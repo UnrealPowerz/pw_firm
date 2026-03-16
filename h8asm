@@ -1,0 +1,7 @@
+#!/bin/bash
+# h8asm - Assemble H8/300H .s file to .o (Renesas asm38)
+# Usage: ./h8asm <output.o> <input.s>
+OUTPUT="$1"
+INPUT="$2"
+docker run --rm --network=none -v .:/work h8 \
+  h8-6_2_2-asm38 -cpu=300HN -object="Z:\\work\\${OUTPUT}" "Z:\\work\\${INPUT}"

@@ -1,0 +1,4 @@
+#!/bin/bash
+# Pass all arguments to the docker container. 
+# Caller is responsible for providing -object="..." to avoid race conditions.
+docker run --rm --network=none -v .:/work h8 h8-6_2_2-ch38 -cpu=300HN -stack=small -lang=c -outcode=sjis -nolist -chgincpath -nologo -Code=Asmcode "$@"

@@ -1,0 +1,15 @@
+diff --git a/ISx.c b/ISx.c
+index 583bf0c..0fa2458 100644
+--- a/ISx.c
++++ b/ISx.c
+@@ -337,7 +337,9 @@ typedef struct IS_FILE_ATTRIBUTES_X
+ /* **** */
+ char *strcat_x(char *path, char *ext_path) {
+     path = realloc(path, strlen(path) + strlen(ext_path) + 1);
+-    return strcat(path, ext_path);
++    char *out = strcat(path, ext_path);
++    for (char* p = out; *p; p++) { if (*p == '\\') *p = '/'; }
++    return out;
+ }
+ 
+ /* Make sure it won't overwrite the existing ones in your environment! */

@@ -1,0 +1,5 @@
+#!/bin/bash
+# h8objdump - GNU h8300-elf-objdump wrapper
+# Usage: ./h8objdump [objdump-args...]
+docker run --rm --network=none --entrypoint h8300-elf-objdump -v .:/work -w /work h8-gcc:4.3.4 \
+  "$@"

@@ -1,0 +1,6 @@
+#!/bin/bash
+# h8lnk - Link H8/300H .o files using optlnk (Renesas 6.1.3 linker)
+# Usage: ./h8lnk [subcommand-file]   (default: link.sub)
+SUB="${1:-link.sub}"
+docker run --rm --network=none -v .:/work h8 \
+  wine cmd /c "set PATH=Z:\\opt\\H8\\6_1_3\\bin;Z:\\opt\\H8\\6_2_2\\bin;%PATH% && optlnk.exe -subcommand=Z:\\work\\${SUB}"

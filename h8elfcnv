@@ -1,0 +1,7 @@
+#!/bin/bash
+# h8elfcnv - Convert Renesas .abs to ELF
+# Usage: ./h8elfcnv <input.abs> <output.elf>
+INPUT="${1:-linked.abs}"
+OUTPUT="${2:-linked.elf}"
+docker run --rm --network=none -v .:/work h8 \
+  wine cmd /c "Z:\\opt\\H8\\6_2_2\\bin\\HELFCNV.exe Z:\\work\\${INPUT}"

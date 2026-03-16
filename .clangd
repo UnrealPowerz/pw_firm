@@ -1,0 +1,15 @@
+CompileFlags:
+  Add:
+    - "-Isrc"
+    - "-Iinclude"
+    - "-Ibuild/gen"
+    - "-Ih8inc"
+    - "-std=c89"
+    - "-xc"
+    - "-D__clang__"
+
+
+Diagnostics:
+  Suppress: 
+    - unused-includes
+    - main_returns_nonint
