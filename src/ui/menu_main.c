@@ -6,10 +6,10 @@ void ui_start_connection_app(void) {
                     (uint16_t)(uintptr_t)sys_main_loop_low_power);
 }
 
-// ROM: 0x6a3e  88.3%
+// ROM: 0x6a3e  90.4%
 void ui_handle_home(void) {
   if (!(walker_status_flags & 0x02)) {
-    if (drv_button_is_triggered(2) || (statusFlags & 0x20)) {
+    if (drv_button_is_triggered(2) || (statusFlags_BIT.pedometer_paused)) {
       ui_start_connection_app();
     }
   } else {

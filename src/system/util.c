@@ -1,9 +1,9 @@
 #include "all_headers.h"
 
-// ROM: 0x25ac  89.2%
+// ROM: 0x25ac  98.8%
 void sys_delay_short(void) {
   uint16_t i;
-  if (statusFlags & 0x10) {
+  if (statusFlags_BIT.lcd_dirty) {
     i = 0x25;
     do {
       nop();

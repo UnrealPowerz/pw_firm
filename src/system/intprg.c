@@ -18,7 +18,7 @@ __interrupt(vect=13) void INT_SLEEP(void) {}
 
 // ROM: 0xa300  83.9%
 __interrupt(vect=16) void irq0(void) {
-    statusFlags |= 0x08;
+    statusFlags_BIT.button_event = 1;
     wakeupFlagMaybe = 1;
     CKSTPR1 |= 0x04;
     IRR1 &= ~0x01;
@@ -37,7 +37,7 @@ __interrupt(vect=22) void INT_COMP1(void) {}
 
 // ROM: 0xa65e  80.6%
 __interrupt(vect=23) void drv_rtc_handle_quarter_sec(void) {
-    statusFlags |= 0x01;
+    statusFlags_BIT.tick = 1;
     RTCFLG &= ~0x01;
 }
 

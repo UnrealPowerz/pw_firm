@@ -32,7 +32,7 @@ void drv_buttons_init_irqs(void) {
   set_ccr(0x00);
 }
 
-// ROM: 0x9b84  93.1%
+// ROM: 0x9b84  95.0%
 void drv_button_read(void) {
   buttonInputRaw = 0;
 
@@ -45,9 +45,9 @@ void drv_button_read(void) {
     buttonHoldDuration = 0;
   }
 
-  if (statusFlags & 0x08) {
+  if (statusFlags_BIT.button_event) {
     buttonInputRaw |= 0x02;
-    statusFlags &= ~0x08;
+    statusFlags_BIT.button_event = 0;
   }
 
   if (PDRB_BIT.B2) {

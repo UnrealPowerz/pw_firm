@@ -488,11 +488,11 @@ void gfx_draw_value_with_icon(uint8_t x, uint8_t y, uint8_t subtype,
   drv_lcd_blit(x + 16, y, buf, 0x10, 0x10);
 }
 
-// ROM: 0x21fe  76.3%
+// ROM: 0x21fe  90.3%
 void gfx_draw_battery_low(uint8_t x, uint8_t y) {
   uint8_t *buf;
 
-  if (!(statusFlags & 0x02)) {
+  if (!(statusFlags_BIT.low_battery)) {
     return;
   }
 

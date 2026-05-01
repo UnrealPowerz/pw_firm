@@ -26,7 +26,7 @@ void sys_init_io_ports(uint16_t r0, uint16_t r1) {
   sys_set_handler(ir_comm_loop);
 }
 
-// ROM: 0x7882  87.2%
+// ROM: 0x7882  89.8%
 void sys_main_loop_low_power(void) {
   IENR2 |= 0x04;
   sys_enter_sleep(1);
@@ -40,7 +40,7 @@ void sys_main_loop_low_power(void) {
     game_dispatch_pedometer_task();
     if (game_detect_activity()) {
       sys_power_save_low_power();
-    } else if (statusFlags & 0x08) {
+    } else if (statusFlags_BIT.button_event) {
       sys_power_save_low_power();
     }
   } else if ((walker_status_flags & 0x18) == 0x10) {
@@ -59,14 +59,14 @@ void sys_main_loop_low_power(void) {
     }
   }
 
-  if (statusFlags & 0x01) {
+  if (statusFlags_BIT.tick) {
     if ((walker_status_flags & 0x18) == 0x10) {
       drv_lcd_clear_pages(0x40);
       ui_dispatch_draw();
       drv_lcd_flip();
       DAT_f7ac++;
     }
-    statusFlags &= ~0x01;
+    statusFlags_BIT.tick = 0;
   } else {
     game_dispatch_pedometer_task();
     if ((walker_status_flags & 0x18) == 0x10) {
@@ -95,11 +95,11 @@ end:
   accelSampleCount = (accelSampleCount + 1) & 0x3F;
 }
 
-// ROM: 0x7998  93.5%
+// ROM: 0x7998  96.6%
 void sys_main_loop_active(void) {
   SYSCR1 = 0x27;
   SYSCR2 = 0xE0;
-  statusFlags |= 0x10;
+  statusFlags_BIT.lcd_dirty = 1;
   if (GRA != 0) {
     sleep();
   }
@@ -107,14 +107,14 @@ void sys_main_loop_active(void) {
   drv_button_read();
   ui_dispatch_event();
 
-  if (statusFlags & 0x01) {
+  if (statusFlags_BIT.tick) {
     if ((walker_status_flags & 0x18) == 0x10) {
       drv_lcd_clear_pages(0x40);
       ui_dispatch_draw();
       drv_lcd_flip();
       DAT_f7ac++;
     }
-    statusFlags &= ~0x01;
+    statusFlags_BIT.tick = 0;
   }
 
   if (!drv_sound_is_playing()) {

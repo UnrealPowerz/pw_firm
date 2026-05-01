@@ -14,7 +14,7 @@ void sys_enter_standby(void) {
       DAT_f7d1 &= ~0x04;
     }
   }
-  if (statusFlags & 0x80) {
+  if (statusFlags_BIT.sleeping) {
     if (gCurSubstateA <= 0x20) {
       DAT_f7d1 |= 0x04;
       DAT_f7d1 |= 0x01;
@@ -45,7 +45,7 @@ LAB_6bd2:
   gCurSubstateA = s;
   DAT_f7d1 ^= 0x04;
 LAB_6bde:
-  if (!(statusFlags & 0x80)) {
+  if (!(statusFlags_BIT.sleeping)) {
     gCurSubstateA = 0x68;
     DAT_f7d1 &= ~0x02;
     DAT_f7d1 &= ~0x04;
@@ -65,7 +65,7 @@ void sys_power_save_low_power(void) {
   walker_status_flags = (walker_status_flags & 0xE7) | 0x08;
   RTCCR2 |= 0x01;
   stepTimer = 0x1E;
-  statusFlags &= ~0x80;
+  statusFlags_BIT.sleeping = 0;
 }
 
 // ROM: 0xa29c  97.3%
@@ -95,12 +95,12 @@ void sys_enter_sleep(uint16_t mode) {
   if (mode == 0) {
     SYSCR1 = 0xA7;
     SYSCR2 = 0xE0;
-    statusFlags |= 0x10;
+    statusFlags_BIT.lcd_dirty = 1;
     sleep();
   } else if (mode == 1) {
     SYSCR1 = 0xAF;
     SYSCR2 = 0xE3;
-    statusFlags &= ~0x10;
+    statusFlags_BIT.lcd_dirty = 0;
     sleep();
   }
 }

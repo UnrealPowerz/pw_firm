@@ -144,7 +144,7 @@ void game_pedometer_set_total(uint32_t val) {
 
 // ROM: 0xa34a  67.9%
 void game_dispatch_pedometer_task(void) {
-  if (((volatile bit_flags_t *)&statusFlags)->b2 == 0) {
+  if (!statusFlags_BIT.pedometer_paused) {
     if (DAT_f7a7 & 0x01) {
       game_pedometer_init_counters();
     }
@@ -167,7 +167,7 @@ void game_pedometer_init_counters(void) {
 
 // ROM: 0xa3aa  76.5%
 void game_pedometer_increment_step(void) {
-  statusFlags |= 4;
+  statusFlags_BIT.battery_check_request = 1;
 
   if (totalSteps < 9999999 && RamCache_STEP_COUNT_maybe < 9999999) {
     RamCache_STEP_COUNT_maybe++;
@@ -295,7 +295,7 @@ void game_process_accel_data(void) {
   uint8_t view, sub, limit;
   uint16_t threshold, tx, ty, tz;
 
-  statusFlags &= ~0x80;
+  statusFlags_BIT.sleeping = 0;
 
   i = 0;
   do {
@@ -350,7 +350,7 @@ void game_process_accel_data(void) {
   if (steps == 0) {
     DAT_f8ea = 0;
   } else {
-    statusFlags |= 0x80;
+    statusFlags_BIT.sleeping = 1;
 
     if (DAT_f8ea != 0) {
       uint32_t accumulation = DAT_f8e6 + DAT_f8ea;

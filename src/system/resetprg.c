@@ -27,7 +27,7 @@ __entry(vect = 0) void PowerON_Reset(void) {
   }
 
   DAT_f7a8 = 0;
-  statusFlags |= 0x10;
+  statusFlags_BIT.lcd_dirty = 1;
   walker_status_flags = (walker_status_flags & 0xE7) | 0x10;
 
   activityTimer = 0x3C;

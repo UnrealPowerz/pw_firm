@@ -86,7 +86,7 @@ void drv_accel_sample(void) {
 
   SYSCR1 = 0xA7;
   SYSCR2 = 0xEB;
-  statusFlags |= 0x10;
+  statusFlags_BIT.lcd_dirty = 1;
   PDR9 |= 0x01;
   SSMR = 0x86;
   sleep();

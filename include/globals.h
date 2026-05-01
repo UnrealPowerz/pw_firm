@@ -5,6 +5,7 @@
 
 /* --- System Status Flags --- */
 extern volatile uint8_t statusFlags;
+#define statusFlags_BIT (((volatile status_flags_t *)&statusFlags)->BIT)
 extern volatile uint8_t wakeupFlagMaybe;
 extern volatile uint8_t status_flags_f7f1;   /* DAT_f7f1 */
 extern volatile uint8_t walker_status_flags; /* DAT_f7ef (?) */

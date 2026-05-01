@@ -47,7 +47,7 @@ uint8_t drv_adc_validate_calib_checksum(uint16_t val) {
   return 0;
 }
 
-// ROM: 0x281e  83.0%
+// ROM: 0x281e  85.3%
 int16_t drv_adc_sample(void) {
   int32_t sum = 0;
   uint16_t count = 8;
@@ -66,7 +66,7 @@ int16_t drv_adc_sample(void) {
     IENR2 &= 0xBF;
     AMR = (AMR & 0xF0) | 0x07;
 
-    if (statusFlags & 0x10) {
+    if (statusFlags_BIT.lcd_dirty) {
       AMR = (AMR & 0xCF) | 0x20;
     } else {
       AMR = (AMR & 0xCF) | 0x30;
@@ -113,16 +113,15 @@ uint8_t drv_adc_check_low_battery(uint16_t threshold) {
   return 1; /* Battery Low */
 }
 
-// ROM: 0x290a  88.7%
+// ROM: 0x290a  96.3%
 void drv_adc_check_battery(void) {
-  /* bit 2 of statusFlags = request check */
-  if (statusFlags & 0x04) {
+  if (statusFlags_BIT.battery_check_request) {
     if (drv_adc_check_low_battery(20)) {
-      statusFlags |= 0x02; /* set low battery flag */
+      statusFlags_BIT.low_battery = 1;
     } else {
-      statusFlags &= ~0x02; /* clear low battery flag */
+      statusFlags_BIT.low_battery = 0;
     }
-    statusFlags &= ~0x04; /* clear request flag */
+    statusFlags_BIT.battery_check_request = 0;
   }
 }
 
