@@ -1,6 +1,6 @@
 #include "all_headers.h"
 
-// ROM: 0xa830  65.9%
+// ROM: 0xa830  76.6%
 uint8_t drv_accel_factory_test(void) {
   uint8_t buf[6];
   uint8_t *p;
@@ -31,30 +31,30 @@ uint8_t drv_accel_factory_test(void) {
 
   /* Send buf[1] via SPI */
   PDR1 &= ~0x01;
-  while (!(SSSR & 0x04))
+  while (!SSSR_BIT.TDRE)
     ;
   SSTDR = buf[1];
-  while (!(SSSR & 0x08))
+  while (!SSSR_BIT.TEND)
     ;
   PDR1 |= 0x01;
   sys_delay_short();
 
   /* Send buf[3] via SPI */
   PDR1 &= ~0x01;
-  while (!(SSSR & 0x04))
+  while (!SSSR_BIT.TDRE)
     ;
   SSTDR = buf[3];
-  while (!(SSSR & 0x08))
+  while (!SSSR_BIT.TEND)
     ;
   PDR1 |= 0x01;
   sys_delay_short();
 
   /* Send buf[5] via SPI */
   PDR1 &= ~0x01;
-  while (!(SSSR & 0x04))
+  while (!SSSR_BIT.TDRE)
     ;
   SSTDR = buf[5];
-  while (!(SSSR & 0x08))
+  while (!SSSR_BIT.TEND)
     ;
   PDR1 |= 0x01;
   sys_delay_short();
@@ -62,7 +62,7 @@ uint8_t drv_accel_factory_test(void) {
   return 1;
 }
 
-// ROM: 0x76aa  73.6%
+// ROM: 0x76aa  77.1%
 void drv_accel_sample(void) {
   uint8_t buf[6];
   register uint8_t *pBuf;
@@ -73,10 +73,10 @@ void drv_accel_sample(void) {
 
   SSMR = 0x87;
   PDR9 &= ~0x01;
-  while (!(SSSR & 0x04))
+  while (!SSSR_BIT.TDRE)
     ;
   SSTDR = 0x0A;
-  while (!(SSSR & 0x08))
+  while (!SSSR_BIT.TEND)
     ;
   SSTDR = 0x00;
 
@@ -95,13 +95,13 @@ void drv_accel_sample(void) {
   drv_accel_read_reg(0x02, 6, pBuf);
 
   PDR9 &= ~0x01;
-  while (!(SSSR & 0x04))
+  while (!SSSR_BIT.TDRE)
     ;
   SSTDR = 0x0A;
-  while (!(SSSR & 0x04))
+  while (!SSSR_BIT.TDRE)
     ;
   SSTDR = 0x01;
-  while (!(SSSR & 0x08))
+  while (!SSSR_BIT.TEND)
     ;
   PDR9 |= 0x01;
 
@@ -149,7 +149,7 @@ void drv_accel_sample(void) {
   }
 }
 
-// ROM: 0x26a0  66.0%
+// ROM: 0x26a0  81.1%
 uint8_t drv_accel_read_reg(uint8_t addr, uint16_t count, uint8_t *dst) {
   uint8_t ssr;
   uint8_t tmp_addr;
@@ -164,27 +164,27 @@ uint8_t drv_accel_read_reg(uint8_t addr, uint16_t count, uint8_t *dst) {
   SSER = 0xC0;
   PDR9 &= ~0x01;
 
-  while (!(SSSR & 0x04))
+  while (!SSSR_BIT.TDRE)
     ;
   SSTDR = tmp_addr;
 
-  while (!(SSSR & 0x02))
+  while (!SSSR_BIT.RDRF)
     ;
   ssr = SSRDR;
 
   while (count != 0) {
-    while (!(SSSR & 0x04))
+    while (!SSSR_BIT.TDRE)
       ;
     SSTDR = 0xFF;
 
-    while (!(SSSR & 0x02))
+    while (!SSSR_BIT.RDRF)
       ;
     *dst = SSRDR;
     dst++;
     count--;
   }
 
-  while (!(SSSR & 0x08))
+  while (!SSSR_BIT.TEND)
     ;
   PDR9 |= 0x01;
   SSER = 0x80;
@@ -192,20 +192,20 @@ uint8_t drv_accel_read_reg(uint8_t addr, uint16_t count, uint8_t *dst) {
   return 0;
 }
 
-// ROM: 0x270a  78.2%
+// ROM: 0x270a  98.5%
 void drv_accel_write_reg(uint8_t addr, uint8_t val) {
   SSER = 0x80;
   PDR9 &= ~0x01;
 
-  while (!(SSSR & 0x04))
+  while (!SSSR_BIT.TDRE)
     ;
   SSTDR = addr;
 
-  while (!(SSSR & 0x04))
+  while (!SSSR_BIT.TDRE)
     ;
   SSTDR = val;
 
-  while (!(SSSR & 0x08))
+  while (!SSSR_BIT.TEND)
     ;
   PDR9 |= 0x01;
 }

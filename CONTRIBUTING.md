@@ -83,6 +83,13 @@ Common causes of low match scores and how to fix them:
 
 **Missing or extra increment/decrement.** Post-increment vs pre-increment, or incrementing a different variable than expected, are common sources of divergence.
 
+**Wrong IO register access style.** `include/iodefine.h` exposes each register that has bit fields under two macros: `REG` for byte/word access and `REG_BIT` for bit-field access. Pick the one that matches what the assembly does:
+
+- Single-bit test in an `if`/`while` — use `REG_BIT.FIELD`. The compiler emits `bld/bcc` (matching the ROM); the byte form `(REG & 0xN)` produces `btst/beq` instead.
+- Single-bit set/clear, especially when chained on the same peripheral (e.g. `TCRW_BIT.CCLR = 0; TIERW_BIT.IMIEA = 0; TMRW_BIT.CTS = 1;`) — use `REG_BIT.FIELD = N`. The compiler reuses the address register across the chain and emits the same `mov.w + bclr/bset @rN` sequence the ROM uses.
+- Multi-bit constant store, byte read-modify-write with a mask (`tmp = REG; tmp &= 0x8F; tmp |= 0x40; REG = tmp;`) — use the byte form `REG`. Bit-field rewrites here would force a sequence of bit ops the ROM didn't use.
+- Never `(uint8_t *)0xF0` or similar bare-address pointer tricks. Those literally point at low RAM (0x00F0), not the IO register at 0xF0F0; the original ROM only got the right address because of `mov.b #imm, r0l` preserving the high byte across instructions, which the C decompiler can't express.
+
 ### 7. Annotate
 
 Once you're satisfied with a function's score, run the annotation tool to record the current match percentage in the source:
@@ -121,11 +128,14 @@ An ASM-only call means the C code is missing a function call that should be ther
 
 Some divergence is not fixable at the C level:
 
-**Compiler version differences.** The compiler version used for the original firmware is unknown. Two instruction patterns appear in the ROM that this project's compiler (ch38 v6.02.02) does not reproduce:
+**Compiler version differences.** The compiler version used for the original firmware is unknown. One instruction pattern appears in the ROM that this project's compiler (ch38 v6.02.02) does not reproduce:
 - `bset Rn, Rd` vs a shift loop for `1 << variable`
-- `bld/bcc` vs `btst/beq` for single-bit tests
 
-Functions that use these patterns will plateau below 100%. The comparison tool will show these as mismatched instructions in otherwise-correct code.
+Functions that use this pattern will plateau below 100% — the comparison tool will show it as mismatched instructions in otherwise-correct code.
+
+(The `bld/bcc` vs `btst/beq` divergence used to be listed here too, but it *is* fixable: it just requires the C source to use `REG_BIT.FIELD` from `iodefine.h` instead of `(REG & 0xMASK)` for single-bit tests on IO registers. See "Wrong IO register access style" in the Iterate section.)
+
+A second class of unfixable divergence is RAM bytes that the original code declared as bit-field unions (e.g. status/setting flag bytes accessed with `bld/bst/bnot`). The decompilation has these as plain `uint8_t` and accesses them with `& 0xMASK`, so the compiler emits `mov+and+cmp` instead of the ROM's bit instructions. Closing this gap would require defining bit-field unions for those RAM globals — possible in principle but not yet done.
 
 **Hand-written assembly in the original.** A small number of routines in the ROM are custom assembly, not compiler output. These are implemented in `src/globals.s` and `src/romdata.s`, or as library functions that were linked in unchanged. They are not expected to be decompiled to C.
 

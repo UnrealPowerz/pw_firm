@@ -42,7 +42,7 @@ void gfx_add_font_border(uint16_t *ptr) {
   *ptr |= 0x101;
 }
 
-// ROM: 0x858a  7.8%
+// ROM: 0x858a  18.5%
 void gfx_draw_string(uint8_t x, uint8_t y_raw, const char *str) {
   uint8_t y_page = y_raw >> 3;
   uint8_t c, idx, i;
@@ -52,10 +52,10 @@ void gfx_draw_string(uint8_t x, uint8_t y_raw, const char *str) {
   PDR1 &= ~0x01;
   PDR1 &= ~0x02;
 
-  while (!(SSSR & 0x04))
+  while (!SSSR_BIT.TDRE)
     ;
   SSTDR = 0x10 | (x >> 4);
-  while (!(SSSR & 0x04))
+  while (!SSSR_BIT.TDRE)
     ;
   SSTDR = x & 0x0F;
 
@@ -63,10 +63,10 @@ void gfx_draw_string(uint8_t x, uint8_t y_raw, const char *str) {
     sleep();
   }
 
-  while (!(SSSR & 0x04))
+  while (!SSSR_BIT.TDRE)
     ;
   SSTDR = 0xB0 | (DAT_f7e4 * 8 + y_page);
-  while (!(SSSR & 0x08))
+  while (!SSSR_BIT.TEND)
     ;
   PDR1 |= 0x02;
 
@@ -74,7 +74,7 @@ void gfx_draw_string(uint8_t x, uint8_t y_raw, const char *str) {
     c = (uint8_t)(*str++);
     if (c == 0x20) {
       for (i = 0; i < 8; i++) {
-        while (!(SSSR & 0x04))
+        while (!SSSR_BIT.TDRE)
           ;
         SSTDR = 0;
       }
@@ -84,26 +84,26 @@ void gfx_draw_string(uint8_t x, uint8_t y_raw, const char *str) {
       else
         idx = c + 0xC9;
       bmp = &L_BCF4[idx * 3];
-      while (!(SSSR & 0x04))
+      while (!SSSR_BIT.TDRE)
         ;
       SSTDR = bmp[0];
-      while (!(SSSR & 0x04))
+      while (!SSSR_BIT.TDRE)
         ;
       SSTDR = bmp[1];
-      while (!(SSSR & 0x04))
+      while (!SSSR_BIT.TDRE)
         ;
       SSTDR = bmp[2];
-      while (!(SSSR & 0x04))
+      while (!SSSR_BIT.TDRE)
         ;
       SSTDR = 0;
-      while (!(SSSR & 0x04))
+      while (!SSSR_BIT.TDRE)
         ;
       SSTDR = 0;
     }
-    while (!(SSSR & 0x08))
+    while (!SSSR_BIT.TEND)
       ;
   }
-  while (!(SSSR & 0x08))
+  while (!SSSR_BIT.TEND)
     ;
   PDR1 |= 0x01;
 }
@@ -578,7 +578,7 @@ void gfx_flip_horiz(uint8_t w, uint8_t h, void *buf) {
   }
 }
 
-// ROM: 0x7e58  24.5%
+// ROM: 0x7e58  24.6%
 #pragma option speed =loop=1 /* pragma:auto */
 void gfx_fill_rect(uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint8_t color) {
   uint16_t p, col;
@@ -590,16 +590,16 @@ void gfx_fill_rect(uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint8_t color) {
 
   for (p = p_start; p < p_end; p++) {
     PDR1 &= ~0x02;
-    while (!(SSSR & 0x04))
+    while (!SSSR_BIT.TDRE)
       ;
     SSTDR = 0x10 | ((x >> 4) & 0x07);
-    while (!(SSSR & 0x04))
+    while (!SSSR_BIT.TDRE)
       ;
     SSTDR = x & 0x0F;
-    while (!(SSSR & 0x04))
+    while (!SSSR_BIT.TDRE)
       ;
     SSTDR = 0xB0 | (uint8_t)(p + (DAT_f7e4 << 3));
-    while (!(SSSR & 0x08))
+    while (!SSSR_BIT.TEND)
       ;
     PDR1 |= 0x02;
 
@@ -619,20 +619,20 @@ void gfx_fill_rect(uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint8_t color) {
         v1 = 0xFF;
       }
 
-      while (!(SSSR & 0x04))
+      while (!SSSR_BIT.TDRE)
         ;
       SSTDR = v0;
-      while (!(SSSR & 0x04))
+      while (!SSSR_BIT.TDRE)
         ;
       SSTDR = v1;
     }
   }
-  while (!(SSSR & 0x08))
+  while (!SSSR_BIT.TEND)
     ;
   PDR1 |= 0x01;
 }
 
-// ROM: 0x82ea  29.7%
+// ROM: 0x82ea  32.3%
 #pragma option noregexpansion /* pragma:auto */
 void gfx_draw_sprite_simple(uint8_t x, uint8_t y, uint16_t w, uint16_t h,
                             void *buffer) {
@@ -650,16 +650,16 @@ void gfx_draw_sprite_simple(uint8_t x, uint8_t y, uint16_t w, uint16_t h,
 
   for (p = p_start; p < p_end; p++) {
     PDR1 &= ~0x02; // A0 low
-    while (!(SSSR & 0x04))
+    while (!SSSR_BIT.TDRE)
       ;
     SSTDR = 0x10 | ((x >> 4) & 0x07);
-    while (!(SSSR & 0x04))
+    while (!SSSR_BIT.TDRE)
       ;
     SSTDR = x & 0x0F;
-    while (!(SSSR & 0x04))
+    while (!SSSR_BIT.TDRE)
       ;
     SSTDR = 0xB0 | (uint8_t)(p + (DAT_f7e4 << 3));
-    while (!(SSSR & 0x08))
+    while (!SSSR_BIT.TEND)
       ;
     PDR1 |= 0x02; // A0 high
 
@@ -685,16 +685,16 @@ void gfx_draw_sprite_simple(uint8_t x, uint8_t y, uint16_t w, uint16_t h,
         }
       }
 
-      while (!(SSSR & 0x04))
+      while (!SSSR_BIT.TDRE)
         ;
       SSTDR = v0;
-      while (!(SSSR & 0x04))
+      while (!SSSR_BIT.TDRE)
         ;
       SSTDR = v1;
     }
   }
 
-  while (!(SSSR & 0x08))
+  while (!SSSR_BIT.TEND)
     ;
   PDR1 |= 0x01; // CS high
 }

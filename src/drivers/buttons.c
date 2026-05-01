@@ -32,11 +32,11 @@ void drv_buttons_init_irqs(void) {
   set_ccr(0x00);
 }
 
-// ROM: 0x9b84  87.5%
+// ROM: 0x9b84  93.1%
 void drv_button_read(void) {
   buttonInputRaw = 0;
 
-  if (PDRB & 0x01) {
+  if (PDRB_BIT.B0) {
     buttonInputRaw |= 0x02;
     if (wakeupFlagMaybe) {
       buttonHoldDuration++;
@@ -50,11 +50,11 @@ void drv_button_read(void) {
     statusFlags &= ~0x08;
   }
 
-  if (PDRB & 0x04) {
+  if (PDRB_BIT.B2) {
     buttonInputRaw |= 0x04;
   }
 
-  if (PDRB & 0x10) {
+  if (PDRB_BIT.B4) {
     buttonInputRaw |= 0x08;
   }
 

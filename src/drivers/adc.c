@@ -1,22 +1,22 @@
 #include "all_headers.h"
 
-// ROM: 0xa8f8  12.2%
+// ROM: 0xa8f8  19.0%
 uint8_t drv_adc_test(void) {
   uint16_t val = drv_adc_sample();
   PDR1 &= ~0x01;
-  while (!(SSSR & 0x04))
+  while (!SSSR_BIT.TDRE)
     ;
   SSTDR = (uint8_t)(val >> 8);
-  while (!(SSSR & 0x08))
+  while (!SSSR_BIT.TEND)
     ;
   PDR1 |= 0x01;
   sys_delay_short();
 
   PDR1 &= ~0x01;
-  while (!(SSSR & 0x04))
+  while (!SSSR_BIT.TDRE)
     ;
   SSTDR = (uint8_t)val;
-  while (!(SSSR & 0x08))
+  while (!SSSR_BIT.TEND)
     ;
   PDR1 |= 0x01;
   sys_delay_short();
@@ -72,8 +72,8 @@ int16_t drv_adc_sample(void) {
       AMR = (AMR & 0xCF) | 0x30;
     }
 
-    ADSR |= 0x80;
-    while (ADSR & 0x80)
+    ADSR_BIT.ADSF = 1;
+    while (ADSR_BIT.ADSF)
       ;
 
     AMR &= 0xF0;

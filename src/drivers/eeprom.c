@@ -34,7 +34,7 @@ uint8_t drv_eeprom_spi_transfer(void) {
   return SSRDR;
 }
 
-// ROM: 0x552e  56.9%
+// ROM: 0x552e  82.8%
 uint8_t drv_eeprom_read_u8(uint16_t addr) {
   uint8_t status, val;
   uint8_t retries = 3;
@@ -48,18 +48,18 @@ uint8_t drv_eeprom_read_u8(uint16_t addr) {
     SSER |= 0xC0;
     PDR1 &= ~0x04;
     while (1) {
-      while (!(SSSR & 0x04))
+      while (!SSSR_BIT.TDRE)
         ;
       SSTDR = 0x05; // RDSR
       drv_eeprom_spi_transfer();
-      while (!(SSSR & 0x04))
+      while (!SSSR_BIT.TDRE)
         ;
       SSTDR = 0xFF;
       status = drv_eeprom_spi_transfer();
       if (!(status & 0x01))
         break;
     }
-    while (!(SSSR & 0x08))
+    while (!SSSR_BIT.TEND)
       ;
     PDR1 |= 0x04;
 
@@ -67,24 +67,24 @@ uint8_t drv_eeprom_read_u8(uint16_t addr) {
     SSSR = 0;
     SSER |= 0xC0;
     PDR1 &= ~0x04;
-    while (!(SSSR & 0x04))
+    while (!SSSR_BIT.TDRE)
       ;
     SSTDR = 0x03; // READ
     drv_eeprom_spi_transfer();
-    while (!(SSSR & 0x04))
+    while (!SSSR_BIT.TDRE)
       ;
     SSTDR = (uint8_t)(addr >> 8);
     drv_eeprom_spi_transfer();
-    while (!(SSSR & 0x04))
+    while (!SSSR_BIT.TDRE)
       ;
     SSTDR = (uint8_t)addr;
     drv_eeprom_spi_transfer();
-    while (!(SSSR & 0x04))
+    while (!SSSR_BIT.TDRE)
       ;
     SSTDR = 0xFF;
     val = drv_eeprom_spi_transfer();
 
-    while (!(SSSR & 0x08))
+    while (!SSSR_BIT.TEND)
       ;
     PDR1 |= 0x04;
     drv_eeprom_spi_reset();
@@ -94,7 +94,7 @@ uint8_t drv_eeprom_read_u8(uint16_t addr) {
   return 0xFF;
 }
 
-// ROM: 0x4fca  51.5%
+// ROM: 0x4fca  78.0%
 void drv_eeprom_write_u8(uint16_t addr, uint8_t val) {
   uint8_t status;
   uint8_t retries = 3;
@@ -108,18 +108,18 @@ void drv_eeprom_write_u8(uint16_t addr, uint8_t val) {
     SSER |= 0xC0;
     PDR1 &= ~0x04;
     while (1) {
-      while (!(SSSR & 0x04))
+      while (!SSSR_BIT.TDRE)
         ;
       SSTDR = 0x05; // RDSR
       drv_eeprom_spi_transfer();
-      while (!(SSSR & 0x04))
+      while (!SSSR_BIT.TDRE)
         ;
       SSTDR = 0xFF;
       status = drv_eeprom_spi_transfer();
       if (!(status & 0x01))
         break;
     }
-    while (!(SSSR & 0x08))
+    while (!SSSR_BIT.TEND)
       ;
     PDR1 |= 0x04;
 
@@ -127,29 +127,29 @@ void drv_eeprom_write_u8(uint16_t addr, uint8_t val) {
     SSSR = 0;
     SSER |= 0x80;
     PDR1 &= ~0x04;
-    while (!(SSSR & 0x04))
+    while (!SSSR_BIT.TDRE)
       ;
     SSTDR = 0x06; // WREN
-    while (!(SSSR & 0x08))
+    while (!SSSR_BIT.TEND)
       ;
     PDR1 |= 0x04;
     PDR1 &= ~0x04;
-    while (!(SSSR & 0x04))
+    while (!SSSR_BIT.TDRE)
       ;
     SSTDR = 0x02; // WRITE
     drv_eeprom_spi_transfer();
-    while (!(SSSR & 0x04))
+    while (!SSSR_BIT.TDRE)
       ;
     SSTDR = (uint8_t)(addr >> 8);
     drv_eeprom_spi_transfer();
-    while (!(SSSR & 0x04))
+    while (!SSSR_BIT.TDRE)
       ;
     SSTDR = (uint8_t)addr;
     drv_eeprom_spi_transfer();
-    while (!(SSSR & 0x04))
+    while (!SSSR_BIT.TDRE)
       ;
     SSTDR = val;
-    while (!(SSSR & 0x08))
+    while (!SSSR_BIT.TEND)
       ;
     PDR1 |= 0x04;
     drv_eeprom_spi_reset();
@@ -158,7 +158,7 @@ void drv_eeprom_write_u8(uint16_t addr, uint8_t val) {
   }
 }
 
-// ROM: 0x5384  42.4%
+// ROM: 0x5384  49.5%
 void drv_eeprom_read_block(uint16_t addr, void *buf, uint16_t size) {
   uint8_t *p = (uint8_t *)buf;
   uint16_t s;
@@ -175,17 +175,17 @@ void drv_eeprom_read_block(uint16_t addr, void *buf, uint16_t size) {
     SSER |= 0xC0;
     PDR1 &= ~0x04;
     while (1) {
-      while (!(SSSR & 0x04))
+      while (!SSSR_BIT.TDRE)
         ;
       SSTDR = 0x05; // RDSR
       drv_eeprom_spi_transfer();
-      while (!(SSSR & 0x04))
+      while (!SSSR_BIT.TDRE)
         ;
       SSTDR = 0xFF;
       if (!(drv_eeprom_spi_transfer() & 0x01))
         break;
     }
-    while (!(SSSR & 0x08))
+    while (!SSSR_BIT.TEND)
       ;
     PDR1 |= 0x04;
 
@@ -193,23 +193,23 @@ void drv_eeprom_read_block(uint16_t addr, void *buf, uint16_t size) {
     SSSR = 0;
     SSER |= 0xC0;
     PDR1 &= ~0x04;
-    while (!(SSSR & 0x04))
+    while (!SSSR_BIT.TDRE)
       ;
     SSTDR = 0x03; // READ
-    while (!(SSSR & 0x04))
+    while (!SSSR_BIT.TDRE)
       ;
     SSTDR = (uint8_t)(addr >> 8);
-    while (!(SSSR & 0x04))
+    while (!SSSR_BIT.TDRE)
       ;
     SSTDR = (uint8_t)addr;
     drv_eeprom_spi_transfer();
     while (s--) {
-      while (!(SSSR & 0x04))
+      while (!SSSR_BIT.TDRE)
         ;
       SSTDR = 0xFF; // Read dummy
       *p++ = drv_eeprom_spi_transfer();
     }
-    while (!(SSSR & 0x08))
+    while (!SSSR_BIT.TEND)
       ;
     PDR1 |= 0x04;
     drv_eeprom_spi_reset();
@@ -218,7 +218,7 @@ void drv_eeprom_read_block(uint16_t addr, void *buf, uint16_t size) {
   }
 }
 
-// ROM: 0x524e  43.9%
+// ROM: 0x524e  77.4%
 void drv_eeprom_write_block(uint16_t addr, const void *buf, uint16_t size) {
   const uint8_t *p = (const uint8_t *)buf;
   uint16_t s;
@@ -239,17 +239,17 @@ void drv_eeprom_write_block(uint16_t addr, const void *buf, uint16_t size) {
       SSER |= 0xC0;
       PDR1 &= ~0x04;
       while (1) {
-        while (!(SSSR & 0x04))
+        while (!SSSR_BIT.TDRE)
           ;
         SSTDR = 0x05; // RDSR
         drv_eeprom_spi_transfer();
-        while (!(SSSR & 0x04))
+        while (!SSSR_BIT.TDRE)
           ;
         SSTDR = 0xFF;
         if (!(drv_eeprom_spi_transfer() & 0x01))
           break;
       }
-      while (!(SSSR & 0x08))
+      while (!SSSR_BIT.TEND)
         ;
       PDR1 |= 0x04;
 
@@ -257,27 +257,27 @@ void drv_eeprom_write_block(uint16_t addr, const void *buf, uint16_t size) {
       SSSR = 0;
       SSER |= 0x80;
       PDR1 &= ~0x04;
-      while (!(SSSR & 0x04))
+      while (!SSSR_BIT.TDRE)
         ;
       SSTDR = 0x06; // WREN
-      while (!(SSSR & 0x08))
+      while (!SSSR_BIT.TEND)
         ;
       PDR1 |= 0x04;
       PDR1 &= ~0x04;
-      while (!(SSSR & 0x04))
+      while (!SSSR_BIT.TDRE)
         ;
       SSTDR = 0x02; // WRITE
       drv_eeprom_spi_transfer();
-      while (!(SSSR & 0x04))
+      while (!SSSR_BIT.TDRE)
         ;
       SSTDR = (uint8_t)(cur_addr >> 8);
       drv_eeprom_spi_transfer();
-      while (!(SSSR & 0x04))
+      while (!SSSR_BIT.TDRE)
         ;
       SSTDR = (uint8_t)cur_addr;
       drv_eeprom_spi_transfer();
       while (s > 0) {
-        while (!(SSSR & 0x04))
+        while (!SSSR_BIT.TDRE)
           ;
         SSTDR = *p++;
         cur_addr++;
@@ -288,7 +288,7 @@ void drv_eeprom_write_block(uint16_t addr, const void *buf, uint16_t size) {
         if (page_written >= 0x80)
           break;
       }
-      while (!(SSSR & 0x08))
+      while (!SSSR_BIT.TEND)
         ;
       PDR1 |= 0x04;
     }
@@ -298,7 +298,7 @@ void drv_eeprom_write_block(uint16_t addr, const void *buf, uint16_t size) {
   }
 }
 
-// ROM: 0x5742  51.6%
+// ROM: 0x5742  78.8%
 void drv_eeprom_fill(uint16_t addr, uint16_t size, uint8_t val) {
   uint8_t retries = 3;
   statusFlags &= ~0x40;
@@ -315,17 +315,17 @@ void drv_eeprom_fill(uint16_t addr, uint16_t size, uint8_t val) {
       SSER |= 0xC0;
       PDR1 &= ~0x04;
       while (1) {
-        while (!(SSSR & 0x04))
+        while (!SSSR_BIT.TDRE)
           ;
         SSTDR = 0x05; // RDSR
         drv_eeprom_spi_transfer();
-        while (!(SSSR & 0x04))
+        while (!SSSR_BIT.TDRE)
           ;
         SSTDR = 0xFF;
         if (!(drv_eeprom_spi_transfer() & 0x01))
           break;
       }
-      while (!(SSSR & 0x08))
+      while (!SSSR_BIT.TEND)
         ;
       PDR1 |= 0x04;
 
@@ -333,27 +333,27 @@ void drv_eeprom_fill(uint16_t addr, uint16_t size, uint8_t val) {
       SSSR = 0;
       SSER |= 0x80;
       PDR1 &= ~0x04;
-      while (!(SSSR & 0x04))
+      while (!SSSR_BIT.TDRE)
         ;
       SSTDR = 0x06; // WREN
-      while (!(SSSR & 0x08))
+      while (!SSSR_BIT.TEND)
         ;
       PDR1 |= 0x04;
       PDR1 &= ~0x04;
-      while (!(SSSR & 0x04))
+      while (!SSSR_BIT.TDRE)
         ;
       SSTDR = 0x02; // WRITE
       drv_eeprom_spi_transfer();
-      while (!(SSSR & 0x04))
+      while (!SSSR_BIT.TDRE)
         ;
       SSTDR = (uint8_t)(cur_addr >> 8);
       drv_eeprom_spi_transfer();
-      while (!(SSSR & 0x04))
+      while (!SSSR_BIT.TDRE)
         ;
       SSTDR = (uint8_t)cur_addr;
       drv_eeprom_spi_transfer();
       while (s > 0) {
-        while (!(SSSR & 0x04))
+        while (!SSSR_BIT.TDRE)
           ;
         SSTDR = val;
         cur_addr++;
@@ -364,7 +364,7 @@ void drv_eeprom_fill(uint16_t addr, uint16_t size, uint8_t val) {
         if (page_written >= 0x80)
           break;
       }
-      while (!(SSSR & 0x08))
+      while (!SSSR_BIT.TEND)
         ;
       PDR1 |= 0x04;
     }
@@ -374,7 +374,7 @@ void drv_eeprom_fill(uint16_t addr, uint16_t size, uint8_t val) {
   }
 }
 
-// ROM: 0x5874  52.8%
+// ROM: 0x5874  64.7%
 void drv_eeprom_write_page(uint16_t addr, const void *buf) {
   const uint8_t *p = (const uint8_t *)buf;
   uint8_t status;
@@ -390,18 +390,18 @@ void drv_eeprom_write_page(uint16_t addr, const void *buf) {
     SSER |= 0xC0;
     PDR1 &= ~0x04;
     while (1) {
-      while (!(SSSR & 0x04))
+      while (!SSSR_BIT.TDRE)
         ;
       SSTDR = 0x05; // RDSR
       drv_eeprom_spi_transfer();
-      while (!(SSSR & 0x04))
+      while (!SSSR_BIT.TDRE)
         ;
       SSTDR = 0xFF;
       status = drv_eeprom_spi_transfer();
       if (!(status & 0x01))
         break;
     }
-    while (!(SSSR & 0x08))
+    while (!SSSR_BIT.TEND)
       ;
     PDR1 |= 0x04;
 
@@ -409,31 +409,31 @@ void drv_eeprom_write_page(uint16_t addr, const void *buf) {
     SSSR = 0;
     SSER |= 0x80;
     PDR1 &= ~0x04;
-    while (!(SSSR & 0x04))
+    while (!SSSR_BIT.TDRE)
       ;
     SSTDR = 0x06; // WREN
-    while (!(SSSR & 0x08))
+    while (!SSSR_BIT.TEND)
       ;
     PDR1 |= 0x04;
     PDR1 &= ~0x04;
-    while (!(SSSR & 0x04))
+    while (!SSSR_BIT.TDRE)
       ;
     SSTDR = 0x02; // WRITE
     drv_eeprom_spi_transfer();
-    while (!(SSSR & 0x04))
+    while (!SSSR_BIT.TDRE)
       ;
     SSTDR = (uint8_t)(addr >> 8);
     drv_eeprom_spi_transfer();
-    while (!(SSSR & 0x04))
+    while (!SSSR_BIT.TDRE)
       ;
     SSTDR = (uint8_t)addr;
     drv_eeprom_spi_transfer();
     for (i = 0; i < 0x80; i++) {
-      while (!(SSSR & 0x04))
+      while (!SSSR_BIT.TDRE)
         ;
       SSTDR = *p++;
     }
-    while (!(SSSR & 0x08))
+    while (!SSSR_BIT.TEND)
       ;
     PDR1 |= 0x04;
     drv_eeprom_spi_reset();
@@ -442,7 +442,7 @@ void drv_eeprom_write_page(uint16_t addr, const void *buf) {
   }
 }
 
-// ROM: 0x5634  54.2%
+// ROM: 0x5634  74.5%
 void drv_eeprom_write_u8_reliable(uint16_t addr, uint8_t val) {
   uint8_t status;
   uint8_t retries = 3;
@@ -455,18 +455,18 @@ void drv_eeprom_write_u8_reliable(uint16_t addr, uint8_t val) {
     SSER |= 0xC0;
     PDR1 &= ~0x04;
     while (1) {
-      while (!(SSSR & 0x04))
+      while (!SSSR_BIT.TDRE)
         ;
       SSTDR = 0x05; // RDSR
       drv_eeprom_spi_transfer();
-      while (!(SSSR & 0x04))
+      while (!SSSR_BIT.TDRE)
         ;
       SSTDR = 0xFF;
       status = drv_eeprom_spi_transfer();
       if (!(status & 0x01))
         break;
     }
-    while (!(SSSR & 0x08))
+    while (!SSSR_BIT.TEND)
       ;
     PDR1 |= 0x04;
 
@@ -474,29 +474,29 @@ void drv_eeprom_write_u8_reliable(uint16_t addr, uint8_t val) {
     SSSR = 0;
     SSER |= 0x80;
     PDR1 &= ~0x04;
-    while (!(SSSR & 0x04))
+    while (!SSSR_BIT.TDRE)
       ;
     SSTDR = 0x06; // WREN
-    while (!(SSSR & 0x08))
+    while (!SSSR_BIT.TEND)
       ;
     PDR1 |= 0x04;
     PDR1 &= ~0x04;
-    while (!(SSSR & 0x04))
+    while (!SSSR_BIT.TDRE)
       ;
     SSTDR = 0x02; // WRITE
     drv_eeprom_spi_transfer();
-    while (!(SSSR & 0x04))
+    while (!SSSR_BIT.TDRE)
       ;
     SSTDR = (uint8_t)(addr >> 8);
     drv_eeprom_spi_transfer();
-    while (!(SSSR & 0x04))
+    while (!SSSR_BIT.TDRE)
       ;
     SSTDR = (uint8_t)addr;
     drv_eeprom_spi_transfer();
-    while (!(SSSR & 0x04))
+    while (!SSSR_BIT.TDRE)
       ;
     SSTDR = val;
-    while (!(SSSR & 0x08))
+    while (!SSSR_BIT.TEND)
       ;
     PDR1 |= 0x04;
     drv_eeprom_spi_reset();

@@ -1,6 +1,6 @@
 #include "all_headers.h"
 
-// ROM: 0xa962  66.0%
+// ROM: 0xa962  79.9%
 void drv_lcd_test_pixels(void) {
   uint8_t row;
   uint8_t col;
@@ -31,38 +31,38 @@ void drv_lcd_test_pixels(void) {
       switch (q) {
       case 0:
         /* 0x00, 0x00 */
-        while (!(SSSR & 0x04))
+        while (!SSSR_BIT.TDRE)
           ;
         SSTDR = 0x00;
-        while (!(SSSR & 0x04))
+        while (!SSSR_BIT.TDRE)
           ;
         SSTDR = 0x00;
         break;
       case 1:
         /* 0x00, 0xFF */
-        while (!(SSSR & 0x04))
+        while (!SSSR_BIT.TDRE)
           ;
         SSTDR = 0x00;
-        while (!(SSSR & 0x04))
+        while (!SSSR_BIT.TDRE)
           ;
         SSTDR = 0xFF;
         break;
       case 2:
         /* 0xFF, 0x00 */
-        while (!(SSSR & 0x04))
+        while (!SSSR_BIT.TDRE)
           ;
         SSTDR = 0xFF;
-        while (!(SSSR & 0x04))
+        while (!SSSR_BIT.TDRE)
           ;
         SSTDR = 0x00;
         break;
       case 3:
       default:
         /* 0xFF, 0xFF */
-        while (!(SSSR & 0x04))
+        while (!SSSR_BIT.TDRE)
           ;
         SSTDR = 0xFF;
-        while (!(SSSR & 0x04))
+        while (!SSSR_BIT.TDRE)
           ;
         SSTDR = 0xFF;
         break;
@@ -72,18 +72,18 @@ void drv_lcd_test_pixels(void) {
     } while (col < 0x60);
 
     /* Wait for TEND between rows */
-    while (!(SSSR & 0x08))
+    while (!SSSR_BIT.TEND)
       ;
     row++;
   } while (row < 8);
 
   /* Final TEND wait then CS high */
-  while (!(SSSR & 0x08))
+  while (!SSSR_BIT.TEND)
     ;
   PDR1 |= 0x01;
 }
 
-// ROM: 0xac1e  69.8%
+// ROM: 0xac1e  85.3%
 void drv_lcd_test_spi(void) {
   uint16_t i;
   uint8_t row;
@@ -96,14 +96,14 @@ void drv_lcd_test_spi(void) {
   /* Send 0xBC bytes of value 0x01 */
   i = 0xBC;
   do {
-    while (!(SSSR & 0x04))
+    while (!SSSR_BIT.TDRE)
       ;
     SSTDR = 0x01;
     i--;
   } while (i != 0);
 
   /* Wait for TEND */
-  while (!(SSSR & 0x08))
+  while (!SSSR_BIT.TEND)
     ;
 
   /* For each of 8 rows: send row cmd then 2 bytes 0xFF */
@@ -111,13 +111,13 @@ void drv_lcd_test_spi(void) {
   do {
     drv_lcd_set_page_addr(row, 0);
     PDR1 |= 0x02;
-    while (!(SSSR & 0x04))
+    while (!SSSR_BIT.TDRE)
       ;
     SSTDR = 0xFF;
-    while (!(SSSR & 0x04))
+    while (!SSSR_BIT.TDRE)
       ;
     SSTDR = 0xFF;
-    while (!(SSSR & 0x08))
+    while (!SSSR_BIT.TEND)
       ;
     row++;
   } while (row < 8);
@@ -127,13 +127,13 @@ void drv_lcd_test_spi(void) {
   do {
     drv_lcd_set_page_addr(row, 0x5F);
     PDR1 |= 0x02;
-    while (!(SSSR & 0x04))
+    while (!SSSR_BIT.TDRE)
       ;
     SSTDR = 0xFF;
-    while (!(SSSR & 0x04))
+    while (!SSSR_BIT.TDRE)
       ;
     SSTDR = 0xFF;
-    while (!(SSSR & 0x08))
+    while (!SSSR_BIT.TEND)
       ;
     row++;
   } while (row < 8);
@@ -143,16 +143,16 @@ void drv_lcd_test_spi(void) {
   PDR1 |= 0x02;
   i = 0xBC;
   do {
-    while (!(SSSR & 0x04))
+    while (!SSSR_BIT.TDRE)
       ;
     SSTDR = 0x80;
     i--;
   } while (i != 0);
 
   /* Wait for TEND twice */
-  while (!(SSSR & 0x08))
+  while (!SSSR_BIT.TEND)
     ;
-  while (!(SSSR & 0x08))
+  while (!SSSR_BIT.TEND)
     ;
 
   PDR1 |= 0x01;
@@ -163,18 +163,18 @@ void drv_lcd_strobe_res(void) {}
 
 // ROM: 0x7a2a  51.7%
 void drv_lcd_cs_high(void) {
-  while (!(SSSR & 0x08))
+  while (!SSSR_BIT.TEND)
     ;
   PDR1 |= 0x01;
 }
 
-// ROM: 0x7b44  77.3%
+// ROM: 0x7b44  98.2%
 void drv_lcd_send_u8(uint8_t data) {
   PDR1 &= ~0x01;
-  while (!(SSSR & 0x04))
+  while (!SSSR_BIT.TDRE)
     ;
   SSTDR = data;
-  while (!(SSSR & 0x08))
+  while (!SSSR_BIT.TEND)
     ;
   PDR1 |= 0x01;
 }
@@ -234,19 +234,19 @@ void drv_lcd_init(void) {
   drv_lcd_send_u8(0xAF);
 }
 
-// ROM: 0x7c24  84.0%
+// ROM: 0x7c24  90.8%
 void drv_lcd_set_contrast(uint8_t shade) {
   SSER = 0x80;
   PDR1 &= ~0x01;
   PDR1 &= ~0x02;
   drv_lcd_send_u8(0x81);
   drv_lcd_send_u8(DAT_f7a9 + shade);
-  while (!(SSSR & 0x08))
+  while (!SSSR_BIT.TEND)
     ;
   PDR1 |= 0x01;
 }
 
-// ROM: 0x7c56  44.4%
+// ROM: 0x7c56  48.1%
 void drv_lcd_set_page_addr(uint8_t x, uint8_t p) {
   SSER = 0x80;
   PDR1 &= ~0x01;
@@ -257,52 +257,52 @@ void drv_lcd_set_page_addr(uint8_t x, uint8_t p) {
     sleep();
   }
   drv_lcd_send_u8(0xB0 | (p + (DAT_f7e4 << 3)));
-  while (!(SSSR & 0x08))
+  while (!SSSR_BIT.TEND)
     ;
   PDR1 |= 0x01;
 }
 
-// ROM: 0x7cac  78.2%
+// ROM: 0x7cac  94.6%
 void drv_lcd_flip(void) {
   SSER = 0x80;
   PDR1 &= ~0x01;
   PDR1 &= ~0x02;
-  while (!(SSSR & 0x04))
+  while (!SSSR_BIT.TDRE)
     ;
   SSTDR = 0x40;
-  while (!(SSSR & 0x04))
+  while (!SSSR_BIT.TDRE)
     ;
   SSTDR = DAT_f7e4 * 0x40;
-  while (!(SSSR & 0x08))
+  while (!SSSR_BIT.TEND)
     ;
-  while (!(SSSR & 0x08))
+  while (!SSSR_BIT.TEND)
     ;
   PDR1 |= 0x01;
   DAT_f7e4 ^= 1;
 }
 
-// ROM: 0x7cfa  82.2%
+// ROM: 0x7cfa  98.1%
 void drv_lcd_set_start(uint8_t page) {
   if (page <= 1) {
     SSER = 0x80;
     PDR1 &= ~0x01;
     PDR1 &= ~0x02;
-    while (!(SSSR & 0x04))
+    while (!SSSR_BIT.TDRE)
       ;
     SSTDR = 0x40;
-    while (!(SSSR & 0x04))
+    while (!SSSR_BIT.TDRE)
       ;
     SSTDR = page * 0x40;
-    while (!(SSSR & 0x08))
+    while (!SSSR_BIT.TEND)
       ;
-    while (!(SSSR & 0x08))
+    while (!SSSR_BIT.TEND)
       ;
     PDR1 |= 0x01;
     DAT_f7e4 = page ^ 1;
   }
 }
 
-// ROM: 0x7d4a  27.9%
+// ROM: 0x7d4a  36.8%
 void drv_lcd_clear(uint8_t color) {
   uint8_t p, col;
   uint8_t v0 = 0, v1 = 0;
@@ -320,61 +320,61 @@ void drv_lcd_clear(uint8_t color) {
   PDR1 &= ~0x01;
   for (p = 0; p < 8; p++) {
     PDR1 &= ~0x02;
-    while (!(SSSR & 0x04))
+    while (!SSSR_BIT.TDRE)
       ;
     SSTDR = 0x10;
-    while (!(SSSR & 0x04))
+    while (!SSSR_BIT.TDRE)
       ;
     SSTDR = 0x00;
     if (p > 7) {
       sleep();
     }
-    while (!(SSSR & 0x04))
+    while (!SSSR_BIT.TDRE)
       ;
     SSTDR = 0xB0 | (p + (DAT_f7e4 << 3));
-    while (!(SSSR & 0x08))
+    while (!SSSR_BIT.TEND)
       ;
     PDR1 |= 0x02;
 
     for (col = 0x60; col != 0; col--) {
-      while (!(SSSR & 0x04))
+      while (!SSSR_BIT.TDRE)
         ;
       SSTDR = v0;
-      while (!(SSSR & 0x04))
+      while (!SSSR_BIT.TDRE)
         ;
       SSTDR = v1;
     }
-    while (!(SSSR & 0x08))
+    while (!SSSR_BIT.TEND)
       ;
   }
-  while (!(SSSR & 0x08))
+  while (!SSSR_BIT.TEND)
     ;
   PDR1 |= 0x01;
 }
 
-// ROM: 0x7fb8  87.1%
+// ROM: 0x7fb8  97.5%
 void drv_lcd_reset(void) {
   SSER = 0x80;
   PDR1 &= ~0x01;
   PDR1 &= ~0x02;
   drv_lcd_send_u8(0xE1);
-  while (!(SSSR & 0x08))
+  while (!SSSR_BIT.TEND)
     ;
   PDR1 |= 0x01;
 }
 
-// ROM: 0x7fda  87.1%
+// ROM: 0x7fda  97.5%
 void drv_lcd_power_save(void) {
   SSER = 0x80;
   PDR1 &= ~0x01;
   PDR1 &= ~0x02;
   drv_lcd_send_u8(0xA9);
-  while (!(SSSR & 0x08))
+  while (!SSSR_BIT.TEND)
     ;
   PDR1 |= 0x01;
 }
 
-// ROM: 0x7ffc  47.9%
+// ROM: 0x7ffc  70.4%
 void drv_lcd_clear_pages(uint8_t height_pixels) {
   uint8_t p;
   uint8_t col;
@@ -384,38 +384,38 @@ void drv_lcd_clear_pages(uint8_t height_pixels) {
   PDR1 &= ~0x01;
   for (p = 0; p < pages; p++) {
     PDR1 &= ~0x02;
-    while (!(SSSR & 0x04))
+    while (!SSSR_BIT.TDRE)
       ;
     SSTDR = 0x10;
-    while (!(SSSR & 0x04))
+    while (!SSSR_BIT.TDRE)
       ;
     SSTDR = 0;
     if (p > 7) {
       sleep();
     }
-    while (!(SSSR & 0x04))
+    while (!SSSR_BIT.TDRE)
       ;
     SSTDR = 0xB0 | (uint8_t)(p + (DAT_f7e4 << 3));
-    while (!(SSSR & 0x08))
+    while (!SSSR_BIT.TEND)
       ;
     PDR1 |= 0x02;
     col = 0x60;
     do {
-      while (!(SSSR & 0x04))
+      while (!SSSR_BIT.TDRE)
         ;
       SSTDR = 0;
-      while (!(SSSR & 0x04))
+      while (!SSSR_BIT.TDRE)
         ;
       SSTDR = 0;
       col--;
     } while (col != 0);
   }
-  while (!(SSSR & 0x08))
+  while (!SSSR_BIT.TEND)
     ;
   PDR1 |= 0x01;
 }
 
-// ROM: 0x80ac  33.6%
+// ROM: 0x80ac  32.4%
 void drv_lcd_blit(uint8_t x, uint8_t y, void *buffer, uint8_t w,
                         uint8_t h) {
   uint16_t p, col;
@@ -431,16 +431,16 @@ void drv_lcd_blit(uint8_t x, uint8_t y, void *buffer, uint8_t w,
 
   for (p = p_start; p < p_end; p++) {
     PDR1 &= ~0x02; // A0 low
-    while (!(SSSR & 0x04))
+    while (!SSSR_BIT.TDRE)
       ;
     SSTDR = 0x10 | ((x >> 4) & 0x07);
-    while (!(SSSR & 0x04))
+    while (!SSSR_BIT.TDRE)
       ;
     SSTDR = x & 0x0F;
-    while (!(SSSR & 0x04))
+    while (!SSSR_BIT.TDRE)
       ;
     SSTDR = 0xB0 | (uint8_t)(p + (DAT_f7e4 << 3));
-    while (!(SSSR & 0x08))
+    while (!SSSR_BIT.TEND)
       ;
     PDR1 |= 0x02; // A0 high
 
@@ -463,17 +463,17 @@ void drv_lcd_blit(uint8_t x, uint8_t y, void *buffer, uint8_t w,
           v1 = (prev[1] >> shift_r) | (ptr[1] << y_off);
         }
       }
-      while (!(SSSR & 0x04))
+      while (!SSSR_BIT.TDRE)
         ;
       SSTDR = v0;
-      while (!(SSSR & 0x04))
+      while (!SSSR_BIT.TDRE)
         ;
       SSTDR = v1;
       ptr += 2;
     }
   }
 
-  while (!(SSSR & 0x08))
+  while (!SSSR_BIT.TEND)
     ;
   PDR1 |= 0x01; // CS high
 }

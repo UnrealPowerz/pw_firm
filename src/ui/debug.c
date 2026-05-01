@@ -36,7 +36,7 @@ uint8_t diag_eeprom_factory_test(uint32_t addr) {
   return 1;
 }
 
-// ROM: 0x5990  48.5%
+// ROM: 0x5990  72.1%
 #pragma option speed =loop=1 /* pragma:auto */
 void sys_factory_test(void) {
   uint8_t res, i;
@@ -44,16 +44,16 @@ void sys_factory_test(void) {
   set_ccr(0x80);
   SSER = 0xC0;
   SSMR = (SSMR & 0xF8) | 0x06;
-  if (SSSR & 0x40)
-    SSSR &= ~0x40;
+  if (SSSR_BIT.ORER)
+    SSSR_BIT.ORER = 0;
 
   PDR1 &= ~0x01;
-  while (!(SSSR & 0x04))
+  while (!SSSR_BIT.TDRE)
     ;
   SSTDR = 0xE2;
   drv_lcd_cs_high();
 
-  while (!(SSSR & 0x02))
+  while (!SSSR_BIT.RDRF)
     ;
   res = SSRDR;
   SSER = 0x80;
@@ -61,10 +61,10 @@ void sys_factory_test(void) {
 
   if (res != 0xAA) {
     PDR1 &= ~0x01;
-    while (!(SSSR & 0x04))
+    while (!SSSR_BIT.TDRE)
       ;
     SSTDR = 0xB0;
-    while (!(SSSR & 0x08))
+    while (!SSSR_BIT.TEND)
       ;
     PDR1 |= 0x01;
     sys_delay_short();
@@ -72,14 +72,14 @@ void sys_factory_test(void) {
   }
 
   PDR1 &= ~0x01;
-  while (!(SSSR & 0x04))
+  while (!SSSR_BIT.TDRE)
     ;
   SSTDR = *((volatile uint8_t *)0x5C);
   drv_lcd_cs_high();
   sys_delay_short();
 
   PDR1 &= ~0x01;
-  while (!(SSSR & 0x04))
+  while (!SSSR_BIT.TDRE)
     ;
   SSTDR = *((volatile uint8_t *)0x5D);
   drv_lcd_cs_high();
@@ -87,7 +87,7 @@ void sys_factory_test(void) {
 
   for (i = 0; i < 12; i++) {
     PDR1 &= ~0x01;
-    while (!(SSSR & 0x04))
+    while (!SSSR_BIT.TDRE)
       ;
     SSTDR = *((volatile uint8_t *)(0x50 + i));
     drv_lcd_cs_high();
@@ -99,14 +99,14 @@ void sys_factory_test(void) {
   TCSRWD1 = 0x8E;
 
   PDR1 &= ~0x01;
-  while (!(SSSR & 0x04))
+  while (!SSSR_BIT.TDRE)
     ;
   SSTDR = 0x04;
   drv_lcd_cs_high();
 
   if (!diag_eeprom_factory_test(0)) {
     PDR1 &= ~0x01;
-    while (!(SSSR & 0x04))
+    while (!SSSR_BIT.TDRE)
       ;
     SSTDR = 0xF4;
     drv_lcd_cs_high();
@@ -116,14 +116,14 @@ void sys_factory_test(void) {
 
   sys_factory_reset_eeprom(1, 1);
   PDR1 &= ~0x01;
-  while (!(SSSR & 0x04))
+  while (!SSSR_BIT.TDRE)
     ;
   SSTDR = 0x03;
   drv_lcd_cs_high();
 
   if (!drv_rtc_wait_sec()) {
     PDR1 &= ~0x01;
-    while (!(SSSR & 0x04))
+    while (!SSSR_BIT.TDRE)
       ;
     SSTDR = 0xF3;
     drv_lcd_cs_high();
@@ -132,7 +132,7 @@ void sys_factory_test(void) {
   }
 
   PDR1 &= ~0x01;
-  while (!(SSSR & 0x04))
+  while (!SSSR_BIT.TDRE)
     ;
   SSTDR = 0x02;
   drv_lcd_cs_high();
@@ -140,14 +140,14 @@ void sys_factory_test(void) {
   drv_accel_factory_test();
 
   PDR1 &= ~0x01;
-  while (!(SSSR & 0x04))
+  while (!SSSR_BIT.TDRE)
     ;
   SSTDR = 0x01;
   drv_lcd_cs_high();
 
   if (!drv_adc_test()) {
     PDR1 &= ~0x01;
-    while (!(SSSR & 0x04))
+    while (!SSSR_BIT.TDRE)
       ;
     SSTDR = 0xF1;
     drv_lcd_cs_high();
@@ -156,17 +156,17 @@ void sys_factory_test(void) {
   }
 
   PDR1 &= ~0x01;
-  while (!(SSSR & 0x04))
+  while (!SSSR_BIT.TDRE)
     ;
   SSTDR = 0x00;
   drv_lcd_cs_high();
 
   PDR9 &= ~0x01;
   PDR1 &= ~0x01;
-  while (!(SSSR & 0x04))
+  while (!SSSR_BIT.TDRE)
     ;
   SSTDR = 0x0A;
-  while (!(SSSR & 0x04))
+  while (!SSSR_BIT.TDRE)
     ;
   SSTDR = 0x01;
   drv_lcd_cs_high();
@@ -194,7 +194,7 @@ void diag_init_test_mode(void) {
   drv_lcd_set_contrast(4);
 }
 
-// ROM: 0xaa6c  69.5%
+// ROM: 0xaa6c  71.1%
 void ui_handle_debug_input(void) {
   uint8_t subY;
   uint8_t subA;
@@ -338,10 +338,10 @@ void ui_handle_debug_input(void) {
     }
     PDR1 &= ~0x01;
     PDR1 &= ~0x02;
-    while (!(SSSR & 0x04))
+    while (!SSSR_BIT.TDRE)
       ;
     SSTDR = 0xA6;
-    while (!(SSSR & 0x08))
+    while (!SSSR_BIT.TEND)
       ;
     PDR1 |= 0x01;
     currentlyActiveView = 0x17;
@@ -362,7 +362,7 @@ set_substate_y_and_clear_a:
   gCurSubstateA = 0;
 }
 
-// ROM: 0xad06  52.7%
+// ROM: 0xad06  54.4%
 void ui_render_debug(void) {
   uint8_t buf[6];
   void (*fn858a)(uint8_t, uint8_t, const char *);
@@ -465,10 +465,10 @@ void ui_render_debug(void) {
     /* SPI command 0xA7 */
     PDR1 &= ~0x01;
     PDR1 &= ~0x02;
-    while (!(SSSR & 0x04))
+    while (!SSSR_BIT.TDRE)
       ;
     SSTDR = 0xA7;
-    while (!(SSSR & 0x08))
+    while (!SSSR_BIT.TEND)
       ;
     PDR1 |= 0x01;
 
@@ -523,7 +523,7 @@ void sys_init_debug_mode(void) {
 // ROM: 0xaef8  100.0%
 void sys_noop(void) {}
 
-// ROM: 0xaefa  39.7%
+// ROM: 0xaefa  41.2%
 #pragma option noregexpansion /* pragma:auto */
 void ui_render_accel_debug(void) {
   uint8_t buf[6];
@@ -615,17 +615,17 @@ void ui_render_accel_debug(void) {
   if (DAT_f7d1 == DAT_f7d8_1) {
     PDR1 &= ~0x01;
     PDR1 &= ~0x02;
-    while (!(SSSR & 0x04))
+    while (!SSSR_BIT.TDRE)
       ;
     SSTDR = 0xA7;
-    while (!(SSSR & 0x08))
+    while (!SSSR_BIT.TEND)
       ;
     PDR1 |= 0x01;
     fn858a(0x08, 0x20, (const char *)0xBF90);
   }
 }
 
-// ROM: 0x8766  75.4%
+// ROM: 0x8766  96.4%
 void diag_lcd_ssu_test_1(void) {
   uint8_t i;
   SSER = 0x80;
@@ -633,89 +633,89 @@ void diag_lcd_ssu_test_1(void) {
   PDR1 &= ~0x02;
 
   /* Page B4 */
-  while (!(SSSR & 0x04))
+  while (!SSSR_BIT.TDRE)
     ;
   SSTDR = 0x10;
-  while (!(SSSR & 0x04))
+  while (!SSSR_BIT.TDRE)
     ;
   SSTDR = 0x00;
-  while (!(SSSR & 0x04))
+  while (!SSSR_BIT.TDRE)
     ;
   SSTDR = 0xB4 + (DAT_f7e4 * 8);
-  while (!(SSSR & 0x08))
+  while (!SSSR_BIT.TEND)
     ;
   PDR1 |= 0x02;
-  while (!(SSSR & 0x04))
+  while (!SSSR_BIT.TDRE)
     ;
   SSTDR = 0xFF;
-  while (!(SSSR & 0x04))
+  while (!SSSR_BIT.TDRE)
     ;
   SSTDR = 0xFF;
   for (i = 0; i < 0xBC; i++) {
-    while (!(SSSR & 0x04))
+    while (!SSSR_BIT.TDRE)
       ;
     SSTDR = 0x01;
   }
-  while (!(SSSR & 0x04))
+  while (!SSSR_BIT.TDRE)
     ;
   SSTDR = 0xFF;
-  while (!(SSSR & 0x04))
+  while (!SSSR_BIT.TDRE)
     ;
   SSTDR = 0xFF;
-  while (!(SSSR & 0x08))
+  while (!SSSR_BIT.TEND)
     ;
   PDR1 &= ~0x02;
 
   /* Page B5 */
-  while (!(SSSR & 0x04))
+  while (!SSSR_BIT.TDRE)
     ;
   SSTDR = 0x10;
-  while (!(SSSR & 0x04))
+  while (!SSSR_BIT.TDRE)
     ;
   SSTDR = 0x00;
-  while (!(SSSR & 0x04))
+  while (!SSSR_BIT.TDRE)
     ;
   SSTDR = 0xB5 + (DAT_f7e4 * 8);
-  while (!(SSSR & 0x08))
+  while (!SSSR_BIT.TEND)
     ;
   PDR1 |= 0x02;
-  while (!(SSSR & 0x04))
+  while (!SSSR_BIT.TDRE)
     ;
   SSTDR = 0xFF;
-  while (!(SSSR & 0x04))
+  while (!SSSR_BIT.TDRE)
     ;
   SSTDR = 0xFF;
-  while (!(SSSR & 0x08))
+  while (!SSSR_BIT.TEND)
     ;
   PDR1 &= ~0x02;
 
-  while (!(SSSR & 0x04))
+  while (!SSSR_BIT.TDRE)
     ;
   SSTDR = 0x15;
-  while (!(SSSR & 0x04))
+  while (!SSSR_BIT.TDRE)
     ;
   SSTDR = 0x0F;
-  while (!(SSSR & 0x04))
+  while (!SSSR_BIT.TDRE)
     ;
   SSTDR = 0xB5 + (DAT_f7e4 * 8);
-  while (!(SSSR & 0x08))
+  while (!SSSR_BIT.TEND)
     ;
   PDR1 |= 0x02;
-  while (!(SSSR & 0x04))
+  while (!SSSR_BIT.TDRE)
     ;
   SSTDR = 0xFF;
-  while (!(SSSR & 0x04))
+  while (!SSSR_BIT.TDRE)
     ;
   SSTDR = 0xFF;
-  while (!(SSSR & 0x08))
+  while (!SSSR_BIT.TEND)
     ;
 
-  while (!(SSSR & 0x08))
+  while (!SSSR_BIT.TEND)
     ;
   PDR1 |= 0x01;
 }
 
-// ROM: 0x88e2  74.8%
+// ROM: 0x88e2  95.3%
 void diag_lcd_ssu_test_2(void) {
   uint8_t i;
   SSER = 0x80;
@@ -723,81 +723,81 @@ void diag_lcd_ssu_test_2(void) {
   PDR1 &= ~0x02;
 
   /* Page B6 */
-  while (!(SSSR & 0x04))
+  while (!SSSR_BIT.TDRE)
     ;
   SSTDR = 0x10;
-  while (!(SSSR & 0x04))
+  while (!SSSR_BIT.TDRE)
     ;
   SSTDR = 0x00;
-  while (!(SSSR & 0x04))
+  while (!SSSR_BIT.TDRE)
     ;
   SSTDR = 0xB6 + (DAT_f7e4 * 8);
-  while (!(SSSR & 0x08))
+  while (!SSSR_BIT.TEND)
     ;
   PDR1 |= 0x02;
-  while (!(SSSR & 0x04))
+  while (!SSSR_BIT.TDRE)
     ;
   SSTDR = 0xFF;
-  while (!(SSSR & 0x04))
+  while (!SSSR_BIT.TDRE)
     ;
   SSTDR = 0xFF;
   for (i = 0; i < 0xBC; i++) {
-    while (!(SSSR & 0x04))
+    while (!SSSR_BIT.TDRE)
       ;
     SSTDR = 0x01;
   }
-  while (!(SSSR & 0x04))
+  while (!SSSR_BIT.TDRE)
     ;
   SSTDR = 0xFF;
-  while (!(SSSR & 0x04))
+  while (!SSSR_BIT.TDRE)
     ;
   SSTDR = 0xFF;
-  while (!(SSSR & 0x08))
+  while (!SSSR_BIT.TEND)
     ;
   PDR1 &= ~0x02;
 
   /* Page B7 */
-  while (!(SSSR & 0x04))
+  while (!SSSR_BIT.TDRE)
     ;
   SSTDR = 0x10;
-  while (!(SSSR & 0x04))
+  while (!SSSR_BIT.TDRE)
     ;
   SSTDR = 0x00;
-  while (!(SSSR & 0x04))
+  while (!SSSR_BIT.TDRE)
     ;
   SSTDR = 0xB7 + (DAT_f7e4 * 8);
-  while (!(SSSR & 0x08))
+  while (!SSSR_BIT.TEND)
     ;
   PDR1 |= 0x02;
-  while (!(SSSR & 0x04))
+  while (!SSSR_BIT.TDRE)
     ;
   SSTDR = 0xFF;
-  while (!(SSSR & 0x04))
+  while (!SSSR_BIT.TDRE)
     ;
   SSTDR = 0xFF;
-  while (!(SSSR & 0x08))
+  while (!SSSR_BIT.TEND)
     ;
 
   for (i = 0; i < 0xBC; i++) {
-    while (!(SSSR & 0x04))
+    while (!SSSR_BIT.TDRE)
       ;
     SSTDR = 0x80;
   }
-  while (!(SSSR & 0x04))
+  while (!SSSR_BIT.TDRE)
     ;
   SSTDR = 0xFF;
-  while (!(SSSR & 0x04))
+  while (!SSSR_BIT.TDRE)
     ;
   SSTDR = 0xFF;
-  while (!(SSSR & 0x08))
+  while (!SSSR_BIT.TEND)
     ;
 
-  while (!(SSSR & 0x08))
+  while (!SSSR_BIT.TEND)
     ;
   PDR1 |= 0x01;
 }
 
-// ROM: 0x8a36  75.6%
+// ROM: 0x8a36  93.9%
 void diag_lcd_ssu_test_3(void) {
   uint8_t i;
   SSER = 0x80;
@@ -805,27 +805,27 @@ void diag_lcd_ssu_test_3(void) {
   PDR1 &= ~0x02;
 
   /* Page B6 */
-  while (!(SSSR & 0x04))
+  while (!SSSR_BIT.TDRE)
     ;
   SSTDR = 0x10;
-  while (!(SSSR & 0x04))
+  while (!SSSR_BIT.TDRE)
     ;
   SSTDR = 0x00;
-  while (!(SSSR & 0x04))
+  while (!SSSR_BIT.TDRE)
     ;
   SSTDR = 0xB6 + (DAT_f7e4 * 8);
-  while (!(SSSR & 0x08))
+  while (!SSSR_BIT.TEND)
     ;
   PDR1 |= 0x02;
   for (i = 0; i < 0xC0; i++) {
-    while (!(SSSR & 0x04))
+    while (!SSSR_BIT.TDRE)
       ;
     SSTDR = 0x01;
   }
-  while (!(SSSR & 0x08))
+  while (!SSSR_BIT.TEND)
     ;
 
-  while (!(SSSR & 0x08))
+  while (!SSSR_BIT.TEND)
     ;
   PDR1 |= 0x01;
 }

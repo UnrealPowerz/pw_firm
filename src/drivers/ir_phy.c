@@ -27,12 +27,12 @@ void drv_ir_config_sci(void) {
 // ROM: 0x0822  64.0%
 void drv_ir_tx_u8(uint8_t val) {
   uint8_t saved = val;
-  while (!(SSR3 & 0x80))
+  while (!SSR3_BIT.TDRE)
     ;
   TDR3 = saved ^ 0xAA;
 }
 
-// ROM: 0x0832  86.2%
+// ROM: 0x0832  90.2%
 void drv_ir_init_hw(void) {
   uint8_t tmp;
   drv_ir_config_sci();
@@ -46,18 +46,12 @@ void drv_ir_init_hw(void) {
   tmp &= 0x8F;
   tmp |= 0x40;
   TCRW = tmp;
-  {
-    uint8_t *p;
-    p = (uint8_t *)&TCRW;
-    *p &= ~0x80;
-    p = (uint8_t *)0xF2;
-    *p &= ~0x01;
-    p = (uint8_t *)0xF0;
-    *p |= 0x80;
-  }
+  TCRW_BIT.CCLR = 0;
+  TIERW_BIT.IMIEA = 0;
+  TMRW_BIT.CTS = 1;
   tmp = SSR3 & 0xC4;
   SSR3 = tmp;
-  if (SSR3 & 0x40) {
+  if (SSR3_BIT.RDRF) {
     rdr_data = RDR3;
   }
 }
@@ -77,7 +71,7 @@ void drv_ir_init_pins(void) {
 // ROM: 0x082e  40.0%
 void drv_ir_init_output_pins(void) { drv_ir_init_pins(); }
 
-// ROM: 0x0772  64.5%
+// ROM: 0x0772  69.5%
 #pragma option speed=loop=1  /* pragma:auto */
 void drv_ir_send_packet(uint8_t cmdType, uint8_t pktLen, uint8_t subtype) {
   uint8_t *pkt = (uint8_t *)&commandType;
@@ -101,14 +95,14 @@ void drv_ir_send_packet(uint8_t cmdType, uint8_t pktLen, uint8_t subtype) {
     i++;
   }
 
-  while (!(SSR3 & 0x04))
+  while (!SSR3_BIT.TEND)
     ;
 
   tcntSnap = TCNT;
   while ((uint16_t)(TCNT - tcntSnap) < 2)
     ;
 
-  if (SSR3 & 0x40) {
+  if (SSR3_BIT.RDRF) {
     rdr_data = RDR3;
   }
 }
@@ -131,18 +125,15 @@ void drv_ir_send_discovery(void) {
   drv_ir_tx_u8(0xFC);
 }
 
-// ROM: 0x1856  96.1%
+// ROM: 0x1856  96.4%
 void drv_ir_finish_and_execute(void) {
-  uint8_t *p;
   IRR1 &= ~0x02;
   PDR3 = 0x01;
   SPCR = 0x01;
   SCR3 = 0x00;
   CKSTPR1 &= ~0x40;
-  p = (uint8_t *)&TCRW;
-  *p |= 0x80;
-  p = (uint8_t *)0xF0;
-  *p &= ~0x80;
+  TCRW_BIT.CCLR = 1;
+  TMRW_BIT.CTS = 0;
   CKSTPR2 &= ~0x40;
   ir_handle_remote_cmd();
 }

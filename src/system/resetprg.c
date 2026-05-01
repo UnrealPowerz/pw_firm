@@ -2,7 +2,7 @@
 
 #pragma section P
 
-// ROM: 0x02c4  78.4%
+// ROM: 0x02c4  79.9%
 __entry(vect = 0) void PowerON_Reset(void) {
   uint16_t i;
   uint8_t cnt;
@@ -15,7 +15,7 @@ __entry(vect = 0) void PowerON_Reset(void) {
   sys_init_heap();
   drv_accel_init();
 
-  if (TCSRWD1 & 0x01) {
+  if (TCSRWD1_BIT.WRST) {
     cnt = drv_eeprom_read_u8(0x0072);
     cnt++;
     drv_eeprom_write_u8(0x0072, cnt);

@@ -223,7 +223,7 @@ uint16_t ir_calc_packet_checksum(uint8_t length, uint8_t *data) {
   return (uint16_t)sum;
 }
 
-// ROM: 0x08d6  38.0%
+// ROM: 0x08d6  38.1%
 #pragma option speed =inline /* pragma:auto */
 void ir_comm_loop(void) {
   uint16_t timerDelta;
@@ -244,7 +244,7 @@ void ir_comm_loop(void) {
     SSR3 = ssr;
   }
   cmdPos_local = commandPos;
-  if (SSR3 & 0x40) {
+  if (SSR3_BIT.RDRF) {
     if (cmdPos_local >= 0x88) {
       rdr_data = RDR3;
       DAT_f7ad = 0x08;
