@@ -246,33 +246,141 @@ uint8_t drv_accel_init(void) {
   return 0;
 }
 
-// ROM: 0x60da  16.6%
+// ROM: 0x60da  46.1%
 #pragma option speed=loop=2  /* pragma:auto */
 void drv_accel_fft(void *samples) {
   int16_t *real_buf;
   int16_t *imag_buf;
   int8_t *src = (int8_t *)samples;
-  uint8_t i;
+  uint8_t i, j;
+  uint8_t stage_step;     /* W^k step within stage; halves each stage */
+  uint8_t stage_half;     /* group_size/2; doubles each stage */
+  uint8_t group_size;
+  uint8_t twiddle_idx;
+  uint8_t k;
+  const int16_t *twiddle = (const int16_t *)DAT_bdd0;  /* sin table, 48 entries */
 
   sys_init_heap();
   real_buf = (int16_t *)sbrk(0x80);
   imag_buf = (int16_t *)sbrk(0x80);
 
-  for (i = 0; i < 64; i += 2) {
-    real_buf[i] = (int16_t)src[i];
-    real_buf[i + 1] = (int16_t)src[i + 1];
+  /* Sign-extend int8 samples into int16 real buffer (unrolled by 2) */
+  {
+    int8_t *sp = src;
+    int16_t *dp = real_buf;
+    i = 0;
+    do {
+      *dp++ = (int16_t)*sp++;
+      i++;
+      *dp++ = (int16_t)*sp++;
+      i++;
+    } while (i < 64);
   }
 
-  for (i = 0; i < 64; i += 2) {
-    imag_buf[i] = 0;
-    imag_buf[i + 1] = 0;
+  /* Zero imaginary buffer (unrolled by 2) */
+  {
+    int16_t *dp = imag_buf;
+    i = 0;
+    do {
+      *dp++ = 0;
+      i++;
+      *dp++ = 0;
+      i++;
+    } while (i < 64);
   }
 
-  /* 64-point FFT butterfly logic */
-  /* Magnitude calculation into fft_results */
-  for (i = 0; i < 32; i++) {
-    int16_t mag = (real_buf[i] < 0 ? -real_buf[i] : real_buf[i]) +
-                  (imag_buf[i] < 0 ? -imag_buf[i] : imag_buf[i]);
-    fft_results[i] = mag;
+  /* Bit-reverse permutation (Gold-Rader algorithm).
+   * j tracks the bit-reversed counter; for each i we find the matching j
+   * and swap real_buf[i] with real_buf[j] when i < j. */
+  j = 0;
+  for (i = 1; i < 0x3F; i++) {
+    uint8_t m = 0x20;
+    j ^= m;
+    while (m > j) {
+      m >>= 1;
+      j ^= m;
+    }
+    if (i < j) {
+      int16_t tmp = real_buf[i];
+      real_buf[i] = real_buf[j];
+      real_buf[j] = tmp;
+    }
+  }
+
+  /* Six butterfly stages.  group_size = 2,4,8,16,32,64. */
+  stage_step = 0x40;
+  stage_half = 1;
+  for (;;) {
+    group_size = stage_half << 1;
+    if (group_size > 0x40) break;
+    stage_step >>= 1;
+    for (twiddle_idx = 0; twiddle_idx < stage_half; twiddle_idx += stage_step) {
+      int16_t cos_w = twiddle[twiddle_idx + 0x10];
+      int16_t sin_w = twiddle[twiddle_idx];
+      for (k = twiddle_idx; k < 0x40; k += group_size) {
+        uint8_t paired = k + stage_half;
+        int16_t real_a = real_buf[k];
+        int16_t imag_a = imag_buf[k];
+        int16_t real_b;
+        int16_t imag_b;
+
+        if (twiddle_idx == 0) {
+          /* W^0 = 1 */
+          real_b = real_buf[paired];
+          imag_b = imag_buf[paired];
+        } else if (twiddle_idx == 0x10) {
+          /* W^16 = i (90 degrees): mul by i swaps re/im with sign flip */
+          real_b = -imag_buf[paired];
+          imag_b = real_buf[paired];
+        } else {
+          int16_t br = real_buf[paired];
+          int16_t bi = imag_buf[paired];
+          int32_t prod_r;
+          int32_t prod_i;
+          if (bi == 0) {
+            prod_r = (int32_t)br * cos_w;
+            prod_i = (int32_t)br * sin_w;
+          } else {
+            prod_r = (int32_t)br * cos_w - (int32_t)bi * sin_w;
+            prod_i = (int32_t)br * sin_w + (int32_t)bi * cos_w;
+          }
+          /* Q-format normalize: <<5 then take high word */
+          prod_r <<= 5;
+          prod_i <<= 5;
+          real_b = (int16_t)(prod_r >> 16);
+          imag_b = (int16_t)(prod_i >> 16);
+        }
+
+        real_buf[paired] = real_a - real_b;
+        imag_buf[paired] = imag_a - imag_b;
+        real_buf[k] = real_a + real_b;
+        imag_buf[k] = imag_a + imag_b;
+      }
+    }
+    stage_half = group_size;
+  }
+
+  /* Magnitude accumulation: fft_results[i] += |real[i]| + |imag[i]| for i=0..31.
+   * The ROM accumulates (does not overwrite) because the caller invokes the
+   * FFT three times (X, Y, Z) and sums their magnitudes. */
+  {
+    int16_t *rp = real_buf;
+    int16_t *ip = imag_buf;
+    uint16_t off = 0;
+    do {
+      int16_t r = *rp;
+      int16_t im;
+      if (r < 0) r = -r;
+      im = *ip;
+      if (im < 0) im = -im;
+      *(int16_t *)((char *)fft_results + off) += r + im;
+      rp++; ip++; off += 2;
+      r = *rp;
+      if (r < 0) r = -r;
+      im = *ip;
+      if (im < 0) im = -im;
+      *(int16_t *)((char *)fft_results + off) += r + im;
+      rp++; ip++; off += 2;
+    } while (off < 0x40);
   }
 }
