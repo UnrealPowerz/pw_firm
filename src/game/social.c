@@ -1,6 +1,6 @@
 #include "all_headers.h"
 
-// ROM: 0x4546  30.8%
+// ROM: 0x4546  34.3%
 #pragma option speed =loop=1 /* pragma:auto */
 void game_log_interaction(uint8_t *a, uint8_t *b, uint8_t d_low, uint8_t d_high,
                           uint16_t val_high) {
@@ -57,15 +57,9 @@ void game_log_interaction(uint8_t *a, uint8_t *b, uint8_t d_low, uint8_t d_high,
         (uint8_t)((b[0x85] & ~(0x03 << 1)) |
                   (((uint8_t)((src_byte >> 6) | (src_byte << 2)) & 3) << 1));
   }
-  {
-    uint8_t flag;
-    flag = a[0x0E];
-    if (flag & 0x02) {
-      b[0x85] |= 0x80;
-    } else {
-      b[0x85] &= ~0x80;
-    }
-  }
+  /* ROM: bld #1, a[0xE]; bst #7, @r6+0x85  (unconditional bit copy) */
+  ((byte_bits_t *)&b[0x85])->BIT.b7 =
+      ((byte_bits_t *)&a[0x0E])->BIT.b1;
 
   if (d_high == 0) {
     b[0x76] = a[0x27];
@@ -549,7 +543,7 @@ void game_rotate_interaction_log(void) {
   }
 }
 
-// ROM: 0x6816  46.3%
+// ROM: 0x6816  51.4%
 #pragma option speed =loop=1 /* pragma:auto */
 void game_rotate_interaction_log_record(void) {
   uint8_t *r3_settings;
@@ -579,8 +573,9 @@ void game_rotate_interaction_log_record(void) {
   *(r6_gift + 0x86) =
       (uint8_t)((*(r6_gift + 0x86) & ~(0x03 << 5)) | ((r1l & 0x03) << 5));
 
-  if (r5_contact[0x36] & 0x80)
-    r6_gift[0x86] |= 0x80;
+  /* ROM: bld #7, r5[0x36]; bst #7, @r6+0x86  (unconditional bit copy) */
+  ((byte_bits_t *)&r6_gift[0x86])->BIT.b7 =
+      ((byte_bits_t *)&r5_contact[0x36])->BIT.b7;
 
   *(uint16_t *)(r6_gift + 0x7A) = *(uint16_t *)(r5_contact + 4);
   *(uint32_t *)(r6_gift + 0x80) = *(uint32_t *)r5_contact;
@@ -601,15 +596,17 @@ void game_rotate_interaction_log_record(void) {
   }
 }
 
-// ROM: 0x632c  48.5%
+// ROM: 0x632c  63.7%
 void ui_start_peer_play_app(void) {
   uint8_t *buf;
   sys_init_heap();
   buf = sbrk(0x38);
   drv_eeprom_read_block(0xF6C0, buf, 0x38);
-  if (buf[0x37] & 0x01) {
-    gCurSubstateY |= 0x02;
-  }
+  /* Copy bit 0 of buf[0x37] into bit 1 of gCurSubstateY -- the ROM uses
+   * bld+bst here, which means the destination bit is unconditionally set
+   * to the source bit (not OR'd as the original C suggested). */
+  ((byte_bits_t *)&gCurSubstateY)->BIT.b1 =
+      ((byte_bits_t *)&buf[0x37])->BIT.b0;
   gCurSubstateZ = 0;
   gCurSubstateA = 0;
   game_calculate_interaction_reward();

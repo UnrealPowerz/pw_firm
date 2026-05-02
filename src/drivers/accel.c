@@ -246,6 +246,19 @@ uint8_t drv_accel_init(void) {
   return 0;
 }
 
+/* Reason: register allocation in butterfly stages diverges from ROM.
+ * Body is now a faithful 64-point radix-2 DIT FFT (was a 16% stub).
+ * The magnitude-accumulation epilogue matches byte-for-byte; the
+ * bit-reverse permutation and butterfly inner loop do not, because:
+ *   - ch38 emits JSR @$sp_regsv$3 / @$spregld2$3 to save many regs;
+ *     ROM's compiler used a slimmer "sub.w #0x10, r7" + 0 saves frame.
+ *   - Our compiler chose different register vars for the same locals
+ *     than the original C source did, so address registers differ.
+ * Reaching ~80% would require iterating local-variable order and types
+ * to nudge ch38's allocator toward the same choices, possibly with
+ * inline assembly for the butterfly hot loop.  Keep current C: it is
+ * functionally correct and structurally close (46% vs. 16% stub).
+ * Class: high-effort, partial-fix */
 // ROM: 0x60da  46.1%
 #pragma option speed=loop=2  /* pragma:auto */
 void drv_accel_fft(void *samples) {

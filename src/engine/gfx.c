@@ -407,6 +407,18 @@ void gfx_draw_numeric_value(uint8_t x, uint8_t y, uint32_t number,
   }
 }
 
+/* Reason: caller-saved register usage in ROM compiler.
+ * ROM keeps `index` in r2 and `buf` in r3 across the eeprom_read_block
+ * call -- both r2 and r3 are caller-saved per H8/300H ABI, so no PUSH/POP
+ * is needed.  Our ch38 puts them in r5/r6 (callee-saved) and emits
+ * PUSH.W R6 / PUSH.W R5 in the prologue.  The original compiler must have
+ * done inter-procedural analysis (proving drv_eeprom_read_block doesn't
+ * clobber r2/r3) or used a different ABI convention; ch38 is more
+ * conservative and assumes any function call clobbers caller-saved regs.
+ * Try `#pragma option speed=register` carefully -- but note pragmas have
+ * file-global scope and clobbering one tends to regress neighbouring
+ * functions (we saw -13% on gfx_draw_text_box this way).
+ * Class: cannot-fix-without-compiler-change */
 // ROM: 0x1eee  52.8%
 uint16_t gfx_get_sprite_addr(uint8_t index) {
   uint8_t *buf;

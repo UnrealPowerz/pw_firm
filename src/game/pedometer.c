@@ -142,6 +142,15 @@ void game_pedometer_set_total(uint32_t val) {
   totalSteps = val;
 }
 
+/* Reason: do NOT bit-field-ize DAT_f7a7.
+ * Tested converting `(DAT_f7a7 & 0x0N)` to `DAT_f7a7_BIT.<name>` and the
+ * function regressed by -12.8% (67.9% -> 55.1%).  The ROM tests these
+ * three bits with `btst #N, r0l; beq` (the original C used `& mask` in
+ * if-conditions), not with `bld; bcc`.  Flat-mask form is what matches
+ * here, even though for statusFlags the bit-field form is the one that
+ * matches.  Lesson: always check `bld` vs `btst` count for the global in
+ * main.mar before sweeping it to bit-field form.
+ * Class: do-not-bit-field */
 // ROM: 0xa34a  67.9%
 void game_dispatch_pedometer_task(void) {
   if (!statusFlags_BIT.pedometer_paused) {

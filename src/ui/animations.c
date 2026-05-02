@@ -206,6 +206,15 @@ case3: ui_render_arrival_success();
 done: gfx_draw_battery_low(0, 0);
 }
 
+/* Reason: do NOT bit-field-ize RamCache_settingsByte bit 0 reads here.
+ * The expression `(uint8_t)(RamCache_settingsByte & 1)` is passed as a
+ * function argument; ch38 already compiles it to MOV+SUB+BLD+BST (the
+ * byte-widening produces the bit-store-to-byte sequence the ROM also
+ * uses).  Switching to RamCache_settingsByte_BIT.mute adds a redundant
+ * widen and regressed this function by -3.2%.  See note in include/types.h
+ * about the multi-bit fields of settings_byte_t -- those are tabled and
+ * may require shift-based access to match.
+ * Class: do-not-bit-field */
 // ROM: 0x4178  60.9%
 void ui_handle_event_reward(void) {
   uint16_t stackVar;
@@ -282,6 +291,15 @@ case3: ui_render_arrival_reward_info();
 done: gfx_draw_battery_low(0, 0);
 }
 
+/* Reason: callee-save ABI mismatch.
+ * ROM saves r2/er3/r5 via push.* instructions and tail-calls a shared
+ * sys_epilogue_6 to pop them.  Our ch38 build saves er3-er6 via the
+ * runtime helpers $sp_regsv$3 / $spregld2$3.  Different register sets and
+ * different shared-helper names mean the prologue/epilogue bytes can never
+ * align.  The body (gfx_draw_home_pokemon + 2 gfx_fill_rect + increment)
+ * is byte-identical, but it is sandwiched between mismatched frames so
+ * the per-instruction match score stays in single digits.
+ * Class: cannot-fix-without-compiler-change */
 // ROM: 0x42d0  1.6%
 void ui_draw_poke_departure_anim(void) {
   uint16_t dummy;

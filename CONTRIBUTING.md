@@ -141,6 +141,31 @@ A second class of unfixable divergence is RAM bytes that the original code decla
 
 When a function is genuinely stuck at a ceiling due to these issues, annotate it with the best-achievable score and move on.
 
+### Annotating known-stuck functions
+
+When you investigate a function and conclude it cannot be improved (or only at very high effort), leave a structured comment block above its definition so future contributors don't repeat the work:
+
+```c
+/* Reason: <few-word category>.
+ * <one or two sentences of detail explaining what was tried and why it
+ * cannot or should not be pushed further>.
+ * Class: <one of the classes below> */
+// ROM: 0xADDR  XX.X%
+return_type function_name(...) { ... }
+```
+
+Pick the **Class** from this list so we can later grep/sort by category and look for systemic fixes (e.g. a compiler flag that resolves a whole class at once):
+
+| Class | Meaning |
+|---|---|
+| `cannot-fix-without-compiler-change` | Caused by ch38 codegen choices we have no flag to override — register allocation, calling-convention helpers, addressing-mode preference. |
+| `compiler-runtime-helper` | The "function" is actually a compiler-emitted thunk (register save/restore, etc.), not user C. The C stub will never byte-match. |
+| `hand-written-assembly` | The original was inline asm or a library function we don't have source for. |
+| `high-effort, partial-fix` | Improvable with substantial iteration on the C source style; document current best and move on. |
+| `do-not-bit-field` | Tested converting a flat `& mask` to `_BIT.field` and it regressed — the ROM uses `btst`/`and` here, not `bld`/`bst`. Future bit-field sweeps should skip this site. |
+
+Keep the **Reason:** line short — it shows up in greps. Put detail in the body.
+
 ---
 
 ## Conventions Summary

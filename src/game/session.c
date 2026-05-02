@@ -1,25 +1,26 @@
 #include "all_headers.h"
 
-// ROM: 0xb176  12.6%
+// ROM: 0xb176  80.0%
 void game_sync_walk_status(void) {
+  /* The save record byte at offset 0x5B holds a few flag bits.  Declared
+   * here MSB-first so that ".b1" really means bit 1 and ".b0" means bit 0. */
+  typedef struct {
+    uint8_t      : 5;
+    uint8_t b2   : 1;
+    uint8_t b1   : 1;
+    uint8_t b0   : 1;
+  } save_flag_byte_t;
+
   uint8_t *buf;
-  uint8_t flags;
 
   sys_init_heap();
   buf = (uint8_t *)sbrk(0x68);
   save_read_reliable(0x00ED, 0x01ED, buf, 0x68);
 
-  flags = buf[0x5B];
-  if (flags & 0x01)
-    walker_status_flags_BIT.session_active = 1;
-  else
-    walker_status_flags_BIT.session_active = 0;
-
-  flags = buf[0x5B];
-  if (flags & 0x02)
-    walker_status_flags_BIT.walking = 1;
-  else
-    walker_status_flags_BIT.walking = 0;
+  walker_status_flags_BIT.session_active =
+      ((save_flag_byte_t *)&buf[0x5B])->b0;
+  walker_status_flags_BIT.walking =
+      ((save_flag_byte_t *)&buf[0x5B])->b1;
 }
 
 // ROM: 0x048c  0.0%
