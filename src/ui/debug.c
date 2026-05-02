@@ -523,7 +523,7 @@ void sys_init_debug_mode(void) {
 // ROM: 0xaef8  100.0%
 void sys_noop(void) {}
 
-// ROM: 0xaefa  41.2%
+// ROM: 0xaefa  0.0%
 #pragma option noregexpansion /* pragma:auto */
 void ui_render_accel_debug(void) {
   uint8_t buf[6];

@@ -1,6 +1,6 @@
 #include "all_headers.h"
 
-// ROM: 0xa962  79.9%
+// ROM: 0xa962  79.4%
 void drv_lcd_test_pixels(void) {
   uint8_t row;
   uint8_t col;
@@ -316,7 +316,7 @@ void drv_lcd_set_start(uint8_t page) {
   }
 }
 
-// ROM: 0x7d4a  36.8%
+// ROM: 0x7d4a  38.8%
 void drv_lcd_clear(uint8_t color) {
   uint8_t p, col;
   uint8_t v0 = 0, v1 = 0;
@@ -429,7 +429,7 @@ void drv_lcd_clear_pages(uint8_t height_pixels) {
   PDR1 |= 0x01;
 }
 
-// ROM: 0x80ac  32.4%
+// ROM: 0x80ac  34.2%
 void drv_lcd_blit(uint8_t x, uint8_t y, void *buffer, uint8_t w,
                         uint8_t h) {
   uint16_t p, col;

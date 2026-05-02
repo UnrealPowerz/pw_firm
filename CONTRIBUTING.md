@@ -131,6 +131,8 @@ Some divergence is not fixable at the C level:
 **Compiler version differences.** The compiler version used for the original firmware is unknown. One instruction pattern appears in the ROM that this project's compiler (ch38 v6.02.02) does not reproduce:
 - `bset Rn, Rd` vs a shift loop for `1 << variable`
 
+(The calling-convention helpers `$sp_regsv$3` / `$spregld2$3` used to be a major systemic blocker here too. Resolved 2026-05-03 by adding `-regparam=3` to CFLAGS — the original firmware was compiled with 3 argument registers instead of the ch38 default of 2. This eliminated all 138 helper calls and bumped the project total by +0.5pt. Functions previously tagged `Class: cannot-fix-without-compiler-change` because of this should be revisited.)
+
 Functions that use this pattern will plateau below 100% — the comparison tool will show it as mismatched instructions in otherwise-correct code.
 
 (The `bld/bcc` vs `btst/beq` divergence used to be listed here too, but it *is* fixable: it just requires the C source to use `REG_BIT.FIELD` from `iodefine.h` instead of `(REG & 0xMASK)` for single-bit tests on IO registers. See "Wrong IO register access style" in the Iterate section.)

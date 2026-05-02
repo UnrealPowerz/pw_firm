@@ -1,6 +1,6 @@
 #include "all_headers.h"
 
-// ROM: 0x3dbc  77.6%
+// ROM: 0x3dbc  73.0%
 void ui_draw_ball_drop_anim(void) {
   void *ptr;
   uint16_t offset;
@@ -26,7 +26,7 @@ void ui_draw_ball_drop_anim(void) {
   gCurSubstateZ++;
 }
 
-// ROM: 0x3e34  71.5%
+// ROM: 0x3e34  54.8%
 void ui_draw_ball_sparkles_anim(void) {
   void *ptr;
   uint16_t dummy;
@@ -53,7 +53,7 @@ void ui_draw_ball_sparkles_anim(void) {
   }
 }
 
-// ROM: 0x3ece  70.1%
+// ROM: 0x3ece  64.5%
 void ui_draw_arrival_cloud_anim(void) {
   void *ptr;
   uint16_t dummy;
@@ -72,7 +72,7 @@ void ui_draw_arrival_cloud_anim(void) {
   }
 }
 
-// ROM: 0x3f32  1.6%
+// ROM: 0x3f32  14.0%
 void ui_draw_arrival_poke_anim(void) {
   uint16_t dummy;
   gfx_draw_home_pokemon(0x10, 8);
@@ -300,7 +300,7 @@ done: gfx_draw_battery_low(0, 0);
  * is byte-identical, but it is sandwiched between mismatched frames so
  * the per-instruction match score stays in single digits.
  * Class: cannot-fix-without-compiler-change */
-// ROM: 0x42d0  1.6%
+// ROM: 0x42d0  14.0%
 void ui_draw_poke_departure_anim(void) {
   uint16_t dummy;
   gfx_draw_home_pokemon(0x10, 8);
@@ -311,7 +311,7 @@ void ui_draw_poke_departure_anim(void) {
   gCurSubstateZ++;
 }
 
-// ROM: 0x4310  74.2%
+// ROM: 0x4310  68.4%
 void ui_draw_cloud_departure_anim(void) {
   void *ptr;
   uint16_t dummy;
@@ -329,7 +329,7 @@ void ui_draw_cloud_departure_anim(void) {
   gCurSubstateZ = 0;
 }
 
-// ROM: 0x4372  75.4%
+// ROM: 0x4372  70.6%
 void ui_draw_cloud_anim(void) {
   void *ptr;
   uint16_t uninitializedE0;

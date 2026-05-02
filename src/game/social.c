@@ -1,6 +1,6 @@
 #include "all_headers.h"
 
-// ROM: 0x4546  34.3%
+// ROM: 0x4546  35.0%
 #pragma option speed =loop=1 /* pragma:auto */
 void game_log_interaction(uint8_t *a, uint8_t *b, uint8_t d_low, uint8_t d_high,
                           uint16_t val_high) {

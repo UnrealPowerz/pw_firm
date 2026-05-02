@@ -50,26 +50,27 @@ void drv_rtc_init_timer_b(void) {
   TMB1 |= 0x40;
 }
 
-// ROM: 0xa4fe  0.0%
+// ROM: 0xa4fe  88.9%
 void drv_rtc_set_time(uint32_t time_sec) {
-  uint32_t t1, q;
-  uint16_t t2;
+  int16_t rem;   /* signed -- ROM uses divxs (signed div) for the BCD step */
   uint8_t sec_bcd, min_bcd, hr_bcd;
 
-  t1 = time_sec / 60;
-  t2 = (uint16_t)(time_sec - t1 * 60);
-  q = t2 / 10;
-  sec_bcd = (uint8_t)((t2 - q * 10) | q * 16);
+  /* Two-divide BCD: ROM does divxs for both quotient (high nibble * 16) and
+   * remainder (low nibble), rather than computing remainder via mul-subtract.
+   * Casting (q*16) and (rem%10) explicitly keeps both as 16-bit ops. */
+  rem = (int16_t)(time_sec % 60);
+  sec_bcd = (uint8_t)((rem / 10) * 16);
+  sec_bcd |= (uint8_t)(rem % 10);
 
-  time_sec = t1;
-  t1 = time_sec / 60;
-  t2 = (uint16_t)(time_sec - t1 * 60);
-  q = t2 / 10;
-  min_bcd = (uint8_t)((t2 - q * 10) | q * 16);
+  time_sec = time_sec / 60;
+  rem = (int16_t)(time_sec % 60);
+  min_bcd = (uint8_t)((rem / 10) * 16);
+  min_bcd |= (uint8_t)(rem % 10);
 
-  t2 = (uint16_t)(t1 - (t1 % 24) * 24);
-  q = t2 / 10;
-  hr_bcd = (uint8_t)((t2 - q * 10) | q * 16);
+  time_sec = time_sec / 60;
+  rem = (int16_t)(time_sec % 24);
+  hr_bcd = (uint8_t)((rem / 10) * 16);
+  hr_bcd |= (uint8_t)(rem % 10);
 
   DAT_f7a6 = hr_bcd;
   DAT_f7a5 = min_bcd;
@@ -87,11 +88,11 @@ void drv_rtc_set_time(uint32_t time_sec) {
   RTCCR1 |= 0x40;
   RTCCR1 |= 0x08;
   RTCCR2 = 0x1C;
-  RTCCR1 |= 0x01;
+  RTCCR2 |= 0x01;        /* was RTCCR1 |= 0x01 -- decomp bug, ROM hits 0xF06D */
   RTCCR1 |= 0x80;
 }
 
-// ROM: 0xa5d4  94.5%
+// ROM: 0xa5d4  90.1%
 #pragma option noregexpansion  /* pragma:auto */
 void drv_rtc_get_time(uint8_t *hr_out, uint8_t *min_out, uint8_t *sec_out) {
   uint8_t times[6];

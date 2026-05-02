@@ -23,6 +23,16 @@ void game_sync_walk_status(void) {
       ((save_flag_byte_t *)&buf[0x5B])->b1;
 }
 
+/* Reason: prologue/frame mismatch defeats compare_bin alignment.
+ * ROM saves er2/er4/er5/er6 (4 long pushes = 16B) + 4B stack alloc.
+ * ch38 saves r4/r5/r6 (3 word pushes = 6B) + 4B stack alloc.  ROM uses
+ * 32-bit pointer locals throughout; ch38 picks 16-bit registers because
+ * our locals are uint16_t/uint8_t*-sized in the small-data model.  Could
+ * try forcing 32-bit locals but inconclusive -- compare_bin shows 0%
+ * because alignment can't latch onto a function this misaligned at
+ * the prologue.  Body is structurally correct (cleaned up vs the
+ * original (uint16_t)cast(uint8_t*) gymnastics).
+ * Class: cannot-fix-without-compiler-change */
 // ROM: 0x048c  0.0%
 #pragma option speed=register  /* pragma:auto */
 void game_start_walk(void) {
@@ -34,7 +44,8 @@ void game_start_walk(void) {
   uint8_t settings_bit;
   uint8_t *trainer_buf;
   uint8_t *extra_buf;
-  uint16_t r6;
+  uint16_t addr;
+  uint8_t *p;
   uint8_t j;
 
   marker.set = 0xA5;
@@ -45,10 +56,10 @@ void game_start_walk(void) {
   marker.clear = 0;
   save_write_reliable(0x016F, 0x026F, &marker.clear, 1);
 
-  r6 = 0xCF0C;
+  addr = 0xCF0C;
   for (j = 0x18; j != 0; j--) {
-    drv_eeprom_write_u8(r6 + 0x84, 0);
-    r6 += 0x88;
+    drv_eeprom_write_u8(addr + 0x84, 0);
+    addr += 0x88;
   }
 
   drv_eeprom_fill(0xDE24, 0x1568, 0);
@@ -63,29 +74,29 @@ void game_start_walk(void) {
   walker_status_flags_BIT.walking = 1;
   walker_status_flags_BIT.session_active = 1;
 
-  r6 = (uint16_t)DAT_f84e;
-  save_read_reliable(0x00ED, 0x01ED, (uint8_t *)r6, 0x68);
+  p = DAT_f84e;
+  save_read_reliable(0x00ED, 0x01ED, p, 0x68);
 
-  ((uint8_t *)r6)[0x5B] |= 0x01;
-  ((uint8_t *)r6)[0x5B] |= 0x02;
-  ((uint8_t *)r6)[0x5B] &= ~0x04;
+  p[0x5B] |= 0x01;
+  p[0x5B] |= 0x02;
+  p[0x5B] &= ~0x04;
 
-  *(uint32_t *)(r6 + 0x00) = *(uint32_t *)DAT_f7e6;
-  *(uint32_t *)(r6 + 0x04) = DAT_f7ea;
-  *(uint16_t *)(r6 + 0x08) = DAT_f7ee;
-  *(uint16_t *)(r6 + 0x0A) = DAT_f7f0;
-  *(uint32_t *)(r6 + 0x0C) = DAT_f7f2;
+  *(uint32_t *)(p + 0x00) = *(uint32_t *)DAT_f7e6;
+  *(uint32_t *)(p + 0x04) = DAT_f7ea;
+  *(uint16_t *)(p + 0x08) = DAT_f7ee;
+  *(uint16_t *)(p + 0x0A) = DAT_f7f0;
+  *(uint32_t *)(p + 0x0C) = DAT_f7f2;
 
   for (j = 0; j < 0x12; j++) {
-    ((uint8_t *)r6)[0x48 + j] = DAT_f82e[j];
+    p[0x48 + j] = DAT_f82e[j];
   }
 
-  ((uint8_t *)r6)[0x5C] = DAT_f842;
-  ((uint8_t *)r6)[0x5D] = DAT_f843;
-  ((uint8_t *)r6)[0x5E] = 0;
-  ((uint8_t *)r6)[0x5F] = 2;
+  p[0x5C] = DAT_f842;
+  p[0x5D] = DAT_f843;
+  p[0x5E] = 0;
+  p[0x5F] = 2;
 
-  save_write_reliable(0x00ED, 0x01ED, (uint8_t *)r6, 0x68);
+  save_write_reliable(0x00ED, 0x01ED, p, 0x68);
 
   sys_init_heap();
   trainer_buf = (uint8_t *)sbrk(0xBE);

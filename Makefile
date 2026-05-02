@@ -15,7 +15,7 @@ OD      = h8300-elf-objdump
 
 INCLUDES = -include=src,include,build/gen,/opt/H8/6_2_2/include
 # Optimization for size and speed to fit in ROM
-CFLAGS   = -cpu=300HN -stack=small -lang=c -outcode=sjis -nolist -chgincpath -nologo -Code=Asmcode -optimize=1 $(INCLUDES)
+CFLAGS   = -cpu=300HN -stack=small -lang=c -outcode=sjis -nolist -chgincpath -nologo -Code=Asmcode -optimize=1 -regparam=3 $(INCLUDES)
 ASFLAGS  = -cpu=300HN -nologo
 
 

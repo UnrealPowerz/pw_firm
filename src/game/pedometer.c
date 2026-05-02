@@ -24,7 +24,7 @@ void game_reset_pedometer_flags(void) {
   isNotWalking = 0;
 }
 
-// ROM: 0x9342  19.1%
+// ROM: 0x9342  20.7%
 #pragma option speed =register /* pragma:auto */
 uint32_t game_pedometer_interpolate_batch(uint8_t flags, uint16_t arg2) {
   uint32_t n;
@@ -80,7 +80,7 @@ void game_render_step_counter(void) {
   gfx_draw_battery_low(0, 0);
 }
 
-// ROM: 0xa1a8  83.6%
+// ROM: 0xa1a8  84.2%
 uint8_t game_detect_activity(void) {
   uint16_t total;
   uint16_t prev;
@@ -239,7 +239,7 @@ void game_rotate_step_history(void) {
   }
 }
 
-// ROM: 0x9698  68.5%
+// ROM: 0x9698  71.1%
 uint32_t game_detect_steps_fft(volatile int16_t *fft_res) {
   uint16_t peakVal;
   uint16_t maxVal;

@@ -111,7 +111,7 @@ go_back:
   ui_set_view(0);
 }
 
-// ROM: 0xb48c  0.0%
+// ROM: 0xb48c  56.4%
 void ui_render_trainer_card_time(void) {
   /* Register usage hints:
    * R3: @drv_eeprom_read_block
@@ -193,7 +193,7 @@ void ui_render_trainer_card_time(void) {
   draw_img(buf, 8, 0x10, 0x48, 0x30);
 }
 
-// ROM: 0xb682  6.7%
+// ROM: 0xb682  38.6%
 #pragma option speed=register  /* pragma:auto */
 void ui_render_daily_step_history(void) {
   void (*ep_read)(uint16_t, void *, uint16_t);
@@ -253,7 +253,7 @@ void ui_render_daily_step_history(void) {
   gfx_draw_numeric_value(0x30, 0x30, totalSteps, 0);
 }
 
-// ROM: 0xb7ee  67.8%
+// ROM: 0xb7ee  66.0%
 #pragma option speed=register  /* pragma:auto */
 void ui_render_step_goal_reached(void) {
   uint8_t *buf;

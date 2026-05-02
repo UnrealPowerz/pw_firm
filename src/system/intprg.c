@@ -102,7 +102,7 @@ __interrupt(vect=33) void timer_b1_overflow(void) {
 // ROM: 0x0076  100.0%
 __interrupt(vect=34) void INT_SSU_I2C(void) {}
 
-// ROM: 0x3a4a  68.6%
+// ROM: 0x3a4a  43.6%
 __interrupt(vect=35) void drv_timerw_isr(void) {
     drv_sound_update();
     TSRW &= ~0x01;
