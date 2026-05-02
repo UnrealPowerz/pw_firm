@@ -10,7 +10,7 @@ void game_generate_encounter_dowsing(void) {
   uint8_t *be_ptr;
 
   gCurSubstateY = 0;
-  if ((RamCache_settingsByte & 1) != 0) {
+  if (((RamCache_settingsByte & 1)) != 0) {
     uint8_t byte_bf7a = drv_eeprom_read_u8(0xBF7A);
     sys_init_heap();
     ram_ptr = sbrk(0x68);
@@ -86,7 +86,7 @@ void game_init_dowsing(void) {
  * Address: 0x47CE  Size: 462 bytes
  * ===========================================================================
  */
-// ROM: 0x47ce  77.3%
+// ROM: 0x47ce  78.0%
 void ui_handle_dowsing(void) {
   uint8_t subZ;
 
@@ -155,7 +155,7 @@ state2:
   if (!drv_button_is_triggered(0x0E)) {
     return;
   }
-  if (RamCache_settingsByte & 0x01) {
+  if ((RamCache_settingsByte & 1)) {
     goto exit_to_main;
   }
   {
@@ -169,7 +169,7 @@ state2:
     }
     drv_eeprom_write_block((uint16_t)slot * 4 + 0xCEBC, (void *)&DAT_f7d8, 0x2);
   }
-  if (walker_status_flags & 0x04) {
+  if (walker_status_flags_BIT.walking) {
     uint8_t *trainer_buf;
     uint8_t *gift_buf;
 
@@ -232,7 +232,7 @@ void game_write_wild_poke(void *ram_src) {
   (void)0;
 }
 
-// ROM: 0x49c0  80.5%
+// ROM: 0x49c0  81.7%
 #pragma option noregexpansion /* pragma:auto */
 void game_check_wild_encounter(void) {
   uint8_t *battle_buf;
@@ -304,7 +304,7 @@ encounter:
       drv_eeprom_write_u8(0xB800, flags);
     }
 
-    if (walker_status_flags & 0x04) {
+    if (walker_status_flags_BIT.walking) {
       uint8_t *gift_buf;
       gift_buf = (uint8_t *)sbrk(0x88);
       game_log_interaction(trainer_buf, gift_buf, 0x0C, 0x01,
@@ -330,7 +330,7 @@ void ui_handle_dowsing_selection(void) {
 
   accelZPos = save_find_empty_slot_32bit(item_table);
 
-  if (RamCache_settingsByte & 0x01) {
+  if ((RamCache_settingsByte & 1)) {
     game_check_wild_encounter();
     return;
   }
@@ -391,7 +391,7 @@ void ui_render_dowsing_grass(void) {
   /* Grass background */
   {
     uint16_t bg_addr;
-    if (RamCache_settingsByte & 0x01) {
+    if ((RamCache_settingsByte & 1)) {
       bg_addr = 0xC83C;
     } else {
       bg_addr = 0x8FBE;
@@ -468,7 +468,7 @@ void ui_render_dowsing(void) {
   /* Grass background */
   {
     uint16_t bg_addr;
-    if (RamCache_settingsByte & 0x01) {
+    if ((RamCache_settingsByte & 1)) {
       bg_addr = 0xC83C;
     } else {
       bg_addr = 0x8FBE;

@@ -517,7 +517,7 @@ void sys_init_debug_mode(void) {
   accelYPos = 0;
   accelZPos = 0;
   drv_eeprom_read_block(8, (void *)&DAT_f7d8, 8);
-  walker_status_flags |= 0x02;
+  walker_status_flags_BIT.session_active = 1;
 }
 
 // ROM: 0xaef8  100.0%

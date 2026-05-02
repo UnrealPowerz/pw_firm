@@ -9,6 +9,7 @@ extern volatile uint8_t statusFlags;
 extern volatile uint8_t wakeupFlagMaybe;
 extern volatile uint8_t status_flags_f7f1;   /* DAT_f7f1 */
 extern volatile uint8_t walker_status_flags; /* DAT_f7ef (?) */
+#define walker_status_flags_BIT (((volatile walker_status_t *)&walker_status_flags)->BIT)
 
 /* --- LCD & UI / Timers --- */
 extern volatile uint8_t DAT_f7ab;            /* 0xF7AB */
@@ -24,6 +25,7 @@ extern volatile uint8_t DAT_f7b4;            /* 0xF7B4 batch_accumulator (?) */
 
 /* --- Button Input --- */
 extern volatile uint8_t buttonInputRaw;
+#define buttonInputRaw_BIT (((volatile button_input_t *)&buttonInputRaw)->BIT)
 extern volatile uint8_t prevButtonInputRaw;
 extern volatile uint8_t buttonTrigger;
 extern volatile uint8_t buttonHoldDuration;
@@ -45,6 +47,7 @@ extern volatile uint8_t DAT_f7a4;
 extern volatile uint8_t DAT_f7a5;
 extern volatile uint8_t DAT_f7a6;
 extern volatile uint8_t DAT_f7a7;
+#define DAT_f7a7_BIT (((volatile ped_task_flags_t *)&DAT_f7a7)->BIT)
 extern volatile uint8_t DAT_f7a8;
 extern volatile uint8_t DAT_f7a9;
 extern volatile uint8_t menu_cursor;
@@ -86,6 +89,7 @@ extern volatile uint16_t heapPointer;
 /* --- LCD & EEPROM --- */
 extern volatile uint8_t DAT_f7e4; /* lcd_page_offset (?) */
 extern volatile uint8_t RamCache_settingsByte;
+#define RamCache_settingsByte_BIT (((volatile settings_byte_t *)&RamCache_settingsByte)->BIT)
 
 /* --- Step Processing Scratch --- */
 extern volatile uint32_t DAT_f8e6;

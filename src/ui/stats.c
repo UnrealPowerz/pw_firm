@@ -474,7 +474,7 @@ void ui_stats_reset_cursor(void) {
   ui_stats_find_index(*(uint16_t *)&gCurSubstateA);
 }
 
-// ROM: 0x8aca  10.5%
+// ROM: 0x8aca  11.5%
 void ui_load_inventory_mask(uint16_t *status_mask_ptr) {
   uint16_t *buf_8c8c;
   uint16_t *buf_8cbc;
@@ -487,7 +487,7 @@ void ui_load_inventory_mask(uint16_t *status_mask_ptr) {
   status_mask_ptr[0] = 0;
   status_mask_ptr[1] = 0;
 
-  if (walker_status_flags & 0x04) {
+  if (walker_status_flags_BIT.walking) {
     status_mask_ptr[0] |= 0x01;
   }
 

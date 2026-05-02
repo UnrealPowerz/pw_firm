@@ -11,15 +11,15 @@ void game_sync_walk_status(void) {
 
   flags = buf[0x5B];
   if (flags & 0x01)
-    walker_status_flags |= 0x02;
+    walker_status_flags_BIT.session_active = 1;
   else
-    walker_status_flags &= ~0x02;
+    walker_status_flags_BIT.session_active = 0;
 
   flags = buf[0x5B];
   if (flags & 0x02)
-    walker_status_flags |= 0x04;
+    walker_status_flags_BIT.walking = 1;
   else
-    walker_status_flags &= ~0x04;
+    walker_status_flags_BIT.walking = 0;
 }
 
 // ROM: 0x048c  0.0%
@@ -59,8 +59,8 @@ void game_start_walk(void) {
 
   save_write_reliable(0x0156, 0x0256, (void *)&totalSteps, 0x18);
 
-  walker_status_flags |= 0x04;
-  walker_status_flags |= 0x02;
+  walker_status_flags_BIT.walking = 1;
+  walker_status_flags_BIT.session_active = 1;
 
   r6 = (uint16_t)DAT_f84e;
   save_read_reliable(0x00ED, 0x01ED, (uint8_t *)r6, 0x68);
@@ -90,7 +90,7 @@ void game_start_walk(void) {
   trainer_buf = (uint8_t *)sbrk(0xBE);
   drv_eeprom_read_block(0x8F00, trainer_buf, 0xBE);
 
-  settings_bit = (RamCache_settingsByte & 0x01) ? 1 : 0;
+  settings_bit = ((RamCache_settingsByte & 1)) ? 1 : 0;
   extra_buf = (uint8_t *)sbrk(0x88);
   game_log_interaction(trainer_buf, extra_buf, 0x19, settings_bit, 0);
 
@@ -101,7 +101,7 @@ void game_start_walk(void) {
 void game_end_walk(void) {
   void *poke_base = (void *)DAT_f7e6;
 
-  walker_status_flags &= ~0x04;
+  walker_status_flags_BIT.walking = 0;
   RamCache_settingsByte &= ~0x01;
 
   DAT_f793 = 0;

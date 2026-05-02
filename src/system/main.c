@@ -1,11 +1,11 @@
 #include "all_headers.h"
 
-// ROM: 0x6954  88.4%
+// ROM: 0x6954  91.7%
 void sys_init_io_ports(uint16_t r0, uint16_t r1) {
   if (r0 != r1) {
     return;
   }
-  if (!(walker_status_flags & 0x02)) {
+  if (!(walker_status_flags_BIT.session_active)) {
     drv_lcd_clear_pages(0x40);
     ui_render_happy_walker(0);
     drv_lcd_flip();
@@ -26,7 +26,7 @@ void sys_init_io_ports(uint16_t r0, uint16_t r1) {
   sys_set_handler(ir_comm_loop);
 }
 
-// ROM: 0x7882  89.8%
+// ROM: 0x7882  91.1%
 void sys_main_loop_low_power(void) {
   IENR2 |= 0x04;
   sys_enter_sleep(1);
@@ -53,7 +53,7 @@ void sys_main_loop_low_power(void) {
     }
   }
 
-  if (walker_status_flags & 0x02) {
+  if (walker_status_flags_BIT.session_active) {
     if (accelSampleCount == 0x3F) {
       game_process_accel_data();
     }

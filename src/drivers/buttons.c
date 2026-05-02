@@ -37,7 +37,7 @@ void drv_button_read(void) {
   buttonInputRaw = 0;
 
   if (PDRB_BIT.B0) {
-    buttonInputRaw |= 0x02;
+    buttonInputRaw_BIT.btn_r = 1;
     if (wakeupFlagMaybe) {
       buttonHoldDuration++;
     }
@@ -46,16 +46,16 @@ void drv_button_read(void) {
   }
 
   if (statusFlags_BIT.button_event) {
-    buttonInputRaw |= 0x02;
+    buttonInputRaw_BIT.btn_r = 1;
     statusFlags_BIT.button_event = 0;
   }
 
   if (PDRB_BIT.B2) {
-    buttonInputRaw |= 0x04;
+    buttonInputRaw_BIT.btn_m = 1;
   }
 
   if (PDRB_BIT.B4) {
-    buttonInputRaw |= 0x08;
+    buttonInputRaw_BIT.btn_l = 1;
   }
 
   buttonTrigger = (buttonInputRaw ^ prevButtonInputRaw) & buttonInputRaw;
@@ -72,7 +72,7 @@ void drv_button_read(void) {
   if (buttonHoldDuration >= 8) {
     if ((walker_status_flags & 0x18) != 0x10) {
       sys_enter_deep_sleep();
-      walker_status_flags |= 0x01;
+      walker_status_flags_BIT.input_pending = 1;
     }
   }
 }

@@ -43,9 +43,11 @@ typedef struct {
   uint8_t b7 : 1;
 } bit_flags_t;
 
-/* statusFlags bit-field union.
+/* RAM-global bit-field unions.
  * ch38 allocates bit fields MSB-first, so the first declared field is bit 7.
- * Bit names are inferred from C call-site usage; rename freely. */
+ * Bit names are inferred from C call-site usage; rename freely.
+ * These are paired with REG_BIT-style accessor macros in globals.h. */
+
 typedef union {
     uint8_t BYTE;
     struct {
@@ -59,5 +61,53 @@ typedef union {
         uint8_t tick                  : 1;  /* bit 0 -- 0x01 */
     } BIT;
 } status_flags_t;
+
+/* walker_status_flags: bits 0,1,2 are independent flags;
+ * bits 3-4 are a 2-bit mode field (0x18 mask used as multi-bit compare in C).
+ * Byte form is preserved for the multi-bit mask sites. */
+typedef union {
+    uint8_t BYTE;
+    struct {
+        uint8_t                : 3;  /* bits 7-5 unused */
+        uint8_t mode           : 2;  /* bits 4-3 -- 0x18 mask in flat form */
+        uint8_t walking        : 1;  /* bit 2 -- 0x04 */
+        uint8_t session_active : 1;  /* bit 1 -- 0x02 */
+        uint8_t input_pending  : 1;  /* bit 0 -- 0x01 */
+    } BIT;
+} walker_status_t;
+
+/* RamCache_settingsByte packed user settings */
+typedef union {
+    uint8_t BYTE;
+    struct {
+        uint8_t          : 1;  /* bit 7 unused */
+        uint8_t contrast : 4;  /* bits 6-3 -- (>>3 & 0xF) in flat form */
+        uint8_t volume   : 2;  /* bits 2-1 -- (>>1 & 0x3) in flat form */
+        uint8_t mute     : 1;  /* bit 0 -- 0x01 */
+    } BIT;
+} settings_byte_t;
+
+/* DAT_f7a7: pedometer task dispatch flags (bits 0,1,2) */
+typedef union {
+    uint8_t BYTE;
+    struct {
+        uint8_t          : 5;  /* bits 7-3 unused */
+        uint8_t rotate   : 1;  /* bit 2 -- 0x04 */
+        uint8_t step     : 1;  /* bit 1 -- 0x02 */
+        uint8_t init     : 1;  /* bit 0 -- 0x01 */
+    } BIT;
+} ped_task_flags_t;
+
+/* buttonInputRaw: bits 1,2,3 are the three buttons (set by ISR). */
+typedef union {
+    uint8_t BYTE;
+    struct {
+        uint8_t        : 4;  /* bits 7-4 unused */
+        uint8_t btn_l  : 1;  /* bit 3 -- 0x08 */
+        uint8_t btn_m  : 1;  /* bit 2 -- 0x04 */
+        uint8_t btn_r  : 1;  /* bit 1 -- 0x02 */
+        uint8_t        : 1;  /* bit 0 unused */
+    } BIT;
+} button_input_t;
 
 #endif /* TYPES_H */

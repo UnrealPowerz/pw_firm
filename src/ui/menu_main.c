@@ -6,9 +6,9 @@ void ui_start_connection_app(void) {
                     (uint16_t)(uintptr_t)sys_main_loop_low_power);
 }
 
-// ROM: 0x6a3e  90.4%
+// ROM: 0x6a3e  92.5%
 void ui_handle_home(void) {
-  if (!(walker_status_flags & 0x02)) {
+  if (!(walker_status_flags_BIT.session_active)) {
     if (drv_button_is_triggered(2) || (statusFlags_BIT.pedometer_paused)) {
       ui_start_connection_app();
     }
@@ -48,7 +48,7 @@ void ui_render_route_image(void) {
 
   sys_init_heap();
   ptr = sbrk(0xC0);
-  if (RamCache_settingsByte & 0x01) {
+  if ((RamCache_settingsByte & 1)) {
     addr = 0xC83C;
   } else {
     addr = 0x8FBE;
@@ -57,7 +57,7 @@ void ui_render_route_image(void) {
   drv_lcd_blit(0, 0x18, ptr, 0x20, 0x18);
 }
 
-// ROM: 0x6bf8  67.3%
+// ROM: 0x6bf8  69.7%
 void ui_render_home_route(void) {
   uint8_t *buf;
   uint8_t subA;
@@ -68,7 +68,7 @@ void ui_render_home_route(void) {
     gfx_draw_small_route_icon(idx);
   }
   ui_render_route_image();
-  if (!(walker_status_flags & 0x04)) {
+  if (!(walker_status_flags_BIT.walking)) {
     return;
   }
   subA = gCurSubstateA;
@@ -474,7 +474,7 @@ void ui_render_home_bar(void) {
   gfx_draw_battery_low(0, 0);
 }
 
-// ROM: 0x9756  66.8%
+// ROM: 0x9756  67.6%
 void ui_handle_main_menu(void) {
   uint16_t cost;
   uint8_t *costTable = (uint8_t *)0xBF0E;
@@ -500,7 +500,7 @@ void ui_handle_main_menu(void) {
     } else {
       switch (menu_cursor) {
       case 0:
-        if (!(walker_status_flags & 4)) {
+        if (!(walker_status_flags_BIT.walking)) {
           gCurSubstateY = 2;
           gCurSubstateY = 4;
           drv_sound_play(2);

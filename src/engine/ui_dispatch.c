@@ -17,7 +17,7 @@ void ui_reset_substate(void) {
   DAT_f7d1 &= ~0x07;
 }
 
-// ROM: 0x7348  87.4%
+// ROM: 0x7348  94.8%
 void ui_dispatch_event(void) {
   drv_lcd_strobe_res();
   sys_get_rng();
@@ -62,7 +62,7 @@ void ui_dispatch_event(void) {
     ui_handle_gifts();
     break;
   case 0x0E:
-    if (walker_status_flags & 0x02) {
+    if (walker_status_flags_BIT.session_active) {
       if (drv_button_is_triggered(0x0E)) {
         ui_reset_substate();
         ui_set_view(0);
@@ -92,12 +92,12 @@ void ui_dispatch_event(void) {
   drv_lcd_cs_high();
 }
 
-// ROM: 0x7406  89.6%
+// ROM: 0x7406  93.5%
 void ui_dispatch_draw(void) {
   drv_lcd_strobe_res();
   switch (currentlyActiveView) {
   case 0:
-    if (!(walker_status_flags & 0x02)) {
+    if (!(walker_status_flags_BIT.session_active)) {
       ui_render_empty_eeprom();
     } else {
       ui_render_home_route();
@@ -141,7 +141,7 @@ void ui_dispatch_draw(void) {
     ui_render_items_stats();
     break;
   case 0x0E:
-    if (!(walker_status_flags & 0x02)) {
+    if (!(walker_status_flags_BIT.session_active)) {
       ui_render_sad_walker();
     } else {
       ui_render_step_history_graph();

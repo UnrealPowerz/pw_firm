@@ -195,7 +195,7 @@ void game_init_peer_identity(void) {
   uint16_t i;
 
   DAT_f7a0 = 0;
-  walker_status_flags |= 0x04;
+  walker_status_flags_BIT.walking = 1;
 
   sys_init_heap();
   buf = (uint8_t *)sbrk(0x68);
@@ -292,7 +292,7 @@ void game_process_interaction_reward(uint8_t type) {
   drv_eeprom_read_block(0x8F00, settings, 0xBE);
 
   {
-    uint8_t param = (RamCache_settingsByte & 0x01);
+    uint8_t param = ((RamCache_settingsByte & 1));
     buf = sbrk(0x88);
     game_log_interaction(settings, buf, type + 16, 0, (uint16_t)param);
   }
@@ -372,7 +372,7 @@ void ui_render_social_feelings(void) {
   gfx_draw_battery_low(0, 0);
 }
 
-// ROM: 0x5fc2  36.3%
+// ROM: 0x5fc2  51.5%
 #pragma option speed =register /* pragma:auto */
 void game_check_periodic_events(void) {
   uint16_t dailyStepCap;
@@ -383,10 +383,10 @@ void game_check_periodic_events(void) {
     return;
   if (currentlyActiveView != 0)
     return;
-  if (!(walker_status_flags & 0x01))
+  if (!(walker_status_flags_BIT.input_pending))
     return;
 
-  walker_status_flags &= ~0x01;
+  walker_status_flags_BIT.input_pending = 0;
   gCurSubstateY = 0;
   gCurSubstateZ = 0;
 
@@ -397,7 +397,7 @@ void game_check_periodic_events(void) {
   if ((sys_get_rng() % 100) >= 40)
     return;
 
-  if (!(walker_status_flags & 0x04)) {
+  if (!(walker_status_flags_BIT.walking)) {
     dailyStepCap = DAT_f7a0;
     if (dailyStepCap < 300)
       return;
@@ -596,7 +596,7 @@ void game_rotate_interaction_log_record(void) {
     uint8_t accel_val = accelXPos;
     if (accel_val < 10) {
       game_log_interaction(r3_settings, r6_gift, accel_val + 1, 0,
-                           (uint16_t)(RamCache_settingsByte & 1));
+                           (uint16_t)((RamCache_settingsByte & 1)));
     }
   }
 }

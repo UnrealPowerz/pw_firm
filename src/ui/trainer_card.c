@@ -153,7 +153,7 @@ void ui_render_trainer_card_time(void) {
   draw_img(buf, 0x10, 0x10, 0, 0x20);
 
   /* Gender */
-  if (RamCache_settingsByte & 1) {
+  if ((RamCache_settingsByte & 1)) {
     ep_read(0xC8FC, buf, sz_large);
   } else {
     ep_read(0x907E, buf, sz_large);

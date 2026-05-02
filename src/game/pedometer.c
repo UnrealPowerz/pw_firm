@@ -145,13 +145,13 @@ void game_pedometer_set_total(uint32_t val) {
 // ROM: 0xa34a  67.9%
 void game_dispatch_pedometer_task(void) {
   if (!statusFlags_BIT.pedometer_paused) {
-    if (DAT_f7a7 & 0x01) {
+    if ((DAT_f7a7 & 0x01)) {
       game_pedometer_init_counters();
     }
-    if (DAT_f7a7 & 0x02) {
+    if ((DAT_f7a7 & 0x02)) {
       game_pedometer_increment_step();
     }
-    if (DAT_f7a7 & 0x04) {
+    if ((DAT_f7a7 & 0x04)) {
       game_rotate_step_history();
     }
     DAT_f7a7 &= 0xF8;
@@ -165,7 +165,7 @@ void game_pedometer_init_counters(void) {
   }
 }
 
-// ROM: 0xa3aa  76.5%
+// ROM: 0xa3aa  78.6%
 void game_pedometer_increment_step(void) {
   statusFlags_BIT.battery_check_request = 1;
 
@@ -175,7 +175,7 @@ void game_pedometer_increment_step(void) {
 
   save_write_reliable(0x0156, 0x0256, (uint8_t *)&totalSteps, 0x18);
 
-  if ((walker_status_flags & 4) != 0) {
+  if ((walker_status_flags_BIT.walking) != 0) {
     void *buf;
     void *extra_buf;
     uint16_t val;
@@ -185,7 +185,7 @@ void game_pedometer_increment_step(void) {
     drv_eeprom_read_block(0x8F00, buf, 0xBE);
 
     val = 0;
-    if ((RamCache_settingsByte & 1) != 0) {
+    if (((RamCache_settingsByte & 1)) != 0) {
       val = 1;
     }
 
@@ -195,7 +195,7 @@ void game_pedometer_increment_step(void) {
 
   DAT_f7a0 = 0;
   if (DAT_f7a6 == DAT_f7a8) {
-    DAT_f7a7 |= 4;
+    DAT_f7a7 |= 0x04;
   }
 }
 

@@ -241,10 +241,10 @@ void ui_handle_event_reward(void) {
     sbrk(0x10);
     drv_eeprom_read_block(0xBA44, ptr1,
                           0x10); /* reusing ptr1 to save register */
-    stackVar = (RamCache_settingsByte & 1) << 8;
+    stackVar = ((RamCache_settingsByte & 1)) << 8;
     ptr3 = sbrk(0x88);
     game_log_interaction(ptr3, ptr1, 0x1D,
-                          (uint8_t)(RamCache_settingsByte & 1), 4);
+                          (uint8_t)((RamCache_settingsByte & 1)), 4);
   } else if (gCurSubstateA == 2) {
     void *ptr1;
     uint16_t *ptr2;
@@ -254,10 +254,10 @@ void ui_handle_event_reward(void) {
     drv_eeprom_read_block(0x8F00, ptr1, 0xBE);
     ptr2 = (uint16_t *)sbrk(0x188);
     drv_eeprom_read_block(0xBD40, ptr2, 0x188);
-    stackVar = (RamCache_settingsByte & 1) << 8;
+    stackVar = ((RamCache_settingsByte & 1)) << 8;
     ptr3 = sbrk(0x88);
     game_log_interaction(ptr3, ptr1, 0x1C,
-                          (uint8_t)(RamCache_settingsByte & 1), ptr2[3]);
+                          (uint8_t)((RamCache_settingsByte & 1)), ptr2[3]);
   } else {
     ui_reset_substate();
     ui_set_view(0);
