@@ -20,7 +20,7 @@ ASFLAGS  = -cpu=300HN -nologo
 
 
 C_SOURCES := $(shell find src -name "*.c")
-S_SOURCES := src/globals.s src/romdata.s
+S_SOURCES := src/globals.s
 
 define to_asm
 build/obj_$(subst /,_,$(1:%.c=%.s))
@@ -76,6 +76,7 @@ build/link.sub: $(OBJS)
 	@printf -- "-rom=D=R\r\n" >> build/link.sub.tmp
 	@printf -- "-optimize=symbol_delete,short_format\r\n" >> build/link.sub.tmp
 	@printf -- "-start=PIntPRG,P,PP,C,D\$$DSEC,D\$$BSEC,C\$$DSEC,C\$$BSEC,D/5E\r\n" >> build/link.sub.tmp
+	@printf -- "-start=CP/BB0E\r\n" >> build/link.sub.tmp
 
 	@printf -- "-start=B,R,S/F780\r\n"           >> build/link.sub.tmp
 	@printf -- "-form=stype\r\n"             >> build/link.sub.tmp

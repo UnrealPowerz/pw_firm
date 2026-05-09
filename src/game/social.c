@@ -685,7 +685,7 @@ void ui_render_peer_play(void) {
         limit = 2;
       table_idx = 1;
     } else if (DAT_f7d1 == 0x30) {
-      ui_draw_music_note(0x2C, DAT_be72, 0);
+      ui_draw_music_note(0x2C, DAT_be72[0], 0);
       goto music_done;
     }
 

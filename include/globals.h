@@ -140,7 +140,7 @@ extern volatile uint8_t DAT_f88e;
 extern volatile uint8_t ir_status;
 extern const uint8_t L_BE70[];
 extern const uint8_t L_BE71[];
-extern const uint8_t DAT_be72;
+extern const uint8_t DAT_be72[];
 extern const uint8_t L_BF14[]; /* Main menu Y-coordinate table */
 extern const uint8_t IMG_POKEWALKER_IR_ACTIVE[];
 extern const uint8_t PERIODTAB[];
