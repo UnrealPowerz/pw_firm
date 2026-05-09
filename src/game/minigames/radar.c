@@ -1,6 +1,6 @@
 #include "all_headers.h"
 
-// ROM: 0x9f44  49.9%
+// ROM: 0x9f44  50.6%
 #pragma option speed=shift  /* pragma:auto */
 void ui_render_pokeradar(void) {
   void *buf;

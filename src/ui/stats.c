@@ -219,7 +219,7 @@ void ui_render_pokemon_stats(void) {
   gfx_draw_battery_low(0x58, 0);
 }
 
-// ROM: 0x918c  83.0%
+// ROM: 0x918c  57.6%
 void ui_render_items_stats(void) {
   void (*blit)(void *, uint8_t, uint8_t, uint8_t, uint8_t);
   void (*eread)(uint16_t, void *, uint16_t);
@@ -339,7 +339,7 @@ void ui_render_caught_poke_stats(void) {
   }
 }
 
-// ROM: 0x3c76  76.5%
+// ROM: 0x3c76  79.4%
 void ui_render_dowsed_item_stats(void) {
   uint32_t val;
   uint16_t *ptr;
@@ -423,7 +423,7 @@ uint8_t ui_stats_next_index(uint16_t mask) {
   return 1;
 }
 
-// ROM: 0x8c0e  76.4%
+// ROM: 0x8c0e  74.5%  saves: e6,r5
 #pragma option speed=register  /* pragma:auto */
 uint8_t ui_stats_find_index(uint16_t mask) {
   uint8_t count;
@@ -440,7 +440,7 @@ uint8_t ui_stats_find_index(uint16_t mask) {
   return 0;
 }
 
-// ROM: 0x8c62  29.4%
+// ROM: 0x8c62  46.3%
 uint8_t ui_stats_prev_index(uint16_t mask) {
   int8_t y;
   if (gCurSubstateY == 0)
@@ -459,7 +459,7 @@ uint8_t ui_stats_prev_index(uint16_t mask) {
   return 1;
 }
 
-// ROM: 0x8ca4  52.8%
+// ROM: 0x8ca4  50.9%
 void ui_stats_cycle_index(uint16_t mask) {
   uint8_t y;
   do {
@@ -474,7 +474,7 @@ void ui_stats_reset_cursor(void) {
   ui_stats_find_index(*(uint16_t *)&gCurSubstateA);
 }
 
-// ROM: 0x8aca  13.4%
+// ROM: 0x8aca  11.5%
 void ui_load_inventory_mask(uint16_t *status_mask_ptr) {
   uint16_t *buf_8c8c;
   uint16_t *buf_8cbc;

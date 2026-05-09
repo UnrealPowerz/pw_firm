@@ -28,7 +28,7 @@ uint8_t save_verify_magic(void) {
   return 1;
 }
 
-// ROM: 0xb1ae  78.8%
+// ROM: 0xb1ae  78.8%  saves: r3,r4,er5,r6 -> er5,er6
 void sys_factory_reset_eeprom(uint8_t b, uint8_t a) {
   uint8_t *ptr;
   register volatile uint8_t *flags_ptr;
@@ -90,7 +90,7 @@ void sys_factory_reset_eeprom(uint8_t b, uint8_t a) {
   drv_eeprom_fill(0xDE24, 0x1568, 0);
 }
 
-// ROM: 0xb2e2  79.9%
+// ROM: 0xb2e2  81.8%  saves: er4,er5,er6
 void sys_sync_eeprom_on_startup(void) {
   uint8_t magic;
 
@@ -153,7 +153,7 @@ void save_commit_staged_data(void) {
   }
 }
 
-// ROM: 0x50d8  84.0%
+// ROM: 0x50d8  84.0%  saves: er3,er4,er5,er6
 void save_write_reliable(uint16_t primary, uint16_t backup, uint8_t *buf,
                                uint16_t size) {
   uint8_t checksum = 1;
@@ -167,7 +167,7 @@ void save_write_reliable(uint16_t primary, uint16_t backup, uint8_t *buf,
   drv_eeprom_write_u8(backup + size, checksum);
 }
 
-// ROM: 0x5128  85.2%
+// ROM: 0x5128  85.2%  saves: er3,er4,er5,er6
 #pragma option noregexpansion  /* pragma:auto */
 void save_read_reliable(uint16_t primary, uint16_t backup, uint8_t *buf,
                               uint16_t size) {
@@ -220,7 +220,7 @@ void save_read_reliable(uint16_t primary, uint16_t backup, uint8_t *buf,
   }
 }
 
-// ROM: 0x1d22  45.1%
+// ROM: 0x1d22  45.1%  saves: r6,r5
 #pragma option speed=register  /* pragma:auto */
 void save_set_event_bit(void *ptr, uint8_t val) {
   uint8_t *p = (uint8_t *)ptr;

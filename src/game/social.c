@@ -1,6 +1,6 @@
 #include "all_headers.h"
 
-// ROM: 0x4546  35.0%
+// ROM: 0x4546  56.9%  saves: r3,r4,er5,er6 -> er5,er6
 #pragma option speed =loop=1 /* pragma:auto */
 void game_log_interaction(uint8_t *a, uint8_t *b, uint8_t d_low, uint8_t d_high,
                           uint16_t val_high) {
@@ -181,7 +181,7 @@ void game_log_item_interaction(void) {
                        *(uint16_t *)(tmp + (gCurSubstateY * 2) + 0x8C));
 }
 
-// ROM: 0x5c0a  77.6%
+// ROM: 0x5c0a  77.6%  saves: er6
 #pragma option speed =register /* pragma:auto */
 void game_init_peer_identity(void) {
   register uint8_t *buf;
@@ -366,7 +366,7 @@ void ui_render_social_feelings(void) {
   gfx_draw_battery_low(0, 0);
 }
 
-// ROM: 0x5fc2  51.5%
+// ROM: 0x5fc2  51.5%  saves: r2,r5,r6 -> sys_epilogue_r2_r5_r6
 #pragma option speed =register /* pragma:auto */
 void game_check_periodic_events(void) {
   uint16_t dailyStepCap;
@@ -596,7 +596,7 @@ void game_rotate_interaction_log_record(void) {
   }
 }
 
-// ROM: 0x632c  63.7%
+// ROM: 0x632c  63.7%  saves: er2,er3,r4,er5,er6 -> sys_epilogue_5
 void ui_start_peer_play_app(void) {
   uint8_t *buf;
   sys_init_heap();
@@ -614,7 +614,7 @@ void ui_start_peer_play_app(void) {
   game_rotate_interaction_log_record();
 }
 
-// ROM: 0x6528  57.8%
+// ROM: 0x6528  57.8%  saves: r6
 void ui_draw_music_note(uint8_t x, uint8_t y, uint8_t shift) {
   uint8_t *buf;
   uint8_t i;
@@ -726,7 +726,7 @@ void ui_render_peer_play(void) {
   gfx_draw_battery_low(0, 0);
 }
 
-// ROM: 0x6784  49.6%
+// ROM: 0x6784  67.1%  saves: er3,er4,er5,er6
 uint8_t game_find_seen_peer(void *trainer_ptr) {
   uint8_t r4l;
   uint8_t r6h;

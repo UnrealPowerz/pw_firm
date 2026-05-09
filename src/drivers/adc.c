@@ -1,6 +1,6 @@
 #include "all_headers.h"
 
-// ROM: 0xa8f8  19.0%
+// ROM: 0xa8f8  22.2%
 uint8_t drv_adc_test(void) {
   uint16_t val = drv_adc_sample();
   PDR1 &= ~0x01;
@@ -26,7 +26,7 @@ uint8_t drv_adc_test(void) {
   return 1;
 }
 
-// ROM: 0x27c2  78.4%
+// ROM: 0x27c2  67.9%
 uint16_t drv_adc_add_calib_checksum(uint16_t val) {
   uint8_t sum;
   sum = (uint8_t)((val >> 4) & 0x0F);
@@ -88,7 +88,7 @@ int16_t drv_adc_sample(void) {
   return (int16_t)(sum / 8);
 }
 
-// ROM: 0x289a  59.2%
+// ROM: 0x289a  62.0%  saves: er3,r5,er6
 uint8_t drv_adc_check_low_battery(uint16_t threshold) {
   uint16_t calib;
   uint16_t target;

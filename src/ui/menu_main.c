@@ -196,7 +196,7 @@ void ui_handle_settings(void) {
   }
 }
 
-// ROM: 0x6e62  74.1%
+// ROM: 0x6e62  74.2%
 #pragma option noregexpansion /* pragma:auto */
 void ui_render_settings(void) {
   uint8_t *buf;
@@ -258,7 +258,7 @@ void ui_render_settings(void) {
   gfx_draw_battery_low(0x58, 0);
 }
 
-// ROM: 0x703c  65.6%
+// ROM: 0x703c  66.0%
 void ui_render_empty_eeprom(void) {
   uint8_t *buf;
   uint16_t i;
@@ -376,7 +376,7 @@ void ui_draw_ir_icon(uint8_t show_ir) {
   gfx_draw_text_box(0x30, 0, 0x0F, 0x00);
 }
 
-// ROM: 0x74bc  84.9%
+// ROM: 0x74bc  85.8%
 void ui_render_home_bar(void) {
   uint8_t *buf;
   uint8_t flags;
@@ -581,7 +581,7 @@ void ui_handle_main_menu(void) {
   }
 }
 
-// ROM: 0x9930  46.3%
+// ROM: 0x9930  1.5%
 #pragma option noregexpansion /* pragma:auto */
 void ui_render_main_menu(void) {
   uint8_t *sprite_buf, *e0_buf;

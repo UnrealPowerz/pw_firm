@@ -131,7 +131,7 @@ Some divergence is not fixable at the C level:
 **Compiler version differences.** The compiler version used for the original firmware is unknown. One instruction pattern appears in the ROM that this project's compiler (ch38 v6.02.02) does not reproduce:
 - `bset Rn, Rd` vs a shift loop for `1 << variable`
 
-(The calling-convention helpers `$sp_regsv$3` / `$spregld2$3` used to be a major systemic blocker here too. Resolved 2026-05-03 by adding `-regparam=3` to CFLAGS — the original firmware was compiled with 3 argument registers instead of the ch38 default of 2. This eliminated all 138 helper calls and bumped the project total by +0.5pt. Functions previously tagged `Class: cannot-fix-without-compiler-change` because of this should be revisited.)
+(The calling-convention helpers `$sp_regsv$3` / `$spregld2$3` look like a systemic blocker but actually aren't. We tested both directions: `-regparam=3` eliminates them and helps several large functions, but ch38 default (`-regparam=2`) keeps them and helps more small functions on net. Either way the project total lands within 0.2pp of the same number. The likely explanation is that the original firmware used **mixed `-regparam` settings per file**, which we cannot reproduce because `#pragma option regparam` is not valid in source code. Current Makefile uses `-stack=medium -cmncode` without `-regparam=3` for the slightly higher net total of 72.3%.)
 
 Functions that use this pattern will plateau below 100% — the comparison tool will show it as mismatched instructions in otherwise-correct code.
 

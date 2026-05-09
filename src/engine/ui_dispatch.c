@@ -1,6 +1,6 @@
 #include "all_headers.h"
 
-// ROM: 0x693a  61.7%
+// ROM: 0x693a  61.7%  saves: r6
 void sys_set_handler(void (*func)(void)) {
   DAT_f7e2 = currentEventLoopFunc;
   currentEventLoopFunc = (uint16_t)(uintptr_t)func;
@@ -17,9 +17,8 @@ void ui_reset_substate(void) {
   DAT_f7d1 &= ~0x07;
 }
 
-// ROM: 0x7348  94.8%
+// ROM: 0x7348  85.7%  saves: er2,er3,er4,er5,er6
 void ui_dispatch_event(void) {
-  drv_lcd_strobe_res();
   sys_get_rng();
   switch (currentlyActiveView) {
   case 0:
@@ -89,12 +88,13 @@ void ui_dispatch_event(void) {
     break;
   }
   DAT_f7ab++;
-  drv_lcd_cs_high();
+  while (!SSSR_BIT.TEND)
+    ;
+  PDR1 |= 0x01;
 }
 
-// ROM: 0x7406  93.5%
+// ROM: 0x7406  84.2%  saves: er2,er3,er4,er5,er6
 void ui_dispatch_draw(void) {
-  drv_lcd_strobe_res();
   switch (currentlyActiveView) {
   case 0:
     if (!(walker_status_flags_BIT.session_active)) {
@@ -168,7 +168,9 @@ void ui_dispatch_draw(void) {
   default:
     break;
   }
-  drv_lcd_cs_high();
+  while (!SSSR_BIT.TEND)
+    ;
+  PDR1 |= 0x01;
 }
 
 // ROM: 0x974e  98.3%

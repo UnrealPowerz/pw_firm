@@ -85,7 +85,7 @@ void drv_sound_set_data(uint8_t *data) {
   isSeparateNote = 0;
 }
 
-// ROM: 0x36f2  75.5%
+// ROM: 0x36f2  76.8%  saves: er3,er4,er5,er6
 void drv_sound_play(uint8_t sound_idx) {
   uint16_t offset;
   uint8_t *src_ptr;
@@ -136,7 +136,7 @@ end:
   TIERW |= 0x01;
 }
 
-// ROM: 0x388c  78.1%
+// ROM: 0x388c  78.1%  saves: r6,r5
 #pragma option noregexpansion  /* pragma:auto */
 void drv_sound_update(void) {
   if (soundData == NULL)

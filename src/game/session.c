@@ -23,17 +23,17 @@ void game_sync_walk_status(void) {
       ((save_flag_byte_t *)&buf[0x5B])->b1;
 }
 
-/* Reason: prologue/frame mismatch defeats compare_bin alignment.
- * ROM saves er2/er4/er5/er6 (4 long pushes = 16B) + 4B stack alloc.
- * ch38 saves r4/r5/r6 (3 word pushes = 6B) + 4B stack alloc.  ROM uses
- * 32-bit pointer locals throughout; ch38 picks 16-bit registers because
- * our locals are uint16_t/uint8_t*-sized in the small-data model.  Could
- * try forcing 32-bit locals but inconclusive -- compare_bin shows 0%
- * because alignment can't latch onto a function this misaligned at
- * the prologue.  Body is structurally correct (cleaned up vs the
- * original (uint16_t)cast(uint8_t*) gymnastics).
+/* Reason: prologue saves smaller register set than ROM, defeats alignment.
+ * ROM saves er2/er4/er5/er6 (4 long pushes = 16B) + subs #4.  Our build
+ * saves r4/r5/r6 (3 word pushes = 6B) + subs #4 -- ch38 picks 16-bit
+ * pushes because our pointer locals are 16-bit in -cpu=300HN normal mode.
+ * Forcing `addr` to uint32_t got one of the four pushes to ER but didn't
+ * close the 0% score (alignment still fails).  300HA advanced mode would
+ * give 24-bit pointers natively but fails to build with our linker setup.
+ * Body is structurally correct.  Stuck until we find a way to express
+ * "register-pressure-induced 32-bit pushes" in C/pragma form.
  * Class: cannot-fix-without-compiler-change */
-// ROM: 0x048c  0.0%
+// ROM: 0x048c  0.0%  saves: er2,er4,er5,er6
 #pragma option speed=register  /* pragma:auto */
 void game_start_walk(void) {
   struct {
@@ -109,7 +109,7 @@ void game_start_walk(void) {
   save_clear_data();
 }
 
-// ROM: 0x0636  81.9%
+// ROM: 0x0636  81.9%  saves: r3,r6
 void game_end_walk(void) {
   void *poke_base = (void *)DAT_f7e6;
 

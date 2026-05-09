@@ -10002,7 +10002,7 @@ LAB_598c:
 ; Called by: PowerON_Reset
 ; =============================================================================
 sys_factory_test:
-          jsr         @drv_lcd_strobe_res:16
+          jsr         @sys_prologue_er2_er3_er4_er5_er6:16
           ldc.b       #H'80, ccr
           mov.b       #H'C0, r0l
           mov.b       r0l, @SSER
@@ -10253,7 +10253,7 @@ LAB_5bd4:
 LAB_5c00:
           bset        #H'0, @PDR1
           ldc.b       #H'0, ccr
-          jmp         @drv_lcd_cs_high:16
+          jmp         @sys_epilogue_er2_er3_er4_er5_er6:16
 ; =============================================================================
 ; Function: game_init_peer_identity
 ; Address:  5c0a
@@ -12872,7 +12872,7 @@ switchD_72ce__default:
 ; Called by: sys_main_loop_low_power, sys_main_loop_active
 ; =============================================================================
 ui_dispatch_event:
-          jsr         @drv_lcd_strobe_res:16
+          jsr         @sys_prologue_er2_er3_er4_er5_er6:16
           jsr         @sys_get_rng:16
           mov.b       @currentlyActiveView, r0l
           cmp.b       #H'17, r0l
@@ -12953,7 +12953,7 @@ switchD_7364__caseD_5:
           mov.b       @DAT_f7ab, r0l
           inc.b       r0l
           mov.b       r0l, @DAT_f7ab
-          jmp         @drv_lcd_cs_high:16
+          jmp         @sys_epilogue_er2_er3_er4_er5_er6:16
 ; =============================================================================
 ; Function: ui_dispatch_draw
 ; Address:  7406
@@ -12961,7 +12961,7 @@ switchD_7364__caseD_5:
 ; Called by: sys_main_loop_low_power, sys_main_loop_active
 ; =============================================================================
 ui_dispatch_draw:
-          jsr         @drv_lcd_strobe_res:16
+          jsr         @sys_prologue_er2_er3_er4_er5_er6:16
           mov.b       @currentlyActiveView, r0l
           cmp.b       #H'18, r0l
           bhi         switchD_741e__caseD_5:16
@@ -13043,7 +13043,7 @@ switchD_741e__caseD_17:
 switchD_741e__caseD_18:
           jsr         @gfx_draw_string_simple:16
 switchD_741e__caseD_5:
-          jmp         @drv_lcd_cs_high:16
+          jmp         @sys_epilogue_er2_er3_er4_er5_er6:16
 ; =============================================================================
 ; Function: ui_render_home_bar
 ; Address:  74bc
@@ -13590,12 +13590,12 @@ LAB_79ee:
 LAB_7a08:
           rts
 ; =============================================================================
-; Function: drv_lcd_strobe_res
+; Function: sys_prologue_er2_er3_er4_er5_er6
 ; Address:  7a0a
 ; Size:     32 bytes
 ; Called by: sys_factory_test, ui_dispatch_event, ui_dispatch_draw
 ; =============================================================================
-drv_lcd_strobe_res:
+sys_prologue_er2_er3_er4_er5_er6:
           subs        #2, er7
           push.l      er3
           push.l      er4
@@ -13606,12 +13606,12 @@ drv_lcd_strobe_res:
           mov.l       er2, @(H'12,er7)
           rts
 ; =============================================================================
-; Function: drv_lcd_cs_high
+; Function: sys_epilogue_er2_er3_er4_er5_er6
 ; Address:  7a2a
 ; Size:     22 bytes
 ; Called by: sys_factory_test, ui_dispatch_event, ui_dispatch_draw
 ; =============================================================================
-drv_lcd_cs_high:
+sys_epilogue_er2_er3_er4_er5_er6:
           pop.l       er6
           pop.l       er5
           pop.l       er4

@@ -42,7 +42,7 @@ void gfx_add_font_border(uint16_t *ptr) {
   *ptr |= 0x101;
 }
 
-// ROM: 0x858a  17.3%
+// ROM: 0x858a  18.5%  saves: er3,er4,er5,er6
 void gfx_draw_string(uint8_t x, uint8_t y_raw, const char *str) {
   uint8_t y_page = y_raw >> 3;
   uint8_t c, idx, i;
@@ -108,7 +108,7 @@ void gfx_draw_string(uint8_t x, uint8_t y_raw, const char *str) {
   PDR1 |= 0x01;
 }
 
-// ROM: 0x18b6  66.1%
+// ROM: 0x18b6  64.2%  saves: r6,r5
 #pragma option speed =register /* pragma:auto */
 void gfx_add_borders_to_text(void *buf, uint8_t w, uint8_t h, uint8_t flags) {
   uint16_t width = w;
@@ -169,7 +169,7 @@ void gfx_draw_own_pokemon_small_flipped(uint8_t x, uint8_t y) {
   drv_lcd_blit(x, y, buf, 0x20, 0x18);
 }
 
-// ROM: 0x1a58  82.5%
+// ROM: 0x1a58  78.0%  saves: r4,r5,r6
 #pragma option speed =register /* pragma:auto */
 void gfx_draw_own_pokemon_name(uint8_t x, uint8_t y, uint8_t flags) {
   uint8_t *buf;
@@ -188,7 +188,7 @@ void gfx_draw_own_pokemon_name(uint8_t x, uint8_t y, uint8_t flags) {
   drv_lcd_blit(x, y, buf, 0x50, 0x10);
 }
 
-// ROM: 0x1ab2  70.4%
+// ROM: 0x1ab2  63.4%
 void gfx_draw_peer_pokemon_name(uint8_t x, uint8_t y, uint8_t flags) {
   uint8_t *buf;
 
@@ -201,7 +201,7 @@ void gfx_draw_peer_pokemon_name(uint8_t x, uint8_t y, uint8_t flags) {
   drv_lcd_blit(x, y, buf, 0x50, 0x10);
 }
 
-// ROM: 0x1af4  72.1%
+// ROM: 0x1af4  64.4%
 void gfx_draw_event_pokemon_info(uint8_t x, uint8_t y, uint8_t flags) {
   uint8_t *buf;
 
@@ -219,7 +219,7 @@ void gfx_draw_event_pokemon_info(uint8_t x, uint8_t y, uint8_t flags) {
   drv_lcd_blit(x, y, buf, 0x50, 0x10);
 }
 
-// ROM: 0x1b40  82.0%
+// ROM: 0x1b40  75.3%  saves: r5,r6
 #pragma option speed =register /* pragma:auto */
 void gfx_draw_special_poke_name(uint8_t x, uint8_t y, uint8_t flags) {
   uint8_t *buf;
@@ -249,7 +249,7 @@ void gfx_draw_item_symbol(uint8_t x, uint8_t y) {
   drv_lcd_blit(x, y, buf, 8, 8);
 }
 
-// ROM: 0x1bc6  84.7%
+// ROM: 0x1bc6  80.4%  saves: r5,r6
 #pragma option speed =register /* pragma:auto */
 void gfx_draw_route_pokemon_name(uint8_t x, uint8_t y, uint8_t index,
                                  uint8_t flags) {
@@ -269,7 +269,7 @@ void gfx_draw_route_pokemon_name(uint8_t x, uint8_t y, uint8_t index,
   drv_lcd_blit(x, y, buf, 0x50, 0x10);
 }
 
-// ROM: 0x1c26  77.2%
+// ROM: 0x1c26  71.3%  saves: r4,r5,er6
 #pragma option speed =register /* pragma:auto */
 void gfx_draw_item_name(uint8_t x, uint8_t y, uint8_t index, uint8_t flags) {
   uint8_t *buf;
@@ -282,7 +282,7 @@ void gfx_draw_item_name(uint8_t x, uint8_t y, uint8_t index, uint8_t flags) {
   drv_lcd_blit(x, y, buf, 0x60, 0x10);
 }
 
-// ROM: 0x1dca  23.8%
+// ROM: 0x1dca  16.5%  saves: r4,r6
 #pragma option speed =loop=1 /* pragma:auto */
 void gfx_draw_animated_grass(uint8_t w, uint8_t h, int8_t shift, void *buf) {
   uint16_t width = w;
@@ -318,7 +318,7 @@ void gfx_draw_animated_grass(uint8_t w, uint8_t h, int8_t shift, void *buf) {
   }
 }
 
-// ROM: 0x1c80  67.0%
+// ROM: 0x1c80  59.9%
 void gfx_draw_event_item_name(uint8_t x, uint8_t y, uint8_t index,
                               uint8_t flags) {
   uint8_t *buf;
@@ -353,7 +353,7 @@ void gfx_draw_present_icon(uint8_t x, uint8_t y) {
   drv_lcd_blit(x, y, buf, 0x18, 0x08);
 }
 
-// ROM: 0x1d7a  60.7%
+// ROM: 0x1d7a  60.7%  saves: r6,r5
 #pragma option speed =register /* pragma:auto */
 uint8_t gfx_xor_rect_ram(void *ptr, uint8_t val) {
   uint8_t *p = (uint8_t *)ptr;
@@ -369,7 +369,7 @@ uint8_t gfx_xor_rect_ram(void *ptr, uint8_t val) {
   return 0;
 }
 
-// ROM: 0x1fee  79.5%
+// ROM: 0x1fee  80.9%  saves: r3,r4,r5,r6
 #pragma option speed =register /* pragma:auto */
 void gfx_draw_numeric_value(uint8_t x, uint8_t y, uint32_t number,
                             uint8_t flags) {
@@ -407,17 +407,16 @@ void gfx_draw_numeric_value(uint8_t x, uint8_t y, uint32_t number,
   }
 }
 
-/* Reason: caller-saved register usage in ROM compiler.
- * ROM keeps `index` in r2 and `buf` in r3 across the eeprom_read_block
- * call -- both r2 and r3 are caller-saved per H8/300H ABI, so no PUSH/POP
- * is needed.  Our ch38 puts them in r5/r6 (callee-saved) and emits
- * PUSH.W R6 / PUSH.W R5 in the prologue.  The original compiler must have
- * done inter-procedural analysis (proving drv_eeprom_read_block doesn't
- * clobber r2/r3) or used a different ABI convention; ch38 is more
- * conservative and assumes any function call clobbers caller-saved regs.
- * Try `#pragma option speed=register` carefully -- but note pragmas have
- * file-global scope and clobbering one tends to regress neighbouring
- * functions (we saw -13% on gfx_draw_text_box this way).
+/* Reason: ROM keeps locals in caller-saved r2/r3; ch38 picks callee-saved
+ * r5/r6 and emits PUSH.W R6 / PUSH.W R5 prologue.
+ * Even with -regparam=3 enabled (so er2 IS caller-saved), ch38 chose r5/r6
+ * here -- score unchanged at 52.8%.  The original compiler must have done
+ * inter-procedural analysis to prove drv_eeprom_read_block doesn't clobber
+ * r2/r3, then used them as scratch across the call without saving anything.
+ * ch38 doesn't do that analysis and conservatively reaches for callee-saved
+ * registers.  Pragmas like `#pragma option speed=register` don't reliably
+ * help -- and they have file-global scope, so clobbering one regresses
+ * neighbouring functions (we saw -13% on gfx_draw_text_box this way).
  * Class: cannot-fix-without-compiler-change */
 // ROM: 0x1eee  52.8%
 uint16_t gfx_get_sprite_addr(uint8_t index) {
@@ -432,7 +431,7 @@ uint16_t gfx_get_sprite_addr(uint8_t index) {
   return result;
 }
 
-// ROM: 0x19b8  48.2%
+// ROM: 0x19b8  41.8%  saves: r6
 void gfx_draw_route_pokemon(uint8_t x, uint8_t y, uint8_t index) {
   uint8_t *buf;
   uint16_t addr;
@@ -446,7 +445,7 @@ void gfx_draw_route_pokemon(uint8_t x, uint8_t y, uint8_t index) {
   drv_lcd_blit(x, y, buf, 0x20, 0x18);
 }
 
-// ROM: 0x2096  36.8%
+// ROM: 0x2096  34.7%  saves: r3,r4,r5,er6
 #pragma option speed =register /* pragma:auto */
 void gfx_draw_text_box(uint8_t y, uint8_t index, uint8_t borders,
                        uint8_t flags) {
@@ -476,7 +475,7 @@ void gfx_draw_text_box(uint8_t y, uint8_t index, uint8_t borders,
   drv_lcd_blit(0, y, buf, 0x60, 0x10);
 }
 
-// ROM: 0x1f6c  50.4%
+// ROM: 0x1f6c  60.5%  saves: r4,er5,er6 -> er5,er6
 void gfx_draw_value_with_icon(uint8_t x, uint8_t y, uint8_t subtype,
                               uint16_t val) {
   uint8_t *buf;
@@ -500,7 +499,7 @@ void gfx_draw_value_with_icon(uint8_t x, uint8_t y, uint8_t subtype,
   drv_lcd_blit(x + 16, y, buf, 0x10, 0x10);
 }
 
-// ROM: 0x21fe  90.3%
+// ROM: 0x21fe  90.3%  saves: r6,r5
 void gfx_draw_battery_low(uint8_t x, uint8_t y) {
   uint8_t *buf;
 
@@ -537,7 +536,7 @@ void gfx_draw_peer_pokemon(uint8_t x, uint8_t y, uint8_t flip) {
   gfx_draw_sprite_simple(x, y, 0x20, 0x18, buf);
 }
 
-// ROM: 0x224c  19.2%
+// ROM: 0x224c  15.7%  saves: er2,er3,r4,er5,er6 -> sys_epilogue_5
 void gfx_alpha_blend(void *buf1, uint8_t w, uint8_t h, void *buf2, void *buf3,
                      uint8_t x, uint8_t y, uint8_t flags) {
   uint8_t *dst = (uint8_t *)buf1;
@@ -568,7 +567,7 @@ void gfx_alpha_blend(void *buf1, uint8_t w, uint8_t h, void *buf2, void *buf3,
   }
 }
 
-// ROM: 0x2178  41.4%
+// ROM: 0x2178  40.5%  saves: r3,r4,er5,r6 -> er5,er6
 void gfx_flip_horiz(uint8_t w, uint8_t h, void *buf) {
   uint16_t width = w;
   uint16_t rows = h / 8;
@@ -590,7 +589,7 @@ void gfx_flip_horiz(uint8_t w, uint8_t h, void *buf) {
   }
 }
 
-// ROM: 0x7e58  26.0%
+// ROM: 0x7e58  24.6%  saves: r4,er5,er6 -> er5,er6
 #pragma option speed =loop=1 /* pragma:auto */
 void gfx_fill_rect(uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint8_t color) {
   uint16_t p, col;
@@ -644,7 +643,7 @@ void gfx_fill_rect(uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint8_t color) {
   PDR1 |= 0x01;
 }
 
-// ROM: 0x82ea  34.0%
+// ROM: 0x82ea  34.1%  saves: r3,r4,er5,er6 -> er5,er6
 #pragma option noregexpansion /* pragma:auto */
 void gfx_draw_sprite_simple(uint8_t x, uint8_t y, uint16_t w, uint16_t h,
                             void *buffer) {
@@ -711,7 +710,7 @@ void gfx_draw_sprite_simple(uint8_t x, uint8_t y, uint16_t w, uint16_t h,
   PDR1 |= 0x01; // CS high
 }
 
-// ROM: 0x7a40  25.9%
+// ROM: 0x7a40  27.2%  saves: er4,r5,er6
 #pragma option speed =register /* pragma:auto */
 void gfx_blit_to_buffer(uint8_t x, uint8_t y, uint8_t w, uint8_t h, void *src,
                         void *dst, uint8_t dst_w) {

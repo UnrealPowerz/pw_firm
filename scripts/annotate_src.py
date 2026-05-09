@@ -26,6 +26,142 @@ except ImportError:
     print("Fix: pip install libclang", file=sys.stderr)
     sys.exit(1)
 
+# ─── Register save analysis (from main.mar bodies) ──────────────────────────
+RE_PUSH_L      = re.compile(r'^\s+push\.l\s+(er[0-7])\b', re.I)
+RE_PUSH_W      = re.compile(r'^\s+push\.w\s+(r[0-7][lh]?|e[0-7])\b', re.I)
+RE_MOV_AT_R7   = re.compile(r'^\s+mov\.[lwb]\s+(er[0-7]|r[0-7][lh]?|e[0-7]),\s*@-r7\b', re.I)
+RE_FN_ENTRY    = re.compile(r'^\w+:\s*$')
+RE_LAB         = re.compile(r'^LAB_[0-9a-f]+:\s*$', re.I)
+RE_TAIL        = re.compile(r'^\s+jmp\s+@(sys_epilogue\w*|\$\w+(?:\$\d+)?)', re.I)
+RE_PRE_HELPER  = re.compile(r'^\s+(jsr|bsr)\s+@(sys_prologue\w*|\$\w+(?:\$\d+)?)', re.I)
+RE_STACK_ADJ   = re.compile(r'^\s+(subs|adds)\s', re.I)
+
+# Helper functions and the registers they save/restore (verified by reading
+# their bodies in main.mar).
+HELPER_SAVES = {
+    # ch38 runtime helpers ($-prefixed)
+    '$sp_regsv$3':                          'er3,er4,er5,er6',
+    '$spregld2$3':                          'er3,er4,er5,er6',
+    '$sp_rgsv3$3':                          'er3,er4,er5,er6+',  # bigger save-set
+    # ROM-side compiler-emitted helpers (sys_prologue/sys_epilogue prefix).
+    # Tail-call epilogue names already encode their register list, so this map
+    # is mainly for the prologue side where the encoding isn't lossless.
+    'sys_prologue_er2_er3_er4_er5_er6':     'er2,er3,er4,er5,er6',
+}
+
+# Parse `sys_epilogue_<reg>_<reg>_..._<hex>` -> register list
+def parse_epilogue_name(name):
+    if not name.startswith('sys_epilogue_'):
+        return None
+    parts = name[len('sys_epilogue_'):].split('_')
+    regs = [p for p in parts if re.match(r'^(er?[0-7][lh]?|e[0-7])$', p, re.I)]
+    return ','.join(regs) if regs else None
+
+
+def parse_function_bodies(mar_path):
+    """Yield (name, [body lines]) for each ; Function: header in main.mar."""
+    cur = None
+    body = []
+    with open(mar_path, encoding='latin-1') as f:
+        for line in f:
+            m = re.match(r';\s*Function:\s*(\S+)', line)
+            if m:
+                if cur:
+                    yield cur, body
+                cur = m.group(1)
+                body = []
+                continue
+            if cur and line.strip() and not line.startswith(';'):
+                body.append(line.rstrip())
+    if cur:
+        yield cur, body
+
+
+RE_POP_L  = re.compile(r'^\s+pop\.l\s+(er[0-7])\b', re.I)
+RE_POP_W  = re.compile(r'^\s+pop\.w\s+(r[0-7][lh]?|e[0-7])\b', re.I)
+
+
+def analyze_register_use(body):
+    """Given a function's main.mar body, return a short string describing
+    callee-saved registers (or '' if it neither saves nor is a helper).
+
+    Shared epilogue helpers (functions whose first instruction is `pop`)
+    are labelled 'epilogue: <regs>' so they don't masquerade as ordinary
+    "no saves" leaf functions."""
+    saves = []
+    helper_pre = None
+    helper_post = None
+    is_epilogue_helper = False
+    epilogue_regs = []
+
+    started = False
+    for ln in body:
+        st = ln.strip()
+        if not st:
+            continue
+        if not started:
+            if RE_FN_ENTRY.match(st):
+                started = True
+            continue
+        if RE_LAB.match(st):
+            break
+        # Shared epilogue helpers begin with pop instructions
+        m = RE_POP_L.match(ln) or RE_POP_W.match(ln)
+        if m:
+            is_epilogue_helper = True
+            epilogue_regs.append(m.group(1).lower())
+            continue
+        if is_epilogue_helper:
+            break  # done collecting pops
+        m = RE_PUSH_L.match(ln) or RE_PUSH_W.match(ln) or RE_MOV_AT_R7.match(ln)
+        if m:
+            saves.append(m.group(1).lower())
+            continue
+        if RE_STACK_ADJ.match(ln):
+            continue
+        m = RE_PRE_HELPER.match(ln)
+        if m and not saves:
+            helper_pre = m.group(2)
+        break
+
+    if is_epilogue_helper:
+        return f'epilogue helper, restores: {",".join(epilogue_regs)}'
+
+    for ln in reversed(body[-8:]):
+        m = RE_TAIL.match(ln)
+        if m:
+            helper_post = m.group(1)
+            break
+
+    pre_regs = ''
+    if saves:
+        pre_regs = ','.join(saves)
+    elif helper_pre:
+        pre_regs = HELPER_SAVES.get(helper_pre, helper_pre)
+
+    post_regs = ''
+    if helper_post:
+        post_regs = (parse_epilogue_name(helper_post)
+                     or HELPER_SAVES.get(helper_post)
+                     or helper_post)
+
+    pieces = []
+    if pre_regs:
+        pieces.append(pre_regs)
+    if post_regs and post_regs != pre_regs:
+        pieces.append(f'-> {post_regs}')
+    return ' '.join(pieces)
+
+
+def get_register_info(mar_path):
+    """Return {func_name: 'saves: ...'} for every function in main.mar."""
+    info = {}
+    for name, body in parse_function_bodies(mar_path):
+        s = analyze_register_use(body)
+        if s:
+            info[name] = s
+    return info
+
 PARSE_ARGS = [
     '-std=c89',
     f'-I{PROJECT_DIR}',
@@ -34,8 +170,12 @@ PARSE_ARGS = [
     '-w',
 ]
 
-# Matches both "// ROM: 0xabcd" and "// ROM: 0xabcd  100.0%"
-ROM_COMMENT_RE = re.compile(r'^\s*// ROM: 0x[0-9a-fA-F]+(\s+[\d.]+%)?\s*$')
+# Matches "// ROM: 0xabcd" plus optional %% and trailing register info
+# ("saves: ..." or "epilogue helper, ...").
+ROM_COMMENT_RE = re.compile(
+    r'^\s*// ROM: 0x[0-9a-fA-F]+(\s+[\d.]+%)?'
+    r'(\s+(?:saves: |epilogue\s).+)?\s*$'
+)
 PRAGMA_AUTO_RE = re.compile(r'#pragma\s+option\s+.*?/\*\s*pragma:auto\s*\*/')
 
 
@@ -121,7 +261,7 @@ def get_func_lines(path):
     return results
 
 
-def annotate_file(path, mar_addrs, scores):
+def annotate_file(path, mar_addrs, scores, reg_info):
     """Annotate one file. Returns True if file was modified."""
     path = Path(path)
     with open(path, encoding='latin-1') as f:
@@ -140,10 +280,17 @@ def annotate_file(path, mar_addrs, scores):
     modified = False
     for name, lineno in annotatable:
         addr = mar_addrs[name].addr
+        head = f'// ROM: 0x{addr:04x}'
         if name in scores:
-            comment = f'// ROM: 0x{addr:04x}  {scores[name]:.1f}%\n'
-        else:
-            comment = f'// ROM: 0x{addr:04x}\n'
+            head += f'  {scores[name]:.1f}%'
+        if name in reg_info:
+            ri = reg_info[name]
+            # Epilogue helpers report a full phrase; everything else is a save list
+            if ri.startswith('epilogue '):
+                head += f'  {ri}'
+            else:
+                head += f'  saves: {ri}'
+        comment = head + '\n'
 
         fi = lineno - 1  # 0-indexed index of the function line
 
@@ -179,6 +326,10 @@ def main():
     mar_addrs = parse_mar_addresses(mar_path)
     print(f"Loaded {len(mar_addrs)} function addresses from main.mar")
 
+    reg_info = get_register_info(mar_path)
+    if reg_info:
+        print(f"Extracted register-save info for {len(reg_info)} functions")
+
     ref_bin = PROJECT_DIR / 'COMPLETE_DUMP.bin'
     scores = get_match_scores(mar_addrs, ref_bin)
     if scores:
@@ -191,7 +342,7 @@ def main():
 
     changed = 0
     for path in paths:
-        if annotate_file(path, mar_addrs, scores):
+        if annotate_file(path, mar_addrs, scores, reg_info):
             try:
                 label = Path(path).resolve().relative_to(PROJECT_DIR)
             except ValueError:

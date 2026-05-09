@@ -1,6 +1,6 @@
 #include "all_headers.h"
 
-// ROM: 0x3dbc  73.0%
+// ROM: 0x3dbc  80.3%  saves: r2,r5,r6 -> sys_epilogue_r2_r5_r6
 void ui_draw_ball_drop_anim(void) {
   void *ptr;
   uint16_t offset;
@@ -26,7 +26,7 @@ void ui_draw_ball_drop_anim(void) {
   gCurSubstateZ++;
 }
 
-// ROM: 0x3e34  54.8%
+// ROM: 0x3e34  73.6%  saves: r2,r5,r6 -> sys_epilogue_r2_r5_r6
 void ui_draw_ball_sparkles_anim(void) {
   void *ptr;
   uint16_t dummy;
@@ -53,7 +53,7 @@ void ui_draw_ball_sparkles_anim(void) {
   }
 }
 
-// ROM: 0x3ece  64.5%
+// ROM: 0x3ece  73.5%  saves: r2,r5,r6 -> sys_epilogue_r2_r5_r6
 void ui_draw_arrival_cloud_anim(void) {
   void *ptr;
   uint16_t dummy;
@@ -72,7 +72,7 @@ void ui_draw_arrival_cloud_anim(void) {
   }
 }
 
-// ROM: 0x3f32  14.0%
+// ROM: 0x3f32  75.5%  saves: r2,er3,r5 -> sys_epilogue_6
 void ui_draw_arrival_poke_anim(void) {
   uint16_t dummy;
   gfx_draw_home_pokemon(0x10, 8);
@@ -83,7 +83,7 @@ void ui_draw_arrival_poke_anim(void) {
   gCurSubstateZ++;
 }
 
-// ROM: 0x3f72  69.7%
+// ROM: 0x3f72  69.7%  saves: r2,r3,r4
 void ui_render_arrival_success(void) {
   uint16_t uninitializedE0;
   gfx_draw_own_pokemon_small(0x20, 4);
@@ -102,7 +102,7 @@ void ui_render_arrival_success(void) {
   }
 }
 
-// ROM: 0x3fc6  40.8%
+// ROM: 0x3fc6  40.8%  saves: r2,r3,r4,r5,er6
 #pragma option case=ifthen  /* pragma:auto */
 void ui_render_arrival_reward_info(void) {
   void *ptr;
@@ -291,16 +291,11 @@ case3: ui_render_arrival_reward_info();
 done: gfx_draw_battery_low(0, 0);
 }
 
-/* Reason: callee-save ABI mismatch.
- * ROM saves r2/er3/r5 via push.* instructions and tail-calls a shared
- * sys_epilogue_6 to pop them.  Our ch38 build saves er3-er6 via the
- * runtime helpers $sp_regsv$3 / $spregld2$3.  Different register sets and
- * different shared-helper names mean the prologue/epilogue bytes can never
- * align.  The body (gfx_draw_home_pokemon + 2 gfx_fill_rect + increment)
- * is byte-identical, but it is sandwiched between mismatched frames so
- * the per-instruction match score stays in single digits.
- * Class: cannot-fix-without-compiler-change */
-// ROM: 0x42d0  14.0%
+/* Note: jumped from 1.6% to 75.5% after we settled on default -regparam=2
+ * + -cmncode (the ROM uses helper-call style for short functions like
+ * this one, and ch38's $sp_regsv$3 + sys_epilogue tail-jump aligns well
+ * with what compare_bin sees).  No further action recommended. */
+// ROM: 0x42d0  75.5%  saves: r2,er3,r5 -> sys_epilogue_6
 void ui_draw_poke_departure_anim(void) {
   uint16_t dummy;
   gfx_draw_home_pokemon(0x10, 8);
@@ -311,7 +306,7 @@ void ui_draw_poke_departure_anim(void) {
   gCurSubstateZ++;
 }
 
-// ROM: 0x4310  68.4%
+// ROM: 0x4310  77.6%  saves: r2,r5,r6 -> sys_epilogue_r2_r5_r6
 void ui_draw_cloud_departure_anim(void) {
   void *ptr;
   uint16_t dummy;
@@ -329,7 +324,7 @@ void ui_draw_cloud_departure_anim(void) {
   gCurSubstateZ = 0;
 }
 
-// ROM: 0x4372  70.6%
+// ROM: 0x4372  78.2%  saves: r2,r5,r6 -> sys_epilogue_r2_r5_r6
 void ui_draw_cloud_anim(void) {
   void *ptr;
   uint16_t uninitializedE0;
@@ -350,7 +345,7 @@ void ui_draw_cloud_anim(void) {
   gCurSubstateZ++;
 }
 
-// ROM: 0x43e4  81.5%
+// ROM: 0x43e4  81.5%  saves: r2
 void ui_render_departure_success(void) {
   uint16_t uninitializedE0;
 
@@ -372,7 +367,7 @@ void ui_render_departure_success(void) {
   }
 }
 
-// ROM: 0x4434  77.3%
+// ROM: 0x4434  77.3%  saves: r2,r5,r6 -> sys_epilogue_r2_r5_r6
 void ui_render_operation_completed(void) {
   void *ptr;
   uint16_t uninitializedE0;

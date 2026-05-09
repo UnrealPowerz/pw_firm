@@ -1,6 +1,6 @@
 #include "all_headers.h"
 
-// ROM: 0xa830  76.6%
+// ROM: 0xa830  77.5%
 uint8_t drv_accel_factory_test(void) {
   uint8_t buf[6];
   uint8_t *p;
@@ -62,7 +62,7 @@ uint8_t drv_accel_factory_test(void) {
   return 1;
 }
 
-// ROM: 0x76aa  77.1%
+// ROM: 0x76aa  77.5%  saves: r4,r5,r6
 void drv_accel_sample(void) {
   uint8_t buf[6];
   register uint8_t *pBuf;
@@ -210,7 +210,7 @@ void drv_accel_write_reg(uint8_t addr, uint8_t val) {
   PDR9 |= 0x01;
 }
 
-// ROM: 0x273c  72.0%
+// ROM: 0x273c  68.7%  saves: r4,r6
 uint8_t drv_accel_init(void) {
   uint8_t flags;
   uint8_t tmp;
@@ -247,19 +247,20 @@ uint8_t drv_accel_init(void) {
 }
 
 /* Reason: register allocation in butterfly stages diverges from ROM.
- * Body is now a faithful 64-point radix-2 DIT FFT (was a 16% stub).
- * The magnitude-accumulation epilogue matches byte-for-byte; the
- * bit-reverse permutation and butterfly inner loop do not, because:
- *   - ch38 emits JSR @$sp_regsv$3 / @$spregld2$3 to save many regs;
- *     ROM's compiler used a slimmer "sub.w #0x10, r7" + 0 saves frame.
- *   - Our compiler chose different register vars for the same locals
- *     than the original C source did, so address registers differ.
+ * Body is a faithful 64-point radix-2 DIT FFT (was a 16% stub).  The
+ * magnitude-accumulation epilogue matches byte-for-byte.  Currently
+ * scoring 32% with default ch38 settings; was 46% with -regparam=3.
+ * That flag was reverted globally because it cost more on smaller
+ * functions than it gained here.  This function would benefit from
+ * -regparam=3 specifically -- a per-file pragma would be ideal but
+ * `#pragma option regparam=N` is not valid in source.
+ *   - The bit-reverse permutation and butterfly inner loop don't match
+ *     because ch38 chose different register variables than the original
+ *     C source did.
  * Reaching ~80% would require iterating local-variable order and types
- * to nudge ch38's allocator toward the same choices, possibly with
- * inline assembly for the butterfly hot loop.  Keep current C: it is
- * functionally correct and structurally close (46% vs. 16% stub).
+ * to nudge ch38's allocator toward the same choices, possibly inline asm.
  * Class: high-effort, partial-fix */
-// ROM: 0x60da  46.1%
+// ROM: 0x60da  32.4%
 #pragma option speed=loop=2  /* pragma:auto */
 void drv_accel_fft(void *samples) {
   int16_t *real_buf;

@@ -18,13 +18,13 @@ void sys_delay_short(void) {
 // ROM: 0x25c8  65.0%
 void sys_seed_rng(uint32_t seed) { nextRandom = seed; }
 
-// ROM: 0x25d0  47.2%
+// ROM: 0x25d0  47.2%  saves: er3,er4,er5,er6
 uint32_t sys_get_rng(void) {
   nextRandom = nextRandom * 1664525 + 1013904223;
   return nextRandom;
 }
 
-// ROM: 0x25f6  49.8%
+// ROM: 0x25f6  49.8%  saves: er3,er4,er5,er6
 void sys_lzss_decode(uint8_t *src, uint8_t *dst) {
   uint8_t count;
   uint8_t flags;

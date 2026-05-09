@@ -28,6 +28,7 @@ typedef uint16_t size_t;
 #define __noregsave
 #define __interrupt(...)
 #define __entry(...)
+#define __regparam3
 #define __sectop(section) 0
 #define __secend(section) 0
 #endif

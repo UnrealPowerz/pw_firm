@@ -367,7 +367,7 @@ void ui_handle_dowsing_selection(void) {
  * Address: 0x4B9C  Size: 314 bytes
  * ===========================================================================
  */
-// ROM: 0x4b9c  66.4%
+// ROM: 0x4b9c  66.4%  saves: r5
 void ui_render_dowsing_grass(void) {
   uint8_t *buf;
   uint16_t base;

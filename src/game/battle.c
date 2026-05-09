@@ -1,6 +1,6 @@
 #include "all_headers.h"
 
-// ROM: 0x30a6  47.6%
+// ROM: 0x30a6  44.1%
 #pragma option noregexpansion /* pragma:auto */
 void ui_render_battle(void) {
   uint8_t *sprite_buf, *e2_buf, *e3_buf;
@@ -275,7 +275,7 @@ void game_start_battle(void) {
   drv_sound_play(10);
 }
 
-// ROM: 0x2972  62.7%
+// ROM: 0x2972  63.4%
 #pragma option speed =expression /* pragma:auto */
 void game_battle_process_turn(void) {
   uint32_t rnd;
@@ -355,7 +355,7 @@ uint8_t game_battle_check_capture_success(void) {
   return 0;
 }
 
-// ROM: 0x2a96  74.5%
+// ROM: 0x2a96  74.0%  saves: er5,e6
 #pragma option speed =shift /* pragma:auto */
 void game_battle_handle_finish(void) {
   uint8_t sub_y = (uint8_t)(gCurSubstateY - 1);
@@ -431,7 +431,7 @@ void game_battle_handle_finish(void) {
   }
 }
 
-// ROM: 0x2c62  48.9%
+// ROM: 0x2c62  48.8%
 void ui_handle_battle(void) {
   uint8_t sub_z = (uint8_t)gCurSubstateZ;
   uint8_t x = accelXPos;

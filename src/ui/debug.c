@@ -1,6 +1,6 @@
 #include "all_headers.h"
 
-// ROM: 0xa72a  47.6%
+// ROM: 0xa72a  56.2%
 #pragma option speed =loop=1 /* pragma:auto */
 uint8_t diag_eeprom_factory_test(uint32_t addr) {
   uint8_t *buf;
@@ -36,11 +36,10 @@ uint8_t diag_eeprom_factory_test(uint32_t addr) {
   return 1;
 }
 
-// ROM: 0x5990  72.1%
+// ROM: 0x5990  89.9%  saves: er2,er3,er4,er5,er6
 #pragma option speed =loop=1 /* pragma:auto */
 void sys_factory_test(void) {
   uint8_t res, i;
-  drv_lcd_strobe_res();
   set_ccr(0x80);
   SSER = 0xC0;
   SSMR = (SSMR & 0xF8) | 0x06;
@@ -51,8 +50,9 @@ void sys_factory_test(void) {
   while (!SSSR_BIT.TDRE)
     ;
   SSTDR = 0xE2;
-  drv_lcd_cs_high();
-
+  while (!SSSR_BIT.TEND)
+    ;
+  PDR1 |= 0x01;
   while (!SSSR_BIT.RDRF)
     ;
   res = SSRDR;
@@ -75,14 +75,18 @@ void sys_factory_test(void) {
   while (!SSSR_BIT.TDRE)
     ;
   SSTDR = *((volatile uint8_t *)0x5C);
-  drv_lcd_cs_high();
+  while (!SSSR_BIT.TEND)
+    ;
+  PDR1 |= 0x01;
   sys_delay_short();
 
   PDR1 &= ~0x01;
   while (!SSSR_BIT.TDRE)
     ;
   SSTDR = *((volatile uint8_t *)0x5D);
-  drv_lcd_cs_high();
+  while (!SSSR_BIT.TEND)
+    ;
+  PDR1 |= 0x01;
   sys_delay_short();
 
   for (i = 0; i < 12; i++) {
@@ -90,7 +94,9 @@ void sys_factory_test(void) {
     while (!SSSR_BIT.TDRE)
       ;
     SSTDR = *((volatile uint8_t *)(0x50 + i));
-    drv_lcd_cs_high();
+    while (!SSSR_BIT.TEND)
+      ;
+    PDR1 |= 0x01;
     sys_delay_short();
   }
 
@@ -102,14 +108,17 @@ void sys_factory_test(void) {
   while (!SSSR_BIT.TDRE)
     ;
   SSTDR = 0x04;
-  drv_lcd_cs_high();
-
+  while (!SSSR_BIT.TEND)
+    ;
+  PDR1 |= 0x01;
   if (!diag_eeprom_factory_test(0)) {
     PDR1 &= ~0x01;
     while (!SSSR_BIT.TDRE)
       ;
     SSTDR = 0xF4;
-    drv_lcd_cs_high();
+    while (!SSSR_BIT.TEND)
+      ;
+    PDR1 |= 0x01;
     while (1)
       ;
   }
@@ -119,14 +128,17 @@ void sys_factory_test(void) {
   while (!SSSR_BIT.TDRE)
     ;
   SSTDR = 0x03;
-  drv_lcd_cs_high();
-
+  while (!SSSR_BIT.TEND)
+    ;
+  PDR1 |= 0x01;
   if (!drv_rtc_wait_sec()) {
     PDR1 &= ~0x01;
     while (!SSSR_BIT.TDRE)
       ;
     SSTDR = 0xF3;
-    drv_lcd_cs_high();
+    while (!SSSR_BIT.TEND)
+      ;
+    PDR1 |= 0x01;
     while (1)
       ;
   }
@@ -135,22 +147,26 @@ void sys_factory_test(void) {
   while (!SSSR_BIT.TDRE)
     ;
   SSTDR = 0x02;
-  drv_lcd_cs_high();
-
+  while (!SSSR_BIT.TEND)
+    ;
+  PDR1 |= 0x01;
   drv_accel_factory_test();
 
   PDR1 &= ~0x01;
   while (!SSSR_BIT.TDRE)
     ;
   SSTDR = 0x01;
-  drv_lcd_cs_high();
-
+  while (!SSSR_BIT.TEND)
+    ;
+  PDR1 |= 0x01;
   if (!drv_adc_test()) {
     PDR1 &= ~0x01;
     while (!SSSR_BIT.TDRE)
       ;
     SSTDR = 0xF1;
-    drv_lcd_cs_high();
+    while (!SSSR_BIT.TEND)
+      ;
+    PDR1 |= 0x01;
     while (1)
       ;
   }
@@ -159,8 +175,9 @@ void sys_factory_test(void) {
   while (!SSSR_BIT.TDRE)
     ;
   SSTDR = 0x00;
-  drv_lcd_cs_high();
-
+  while (!SSSR_BIT.TEND)
+    ;
+  PDR1 |= 0x01;
   PDR9 &= ~0x01;
   PDR1 &= ~0x01;
   while (!SSSR_BIT.TDRE)
@@ -169,7 +186,9 @@ void sys_factory_test(void) {
   while (!SSSR_BIT.TDRE)
     ;
   SSTDR = 0x01;
-  drv_lcd_cs_high();
+  while (!SSSR_BIT.TEND)
+    ;
+  PDR1 |= 0x01;
   PDR9 |= 0x01;
 
   set_ccr(0x80);
@@ -181,7 +200,6 @@ void sys_factory_test(void) {
 cleanup:
   PDR1 |= 0x01;
   set_ccr(0x00);
-  drv_lcd_strobe_res();
 }
 
 // ROM: 0xaa42  97.2%
@@ -362,7 +380,7 @@ set_substate_y_and_clear_a:
   gCurSubstateA = 0;
 }
 
-// ROM: 0xad06  54.4%
+// ROM: 0xad06  54.9%
 void ui_render_debug(void) {
   uint8_t buf[6];
   void (*fn858a)(uint8_t, uint8_t, const char *);
@@ -523,7 +541,7 @@ void sys_init_debug_mode(void) {
 // ROM: 0xaef8  100.0%
 void sys_noop(void) {}
 
-// ROM: 0xaefa  0.0%
+// ROM: 0xaefa  41.7%
 #pragma option noregexpansion /* pragma:auto */
 void ui_render_accel_debug(void) {
   uint8_t buf[6];
