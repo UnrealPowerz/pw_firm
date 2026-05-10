@@ -19,7 +19,7 @@ __interrupt(vect=13) void INT_SLEEP(void) {}
 // ROM: 0xa300  83.9%  saves: r0
 __interrupt(vect=16) void irq0(void) {
     statusFlags_BIT.button_event = 1;
-    wakeupFlagMaybe = 1;
+    wakeupFlagMaybe[0] = 1;
     CKSTPR1 |= 0x04;
     IRR1 &= ~0x01;
 }

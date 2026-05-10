@@ -865,7 +865,7 @@ start_eeprom_tx_alt:
 LAB_17b0: {
   uint16_t chunk = (DAT_f8c6 > 0x80) ? 0x80 : DAT_f8c6;
   drv_eeprom_read_block(0x8F00, &watts, 2);
-  DAT_f88e = (uint8_t)((watts / 20) & 0xFF);
+  DAT_f88e[0] = (uint8_t)((watts / 20) & 0xFF);
   drv_eeprom_write_block(0x8F00, &watts, 2);
   {
     uint8_t *p = drv_ir_get_rx_ptr();

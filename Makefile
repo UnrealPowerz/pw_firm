@@ -16,11 +16,12 @@ OD      = h8300-elf-objdump
 INCLUDES = -include=src,include,build/gen,/opt/H8/6_2_2/include
 # Optimization for size and speed to fit in ROM
 CFLAGS   = -cpu=300HN -stack=medium -lang=c -outcode=sjis -nolist -chgincpath -nologo -Code=Asmcode -optimize=1 -cmncode $(INCLUDES)
+
 ASFLAGS  = -cpu=300HN -nologo
 
 
 C_SOURCES := $(shell find src -name "*.c")
-S_SOURCES := src/globals.s
+S_SOURCES :=
 
 define to_asm
 build/obj_$(subst /,_,$(1:%.c=%.s))

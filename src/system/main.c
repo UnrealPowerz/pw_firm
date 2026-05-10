@@ -73,7 +73,7 @@ void sys_main_loop_low_power(void) {
       if (activityTimer == 0) {
         drv_lcd_power_save();
         walker_status_flags = (walker_status_flags & 0xE7) | 0x08;
-        wakeupFlagMaybe = 0;
+        wakeupFlagMaybe[0] = 0;
         buttonHoldDuration = 0;
       }
     } else {

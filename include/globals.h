@@ -6,9 +6,9 @@
 /* --- System Status Flags --- */
 extern volatile uint8_t statusFlags;
 #define statusFlags_BIT (((volatile status_flags_t *)&statusFlags)->BIT)
-extern volatile uint8_t wakeupFlagMaybe;
+extern uint8_t wakeupFlagMaybe[3];
 extern volatile uint8_t status_flags_f7f1;   /* DAT_f7f1 */
-extern volatile uint8_t walker_status_flags; /* DAT_f7ef (?) */
+extern volatile uint16_t walker_status_flags; /* 0xF7B6 (.s 2 bytes) */
 #define walker_status_flags_BIT (((volatile walker_status_t *)&walker_status_flags)->BIT)
 
 /* --- LCD & UI / Timers --- */
@@ -40,7 +40,7 @@ extern volatile uint16_t DAT_f790;
 extern volatile uint32_t sessionSteps;
 extern volatile uint16_t watts_redundant; /* DAT_f7c8 (?) */
 extern volatile uint8_t stepWattCounter;
-extern volatile uint8_t DAT_f793;  /* DAT_f793 */
+extern volatile uint32_t DAT_f793;  /* 0xF793 (.s 4 bytes) */
 extern volatile uint16_t DAT_f7a0; /* daily_step_cap (?) */
 extern volatile uint16_t DAT_f7a2;
 extern volatile uint8_t DAT_f7a4;
@@ -57,10 +57,9 @@ extern volatile uint8_t gCurSubstateY; /* 0xF7CD */
 extern volatile uint8_t gCurSubstateZ; /* 0xF7CE */
 extern volatile uint8_t gCurSubstateA; /* 0xF7CF (?) */
 extern volatile uint8_t DAT_f7d1;      /* 0xF7D1 */
-extern volatile uint16_t
-    accelXPos; /* 0xF7D2 (Combined with dowsing_item_pos) */
+extern volatile uint8_t accelXPos; /* 0xF7D2 */
 extern volatile uint8_t dowsing_item_pos; /* 0xF7D3 (?) */
-extern volatile uint16_t accelYPos;       /* 0xF7D4 (Combined with DAT_f7d5) */
+extern volatile uint8_t accelYPos;       /* 0xF7D4 */
 extern volatile uint8_t DAT_f7d5;         /* 0xF7D5 */
 extern volatile uint16_t accelZPos;       /* 0xF7D6 */
 extern volatile uint8_t DAT_f7d8;         /* 0xF7D8 */
@@ -69,13 +68,18 @@ extern volatile uint16_t DAT_f7da;        /* 0xF7DA */
 extern volatile uint16_t DAT_f7dc;        /* 0xF7DC */
 extern volatile uint16_t DAT_f7de;        /* 0xF7DE */
 
-extern uint8_t ACCEL_SAMPLES_X[32];
-extern uint8_t ACCEL_SAMPLES_Y[32];
-extern uint8_t ACCEL_SAMPLES_Z[32];
-extern volatile int16_t fft_results[32];  // at 0xF7E6
-extern volatile int8_t accelXSamples[64]; // at 0xF826
-extern volatile int8_t accelYSamples[64]; // at 0xF866
-extern volatile int8_t accelZSamples[64]; // at 0xF8A6
+extern uint8_t ACCEL_SAMPLES_X[8];   /* 0xF826 (only 8 bytes named; accelXSamples is a 64-byte view) */
+extern uint8_t ACCEL_SAMPLES_Y[32];  /* 0xF866 */
+extern uint8_t ACCEL_SAMPLES_Z[3];   /* 0xF8A6 (only 3 bytes named; accelZSamples is a 64-byte view) */
+
+/* Aliased multi-symbol views. fft_results is an int16_t window onto the same
+ * region whose first uint32_t slot is DAT_f7e6. accelXSamples/Y/Z are
+ * int8_t windows that span the next ~64 bytes from each ACCEL_SAMPLES_*. */
+#define fft_results    ((volatile int16_t *)&DAT_f7e6)
+#define accelXSamples  ((volatile int8_t *)ACCEL_SAMPLES_X)
+#define accelYSamples  ((volatile int8_t *)ACCEL_SAMPLES_Y)
+#define accelZSamples  ((volatile int8_t *)ACCEL_SAMPLES_Z)
+#define L_F886         DAT_f886
 
 /* --- Control Flow --- */
 extern volatile uint16_t currentEventLoopFunc;
@@ -87,7 +91,7 @@ extern volatile uint32_t nextRandom;
 extern volatile uint16_t heapPointer;
 
 /* --- LCD & EEPROM --- */
-extern volatile uint8_t DAT_f7e4; /* lcd_page_offset (?) */
+extern volatile uint16_t DAT_f7e4; /* lcd_page_offset (?) -- 0xF7E4 (.s 2 bytes) */
 extern volatile uint8_t RamCache_settingsByte;
 #define RamCache_settingsByte_BIT (((volatile settings_byte_t *)&RamCache_settingsByte)->BIT)
 
@@ -108,9 +112,9 @@ extern volatile uint16_t DAT_f8c8;
 extern volatile uint16_t DAT_f8ca;
 extern volatile uint8_t DAT_f8cc;
 extern volatile uint8_t DAT_f8c5;
-extern volatile uint16_t DAT_f8c3;
+extern volatile uint8_t DAT_f8c3;
 extern volatile uint8_t DAT_f8be;
-extern volatile uint8_t DAT_f8bf;
+extern volatile uint16_t DAT_f8bf;  /* 0xF8BF (.s 2 bytes) */
 extern volatile uint8_t DAT_f8c2;
 extern volatile uint32_t DAT_f8b6;
 extern volatile uint32_t DAT_f8ba;
@@ -118,12 +122,14 @@ extern volatile uint8_t DAT_f8c1;
 extern volatile uint8_t DAT_f840;
 extern volatile uint8_t DAT_f841;
 extern volatile uint8_t DAT_f842;
-extern volatile uint8_t DAT_f844;
-extern volatile uint8_t DAT_f088;
+extern volatile uint16_t DAT_f844;  /* 0xF844 (.s 2 bytes) */
 extern volatile uint8_t TX_PACKET_payload;
-extern uint8_t DAT_f7e6[0x68];
-extern uint8_t
-    DAT_f84e[0x68]; /* Used as sound buffer overlaps with ACCEL_SAMPLES_X */
+extern volatile uint32_t DAT_f7e6;             /* 0xF7E6 -- first slot of a 0x68-byte buffer */
+extern uint8_t DAT_f84e[8];                    /* 0xF84E (8 named bytes; surrounding aliases see C globals) */
+/* Absolute hardware-address aliases (no allocation -- compiler generates
+ * direct pointer literals). */
+#define DAT_f088 (*(volatile uint8_t *)0xF088)
+#define DAT_f580 ((uint8_t *)0xF580)
 extern volatile uint32_t DAT_f846;
 extern volatile uint32_t DAT_f7ea;
 extern volatile uint16_t DAT_f7ee;
@@ -133,10 +139,9 @@ extern volatile uint8_t DAT_f82e[0x12];
 extern volatile uint8_t DAT_f843;
 extern volatile uint16_t DAT_f856;
 extern volatile uint8_t DAT_f896;
-extern volatile uint16_t DAT_f956;
-extern uint8_t DAT_f580[];
-extern volatile uint16_t DAT_f886;
-extern volatile uint8_t DAT_f88e;
+extern volatile uint8_t DAT_f956;
+extern uint8_t DAT_f886[8];                    /* 0xF886 */
+extern volatile uint8_t DAT_f88e[8];           /* 0xF88E (.s 8 bytes) */
 extern volatile uint8_t ir_status;
 extern const uint8_t L_BE70[];
 extern const uint8_t L_BE71[];
@@ -169,8 +174,8 @@ extern const uint8_t L_BCF4[];
 
 /* --- Sound Engine Globals (Fixed addresses) --- */
 extern uint8_t *soundData;
-extern uint8_t soundHeader;
-extern uint8_t volume;
+extern uint16_t soundHeader;          /* 0xF7CC (.s 2 bytes) */
+extern uint16_t volume;               /* 0xF7C6 (.s 2 bytes) */
 extern uint16_t noteDuration;
 extern uint16_t isSeparateNote;
 
