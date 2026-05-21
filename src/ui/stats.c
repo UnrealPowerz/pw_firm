@@ -115,7 +115,7 @@ void ui_render_pokemon_stats(void) {
   case 1:
   case 2:
   case 3: {
-    drv_eeprom_read_block(0x8F52, buf180, 0x30);
+    drv_eeprom_read_block(EEPROM_POKEMON_SLOTS, buf180, 0x30);
     addr = 0xCE8C + (uint32_t)(gCurSubstateY - 1) * 0x10;
     drv_eeprom_read_block((uint16_t)addr, (uint8_t *)buf180 + 0x30, 0x10);
 
@@ -130,7 +130,7 @@ void ui_render_pokemon_stats(void) {
     break;
   }
   case 4:
-    addr = romBase + 0xBA80 + (uint32_t)(DAT_f7ac & 1) * 0xC0;
+    addr = romBase + 0xBA80 + (uint32_t)(animTick & 1) * 0xC0;
     drv_eeprom_read_block((uint16_t)addr, buf180, 0x180);
     drv_lcd_blit(0x20, 0x18, buf180, 0x3C, 0x18);
     gfx_draw_event_pokemon_info(0x00, 0x30, 7);
@@ -149,7 +149,7 @@ void ui_render_pokemon_stats(void) {
     drv_eeprom_read_block((uint16_t)addr, buf180, 4);
 
     itemBuf = sbrk(0x14);
-    drv_eeprom_read_block(0x8F8C, itemBuf, 0x14);
+    drv_eeprom_read_block(EEPROM_SUBY_LOOKUP_TABLE, itemBuf, 0x14);
 
     for (i = 0; i < 10; i++) {
       if (*(uint16_t *)buf180 == ((uint16_t *)itemBuf)[i]) {
@@ -166,7 +166,7 @@ void ui_render_pokemon_stats(void) {
     break;
   }
 
-  addr = romBase + 0x278 + (uint32_t)((DAT_f7ac & 1) + 3) * 0x10;
+  addr = romBase + 0x278 + (uint32_t)((animTick & 1) + 3) * 0x10;
   drv_eeprom_read_block((uint16_t)addr, buf180, 0x10);
 
   x = (uint8_t)((gCurSubstateY % 5) * 8 + 0x10);
@@ -248,7 +248,7 @@ void ui_render_items_stats(void) {
   eread(0x1810 + base, buf, 0xC0);
   blit(buf, 0x20, 0x18, 0x3C, 0x18);
 
-  anim = (uint16_t)((uint16_t)(DAT_f7ac & 1) + 3) * 0x10;
+  anim = (uint16_t)((uint16_t)(animTick & 1) + 3) * 0x10;
   eread(0x0278 + base + anim, buf, 0x10);
 
   sel = gCurSubstateY;
@@ -328,7 +328,7 @@ void ui_render_caught_poke_stats(void) {
   sys_init_heap();
   ptr = sbrk(0x40);
   drv_eeprom_read_block(addr, ptr, len);
-  drv_eeprom_read_block(0xce8c + (gCurSubstateZ * 0x10), (uint8_t *)ptr + 0x30,
+  drv_eeprom_read_block(EEPROM_LOG_CONTEXT + (gCurSubstateZ * 0x10), (uint8_t *)ptr + 0x30,
                         0x10);
 
   for (i = 0; i < 3; i++) {
@@ -347,8 +347,8 @@ void ui_render_dowsed_item_stats(void) {
 
   sys_init_heap();
   ptr = sbrk(0x14);
-  drv_eeprom_read_block(0xcebc + ((int8_t)gCurSubstateZ * 4), &val, 4);
-  drv_eeprom_read_block(0x8f8c, ptr, 0x14);
+  drv_eeprom_read_block(EEPROM_LOG_ITEMS + ((int8_t)gCurSubstateZ * 4), &val, 4);
+  drv_eeprom_read_block(EEPROM_SUBY_LOOKUP_TABLE, ptr, 0x14);
 
   for (i = 0; i < 10; i++) {
     if (*(uint16_t *)&val == ptr[i]) {
@@ -377,7 +377,7 @@ void ui_render_inventory_stats_view(void) {
 
   drv_eeprom_read_block(off + 0x2a8, ptr, 0x20);
   drawFunc((uint8_t)(0x18 + (gCurSubstateZ * 0x14)), 0x18,
-           (uint8_t *)ptr + ((DAT_f7ac & 1) * 0x10), 8, 8);
+           (uint8_t *)ptr + ((animTick & 1) * 0x10), 8, 8);
 
   if (gCurSubstateA == 0) {
     drv_eeprom_read_block(off + 0x1e0, ptr, 0x10);
@@ -491,8 +491,8 @@ void ui_load_inventory_mask(uint16_t *status_mask_ptr) {
     status_mask_ptr[0] |= 0x01;
   }
 
-  drv_eeprom_read_block(0xCE8C, buf_8c8c, 0x30);
-  drv_eeprom_read_block(0xCEBC, buf_8cbc, 0x34);
+  drv_eeprom_read_block(EEPROM_LOG_CONTEXT, buf_8c8c, 0x30);
+  drv_eeprom_read_block(EEPROM_LOG_ITEMS, buf_8cbc, 0x34);
 
   for (i = 0; i < 3; i++) {
     if (buf_8c8c[(uint16_t)i << 3] != 0) {
@@ -512,7 +512,7 @@ void ui_load_inventory_mask(uint16_t *status_mask_ptr) {
     }
   }
 
-  i = drv_eeprom_read_u8(0xB800);
+  i = drv_eeprom_read_u8(EEPROM_STEP_HIST_FLAGS);
   if (i & 0x20)
     status_mask_ptr[0] |= 0x10;
   if (i & 0x10)

@@ -88,7 +88,7 @@ typedef union {
     } BIT;
 } settings_byte_t;
 
-/* DAT_f7a7: pedometer task dispatch flags (bits 0,1,2) */
+/* pedTaskFlags: pedometer task dispatch flags (bits 0,1,2) */
 typedef union {
     uint8_t BYTE;
     struct {
@@ -127,5 +127,37 @@ typedef union {
         uint8_t b0 : 1;  /* bit 0 */
     } BIT;
 } byte_bits_t;
+
+/* Per-tick handler installed in currentEventLoopFunc / passed to
+ * sys_set_handler(). The main loop calls this from the foreground; both
+ * sleep/active loops and the IR comm loop are installed via this pointer. */
+typedef void (*event_loop_func_t)(void);
+
+/* 0x68-byte trainer/peer-pokemon profile record. Persisted to EEPROM
+ * 0x00ED (with redundant copy at 0x01ED) and exchanged via IR sync.
+ * Field semantics are partial; *_at_NN names denote bytes whose role
+ * isn't fully understood yet, kept named so they don't get accidentally
+ * collapsed. flags_5b is a bit byte: b0/b1/b2 used as session/walking/
+ * has-personalized markers (see save_flag_byte_t in src/game/session.c). */
+struct trainer_record {
+    uint32_t id;            /* +0x00 trainer/peer identity */
+    uint32_t id_backup;     /* +0x04 backup; zeroed at session end, set from id at first peer init */
+    uint16_t loc;           /* +0x08 location/route code */
+    uint16_t loc_backup;    /* +0x0A backup; zeroed at session end */
+    uint8_t  at_0c[4];      /* +0x0C..0x0F mixed access (uint32 / uint16 at +2 / byte at +1) */
+    uint8_t  nickname[22];  /* +0x10..0x25 trainer nickname (utf-8 / sjis bytes) */
+    uint8_t  marker_46;     /* +0x26 set to 0x46 by init_peer_identity */
+    uint8_t  at_27;         /* +0x27 */
+    uint8_t  at_28[16];     /* +0x28..0x37 pokemon move/data block; bit 0 of [0x37] read in social.c */
+    uint8_t  flags_38[16];  /* +0x38..0x47 bit-array (gfx.c reads p[0x38+off] & (1<<bit)) */
+    uint8_t  at_48[18];     /* +0x48..0x59 18-byte block written from DAT_f82e in session.c */
+    uint8_t  at_5a;         /* +0x5A (unaccessed in current decomp; preserves 0x5B alignment) */
+    volatile uint8_t  flags_5b;  /* +0x5B status flags (b0,b1,b2 used) */
+    uint8_t  at_5c;         /* +0x5C set from DAT_f842 (battle context?) */
+    uint8_t  at_5d;         /* +0x5D set from DAT_f843 */
+    uint8_t  at_5e;         /* +0x5E zeroed in game_start_walk */
+    uint8_t  at_5f;         /* +0x5F set to 2 in game_start_walk */
+    uint8_t  at_60[8];      /* +0x60..0x67 trailing 8 bytes (purpose unknown) */
+};
 
 #endif /* TYPES_H */

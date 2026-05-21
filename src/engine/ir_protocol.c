@@ -53,15 +53,15 @@ case_fe:
   goto epilogue;
 case_e0:
   drv_lcd_init();
-  DAT_f7a2 = 0xE10;
+  idleSeconds = 0xE10;
   sys_factory_reset_eeprom(1, 1);
   goto load_settings;
 case_2a:
-  DAT_f7a2 = 0xE10;
+  idleSeconds = 0xE10;
   sys_factory_reset_eeprom(0, 1);
   goto load_settings;
 case_2c:
-  DAT_f7a2 = 0xE10;
+  idleSeconds = 0xE10;
   sys_factory_reset_eeprom(0, 0);
 load_settings:
   drv_sound_set_volume((RamCache_settingsByte >> 1) & 0x3);
@@ -78,7 +78,7 @@ case_4e:
   goto clear_substate_z;
 case_5a:
   game_start_walk();
-  drv_eeprom_fill(0xB800, 0x06C8, 0);
+  drv_eeprom_fill(EEPROM_STEP_HIST_FLAGS, 0x06C8, 0);
 set_view_f:
   ui_set_view(0xF);
   gCurSubstateY = 0;
@@ -143,7 +143,7 @@ set_substate_a:
   goto epilogue;
 
 check_dat_f7ad:
-  if (DAT_f7ad == 0)
+  if (irResultCode == 0)
     goto set_initial;
   ui_set_view(0xE);
 clear_substate_z:
@@ -157,10 +157,10 @@ set_initial:
 epilogue:
   accelSampleCount = 0;
   game_reset_pedometer_flags();
-  sys_set_handler((void (*)(void))sys_main_loop_low_power);
+  sys_set_handler(sys_main_loop_low_power);
   set_ccr(0x00);
-  drv_rtc_get_time((uint8_t *)&DAT_f7a4, (uint8_t *)&DAT_f7a5,
-                   (uint8_t *)&DAT_f7a6);
+  drv_rtc_get_time((uint8_t *)&rtcSec, (uint8_t *)&rtcMin,
+                   (uint8_t *)&rtcHour);
 }
 
 // ROM: 0x03b4  55.4%  saves: er2,r3,er4,er5,er6 -> sys_epilogue_0700
@@ -178,12 +178,12 @@ void ir_parse_rx_packet(void) {
     bcd = (uint16_t)(raw >> 3);
     tens = bcd / 10;
     units = bcd - (tens * 10);
-    DAT_f7a8 = (uint8_t)((tens << 4) | units);
+    scheduledNotifyHour = (uint8_t)((tens << 4) | units);
   }
 
-  poke_ptr = DAT_f846;
+  poke_ptr = peerRcvdRtcTime;
   if (poke_ptr != 0) {
-    DAT_f788 = poke_ptr;
+    rtcTime = poke_ptr;
     drv_rtc_set_time(poke_ptr);
   }
 }
@@ -236,7 +236,6 @@ void ir_comm_loop(void) {
   uint8_t phase;
   uint16_t crcExpected;
   uint16_t crcCalc;
-  uint32_t sessionKey;
 
   sys_wdt_kick();
   {
@@ -247,7 +246,7 @@ void ir_comm_loop(void) {
   if (SSR3_BIT.RDRF) {
     if (cmdPos_local >= 0x88) {
       rdr_data = RDR3;
-      DAT_f7ad = 0x08;
+      irResultCode = 0x08;
       goto do_action;
     }
     recvByte = RDR3 ^ 0xAA;
@@ -263,15 +262,15 @@ void ir_comm_loop(void) {
     goto long_timeout;
   if (cmdPos_local == 0)
     goto finish_no_action;
-  *(uint8_t *)&DAT_f8c3 |= 0x01;
+  irPacketReceivedFlag_BIT.b0 = 1;
   if (cmdPos_local == 1) {
     commandPos = 0;
     cmdByte = commandType;
     if (cmdByte != 0xFC)
       goto finish_no_action;
-    phase = DAT_f8be;
+    phase = irHandshakeStep;
     if (phase == 1) {
-      DAT_f8be = 2;
+      irHandshakeStep = 2;
       drv_ir_send_packet(0xFA, 0x00, 2);
     }
     goto finish_no_action;
@@ -288,11 +287,11 @@ void ir_comm_loop(void) {
   commandPos = 0;
   crcCalc = ir_calc_packet_checksum(cmdLen, pktBase);
   if (crcCalc != crcExpected) {
-    DAT_f8c2++;
-    if (DAT_f8c2 < 0x14) {
+    irCrcRetryCount++;
+    if (irCrcRetryCount < 0x14) {
       goto finish_no_action;
     }
-    DAT_f7ad = 2;
+    irResultCode = 2;
     goto do_action;
   }
   *(uint32_t *)((uint8_t *)&commandType + 2) = *(uint32_t *)(pktBase + 4);
@@ -308,16 +307,15 @@ void ir_comm_loop(void) {
     subtype = pktBase[1];
     pktLen2 = (uint8_t)(cmdLen - 8);
     payload = drv_ir_get_rx_ptr();
-    e1val = DAT_f8c6;
+    e1val = irXferRemaining;
     e2val = pktLen2;
-    addr = DAT_f8c8;
+    addr = irXferSrc;
 
     cmdByte = pktBase[0];
     if (cmdByte < 0xF8) {
-      sessionKey = DAT_f8ba;
       if (*(uint32_t *)(pktBase + 4) != sessionKey)
         goto LAB_182e;
-      phase = DAT_f8be;
+      phase = irHandshakeStep;
       if (phase < 3)
         goto LAB_182e;
     }
@@ -325,12 +323,12 @@ void ir_comm_loop(void) {
     switch (cmdByte) {
     case 0xFA:
       if (subtype == 1 || subtype == 2) {
-        phase = DAT_f8be;
+        phase = irHandshakeStep;
         if (phase == 1) {
-          DAT_f8be = 3;
+          irHandshakeStep = 3;
           drv_ir_send_packet(0xF8, 0x00, 2);
           sessionKey = *(uint32_t *)(pktBase + 4);
-          DAT_f8ba = DAT_f8b6 ^ sessionKey;
+          sessionKey = nextSessionKey ^ sessionKey;
           goto LAB_182e;
         }
         if (phase == 4 || phase == 3 || phase == 2) {
@@ -338,58 +336,58 @@ void ir_comm_loop(void) {
         }
         goto LAB_182e;
       }
-      DAT_f7ad = 3;
+      irResultCode = 3;
       goto LAB_14bc;
 
     case 0xF8:
       if (subtype != 2) {
-        DAT_f7ad = 3;
+        irResultCode = 3;
         goto LAB_14bc;
       }
-      phase = DAT_f8be;
+      phase = irHandshakeStep;
       if (phase >= 3) {
         goto LAB_182e;
       }
       sessionKey = *(uint32_t *)(pktBase + 4);
-      DAT_f8ba = DAT_f8b6 ^ sessionKey;
-      DAT_f8be = 4;
-      save_read_reliable(0x00ED, 0x01ED, (void *)DAT_f84e, 0x68);
+      sessionKey = nextSessionKey ^ sessionKey;
+      irHandshakeStep = 4;
+      save_read_reliable(EEPROM_TRAINER_REC, EEPROM_TRAINER_REC_BACKUP, (void *)trainerRecBuf, 0x68);
       drv_ir_send_packet(0x10, 0x68, 2);
-      gCurSubstateY &= ~0x01;
+      gCurSubstateY_BIT.b0 = 0;
       goto LAB_182e;
 
     case 0x10:
-      gCurSubstateY |= 0x01;
+      gCurSubstateY_BIT.b0 = 1;
       memcpy(payload, (void *)DAT_f7e6, 0x68);
-      save_read_reliable(0x00ED, 0x01ED, (void *)DAT_f84e, 0x68);
+      save_read_reliable(EEPROM_TRAINER_REC, EEPROM_TRAINER_REC_BACKUP, (void *)trainerRecBuf, 0x68);
       if (!(*(uint8_t *)(payload + 0x5B) & 0x01)) {
         drv_ir_send_packet(0x12, 0x68, 2);
-        DAT_f7ad = 3;
+        irResultCode = 3;
         goto LAB_14bc;
       }
       if (!(DAT_f841 & 0x01)) {
         drv_ir_send_packet(0x12, 0x68, 2);
-        DAT_f7ad = 3;
+        irResultCode = 3;
         goto LAB_14bc;
       }
       if (!(DAT_f841 & 0x02)) {
         drv_ir_send_packet(0x12, 0x68, 2);
-        DAT_f7ad = 3;
+        irResultCode = 3;
         goto LAB_14bc;
       }
       if (*(uint8_t *)(payload + 0x5C) != DAT_f842) {
         drv_ir_send_packet(0x12, 0x68, 2);
-        DAT_f7ad = 3;
+        irResultCode = 3;
         goto LAB_14bc;
       }
       if (DAT_f844 != 0) {
         drv_ir_send_packet(0x12, 0x68, 2);
-        DAT_f7ad = 3;
+        irResultCode = 3;
         goto LAB_14bc;
       }
       if (!(*(uint8_t *)(payload + 0x5B) & 0x02)) {
         drv_ir_send_packet(0x12, 0x68, 2);
-        DAT_f7ad = 4;
+        irResultCode = 4;
         goto LAB_14bc;
       }
       game_find_seen_peer((void *)(DAT_f7e6 + 0x10));
@@ -398,80 +396,80 @@ void ir_comm_loop(void) {
 
     case 0x12:
       memcpy(payload, (void *)DAT_f7e6, 0x68);
-      save_read_reliable(0x00ED, 0x01ED, (void *)DAT_f84e, 0x68);
+      save_read_reliable(EEPROM_TRAINER_REC, EEPROM_TRAINER_REC_BACKUP, (void *)trainerRecBuf, 0x68);
       if (!(*(uint8_t *)(payload + 0x5B) & 0x01)) {
-        DAT_f7ad = 3;
+        irResultCode = 3;
         goto LAB_14bc;
       }
       if (!(DAT_f841 & 0x01)) {
-        DAT_f7ad = 3;
+        irResultCode = 3;
         goto LAB_14bc;
       }
       if (!(DAT_f841 & 0x02)) {
-        DAT_f7ad = 3;
+        irResultCode = 3;
         goto LAB_14bc;
       }
       if (*(uint8_t *)(payload + 0x5C) != DAT_f842) {
-        DAT_f7ad = 3;
+        irResultCode = 3;
         goto LAB_14bc;
       }
       if (DAT_f844 != 0) {
-        DAT_f7ad = 3;
+        irResultCode = 3;
         goto LAB_14bc;
       }
       if (!(*(uint8_t *)(payload + 0x5B) & 0x02)) {
-        DAT_f7ad = 4;
+        irResultCode = 4;
         goto LAB_14bc;
       }
       game_find_seen_peer((void *)(DAT_f7e6 + 0x10));
-      DAT_f8c5 = 1;
-      *(uint16_t *)&DAT_f8c8 = 0x91BE;
-      *(uint16_t *)&DAT_f8ca = 0xF400;
-      DAT_f8c6 = 0x180;
-      DAT_f8cc = 0;
+      irSessionPhase = 1;
+      *(uint16_t *)&irXferSrc = 0x91BE;
+      *(uint16_t *)&irXferDst = 0xF400;
+      irXferRemaining = 0x180;
+      irXferChunkCount = 0;
       goto start_eeprom_tx;
 
     case 0x14:
-      if (gCurSubstateY & 0x01) {
+      if (gCurSubstateY_BIT.b0) {
         drv_eeprom_write_block(0xF6C0, payload, 0x38);
         *(payload + 0x36) = (uint8_t)((*(payload + 0x36) & ~(0x03 << 5)) |
                                       (((uint8_t)(cmdLen - 8) & 3) << 5));
         drv_ir_send_packet(0x14, 0x38, 2);
       } else {
-        drv_eeprom_write_block(DAT_f8ca, payload, 0x80);
+        drv_eeprom_write_block(irXferDst, payload, 0x80);
         drv_ir_send_packet(0x16, 0x00, 2);
         goto LAB_182a_send;
       }
       goto LAB_182e;
 
     case 0x16:
-      if (gCurSubstateY & 0x01) {
+      if (gCurSubstateY_BIT.b0) {
         drv_ir_send_packet(0x16, 0x00, 2);
       }
       cmdByte = 0x16;
       goto LAB_1252;
 
     case 0x1C:
-      DAT_f7ad = 5;
+      irResultCode = 5;
       goto LAB_14bc;
 
     case 0x20:
-      save_read_reliable(0x00ED, 0x01ED, (void *)DAT_f84e, 0x68);
+      save_read_reliable(EEPROM_TRAINER_REC, EEPROM_TRAINER_REC_BACKUP, (void *)trainerRecBuf, 0x68);
       *(uint32_t *)(payload + 0x64) = totalSteps;
-      save_write_reliable(0x00ED, 0x01ED, (void *)DAT_f84e, 0x68);
-      drv_eeprom_write_block(0x8F00, &watts, 2);
-      memcpy(payload, (void *)DAT_f84e, 0x68);
+      save_write_reliable(EEPROM_TRAINER_REC, EEPROM_TRAINER_REC_BACKUP, (void *)trainerRecBuf, 0x68);
+      drv_eeprom_write_block(EEPROM_TRAINER_PROFILE, &watts, 2);
+      memcpy(payload, (void *)trainerRecBuf, 0x68);
       drv_ir_send_packet(0x22, 0x68, 2);
       goto LAB_182a_send;
 
     case 0x32:
       ir_parse_rx_packet();
-      save_write_reliable(0x00ED, 0x01ED, (void *)DAT_f84e, 0x68);
+      save_write_reliable(EEPROM_TRAINER_REC, EEPROM_TRAINER_REC_BACKUP, (void *)trainerRecBuf, 0x68);
       drv_ir_send_packet(0x34, 0x00, 2);
       goto LAB_182a_send;
 
     case 0x36:
-      DAT_f7ad = 3;
+      irResultCode = 3;
       goto LAB_14bc;
 
     case 0x38:
@@ -481,12 +479,12 @@ void ir_comm_loop(void) {
 
     case 0x40:
       ir_parse_rx_packet();
-      save_write_reliable(0x00ED, 0x01ED, (void *)DAT_f84e, 0x68);
+      save_write_reliable(EEPROM_TRAINER_REC, EEPROM_TRAINER_REC_BACKUP, (void *)trainerRecBuf, 0x68);
       drv_ir_send_packet(0x42, 0x00, 2);
       goto LAB_182a_send;
 
     case 0x44:
-      DAT_f7ad = 3;
+      irResultCode = 3;
       goto LAB_14bc;
 
     case 0x4E:
@@ -496,7 +494,7 @@ void ir_comm_loop(void) {
 
     case 0x52:
       ir_parse_rx_packet();
-      save_write_reliable(0x00ED, 0x01ED, (void *)DAT_f84e, 0x68);
+      save_write_reliable(EEPROM_TRAINER_REC, EEPROM_TRAINER_REC_BACKUP, (void *)trainerRecBuf, 0x68);
       drv_ir_send_packet(0x54, 0x00, 2);
       goto LAB_182a_send;
 
@@ -506,12 +504,12 @@ void ir_comm_loop(void) {
       goto LAB_1252;
 
     case 0x56:
-      DAT_f7ad = 3;
+      irResultCode = 3;
       goto LAB_14bc;
 
     case 0x60:
       ir_parse_rx_packet();
-      save_read_reliable(0x00ED, 0x01ED, (void *)DAT_f84e, 0x68);
+      save_read_reliable(EEPROM_TRAINER_REC, EEPROM_TRAINER_REC_BACKUP, (void *)trainerRecBuf, 0x68);
       drv_ir_send_packet(0x62, 0x00, 2);
       goto LAB_182a_send;
 
@@ -521,7 +519,7 @@ void ir_comm_loop(void) {
       goto LAB_15e4;
 
     case 0x64:
-      DAT_f7ad = 3;
+      irResultCode = 3;
       goto LAB_14bc;
 
     case 0xC0: {
@@ -591,7 +589,7 @@ void ir_comm_loop(void) {
     }
       save_set_event_bit(NULL, 0);
       RamCache_settingsByte |= 0x01;
-      save_write_reliable(0x00ED, 0x01ED, (void *)DAT_f84e, 0x68);
+      save_write_reliable(EEPROM_TRAINER_REC, EEPROM_TRAINER_REC_BACKUP, (void *)trainerRecBuf, 0x68);
       drv_ir_send_packet(0xC6, 0x00, 2);
       cmdByte = 0xC6;
       goto LAB_1252;
@@ -603,13 +601,13 @@ void ir_comm_loop(void) {
     }
       save_set_event_bit(NULL, 0);
       RamCache_settingsByte |= 0x01;
-      save_write_reliable(0x00ED, 0x01ED, (void *)DAT_f84e, 0x68);
+      save_write_reliable(EEPROM_TRAINER_REC, EEPROM_TRAINER_REC_BACKUP, (void *)trainerRecBuf, 0x68);
       drv_ir_send_packet(0xC6, 0x00, 2);
       cmdByte = 0xC6;
       goto LAB_1252;
 
     case 0xD8:
-      DAT_f7ad = 3;
+      irResultCode = 3;
       goto LAB_14bc;
 
     case 0x24:
@@ -623,8 +621,8 @@ void ir_comm_loop(void) {
       if (cmdByte == 0x80) {
         drv_eeprom_write_page(read_addr, payload);
       } else {
-        sys_lzss_decode((uint8_t *)payload, (uint8_t *)&DAT_f956);
-        drv_eeprom_write_page(read_addr, (void *)&DAT_f956);
+        sys_lzss_decode((uint8_t *)payload, eepromPageScratch);
+        drv_eeprom_write_page(read_addr, eepromPageScratch);
       }
       goto LAB_17ee;
     }
@@ -638,7 +636,7 @@ void ir_comm_loop(void) {
 
     case 0x04:
       if (e1val == 0) {
-        phase = DAT_f8c5;
+        phase = irSessionPhase;
         if (phase == 1)
           goto handle_0x04_phase1;
         if (phase == 3)
@@ -647,34 +645,34 @@ void ir_comm_loop(void) {
           goto handle_0x04_phase5;
         goto LAB_182e;
       } else {
-        DAT_f8c6 = e1val;
+        irXferRemaining = e1val;
         if (e1val <= 0x80)
           goto start_eeprom_tx;
         goto LAB_1362;
       }
 
     handle_0x04_phase1:
-      DAT_f8c5 = 3;
-      *(uint16_t *)&DAT_f8c8 = 0x993E;
-      *(uint16_t *)&DAT_f8ca = (uint16_t)DAT_f580;
-      DAT_f8c6 = 0x140;
-      DAT_f8cc = 0;
+      irSessionPhase = 3;
+      *(uint16_t *)&irXferSrc = 0x993E;
+      *(uint16_t *)&irXferDst = (uint16_t)DAT_f580;
+      irXferRemaining = 0x140;
+      irXferChunkCount = 0;
       goto start_eeprom_tx;
 
     handle_0x04_phase3:
-      DAT_f8c5 = 5;
-      *(uint16_t *)&DAT_f8c8 = 0xCC00;
-      *(uint16_t *)&DAT_f8ca = 0xDC00;
-      DAT_f8c6 = 0x224;
-      DAT_f8cc = 0;
+      irSessionPhase = 5;
+      *(uint16_t *)&irXferSrc = 0xCC00;
+      *(uint16_t *)&irXferDst = 0xDC00;
+      irXferRemaining = 0x224;
+      irXferChunkCount = 0;
       goto start_eeprom_tx;
 
     handle_0x04_phase5:
-      DAT_f8c5 = 2;
-      *(uint16_t *)&DAT_f8c8 = 0x91BE;
-      *(uint16_t *)&DAT_f8ca = 0xF400;
-      DAT_f8c6 = 0x180;
-      DAT_f8cc = 0;
+      irSessionPhase = 2;
+      *(uint16_t *)&irXferSrc = 0x91BE;
+      *(uint16_t *)&irXferDst = 0xF400;
+      irXferRemaining = 0x180;
+      irXferChunkCount = 0;
       goto start_eeprom_tx_alt;
 
     case 0xA0:
@@ -732,24 +730,24 @@ void ir_comm_loop(void) {
 
     case 0x9E:
       drv_ir_send_packet(0x9E, 0x00, 2);
-      DAT_f7ad = 7;
+      irResultCode = 7;
       goto LAB_14bc;
 
     case 0x9C:
       drv_ir_send_packet(0x9C, 0x00, 2);
-      DAT_f7ad = 7;
+      irResultCode = 7;
       goto LAB_14bc;
 
     case 0xF0:
-      save_write_reliable(0x00ED, 0x01ED, (void *)DAT_f84e, 0x68);
+      save_write_reliable(EEPROM_TRAINER_REC, EEPROM_TRAINER_REC_BACKUP, (void *)trainerRecBuf, 0x68);
       drv_eeprom_write_block(addr, payload, 0x80);
       gCurSubstateZ = 1;
       REQUESTED_POKEMON_ACTION_TYPE = 0xF0;
       {
         uint8_t giftType = *(uint8_t *)(payload + 0x70);
         if (giftType == 1) {
-          save_write_reliable(0x0156, 0x0256, (void *)&totalSteps, 0x18);
-          save_read_reliable(0x00ED, 0x01ED, (void *)DAT_f84e, 0x68);
+          save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (void *)&totalSteps, 0x18);
+          save_read_reliable(EEPROM_TRAINER_REC, EEPROM_TRAINER_REC_BACKUP, (void *)trainerRecBuf, 0x68);
         }
       }
       drv_ir_send_packet(0xF0, 0x28, 2);
@@ -770,13 +768,13 @@ void ir_comm_loop(void) {
       break;
 
     case 0x2A:
-      save_read_reliable(0x00ED, 0x01ED, (void *)DAT_f84e, 0x68);
+      save_read_reliable(EEPROM_TRAINER_REC, EEPROM_TRAINER_REC_BACKUP, (void *)trainerRecBuf, 0x68);
       drv_ir_send_packet(0x2A, 0x28, 2);
       cmdByte = 0x2A;
       goto LAB_15e4;
 
     case 0x2C:
-      save_read_reliable(0x00ED, 0x01ED, (void *)DAT_f84e, 0x68);
+      save_read_reliable(EEPROM_TRAINER_REC, EEPROM_TRAINER_REC_BACKUP, (void *)trainerRecBuf, 0x68);
       drv_ir_send_packet(0x2A, 0x28, 2);
       cmdByte = 0x2C;
       goto LAB_15e4;
@@ -790,17 +788,17 @@ void ir_comm_loop(void) {
 
     case 0x0E:
       drv_eeprom_write_block(addr, payload, 0x80);
-      DAT_f8c8 += e2val;
-      DAT_f8ca += e2val;
-      DAT_f8c6 -= e2val;
-      DAT_f8cc++;
-      if (DAT_f8c6 == 0) {
-        if (DAT_f8c5 == 2) {
-          DAT_f8c5 = 4;
-          *(uint16_t *)&DAT_f8c8 = 0x993E;
-          *(uint16_t *)&DAT_f8ca = (uint16_t)DAT_f580;
-          DAT_f8c6 = 0x140;
-          DAT_f8cc = 0;
+      irXferSrc += e2val;
+      irXferDst += e2val;
+      irXferRemaining -= e2val;
+      irXferChunkCount++;
+      if (irXferRemaining == 0) {
+        if (irSessionPhase == 2) {
+          irSessionPhase = 4;
+          *(uint16_t *)&irXferSrc = 0x993E;
+          *(uint16_t *)&irXferDst = (uint16_t)DAT_f580;
+          irXferRemaining = 0x140;
+          irXferChunkCount = 0;
           goto start_eeprom_tx;
         }
       }
@@ -813,7 +811,7 @@ void ir_comm_loop(void) {
     case 0x06: {
       uint8_t i = 0;
       uint8_t *src = payload + 1;
-      uint8_t *dst = (uint8_t *)DAT_f8ca;
+      uint8_t *dst = (uint8_t *)irXferDst;
       while (i < (uint8_t)(pktLen2 - 1)) {
         *dst++ = *src++;
         i++;
@@ -828,11 +826,11 @@ void ir_comm_loop(void) {
   }
 
 long_timeout:
-  DAT_f8bf++;
-  if (DAT_f8be < 3 && DAT_f8bf < 0x14) {
+  irTimeoutRetryCount++;
+  if (irHandshakeStep < 3 && irTimeoutRetryCount < 0x14) {
     goto LAB_0980_retry;
   }
-  DAT_f7ad = (*(uint8_t *)&DAT_f8c3 & 0x01) ? 2 : 1;
+  irResultCode = irPacketReceivedFlag_BIT.b0 ? 2 : 1;
   goto do_action;
 
 LAB_0980_retry: {
@@ -843,7 +841,7 @@ LAB_0980_retry: {
   while ((uint16_t)(TCNT - tcntSnap) < (uint16_t)r)
     ;
 }
-  DAT_f8be = 1;
+  irHandshakeStep = 1;
   drv_ir_tx_u8(0xFC);
   goto LAB_182e;
 
@@ -855,7 +853,7 @@ retry_with_random_delay: {
   while ((uint16_t)(TCNT - tcntSnap) < (uint16_t)r)
     ;
 }
-  DAT_f8be = 1;
+  irHandshakeStep = 1;
   drv_ir_tx_u8(0xFC);
   goto LAB_182e;
 
@@ -863,14 +861,14 @@ LAB_1362:
 start_eeprom_tx:
 start_eeprom_tx_alt:
 LAB_17b0: {
-  uint16_t chunk = (DAT_f8c6 > 0x80) ? 0x80 : DAT_f8c6;
-  drv_eeprom_read_block(0x8F00, &watts, 2);
+  uint16_t chunk = (irXferRemaining > 0x80) ? 0x80 : irXferRemaining;
+  drv_eeprom_read_block(EEPROM_TRAINER_PROFILE, &watts, 2);
   DAT_f88e[0] = (uint8_t)((watts / 20) & 0xFF);
-  drv_eeprom_write_block(0x8F00, &watts, 2);
+  drv_eeprom_write_block(EEPROM_TRAINER_PROFILE, &watts, 2);
   {
     uint8_t *p = drv_ir_get_rx_ptr();
-    p[0] = (uint8_t)(DAT_f8c8 >> 8);
-    p[1] = (uint8_t)(DAT_f8c8);
+    p[0] = (uint8_t)(irXferSrc >> 8);
+    p[1] = (uint8_t)(irXferSrc);
     p[2] = (uint8_t)chunk;
   }
   drv_ir_send_packet(0x0C, 0x03, 2);
@@ -878,7 +876,7 @@ LAB_17b0: {
 }
 
 LAB_17ea:
-  drv_eeprom_write_block(0x8F00, &watts, 2);
+  drv_eeprom_write_block(EEPROM_TRAINER_PROFILE, &watts, 2);
 LAB_17ee:
   drv_ir_send_packet(0x04, 0x00, 2);
   goto LAB_182e;

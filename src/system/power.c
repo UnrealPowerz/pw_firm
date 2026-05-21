@@ -2,7 +2,7 @@
 
 // ROM: 0x6b4c  83.0%
 void sys_enter_standby(void) {
-  if (!(DAT_f7d1 & 0x04)) {
+  if (!DAT_f7d1_BIT.b2) {
     gCurSubstateA += 0xFC;
     if (gCurSubstateA <= 0x20) {
       gCurSubstateA = 0x20;
@@ -10,14 +10,14 @@ void sys_enter_standby(void) {
   } else {
     gCurSubstateA += 0x04;
     if (gCurSubstateA >= 0x60) {
-      DAT_f7d1 |= 0x02;
-      DAT_f7d1 &= ~0x04;
+      DAT_f7d1_BIT.b1 = 1;
+      DAT_f7d1_BIT.b2 = 0;
     }
   }
   if (statusFlags_BIT.sleeping) {
     if (gCurSubstateA <= 0x20) {
-      DAT_f7d1 |= 0x04;
-      DAT_f7d1 |= 0x01;
+      DAT_f7d1_BIT.b2 = 1;
+      DAT_f7d1_BIT.b0 = 1;
     }
   }
 }
@@ -25,10 +25,10 @@ void sys_enter_standby(void) {
 // ROM: 0x6ba0  85.6%
 void sys_update_standby_state(void) {
   uint8_t s;
-  if ((DAT_f7ac & 0x03) != 0) {
+  if ((animTick & 0x03) != 0) {
     return;
   }
-  if (!(DAT_f7d1 & 0x04)) {
+  if (!DAT_f7d1_BIT.b2) {
     s = gCurSubstateA + 0xFC;
     gCurSubstateA = s;
     if (s > 0x20)
@@ -43,12 +43,13 @@ void sys_update_standby_state(void) {
   s = 0x40;
 LAB_6bd2:
   gCurSubstateA = s;
-  DAT_f7d1 ^= 0x04;
+  DAT_f7d1 ^= 0x04;  /* ROM emits `bnot #2,@r0`; ch38 doesn't pattern-match
+                        either `^= 0x04` or `bN = !bN` to bnot */
 LAB_6bde:
   if (!(statusFlags_BIT.sleeping)) {
     gCurSubstateA = 0x68;
-    DAT_f7d1 &= ~0x02;
-    DAT_f7d1 &= ~0x04;
+    DAT_f7d1_BIT.b1 = 0;
+    DAT_f7d1_BIT.b2 = 0;
   }
 }
 

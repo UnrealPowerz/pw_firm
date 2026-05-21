@@ -4,6 +4,7 @@
 #include "globals.h"
 #include "iodefine.h"
 #include "types.h"
+#include "eeprom_layout.h"
 #include <_h_c_lib.h>
 #include <machine.h>
 

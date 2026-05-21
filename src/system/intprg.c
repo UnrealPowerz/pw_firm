@@ -48,13 +48,13 @@ __interrupt(vect=24) void drv_rtc_handle_half_sec(void) { RTCFLG &= ~0x02; }
 __interrupt(vect=25) void drv_rtc_handle_sec(void) {
     uint8_t sec = RSECDR;
     if (!(sec & 0x80)) {
-        DAT_f7a4 = sec;
+        rtcSec = sec;
     }
-    DAT_f788++;
-    if (DAT_f7a2 < 0xE10) {
-        DAT_f7a2++;
+    rtcTime++;
+    if (idleSeconds < 0xE10) {
+        idleSeconds++;
     } else {
-        DAT_f7a2 = 0xE10;
+        idleSeconds = 0xE10;
     }
     if (activityTimer != 0) {
         activityTimer--;
@@ -69,9 +69,9 @@ __interrupt(vect=25) void drv_rtc_handle_sec(void) {
 __interrupt(vect=26) void drv_rtc_handle_min(void) {
     uint8_t min = RMINDR;
     if (!(min & 0x80)) {
-        DAT_f7a5 = min;
+        rtcMin = min;
     }
-    DAT_f7a7 |= 0x01;
+    pedTaskFlags |= 0x01;
     RTCFLG &= ~0x08;
 }
 
@@ -79,9 +79,9 @@ __interrupt(vect=26) void drv_rtc_handle_min(void) {
 __interrupt(vect=27) void drv_rtc_handle_hour(void) {
     uint8_t hr = RHRDR;
     if (!(hr & 0x80)) {
-        DAT_f7a6 = RHRDR;
+        rtcHour = RHRDR;
     }
-    DAT_f7a7 |= 0x02;
+    pedTaskFlags |= 0x02;
     RTCFLG &= ~0x10;
 }
 

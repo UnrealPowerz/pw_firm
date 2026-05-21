@@ -37,7 +37,7 @@ void drv_rtc_load(void) {
     sys_delay_short();
     i--;
   } while (i != 0);
-  drv_rtc_set_time(DAT_f788);
+  drv_rtc_set_time(rtcTime);
 }
 
 // ROM: 0x0078  97.7%
@@ -72,9 +72,9 @@ void drv_rtc_set_time(uint32_t time_sec) {
   hr_bcd = (uint8_t)((rem / 10) * 16);
   hr_bcd |= (uint8_t)(rem % 10);
 
-  DAT_f7a6 = hr_bcd;
-  DAT_f7a5 = min_bcd;
-  DAT_f7a4 = sec_bcd;
+  rtcHour = hr_bcd;
+  rtcMin = min_bcd;
+  rtcSec = sec_bcd;
 
   CKSTPR1 |= 0x01;
   RTCCR1 &= ~0x80;

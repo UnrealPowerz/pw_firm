@@ -5,7 +5,7 @@ void save_write_magic(void) {
   uint8_t i;
   i = 0;
   do {
-    drv_eeprom_write_u8(i, ((uint8_t *)0xBF98)[i]);
+    drv_eeprom_write_u8(i, nintendoMagic[i]);
     i++;
   } while (i < 8);
 }
@@ -19,7 +19,7 @@ uint8_t save_verify_magic(void) {
   i = 0;
   do {
     eep_val = drv_eeprom_read_u8(i);
-    rom_val = (int16_t)(int8_t)((uint8_t *)0xBF98)[i];
+    rom_val = (int16_t)(int8_t)nintendoMagic[i];
     if ((int16_t)(uint16_t)eep_val != rom_val) {
       return 0;
     }
@@ -36,11 +36,11 @@ void sys_factory_reset_eeprom(uint8_t b, uint8_t a) {
   uint16_t i;
 
   sessionSteps = zero;
-  DAT_f7a0 = 0;
+  recentSessionSteps = 0;
   walker_status_flags &= ~0x06;
 
   ptr = (uint8_t *)drv_ir_get_rx_ptr();
-  save_read_reliable(0x00ED, 0x01ED, ptr, 0x68);
+  save_read_reliable(EEPROM_TRAINER_REC, EEPROM_TRAINER_REC_BACKUP, ptr, 0x68);
 
   *((uint32_t *)(ptr)) = zero;
   *((uint32_t *)(ptr + 4)) = zero;
@@ -68,15 +68,15 @@ void sys_factory_reset_eeprom(uint8_t b, uint8_t a) {
   ptr[0x5F] = 2;
   *((uint32_t *)(ptr + 0x60)) = zero;
 
-  save_read_reliable(0x0083, 0x0183, ptr + 0x28, 0x10);
+  save_read_reliable(EEPROM_RESV_0083, EEPROM_RESV_0083_BACKUP, ptr + 0x28, 0x10);
   if (a) {
     *((uint32_t *)(ptr + 0x64)) = zero;
   }
-  save_write_reliable(0x00ED, 0x01ED, ptr, 0x68);
+  save_write_reliable(EEPROM_TRAINER_REC, EEPROM_TRAINER_REC_BACKUP, ptr, 0x68);
   game_reset_step_data(a);
 
   if (a) {
-    drv_eeprom_fill(0xCE80, 0x0D4C, 0);
+    drv_eeprom_fill(EEPROM_LOG_REGION, 0x0D4C, 0);
   } else {
     save_clear_data();
     save_init_defaults();
@@ -84,10 +84,10 @@ void sys_factory_reset_eeprom(uint8_t b, uint8_t a) {
   }
 
   if (b) {
-    drv_eeprom_fill(0xB800, 0x06C8, 0);
+    drv_eeprom_fill(EEPROM_STEP_HIST_FLAGS, 0x06C8, 0);
   }
 
-  drv_eeprom_fill(0xDE24, 0x1568, 0);
+  drv_eeprom_fill(EEPROM_STEP_HIST, 0x1568, 0);
 }
 
 // ROM: 0xb2e2  81.8%  saves: er4,er5,er6
@@ -95,7 +95,7 @@ void sys_sync_eeprom_on_startup(void) {
   uint8_t magic;
 
   if (save_verify_magic() != 0) {
-    save_read_reliable(0x0156, 0x0256, (void *)&totalSteps, 0x18);
+    save_read_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (void *)&totalSteps, 0x18);
     if ((RamCache_settingsByte & 0x78) > 0x48) {
       RamCache_settingsByte = (RamCache_settingsByte & 0x87) | 0x20;
     }
@@ -107,11 +107,11 @@ void sys_sync_eeprom_on_startup(void) {
     save_write_magic();
   }
 
-  save_read_reliable(0x016F, 0x026F, &magic, 1);
+  save_read_reliable(EEPROM_STAGE_MARKER, EEPROM_STAGE_MARKER_BACKUP, &magic, 1);
   if (magic == 0xA5) {
     save_commit_staged_data();
     magic = 0;
-    save_write_reliable(0x016F, 0x026F, &magic, 1);
+    save_write_reliable(EEPROM_STAGE_MARKER, EEPROM_STAGE_MARKER_BACKUP, &magic, 1);
   }
 }
 
@@ -231,9 +231,9 @@ void save_set_event_bit(void *ptr, uint8_t val) {
     return;
 
   /* This matches the bit-setting logic in assembly */
-  save_read_reliable(0x00ED, 0x01ED, p, 0x68);
+  save_read_reliable(EEPROM_TRAINER_REC, EEPROM_TRAINER_REC_BACKUP, p, 0x68);
   p[0x38 + offset] |= (1 << bit);
-  save_write_reliable(0x00ED, 0x01ED, p, 0x68);
+  save_write_reliable(EEPROM_TRAINER_REC, EEPROM_TRAINER_REC_BACKUP, p, 0x68);
 }
 
 // ROM: 0x1eca  69.1%
@@ -268,7 +268,7 @@ uint8_t save_find_empty_slot_32bit(void *ptr) {
  * Address: 0x187E
  */
 // ROM: 0x187e  72.2%
-void save_clear_data(void) { drv_eeprom_fill(0xCE8C, 0x0064, 0); }
+void save_clear_data(void) { drv_eeprom_fill(EEPROM_LOG_CONTEXT, 0x0064, 0); }
 
 #pragma noregsave(save_init_defaults)
 // ROM: 0x188c  96.9%
@@ -285,4 +285,4 @@ void save_init_defaults(void) {
  * Address: 0x18A8
  */
 // ROM: 0x18a8  72.2%
-void save_delete_step_history(void) { drv_eeprom_fill(0xCEF0, 0x001C, 0); }
+void save_delete_step_history(void) { drv_eeprom_fill(EEPROM_LOG_POKE_STATS, 0x001C, 0); }

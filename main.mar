@@ -296,17 +296,17 @@ LAB_011a:
 LAB_0128:
           jsr         @drv_lcd_init:16
           mov.w       #H'E10, r0
-          mov.w       r0, @DAT_f7a2
+          mov.w       r0, @idleSeconds
           mov.w       #H'101, r0
           bra         LAB_0152:8
 LAB_013a:
           mov.w       #H'E10, r0
-          mov.w       r0, @DAT_f7a2
+          mov.w       r0, @idleSeconds
           mov.w       #H'100, r0
           bra         LAB_0152:8
 LAB_0148:
           mov.w       #H'E10, r0
-          mov.w       r0, @DAT_f7a2
+          mov.w       r0, @idleSeconds
           sub.w       r0, r0
 LAB_0152:
           jsr         @sys_factory_reset_eeprom:16
@@ -426,7 +426,7 @@ LAB_027c:
           mov.b       r0h, @gCurSubstateA
           bra         LAB_02a0:8
 LAB_0282:
-          mov.b       @DAT_f7ad, r0l
+          mov.b       @irResultCode, r0l
           beq         LAB_0296:8
           mov.b       #H'E, r0l
           jsr         @ui_set_view:16
@@ -446,9 +446,9 @@ LAB_02a0:
           mov.w       #sys_main_loop_low_power, r0
           jsr         @sys_set_handler:16
           ldc.b       #H'0, ccr
-          mov.w       #DAT_f7a6, r1
-          mov.w       #DAT_f7a5, e0
-          mov.w       #DAT_f7a4, r0
+          mov.w       #rtcHour, r1
+          mov.w       #rtcMin, e0
+          mov.w       #rtcSec, r0
           jmp         @drv_rtc_get_time:16
 ; =============================================================================
 ; Function: PowerON_Reset
@@ -481,7 +481,7 @@ LAB_02fa:
           inc.w       #1, e0
           cmp.w       #H'3E, e0
           bcs         LAB_02fa:8
-          mov.b       r0l, @DAT_f7a8
+          mov.b       r0l, @scheduledNotifyHour
           mov.w       #statusFlags, r0
           bset        #H'4, @r0
           mov.b       @walker_status_flags, r0l
@@ -493,7 +493,7 @@ LAB_02fa:
           mov.b       #H'5A, r0l
           mov.b       r0l, @stepTimer
           mov.w       #H'E10, r0
-          mov.w       r0, @DAT_f7a2
+          mov.w       r0, @idleSeconds
           jsr         @game_reset_pedometer_flags:16
           jsr         @sys_factory_test:16
           jsr         @sys_wdt_unlock:16
@@ -571,11 +571,11 @@ ir_parse_rx_packet:
           divxs.w     r1, er2
           mov.w       e2, r2
           or.b        r2l, r0l
-          mov.b       r0l, @DAT_f7a8
+          mov.b       r0l, @scheduledNotifyHour
 LAB_040e:
-          mov.l       @DAT_f846, er6
+          mov.l       @peerRcvdRtcTime, er6
           beq         LAB_0422:8
-          mov.l       er6, @DAT_f788
+          mov.l       er6, @rtcTime
           mov.l       er6, er0
           jsr         @drv_rtc_set_time:16
 LAB_0422:
@@ -669,9 +669,9 @@ LAB_04da:
           mov.l       #H'1568DE24, er0
           jsr         @drv_eeprom_fill:16
           sub.w       r0, r0
-          mov.w       r0, @DAT_f7a0
-          mov.w       r0, @DAT_f790
-          mov.b       r0l, @DAT_f793
+          mov.w       r0, @recentSessionSteps
+          mov.w       r0, @sessionTicksElapsed
+          mov.b       r0l, @peerSlotIndex
           mov.w       r0, @watts
           mov.w       #H'18, e1
           mov.w       #totalSteps, r1
@@ -680,7 +680,7 @@ LAB_04da:
           mov.w       #walker_status_flags, r0
           bset        #H'2, @r0
           bset        #H'1, @r0
-          mov.w       #DAT_f84e, r6
+          mov.w       #trainerRecBuf, r6
           mov.w       #H'68, e1
           mov.w       r6, r1
           mov.l       #H'1ED00ED, er0
@@ -775,7 +775,7 @@ game_end_walk:
           mov.w       #RamCache_settingsByte, r0
           bclr        #H'0, @r0
           sub.b       r0l, r0l
-          mov.b       r0l, @DAT_f793
+          mov.b       r0l, @peerSlotIndex
           sub.w       e0, e0
           mov.w       e0, @watts
           mov.w       #H'18, e1
@@ -910,7 +910,7 @@ drv_ir_isr_sci3:
 ; Called by: sys_factory_reset_eeprom, ir_parse_rx_packet, ir_comm_loop
 ; =============================================================================
 drv_ir_get_rx_ptr:
-          mov.w       #TX_PACKET_payload, r0
+          mov.w       #irPacketPayload, r0
           rts
 ; =============================================================================
 ; Function: drv_ir_init_pins
@@ -938,7 +938,7 @@ drv_ir_send_packet:
           mov.w       #commandType, r6
           mov.b       r0h, @er6
           mov.b       r1l, @(H'1,er6)
-          mov.l       @DAT_f8ba, er1
+          mov.l       @sessionKey, er1
           mov.l       er1, @(H'4,er6)
           sub.b       r0h, r0h
           mov.b       r0h, @(H'2,er6)
@@ -1080,24 +1080,24 @@ LAB_087c:
 drv_ir_send_discovery:
           bsr         drv_ir_init_hw:8
           sub.b       r0l, r0l
-          mov.b       r0l, @DAT_f7ad
+          mov.b       r0l, @irResultCode
           mov.l       @nextRandom, er1
-          mov.l       er1, @DAT_f8b6
-          mov.l       @DAT_f8b6, er1
-          mov.l       er1, @DAT_f8ba
+          mov.l       er1, @nextSessionKey
+          mov.l       @nextSessionKey, er1
+          mov.l       er1, @sessionKey
           mov.b       #H'1, r0h
-          mov.b       r0h, @DAT_f8be
-          mov.b       r0l, @DAT_f8bf
-          mov.b       r0l, @DAT_f8c2
+          mov.b       r0h, @irHandshakeStep
+          mov.b       r0l, @irTimeoutRetryCount
+          mov.b       r0l, @irCrcRetryCount
           mov.b       #H'FF, r0h
           mov.b       r0h, @REQUESTED_POKEMON_ACTION_TYPE
-          mov.w       #DAT_f8c3, r1
+          mov.w       #irPacketReceivedFlag, r1
           bclr        #H'0, @r1
           mov.b       r0l, @commandPos
           mov.b       r0l, @DAT_f8c1
           mov.w       @TCNT, e0
           mov.w       e0, @lastCommandTime
-          mov.b       r0l, @DAT_f8c5
+          mov.b       r0l, @irSessionPhase
           mov.b       #H'FC, r0l
           jmp         @drv_ir_tx_u8:16
 ; =============================================================================
@@ -1123,7 +1123,7 @@ ir_comm_loop:
           mov.b       @RDR3:8, r0l
           mov.b       r0l, @rdr_data
           mov.b       #H'8, r0l
-          mov.b       r0l, @DAT_f7ad
+          mov.b       r0l, @irResultCode
           jmp         @LAB_0a74:16
 LAB_090e:
           mov.b       @commandPos, r0l
@@ -1145,25 +1145,25 @@ LAB_0930:
           bls         sys_ir_comm_loop__finishIRComms:16
           cmp.w       #H'C80, e6
           bls         LAB_09d8:16
-          mov.b       @DAT_f8bf, r0l
+          mov.b       @irTimeoutRetryCount, r0l
           inc.b       r0l
-          mov.b       r0l, @DAT_f8bf
-          mov.b       @DAT_f8be, r0l
+          mov.b       r0l, @irTimeoutRetryCount
+          mov.b       @irHandshakeStep, r0l
           cmp.b       #H'3, r0l
           bcc         LAB_0964:8
-          mov.b       @DAT_f8bf, r0l
+          mov.b       @irTimeoutRetryCount, r0l
           cmp.b       #H'14, r0l
           bcs         LAB_0980:8
 LAB_0964:
-          mov.b       @DAT_f8c3, r0l
+          mov.b       @irPacketReceivedFlag, r0l
           bld         #H'0, r0l
           bcc         LAB_0976:8
           mov.b       #H'2, r0l
-          mov.b       r0l, @DAT_f7ad
+          mov.b       r0l, @irResultCode
           jmp         @LAB_0a74:16
 LAB_0976:
           mov.b       #H'1, r0l
-          mov.b       r0l, @DAT_f7ad
+          mov.b       r0l, @irResultCode
           jmp         @LAB_0a74:16
 LAB_0980:
           jsr         @sys_get_rng:16
@@ -1185,7 +1185,7 @@ LAB_09a0:
           cmp.w       e6, r0
           bcs         LAB_09a0:8
           mov.b       #H'1, r0l
-          mov.b       r0l, @DAT_f8be
+          mov.b       r0l, @irHandshakeStep
           mov.b       #H'FC, r0l
           jsr         @drv_ir_tx_u8:16
           mov.w       @TCNT, e6
@@ -1200,7 +1200,7 @@ LAB_09a0:
 LAB_09d8:
           mov.b       r5l, r5l
           beq         sys_ir_comm_loop__finishIRComms:16
-          mov.w       #DAT_f8c3, r0
+          mov.w       #irPacketReceivedFlag, r0
           bset        #H'0, @r0
           mov.b       @commandPos, r0l
           cmp.b       #H'1, r0l
@@ -1210,7 +1210,7 @@ LAB_09d8:
           mov.b       @commandType, r0l
           cmp.b       #H'FC, r0l
           bne         sys_ir_comm_loop__finishIRComms:16
-          mov.b       @DAT_f8be, r0l
+          mov.b       @irHandshakeStep, r0l
           cmp.b       #H'1, r0l
           beq         LAB_0a18:8
           cmp.b       #H'2, r0l
@@ -1221,7 +1221,7 @@ LAB_09d8:
           jmp         @sys_ir_comm_loop__finishIRComms:16
 LAB_0a18:
           mov.b       #H'2, r0l
-          mov.b       r0l, @DAT_f8be
+          mov.b       r0l, @irHandshakeStep
           mov.b       r0l, r1l
           mov.w       #H'FA00, r0
           jsr         @drv_ir_send_packet:16
@@ -1244,13 +1244,13 @@ LAB_0a2c:
           beq         LAB_0a7c:8
           sub.b       r0l, r0l
           mov.b       r0l, @commandPos
-          mov.b       @DAT_f8c2, r0l
+          mov.b       @irCrcRetryCount, r0l
           inc.b       r0l
-          mov.b       r0l, @DAT_f8c2
+          mov.b       r0l, @irCrcRetryCount
           cmp.b       #H'14, r0l
           bcs         sys_ir_comm_loop__finishIRComms:16
           mov.b       #H'2, r0l
-          mov.b       r0l, @DAT_f7ad
+          mov.b       r0l, @irResultCode
 LAB_0a74:
           jsr         @drv_ir_finish_and_execute:16
           jmp         @sys_ir_comm_loop__finishIRComms:16
@@ -1262,13 +1262,13 @@ LAB_0a7c:
           mov.b       @commandPos, r4h
           add.b       #H'F8, r4h
           mov.w       e5, r5
-          add.w       #H'F8CE, r5
+          add.w       #commandType, r5
           cmp.b       #H'F8, r3l
           bcc         LAB_0ab4:8
-          mov.l       @DAT_f8ba, er1
+          mov.l       @sessionKey, er1
           cmp.l       er1, er0
           bne         LAB_182e:16
-          mov.b       @DAT_f8be, r0l
+          mov.b       @irHandshakeStep, r0l
           cmp.b       #H'3, r0l
           bcs         LAB_182e:16
 LAB_0ab4:
@@ -1285,7 +1285,7 @@ LAB_0ab4:
           mov.b       r4h, r0l
           extu.w      r0
           mov.w       r0, e2
-          mov.w       @DAT_f8c6, e1
+          mov.w       @irXferRemaining, e1
           mov.b       r3l, r0l
           cmp.b       #H'FA, r0l
           beq         LAB_0c3c:16
@@ -1410,7 +1410,7 @@ LAB_0c3c:
           cmp.b       #H'2, r4l
           bne         LAB_0cce:16
 LAB_0c46:
-          mov.b       @DAT_f8be, r0l
+          mov.b       @irHandshakeStep, r0l
           cmp.b       #H'1, r0l
           beq         LAB_0c5e:8
           cmp.b       #H'4, r0l
@@ -1422,14 +1422,14 @@ LAB_0c46:
           bra         LAB_0c88:8
 LAB_0c5e:
           mov.b       #H'3, r0l
-          mov.b       r0l, @DAT_f8be
+          mov.b       r0l, @irHandshakeStep
           mov.b       #H'2, r1l
           mov.w       #H'F800, r0
           jsr         @drv_ir_send_packet:16
           mov.l       @(H'2,er7), er0
-          mov.l       @DAT_f8b6, er1
+          mov.l       @nextSessionKey, er1
           xor.l       er1, er0
-          mov.l       er0, @DAT_f8ba
+          mov.l       er0, @sessionKey
           jmp         @LAB_182e:16
 LAB_0c88:
           jsr         @sys_get_rng:16
@@ -1451,7 +1451,7 @@ LAB_0ca8:
           cmp.w       e6, r0
           bcs         LAB_0ca8:8
           mov.b       #H'1, r0l
-          mov.b       r0l, @DAT_f8be
+          mov.b       r0l, @irHandshakeStep
           mov.b       #H'FC, r0l
           jsr         @drv_ir_tx_u8:16
           mov.w       @TCNT, r0
@@ -1459,24 +1459,24 @@ LAB_0ca8:
           jmp         @LAB_182e:16
 LAB_0cce:
           mov.b       #H'3, r0l
-          mov.b       r0l, @DAT_f7ad
+          mov.b       r0l, @irResultCode
           jmp         @LAB_14bc:16
 LAB_0cd8:
           cmp.b       #H'2, r4l
           beq         LAB_0ce6:8
           mov.b       #H'3, r0l
-          mov.b       r0l, @DAT_f7ad
+          mov.b       r0l, @irResultCode
           jmp         @LAB_14bc:16
 LAB_0ce6:
-          mov.b       @DAT_f8be, r0l
+          mov.b       @irHandshakeStep, r0l
           cmp.b       #H'3, r0l
           bcc         LAB_182e:16
           mov.l       @(H'2,er7), er0
-          mov.l       @DAT_f8b6, er1
+          mov.l       @nextSessionKey, er1
           xor.l       er1, er0
-          mov.l       er0, @DAT_f8ba
+          mov.l       er0, @sessionKey
           mov.b       #H'4, r0l
-          mov.b       r0l, @DAT_f8be
+          mov.b       r0l, @irHandshakeStep
           jsr         @drv_ir_get_rx_ptr:16
           mov.w       r0, r1
           mov.w       e4, e1
@@ -1509,7 +1509,7 @@ LAB_0d32:
           mov.w       #H'1268, r0
           jsr         @drv_ir_send_packet:16
           mov.b       #H'3, r0l
-          mov.b       r0l, @DAT_f7ad
+          mov.b       r0l, @irResultCode
           jmp         @LAB_14bc:16
 LAB_0d74:
           mov.b       @DAT_f841, r0l
@@ -1519,7 +1519,7 @@ LAB_0d74:
           mov.w       #H'1268, r0
           jsr         @drv_ir_send_packet:16
           mov.b       #H'3, r0l
-          mov.b       r0l, @DAT_f7ad
+          mov.b       r0l, @irResultCode
           jmp         @LAB_14bc:16
 LAB_0d90:
           bld         #H'1, r0l
@@ -1528,7 +1528,7 @@ LAB_0d90:
           mov.w       #H'1268, r0
           jsr         @drv_ir_send_packet:16
           mov.b       #H'3, r0l
-          mov.b       r0l, @DAT_f7ad
+          mov.b       r0l, @irResultCode
           jmp         @LAB_14bc:16
 LAB_0da8:
           mov.b       @(H'5C,er5), r0l
@@ -1539,7 +1539,7 @@ LAB_0da8:
           mov.w       #H'1268, r0
           jsr         @drv_ir_send_packet:16
           mov.b       #H'3, r0l
-          mov.b       r0l, @DAT_f7ad
+          mov.b       r0l, @irResultCode
           jmp         @LAB_14bc:16
 LAB_0dc8:
           mov.b       @DAT_f844, r0l
@@ -1548,7 +1548,7 @@ LAB_0dc8:
           mov.w       #H'1268, r0
           jsr         @drv_ir_send_packet:16
           mov.b       #H'3, r0l
-          mov.b       r0l, @DAT_f7ad
+          mov.b       r0l, @irResultCode
           jmp         @LAB_14bc:16
 LAB_0de2:
           mov.b       @(H'5B,er5), r0l
@@ -1558,10 +1558,10 @@ LAB_0de2:
           mov.w       #H'1268, r0
           jsr         @drv_ir_send_packet:16
           mov.b       #H'4, r0l
-          mov.b       r0l, @DAT_f7ad
+          mov.b       r0l, @irResultCode
           jmp         @LAB_14bc:16
 LAB_0dfe:
-          mov.w       #H'F7F6, r0
+          mov.w       #g_scratch+H'10, r0
           jsr         @game_find_seen_peer:16
           mov.b       r0l, r0l
           beq         LAB_0e1e:8
@@ -1569,7 +1569,7 @@ LAB_0dfe:
           mov.w       #H'1C00, r0
           jsr         @drv_ir_send_packet:16
           mov.b       #H'5, r0l
-          mov.b       r0l, @DAT_f7ad
+          mov.b       r0l, @irResultCode
           jmp         @LAB_14bc:16
 LAB_0e1e:
           mov.b       #H'2, r1l
@@ -1590,20 +1590,20 @@ LAB_0e28:
           bld         #H'0, r0l
           bcs         LAB_0e58:8
           mov.b       #H'3, r0l
-          mov.b       r0l, @DAT_f7ad
+          mov.b       r0l, @irResultCode
           jmp         @LAB_14bc:16
 LAB_0e58:
           mov.b       @DAT_f841, r0l
           bld         #H'0, r0l
           bcs         LAB_0e6a:8
           mov.b       #H'3, r0l
-          mov.b       r0l, @DAT_f7ad
+          mov.b       r0l, @irResultCode
           jmp         @LAB_14bc:16
 LAB_0e6a:
           bld         #H'1, r0l
           bcs         LAB_0e78:8
           mov.b       #H'3, r0l
-          mov.b       r0l, @DAT_f7ad
+          mov.b       r0l, @irResultCode
           jmp         @LAB_14bc:16
 LAB_0e78:
           mov.b       @(H'5C,er5), r0l
@@ -1611,23 +1611,23 @@ LAB_0e78:
           cmp.b       r0h, r0l
           beq         LAB_0e8e:8
           mov.b       #H'3, r0l
-          mov.b       r0l, @DAT_f7ad
+          mov.b       r0l, @irResultCode
           jmp         @LAB_14bc:16
 LAB_0e8e:
           mov.b       @DAT_f844, r0l
           beq         LAB_0e9e:8
           mov.b       #H'3, r0l
-          mov.b       r0l, @DAT_f7ad
+          mov.b       r0l, @irResultCode
           jmp         @LAB_14bc:16
 LAB_0e9e:
           mov.b       @(H'5B,er5), r0l
           bld         #H'1, r0l
           bcs         LAB_0eb0:8
           mov.b       #H'4, r0l
-          mov.b       r0l, @DAT_f7ad
+          mov.b       r0l, @irResultCode
           jmp         @LAB_14bc:16
 LAB_0eb0:
-          mov.w       #H'F7F6, r0
+          mov.w       #g_scratch+H'10, r0
           jsr         @game_find_seen_peer:16
           mov.b       r0l, r0l
           beq         LAB_0ed0:8
@@ -1635,20 +1635,20 @@ LAB_0eb0:
           mov.w       #H'1C00, r0
           jsr         @drv_ir_send_packet:16
           mov.b       #H'5, r0l
-          mov.b       r0l, @DAT_f7ad
+          mov.b       r0l, @irResultCode
           jmp         @LAB_14bc:16
 LAB_0ed0:
           mov.w       #H'F400, r5
           mov.w       #H'91BE, r0
           mov.b       #H'1, r1l
-          mov.b       r1l, @DAT_f8c5
-          mov.w       r0, @DAT_f8c8
-          mov.w       r5, @DAT_f8ca
+          mov.b       r1l, @irSessionPhase
+          mov.w       r0, @irXferSrc
+          mov.w       r5, @irXferDst
           mov.w       #H'180, r0
-          mov.w       r0, @DAT_f8c6
+          mov.w       r0, @irXferRemaining
           sub.b       r0l, r0l
-          mov.b       r0l, @DAT_f8cc
-          mov.w       @DAT_f8c6, e6
+          mov.b       r0l, @irXferChunkCount
+          mov.w       @irXferRemaining, e6
           cmp.w       #H'80, e6
           bls         LAB_1366:16
           jmp         @LAB_1362:16
@@ -1660,12 +1660,12 @@ LAB_0f04:
           mov.w       #H'38, r1
           mov.w       #H'F6C0, r0
           jsr         @drv_eeprom_write_block:16
-          mov.w       #DAT_f956, r4
+          mov.w       #eepromPageScratch, r4
           jsr         @drv_ir_get_rx_ptr:16
           mov.w       r0, r5
           mov.l       @sessionSteps, er1
           mov.l       er1, @er0
-          mov.w       @DAT_f7a0, e0
+          mov.w       @recentSessionSteps, e0
           mov.w       e0, @(H'4,er0)
           mov.w       #H'8F00, r0
           mov.w       #H'10, r1
@@ -1703,11 +1703,11 @@ LAB_0f04:
           mov.w       e4, e1
           mov.w       e6, e0
           mov.w       e3, r0
-          mov.w       #DAT_f84e, r1
+          mov.w       #trainerRecBuf, r1
           jsr         @save_read_reliable:16
-          mov.l       @DAT_f84e, er0
+          mov.l       @trainerRecBuf, er0
           mov.l       er0, @(H'8,er5)
-          mov.w       @DAT_f856, r0
+          mov.w       @trainerRecBuf_loc, r0
           mov.w       r0, @(H'C,er5)
           sub.w       e6, e6
 LAB_0fc0:
@@ -1741,7 +1741,7 @@ LAB_1006:
           jmp         @LAB_1252:16
 LAB_100c:
           mov.b       #H'5, r0l
-          mov.b       r0l, @DAT_f7ad
+          mov.b       r0l, @irResultCode
           jmp         @LAB_14bc:16
 LAB_1016:
           jsr         @drv_ir_get_rx_ptr:16
@@ -1764,7 +1764,7 @@ LAB_1020:
           mov.w       #watts, e0
           jsr         @drv_eeprom_write_block:16
           mov.w       r5, r0
-          mov.w       #DAT_f84e, r1
+          mov.w       #trainerRecBuf, r1
           mov.w       #H'68, r2
           jsr         @$MVN$3:16
           mov.b       #H'2, r1l
@@ -1781,7 +1781,7 @@ LAB_1072:
           jmp         @LAB_182a:16
 LAB_1092:
           mov.b       #H'3, r0l
-          mov.b       r0l, @DAT_f7ad
+          mov.b       r0l, @irResultCode
           jmp         @LAB_14bc:16
 LAB_109c:
           mov.b       #H'2, r1l
@@ -1800,7 +1800,7 @@ LAB_10ac:
           jmp         @LAB_182a:16
 LAB_10cc:
           mov.b       #H'3, r0l
-          mov.b       r0l, @DAT_f7ad
+          mov.b       r0l, @irResultCode
           jmp         @LAB_14bc:16
 LAB_10d6:
           mov.b       #H'2, r1l
@@ -1825,14 +1825,14 @@ LAB_1106:
           jmp         @LAB_1252:16
 LAB_1116:
           mov.b       #H'3, r0l
-          mov.b       r0l, @DAT_f7ad
+          mov.b       r0l, @irResultCode
           jmp         @LAB_14bc:16
 LAB_1120:
           jsr         @ir_parse_rx_packet:16
           mov.w       e4, e1
           mov.w       e6, e0
           mov.w       e3, r0
-          mov.w       #DAT_f84e, r1
+          mov.w       #trainerRecBuf, r1
           jsr         @save_read_reliable:16
           mov.b       #H'2, r1l
           mov.w       #H'6200, r0
@@ -1845,7 +1845,7 @@ LAB_113c:
           jmp         @LAB_15e4:16
 LAB_114c:
           mov.b       #H'3, r0l
-          mov.b       r0l, @DAT_f7ad
+          mov.b       r0l, @irResultCode
           jmp         @LAB_14bc:16
 LAB_1156:
           mov.w       r6, r0
@@ -1863,7 +1863,7 @@ LAB_116c:
           mov.w       r6, r0
           jsr         @drv_eeprom_write_u8:16
           mov.b       @DAT_f840, r1l
-          mov.w       #DAT_f84e, r0
+          mov.w       #trainerRecBuf, r0
           jsr         @save_set_event_bit:16
           mov.b       #H'2, r1l
           mov.w       #H'C000, r0
@@ -1886,7 +1886,7 @@ LAB_11a6:
           mov.w       r6, r0
           jsr         @drv_eeprom_write_u8:16
           mov.b       @DAT_f840, r1l
-          mov.w       #DAT_f84e, r0
+          mov.w       #trainerRecBuf, r0
           jsr         @save_set_event_bit:16
           mov.b       #H'2, r1l
           mov.w       #H'C200, r0
@@ -1909,7 +1909,7 @@ LAB_11e0:
           mov.w       r6, r0
           jsr         @drv_eeprom_write_u8:16
           mov.b       @DAT_f840, r1l
-          mov.w       #DAT_f84e, r0
+          mov.w       #trainerRecBuf, r0
           jsr         @save_set_event_bit:16
           mov.b       #H'2, r1l
           mov.w       #H'C400, r0
@@ -1932,7 +1932,7 @@ LAB_1218:
           mov.w       r6, r0
           jsr         @drv_eeprom_write_u8:16
           mov.b       @DAT_f840, r1l
-          mov.w       #DAT_f84e, r0
+          mov.w       #trainerRecBuf, r0
           jsr         @save_set_event_bit:16
           mov.w       #RamCache_settingsByte, r0
           bset        #H'0, @r0
@@ -1949,7 +1949,7 @@ LAB_1252:
           jmp         @LAB_14bc:16
 LAB_125a:
           mov.b       #H'3, r0l
-          mov.b       r0l, @DAT_f7ad
+          mov.b       r0l, @irResultCode
           jmp         @LAB_14bc:16
 LAB_1264:
           mov.b       #H'2, r1l
@@ -1967,10 +1967,10 @@ LAB_126e:
           bra         LAB_1290:8
 LAB_1280:
           mov.w       r5, r0
-          mov.w       #DAT_f956, e0
+          mov.w       #eepromPageScratch, e0
           jsr         @sys_lzss_decode:16
           mov.w       e6, r0
-          mov.w       #DAT_f956, e0
+          mov.w       #eepromPageScratch, e0
 LAB_1290:
           jsr         @drv_eeprom_write_page:16
           jmp         @LAB_17ee:16
@@ -1987,7 +1987,7 @@ LAB_1298:
 LAB_12ac:
           mov.w       e1, r0
           bne         LAB_135a:16
-          mov.b       @DAT_f8c5, r0l
+          mov.b       @irSessionPhase, r0l
           cmp.b       #H'1, r0l
           beq         LAB_12c6:8
           cmp.b       #H'3, r0l
@@ -1999,14 +1999,14 @@ LAB_12c6:
           mov.w       #DAT_f580, e6
           mov.w       #H'993E, r5
           mov.b       #H'3, r0l
-          mov.b       r0l, @DAT_f8c5
-          mov.w       r5, @DAT_f8c8
-          mov.w       e6, @DAT_f8ca
+          mov.b       r0l, @irSessionPhase
+          mov.w       r5, @irXferSrc
+          mov.w       e6, @irXferDst
           mov.w       #H'140, r0
-          mov.w       r0, @DAT_f8c6
+          mov.w       r0, @irXferRemaining
           sub.b       r0l, r0l
-          mov.b       r0l, @DAT_f8cc
-          mov.w       @DAT_f8c6, e6
+          mov.b       r0l, @irXferChunkCount
+          mov.w       @irXferRemaining, e6
           cmp.w       #H'80, e6
           bls         LAB_1366:8
           bra         LAB_1362:8
@@ -2014,14 +2014,14 @@ LAB_12f6:
           mov.w       #H'DC00, e6
           mov.w       #H'CC00, r5
           mov.b       #H'5, r0l
-          mov.b       r0l, @DAT_f8c5
-          mov.w       r5, @DAT_f8c8
-          mov.w       e6, @DAT_f8ca
+          mov.b       r0l, @irSessionPhase
+          mov.w       r5, @irXferSrc
+          mov.w       e6, @irXferDst
           mov.w       #H'224, r0
-          mov.w       r0, @DAT_f8c6
+          mov.w       r0, @irXferRemaining
           sub.b       r0l, r0l
-          mov.b       r0l, @DAT_f8cc
-          mov.w       @DAT_f8c6, e6
+          mov.b       r0l, @irXferChunkCount
+          mov.w       @irXferRemaining, e6
           cmp.w       #H'80, e6
           bls         LAB_1366:8
           bra         LAB_1362:8
@@ -2029,14 +2029,14 @@ LAB_1326:
           mov.w       #H'F400, e6
           mov.w       #H'91BE, r5
           mov.b       #H'2, r0l
-          mov.b       r0l, @DAT_f8c5
-          mov.w       r5, @DAT_f8c8
-          mov.w       e6, @DAT_f8ca
+          mov.b       r0l, @irSessionPhase
+          mov.w       r5, @irXferSrc
+          mov.w       e6, @irXferDst
           mov.w       #H'180, r0
-          mov.w       r0, @DAT_f8c6
+          mov.w       r0, @irXferRemaining
           sub.b       r0l, r0l
-          mov.b       r0l, @DAT_f8cc
-          mov.w       @DAT_f8c6, e6
+          mov.b       r0l, @irXferChunkCount
+          mov.w       @irXferRemaining, e6
           cmp.w       #H'80, e6
           bls         LAB_17bc:16
           jmp         @LAB_17b8:16
@@ -2050,9 +2050,9 @@ LAB_1366:
           jsr         @drv_ir_get_rx_ptr:16
           mov.w       r0, e0
           mov.w       e6, r1
-          mov.w       @DAT_f8c8, r0
+          mov.w       @irXferSrc, r0
           jsr         @drv_eeprom_read_block:16
-          mov.w       @DAT_f8ca, r5
+          mov.w       @irXferDst, r5
           mov.b       r5h, r1l
           mov.b       r5l, r0h
           and.b       #H'80, r0h
@@ -2060,18 +2060,18 @@ LAB_1366:
           mov.w       e6, r2
           mov.b       r2l, r0l
           jsr         @drv_ir_send_packet:16
-          mov.w       @DAT_f8c8, r0
+          mov.w       @irXferSrc, r0
           add.w       e6, r0
-          mov.w       r0, @DAT_f8c8
-          mov.w       @DAT_f8ca, r0
+          mov.w       r0, @irXferSrc
+          mov.w       @irXferDst, r0
           add.w       e6, r0
-          mov.w       r0, @DAT_f8ca
-          mov.w       @DAT_f8c6, r0
+          mov.w       r0, @irXferDst
+          mov.w       @irXferRemaining, r0
           sub.w       e6, r0
-          mov.w       r0, @DAT_f8c6
-          mov.b       @DAT_f8cc, r0l
+          mov.w       r0, @irXferRemaining
+          mov.b       @irXferChunkCount, r0l
           inc.b       r0l
-          mov.b       r0l, @DAT_f8cc
+          mov.b       r0l, @irXferChunkCount
           jmp         @LAB_182e:16
 LAB_13b6:
           jsr         @ir_parse_rx_packet:16
@@ -2090,7 +2090,7 @@ LAB_13c2:
           mov.b       @DAT_f840, r0l
           mov.b       r0l, @er4
           mov.b       @DAT_f840, r1l
-          mov.w       #DAT_f84e, r0
+          mov.w       #trainerRecBuf, r0
           jsr         @gfx_xor_rect_ram:16
           mov.b       r0l, r0l
           beq         LAB_1444:8
@@ -2098,7 +2098,7 @@ LAB_13c2:
           mov.w       #H'9E11, r0
           jsr         @drv_ir_send_packet:16
           mov.b       #H'6, r0l
-          mov.b       r0l, @DAT_f7ad
+          mov.b       r0l, @irResultCode
           jmp         @LAB_14bc:16
 LAB_13fe:
           jsr         @ir_parse_rx_packet:16
@@ -2117,7 +2117,7 @@ LAB_140a:
           mov.b       @DAT_f840, r0l
           mov.b       r0l, @er4
           mov.b       @DAT_f840, r1l
-          mov.w       #DAT_f84e, r0
+          mov.w       #trainerRecBuf, r0
           jsr         @gfx_xor_rect_ram:16
           mov.b       r0l, r0l
           beq         LAB_1444:8
@@ -2125,7 +2125,7 @@ LAB_140a:
           mov.w       #H'9E11, r0
           jsr         @drv_ir_send_packet:16
           mov.b       #H'6, r0l
-          mov.b       r0l, @DAT_f7ad
+          mov.b       r0l, @irResultCode
           bra         LAB_14bc:8
 LAB_1444:
           mov.b       r3l, r0h
@@ -2178,14 +2178,14 @@ LAB_149a:
           mov.w       #H'9E00, r0
           jsr         @drv_ir_send_packet:16
           mov.b       #H'7, r0l
-          mov.b       r0l, @DAT_f7ad
+          mov.b       r0l, @irResultCode
           bra         LAB_14bc:8
 LAB_14ac:
           mov.b       #H'2, r1l
           mov.w       #H'9C00, r0
           jsr         @drv_ir_send_packet:16
           mov.b       #H'7, r0l
-          mov.b       r0l, @DAT_f7ad
+          mov.b       r0l, @irResultCode
 LAB_14bc:
           jsr         @drv_ir_finish_and_execute:16
           jmp         @LAB_182e:16
@@ -2228,7 +2228,7 @@ LAB_1524:
           mov.w       e4, e1
           mov.w       r4, e0
           mov.w       e6, r0
-          mov.w       #DAT_f956, r1
+          mov.w       #eepromPageScratch, r1
           jsr         @save_read_reliable:16
           sub.b       r4l, r4l
 LAB_1534:
@@ -2238,7 +2238,7 @@ LAB_1534:
           add.w       r5, r1
           add.w       r0, r1
           mov.b       @er1, r1l
-          mov.b       @(DAT_f956,er0), r0l
+          mov.b       @(eepromPageScratch,er0), r0l
           cmp.b       r0l, r1l
           beq         LAB_1552:8
           sub.b       r0l, r0l
@@ -2325,24 +2325,24 @@ LAB_1618:
           jsr         @drv_ir_get_rx_ptr:16
           mov.w       r2, r1
           mov.w       r0, e0
-          mov.w       @DAT_f8ca, r0
+          mov.w       @irXferDst, r0
           jsr         @drv_eeprom_write_block:16
           mov.w       e2, r0
-          mov.w       @DAT_f8c8, e0
+          mov.w       @irXferSrc, e0
           add.w       r0, e0
-          mov.w       e0, @DAT_f8c8
-          mov.w       @DAT_f8ca, e0
+          mov.w       e0, @irXferSrc
+          mov.w       @irXferDst, e0
           add.w       r0, e0
-          mov.w       e0, @DAT_f8ca
-          mov.w       @DAT_f8c6, e0
+          mov.w       e0, @irXferDst
+          mov.w       @irXferRemaining, e0
           sub.w       r0, e0
-          mov.w       e0, @DAT_f8c6
-          mov.b       @DAT_f8cc, r1l
+          mov.w       e0, @irXferRemaining
+          mov.b       @irXferChunkCount, r1l
           inc.b       r1l
-          mov.b       r1l, @DAT_f8cc
-          mov.w       @DAT_f8c6, e0
+          mov.b       r1l, @irXferChunkCount
+          mov.w       @irXferRemaining, e0
           bne         LAB_17b0:16
-          mov.b       @DAT_f8c5, r1l
+          mov.b       @irSessionPhase, r1l
           cmp.b       #H'2, r1l
           beq         LAB_1672:8
           cmp.b       #H'4, r1l
@@ -2354,14 +2354,14 @@ LAB_1672:
           mov.w       #DAT_f580, r5
           mov.w       #H'993E, r0
           mov.b       #H'4, r1l
-          mov.b       r1l, @DAT_f8c5
-          mov.w       r0, @DAT_f8c8
-          mov.w       r5, @DAT_f8ca
+          mov.b       r1l, @irSessionPhase
+          mov.w       r0, @irXferSrc
+          mov.w       r5, @irXferDst
           mov.w       #H'140, r0
-          mov.w       r0, @DAT_f8c6
+          mov.w       r0, @irXferRemaining
           sub.b       r0l, r0l
-          mov.b       r0l, @DAT_f8cc
-          mov.w       @DAT_f8c6, e6
+          mov.b       r0l, @irXferChunkCount
+          mov.w       @irXferRemaining, e6
           cmp.w       #H'80, e6
           bls         LAB_17bc:16
           jmp         @LAB_17b8:16
@@ -2369,24 +2369,24 @@ LAB_16a6:
           mov.w       #H'DC00, r5
           mov.w       #H'CC00, e6
           mov.b       #H'6, r0l
-          mov.b       r0l, @DAT_f8c5
-          mov.w       e6, @DAT_f8c8
-          mov.w       r5, @DAT_f8ca
+          mov.b       r0l, @irSessionPhase
+          mov.w       e6, @irXferSrc
+          mov.w       r5, @irXferDst
           mov.w       #H'224, r0
-          mov.w       r0, @DAT_f8c6
+          mov.w       r0, @irXferRemaining
           sub.b       r0l, r0l
-          mov.b       r0l, @DAT_f8cc
-          mov.w       @DAT_f8c6, e6
+          mov.b       r0l, @irXferChunkCount
+          mov.w       @irXferRemaining, e6
           cmp.w       #H'80, e6
           bls         LAB_17bc:16
           jmp         @LAB_17b8:16
 LAB_16da:
-          mov.w       #DAT_f956, r4
+          mov.w       #eepromPageScratch, r4
           jsr         @drv_ir_get_rx_ptr:16
           mov.w       r0, r5
           mov.l       @sessionSteps, er1
           mov.l       er1, @er0
-          mov.w       @DAT_f7a0, e0
+          mov.w       @recentSessionSteps, e0
           mov.w       e0, @(H'4,er0)
           mov.w       #H'8F00, r0
           mov.w       #H'10, r1
@@ -2424,11 +2424,11 @@ LAB_16da:
           mov.w       e4, e1
           mov.w       e6, e0
           mov.w       e3, r0
-          mov.w       #DAT_f84e, r1
+          mov.w       #trainerRecBuf, r1
           jsr         @save_read_reliable:16
-          mov.l       @DAT_f84e, er0
+          mov.l       @trainerRecBuf, er0
           mov.l       er0, @(H'8,er5)
-          mov.w       @DAT_f856, r0
+          mov.w       @trainerRecBuf_loc, r0
           mov.w       r0, @(H'C,er5)
           sub.w       e6, e6
 LAB_177e:
@@ -2458,7 +2458,7 @@ LAB_17b8:
           mov.w       #H'80, e6
 LAB_17bc:
           jsr         @drv_ir_get_rx_ptr:16
-          mov.w       @DAT_f8c8, r4
+          mov.w       @irXferSrc, r4
           mov.b       r4h, @er0
           mov.b       r4l, @(H'1,er0)
           mov.w       e6, r1
@@ -2676,7 +2676,7 @@ gfx_draw_own_pokemon_small:
           mov.w       #H'C0, r0
           jsr         @sbrk:16
           mov.w       r0, r3
-          mov.b       @DAT_f7ac, r2l
+          mov.b       @animTick, r2l
           and.b       #H'1, r2l
           mov.b       #H'C0, r2h
           mulxu.b     r2h, r2
@@ -2705,7 +2705,7 @@ gfx_draw_own_pokemon_small_flipped:
           mov.w       #H'C0, r0
           jsr         @sbrk:16
           mov.w       r0, r6
-          mov.b       @DAT_f7ac, r5l
+          mov.b       @animTick, r5l
           and.b       #H'1, r5l
           mov.b       #H'C0, r5h
           mulxu.b     r5h, r5
@@ -2743,7 +2743,7 @@ gfx_draw_route_pokemon:
           extu.w      r1
           mov.w       #H'180, e1
           mulxu.w     e1, er1
-          mov.b       @DAT_f7ac, r3l
+          mov.b       @animTick, r3l
           and.b       #H'1, r3l
           mov.b       r3l, r2l
           mov.b       #H'C0, r2h
@@ -2778,7 +2778,7 @@ gfx_draw_peer_pokemon:
           jsr         @sbrk:16
           mov.w       r0, r3
           mov.w       r0, e0
-          mov.b       @DAT_f7ac, r0l
+          mov.b       @animTick, r0l
           and.b       #H'1, r0l
           mov.b       #H'C0, r0h
           mulxu.b     r0h, r0
@@ -3643,7 +3643,7 @@ gfx_draw_text_box:
           jsr         @gfx_add_borders_to_text:16
           mov.b       r3l, r3l
           beq         LAB_215e:8
-          mov.b       @DAT_f7ac, r0l
+          mov.b       @animTick, r0l
           extu.w      r0
           shar.w      r0
           btst        #H'0, r0l
@@ -3797,7 +3797,7 @@ gfx_draw_battery_low:
           mov.b       @statusFlags, r1l
           bld         #H'1, r1l
           bcc         LAB_2246:8
-          mov.b       @DAT_f7ac, r0l
+          mov.b       @animTick, r0l
           extu.w      r0
           shar.w      r0
           shar.w      r0
@@ -4153,22 +4153,22 @@ LAB_24a6:
 ; =============================================================================
 game_pedometer_tick_counters:
           mov.b       @stepBatchSize, r1l
-          mov.b       @DAT_f7b3, r0l
+          mov.b       @subStepCount, r0l
           cmp.b       r1l, r0l
           beq         LAB_256c:16
-          mov.b       @DAT_f7b4, r0l
+          mov.b       @batchAccumulator, r0l
           add.b       r1l, r0l
-          mov.b       r0l, @DAT_f7b4
+          mov.b       r0l, @batchAccumulator
           cmp.b       #H'40, r0l
           bls         LAB_256c:16
-          mov.w       @DAT_f7a0, r0
+          mov.w       @recentSessionSteps, r0
           inc.w       #1, r0
-          mov.w       r0, @DAT_f7a0
-          mov.w       @DAT_f7a0, r0
+          mov.w       r0, @recentSessionSteps
+          mov.w       @recentSessionSteps, r0
           cmp.w       #H'270F, r0
           bls         LAB_24e6:8
           mov.w       #H'270F, r0
-          mov.w       r0, @DAT_f7a0
+          mov.w       r0, @recentSessionSteps
 LAB_24e6:
           mov.l       @sessionSteps, er0
           inc.l       #1, er0
@@ -4199,18 +4199,18 @@ LAB_250e:
 LAB_2546:
           mov.w       r0, @watts
 LAB_254a:
-          mov.b       @DAT_f7b3, r0l
+          mov.b       @subStepCount, r0l
           inc.b       r0l
-          mov.b       r0l, @DAT_f7b3
+          mov.b       r0l, @subStepCount
           mov.b       @stepBatchSize, r0h
           cmp.b       r0h, r0l
           bls         LAB_2562:8
           mov.b       r0h, r0l
-          mov.b       r0l, @DAT_f7b3
+          mov.b       r0l, @subStepCount
 LAB_2562:
-          mov.b       @DAT_f7b4, r0l
+          mov.b       @batchAccumulator, r0l
           add.b       #H'C0, r0l
-          mov.b       r0l, @DAT_f7b4
+          mov.b       r0l, @batchAccumulator
 LAB_256c:
           rts
 ; =============================================================================
@@ -4789,7 +4789,7 @@ game_battle_process_turn:
           mov.b       #H'64, r1l
           jsr         @$DIVUL$3:16
           mov.b       r1l, r6l
-          mov.w       #H'BB36, e1
+          mov.w       #battleMoveOutcomeWeights, e1
           mov.b       @DAT_f7d8, r0l
           rotl.b      r0l
           rotl.b      r0l
@@ -4987,7 +4987,7 @@ LAB_2b4c:
           mov.w       #H'68, r0
           jsr         @sbrk:16
           mov.w       r0, e3
-          mov.w       #H'BF7A, r0
+          mov.w       #factoryStr_EEP, r0
           jsr         @drv_eeprom_read_u8:16
           mov.b       r0l, r4l
           mov.b       r0l, r1l
@@ -5084,7 +5084,7 @@ game_battle_check_capture_success:
           mov.b       r1l, r0l
           extu.w      r0
           dec.w       #1, r0
-          mov.b       @(L_BB45,er0), r0l
+          mov.b       @(captureSuccessProbs,er0), r0l
           cmp.b       r0l, r6h
           bcc         LAB_2c5e:8
           mov.b       #H'1, r0l
@@ -5125,7 +5125,7 @@ switchD_2c92__caseD_0:
 switchD_2c92__caseD_1:
           mov.b       r6l, r0l
           extu.w      r0
-          mov.b       @(DAT_bb0e,er0), r0l
+          mov.b       @(battleAnimP1XFrames,er0), r0l
           mov.b       r0l, @DAT_f7d5
           mov.b       @accelXPos, r0l
           mov.b       @dowsing_item_pos, r0h
@@ -5145,12 +5145,12 @@ switchD_2c92__caseD_3:
           mov.b       r6l, r0l
           extu.w      r0
           shll.w      r0
-          mov.b       @(DAT_bb12,er0), r0l
+          mov.b       @(battleAnimP3YFrames,er0), r0l
           mov.b       r0l, @accelYPos
           mov.b       @accelXPos, r0l
           extu.w      r0
           shll.w      r0
-          mov.b       @(DAT_bb13,er0), r0l
+          mov.b       @(battleAnimP3XFrames,er0), r0l
           mov.b       r0l, @DAT_f7d5
           jsr         @drv_sound_is_playing:16
           mov.b       r0l, r0l
@@ -5217,12 +5217,12 @@ switchD_2c92__caseD_4:
           mov.b       r6l, r0l
           extu.w      r0
           shll.w      r0
-          mov.b       @(DAT_bb24,er0), r0l
+          mov.b       @(battleAnimP4YFrames,er0), r0l
           mov.b       r0l, @accelYPos
           mov.b       @accelXPos, r0l
           extu.w      r0
           shll.w      r0
-          mov.b       @(DAT_bb25,er0), r0l
+          mov.b       @(battleAnimP4XFrames,er0), r0l
           mov.b       r0l, @DAT_f7d5
           jsr         @drv_sound_is_playing:16
           mov.b       r0l, r0l
@@ -5366,7 +5366,7 @@ switchD_2c92__caseD_7:
           mov.w       #H'3, e0
           sub.w       r0, e0
           mov.w       e0, r0
-          mov.b       @(DAT_bb0e,er0), r0l
+          mov.b       @(battleAnimP1XFrames,er0), r0l
           bra         LAB_2f26:8
 LAB_2f24:
           mov.b       #H'E0, r0l
@@ -5550,7 +5550,7 @@ ui_render_battle:
           mov.w       #H'8, r0
           jsr         @sbrk:16
           mov.w       r0, e2
-          mov.b       @DAT_f7ac, r0l
+          mov.b       @animTick, r0l
           and.b       #H'1, r0l
           mov.b       #H'C0, r0h
           mulxu.b     r0h, r0
@@ -5634,7 +5634,7 @@ LAB_3158:
           dec.w       #1, r0
           mov.w       #H'180, e0
           mulxu.w     e0, er0
-          mov.b       @DAT_f7ac, r1l
+          mov.b       @animTick, r1l
           and.b       #H'1, r1l
           mov.b       #H'C0, r1h
           mulxu.b     r1h, r1
@@ -5651,7 +5651,7 @@ LAB_31ac:
           bld         #H'0, r0h
           bst         #H'0, r0l
           mov.b       r0l, r2l
-          mov.b       @DAT_f7ac, r0l
+          mov.b       @animTick, r0l
           and.b       #H'1, r0l
           mov.b       #H'C0, r0h
           mulxu.b     r0h, r0
@@ -5686,7 +5686,7 @@ LAB_3206:
           mov.b       r0h, r2l
           extu.w      r0
           shll.w      r0
-          mov.w       @(DAT_bdd0,er0), r0
+          mov.w       @(fftTwiddleTable,er0), r0
           shll.w      r0
           mov.b       r0h, r0l
           subx        r0h, r0h
@@ -6006,7 +6006,7 @@ switchD_3296__caseD_b:
 switchD_3296__caseD_c:
           bra         switchD_3296__caseD_e:8
 switchD_3296__caseD_d:
-          mov.b       @DAT_f7ac, r0l
+          mov.b       @animTick, r0l
           and.b       #H'3, r0l
           beq         LAB_356e:8
           cmp.b       #H'1, r0l
@@ -6898,7 +6898,7 @@ ui_render_inventory_stats_view:
           mov.w       #H'20, r1
           mov.w       r6, e0
           jsr         @drv_eeprom_read_block:16
-          mov.b       @DAT_f7ac, r0l
+          mov.b       @animTick, r0l
           and.b       #H'1, r0l
           extu.w      r0
           mov.w       #H'10, e0
@@ -6979,7 +6979,7 @@ LAB_3de2:
           mov.w       r6, e0
           mov.b       @gCurSubstateZ, r1l
           extu.w      r1
-          mov.b       @(L_BD70,er1), r0h
+          mov.b       @(ballDropAnimYTable,er1), r0h
           mov.w       #H'808, r1
           mov.b       #H'2C, r0l
           jsr         @drv_lcd_blit:16
@@ -7030,7 +7030,7 @@ ui_draw_ball_sparkles_anim:
           mov.b       @gCurSubstateZ, r5l
           extu.w      r5
           shll.w      r5
-          add.w       #H'BD76, r5
+          add.w       #sparklesAnimXYTable, r5
           mov.w       r6, e0
           mov.w       #H'808, r1
           mov.b       @(H'1,er5), r0h
@@ -7205,7 +7205,7 @@ switchD_3ffa__caseD_3:
           mov.w       #LAB_1120, r0
           jmp         @LAB_40cc:16
 switchD_3ffa__caseD_0:
-          mov.b       @DAT_f7ac, r0l
+          mov.b       @animTick, r0l
           and.b       #H'1, r0l
           mov.b       #H'C0, r0h
           mulxu.b     r0h, r0
@@ -7597,7 +7597,7 @@ ui_draw_cloud_anim:
           mov.w       r6, e0
           mov.b       @gCurSubstateZ, r1l
           extu.w      r1
-          mov.b       @(L_BD7C,er1), r0h
+          mov.b       @(cloudAnimYTable,er1), r0h
           mov.b       #H'8, r1h
           mov.b       r1h, r1l
           mov.b       #H'2C, r0l
@@ -7824,7 +7824,7 @@ game_log_interaction:
           mov.b       r1l, r3l
           mov.b       r1h, @er7
           mov.w       e1, e5
-          mov.b       @DAT_f793, r4l
+          mov.b       @peerSlotIndex, r4l
           mov.b       #H'88, r4h
           mulxu.b     r4h, r4
           add.w       #H'CF0C, r4
@@ -7838,14 +7838,14 @@ game_log_interaction:
 LAB_457e:
           cmp.b       #H'19, r3h
           bne         LAB_45a4:8
-          mov.b       @DAT_f793, r0l
+          mov.b       @peerSlotIndex, r0l
           extu.w      r0
           inc.w       #1, r0
           exts.l      er0
           mov.w       #H'17, r1
           divxs.w     r1, er0
           mov.w       e0, r0
-          mov.b       r0l, @DAT_f793
+          mov.b       r0l, @peerSlotIndex
           mov.b       r0l, r4l
           mov.b       #H'88, r4h
           mulxu.b     r4h, r4
@@ -7866,9 +7866,9 @@ LAB_45ae:
 LAB_45bc:
           mov.b       r3l, @(H'84,er6)
           mov.w       e5, @(H'E,er6)
-          mov.l       @DAT_f788, er0
+          mov.l       @rtcTime, er0
           mov.l       er0, @er6
-          mov.w       @DAT_f7a0, r0
+          mov.w       @recentSessionSteps, r0
           mov.w       r0, @(H'78,er6)
           mov.l       @sessionSteps, er0
           mov.l       er0, @(H'7C,er6)
@@ -8021,14 +8021,14 @@ LAB_4756:
           mov.w       r4, r0
           mov.w       #H'88, r1
           jsr         @drv_eeprom_write_block:16
-          mov.b       @DAT_f793, r0l
+          mov.b       @peerSlotIndex, r0l
           extu.w      r0
           inc.w       #1, r0
           exts.l      er0
           mov.w       #H'17, r1
           divxs.w     r1, er0
           mov.w       e0, r0
-          mov.b       r0l, @DAT_f793
+          mov.b       r0l, @peerSlotIndex
           mov.w       #H'18, e1
           mov.w       #totalSteps, r1
           mov.l       #H'2560156, er0
@@ -8552,7 +8552,7 @@ LAB_4c94:
           inc.w       #1, e6
           cmp.w       #H'6, e6
           blt         LAB_4c62:8
-          mov.b       @DAT_f7ac, r1l
+          mov.b       @animTick, r1l
           and.b       #H'3, r1l
           extu.w      r1
           mov.b       @(L_BD82,er1), r1l
@@ -8700,7 +8700,7 @@ LAB_4df8:
           bne         LAB_4f48:16
           jmp         @LAB_4f10:16
 LAB_4e1e:
-          mov.b       @DAT_f7ac, r4l
+          mov.b       @animTick, r4l
           and.b       #H'1, r4l
           extu.w      r4
           mov.w       e6, e4
@@ -10264,7 +10264,7 @@ game_init_peer_identity:
           push.l      er6
           mov.w       #H'BE, e5
           sub.w       r0, r0
-          mov.w       r0, @DAT_f7a0
+          mov.w       r0, @recentSessionSteps
           mov.w       #walker_status_flags, r0
           bset        #H'2, @r0
           jsr         @sys_init_heap:16
@@ -10355,7 +10355,7 @@ LAB_5d12:
           mov.w       e5, r1
           jsr         @drv_eeprom_write_block:16
           sub.w       r0, r0
-          mov.w       r0, @DAT_f790
+          mov.w       r0, @sessionTicksElapsed
           mov.w       #H'18, e1
           mov.w       #totalSteps, r1
           mov.l       #H'2560156, er0
@@ -10379,12 +10379,12 @@ game_process_interaction_reward:
           mov.b       r6l, r1l
           extu.w      r1
           shll.w      r1
-          mov.w       @(L_BD84,er1), r1
+          mov.w       @(interactionRewardPtrTable,er1), r1
           mov.w       r1, @accelXPos
           mov.b       #H'C, r0l
           jsr         @ui_set_view:16
           sub.w       r0, r0
-          mov.w       r0, @DAT_f7a2
+          mov.w       r0, @idleSeconds
           mov.b       r6l, r0l
           cmp.b       #H'1, r0l
           beq         LAB_5d98:8
@@ -10398,10 +10398,10 @@ game_process_interaction_reward:
           bne         LAB_5e22:16
           jmp         @LAB_5e1c:16
 LAB_5d98:
-          mov.w       @DAT_f7a0, r0
+          mov.w       @recentSessionSteps, r0
           cmp.w       #H'1194, r0
           bcc         LAB_5db8:8
-          mov.w       @DAT_f7a0, r0
+          mov.w       @recentSessionSteps, r0
           extu.l      er0
           mov.w       #H'1F4, r1
           divxu.w     r1, er0
@@ -10658,7 +10658,7 @@ game_check_periodic_events:
           sub.b       r0l, r0l
           mov.b       r0l, @gCurSubstateY
           mov.b       r0l, @gCurSubstateZ
-          mov.w       @DAT_f7a0, r0
+          mov.w       @recentSessionSteps, r0
           mov.w       r0, @er7
           jsr         @sys_get_rng:16
           sub.l       er1, er1
@@ -10669,13 +10669,13 @@ game_check_periodic_events:
           mov.b       @walker_status_flags, r0l
           bld         #H'2, r0l
           bcs         LAB_602c:8
-          mov.w       @DAT_f7a0, r0
+          mov.w       @recentSessionSteps, r0
           cmp.w       #H'12C, r0
           bcs         LAB_60d4:16
           mov.b       #H'7, r0l
           jmp         @LAB_60ca:16
 LAB_602c:
-          mov.w       @DAT_f7a2, r0
+          mov.w       @idleSeconds, r0
           cmp.w       #H'E10, r0
           bcs         LAB_60d4:16
           jsr         @sys_init_heap:16
@@ -10727,7 +10727,7 @@ LAB_60aa:
           mov.b       #H'4, r0l
           bra         LAB_60ca:8
 LAB_60b6:
-          mov.w       @DAT_f790, r0
+          mov.w       @sessionTicksElapsed, r0
           cmp.w       #H'3C, r0
           bcs         LAB_60d4:8
           mov.w       @er7, r0
@@ -10850,9 +10850,9 @@ LAB_61a4:
           mov.w       r0, r6
           add.w       #H'10, r0
           shll.w      r0
-          mov.w       @(DAT_bdd0,er0), e4
+          mov.w       @(fftTwiddleTable,er0), e4
           shll.w      r6
-          mov.w       @(DAT_bdd0,er6), e3
+          mov.w       @(fftTwiddleTable,er6), e3
           mov.b       r3h, r3l
           jmp         @LAB_629e:16
 LAB_61c0:
@@ -11098,7 +11098,7 @@ game_calculate_interaction_reward:
           mov.l       @sessionSteps, er3
           mov.l       @er4, er0
           add.l       er0, er3
-          mov.w       @DAT_f7a0, r0
+          mov.w       @recentSessionSteps, r0
           mov.w       @(H'4,er4), e0
           add.w       e0, r0
           mov.w       #H'A, e0
@@ -11367,7 +11367,7 @@ LAB_6634:
 LAB_6638:
           mov.b       r6l, r1l
           extu.w      r1
-          mov.b       @(L_BE70,er1), r1l
+          mov.b       @(musicNoteYTableA,er1), r1l
           mov.b       r6l, r0l
           mov.b       #H'8, r0h
           mulxu.b     r0h, r0
@@ -11390,7 +11390,7 @@ LAB_6660:
 LAB_6664:
           mov.b       r6l, r1l
           extu.w      r1
-          mov.b       @(L_BE70,er1), r1l
+          mov.b       @(musicNoteYTableA,er1), r1l
           mov.b       r6l, r0l
           mov.b       #H'8, r0h
           mulxu.b     r0h, r0
@@ -11412,7 +11412,7 @@ LAB_6688:
 LAB_668c:
           mov.b       r6l, r1l
           extu.w      r1
-          mov.b       @(L_BE71,er1), r1l
+          mov.b       @(musicNoteYTableB,er1), r1l
           mov.b       r6l, r0l
           mov.b       #H'8, r0h
           mulxu.b     r0h, r0
@@ -11434,7 +11434,7 @@ LAB_66b0:
 LAB_66b4:
           mov.b       r6l, r1l
           extu.w      r1
-          mov.b       @(L_BE71,er1), r1l
+          mov.b       @(musicNoteYTableB,er1), r1l
           mov.b       r6l, r0l
           mov.b       #H'8, r0h
           mulxu.b     r0h, r0
@@ -11447,7 +11447,7 @@ LAB_66cc:
           bcc         LAB_66de:8
           bra         LAB_66b4:8
 LAB_66d2:
-          mov.b       @DAT_be72, r1l
+          mov.b       @musicNoteInitialState, r1l
           mov.w       #H'2C, r0
           jsr         @ui_draw_music_note:16
 LAB_66de:
@@ -11527,7 +11527,7 @@ game_find_seen_peer:
           jsr         @$sp_regsv$3:16
           mov.w       r0, e5
           mov.w       #H'DE24, r3
-          mov.w       #DAT_f956, r5
+          mov.w       #eepromPageScratch, r5
           sub.b       r4l, r4l
           bra         LAB_67d4:8
 LAB_6796:
@@ -11717,7 +11717,7 @@ LAB_6938:
 sys_set_handler:
           push.w      r6
           mov.w       @currentEventLoopFunc, r6
-          mov.w       r6, @DAT_f7e2
+          mov.w       r6, @savedEventLoopFunc
           mov.w       r0, @currentEventLoopFunc
           pop.w       r6
           rts
@@ -11810,7 +11810,7 @@ gfx_draw_home_pokemon:
           bra         LAB_6a06:8
 LAB_69ee:
           mov.w       e3, r1
-          mov.b       @DAT_f7ac, r0l
+          mov.b       @animTick, r0l
           extu.w      r0
           shar.w      r0
           and.w       #H'1, r0
@@ -12014,7 +12014,7 @@ LAB_6b9e:
 ; Called by: ui_render_home_route
 ; =============================================================================
 sys_update_standby_state:
-          mov.b       @DAT_f7ac, r0l
+          mov.b       @animTick, r0l
           and.b       #H'3, r0l
           bne         LAB_6bf6:8
           mov.b       @DAT_f7d1, r0l
@@ -12060,7 +12060,7 @@ ui_render_home_route:
           mov.b       @gCurSubstateY, r0l
           extu.w      r0
           dec.w       #1, r0
-          mov.b       @(L_BEB0,er0), r0l
+          mov.b       @(routeIconIndices,er0), r0l
           jsr         @gfx_draw_small_route_icon:16
 LAB_6c0e:
           jsr         @ui_render_route_image:16
@@ -12393,7 +12393,7 @@ ui_render_settings:
           bne         LAB_7018:16
           jmp         @LAB_6fa0:16
 LAB_6efe:
-          mov.b       @DAT_f7ac, r0l
+          mov.b       @animTick, r0l
           and.b       #H'1, r0l
           extu.w      r0
           add.w       #H'9, r0
@@ -12419,7 +12419,7 @@ LAB_6f1e:
           mov.b       r0h, r0l
           mov.b       #H'20, r0h
           mulxu.b     r0h, r0
-          mov.b       @DAT_f7ac, r0h
+          mov.b       @animTick, r0h
           and.b       #H'1, r0h
           mov.b       r0h, r1l
           extu.w      r1
@@ -12465,7 +12465,7 @@ LAB_6fa0:
           mov.b       #H'8, r0h
           mulxu.b     r0h, r0
           add.b       #H'8, r0l
-          mov.b       @DAT_f7ac, r0h
+          mov.b       @animTick, r0h
           and.b       #H'1, r0h
           mov.b       r0h, r1l
           extu.w      r1
@@ -12544,7 +12544,7 @@ LAB_7050:
           inc.w       #1, e0
           cmp.w       #H'100, e0
           bcs         LAB_7050:8
-          mov.w       #DAT_bc74, e5
+          mov.w       #walkerFaceNeutral, e5
           mov.w       r5, e1
           add.w       #H'50, e1
           sub.w       e0, e0
@@ -12569,13 +12569,13 @@ LAB_7072:
           inc.w       #1, e0
           cmp.w       #H'20, e0
           bcs         LAB_7072:8
-          mov.b       @DAT_f7ac, r0l
+          mov.b       @animTick, r0l
           extu.w      r0
           shar.w      r0
           shar.w      r0
           btst        #H'0, r0l
           beq         LAB_710a:8
-          mov.w       #DAT_bcd4, r3
+          mov.w       #walkerEmptyExtraGlyph, r3
           mov.w       r5, e1
           add.w       #H'D8, e1
           sub.w       e0, e0
@@ -12649,7 +12649,7 @@ LAB_712e:
           inc.w       #1, e0
           cmp.w       #H'100, e0
           bcs         LAB_712e:8
-          mov.w       #DAT_bcb4, e5
+          mov.w       #walkerFaceSad, e5
           mov.w       r5, r0
           add.w       #H'50, r0
           mov.w       r0, e1
@@ -12722,7 +12722,7 @@ LAB_71ce:
           inc.w       #1, r6
           cmp.w       #H'100, r6
           bcs         LAB_71ce:8
-          mov.w       #DAT_bc94, e1
+          mov.w       #walkerFaceHappy, e1
           mov.w       r5, r0
           add.w       #H'50, r0
           mov.w       r0, e0
@@ -12811,7 +12811,7 @@ ui_render_step_history_graph:
           mov.w       #LAB_1020, r0
           jsr         @drv_lcd_blit:16
           mov.w       #gfx_draw_text_box, r6
-          mov.b       @DAT_f7ad, r0l
+          mov.b       @irResultCode, r0l
           add.b       #H'FF, r0l
           cmp.b       #H'7, r0l
           bhi         switchD_72ce__default:8
@@ -13497,9 +13497,9 @@ LAB_78fe:
           jsr         @drv_lcd_clear_pages:16
           jsr         @ui_dispatch_draw:16
           jsr         @drv_lcd_flip:16
-          mov.b       @DAT_f7ac, r0l
+          mov.b       @animTick, r0l
           inc.b       r0l
-          mov.b       r0l, @DAT_f7ac
+          mov.b       r0l, @animTick
 LAB_7928:
           mov.w       #statusFlags, r0
           bclr        #H'0, @r0
@@ -13572,9 +13572,9 @@ LAB_79b0:
           jsr         @drv_lcd_clear_pages:16
           jsr         @ui_dispatch_draw:16
           jsr         @drv_lcd_flip:16
-          mov.b       @DAT_f7ac, r0l
+          mov.b       @animTick, r0l
           inc.b       r0l
-          mov.b       r0l, @DAT_f7ac
+          mov.b       r0l, @animTick
 LAB_79e6:
           mov.w       #statusFlags, r0
           bclr        #H'0, @r0
@@ -13810,12 +13810,12 @@ drv_lcd_init:
           cmp.b       #H'FF, r0l
           bne         LAB_7bb0:8
 LAB_7bac:
-          mov.w       #L_BEB8, r6
+          mov.w       #lcdInitFallbackSeq, r6
 LAB_7bb0:
           mov.w       r6, r0
           inc.w       #1, r6
           mov.b       @er0, r0l
-          mov.b       r0l, @DAT_f7a9
+          mov.b       r0l, @lcdShadeBase
 LAB_7bba:
           mov.b       @er6, r0l
           cmp.b       #H'FE, r0l
@@ -13851,11 +13851,11 @@ LAB_7be4:
           mov.b       r0h, r0l
           bsr         drv_lcd_set_contrast:8
           mov.b       #H'1, r0l
-          mov.b       r0l, @DAT_f7e4
+          mov.b       r0l, @lcdPageOffset
           mov.b       #H'40, r0l
           jsr         @drv_lcd_clear_pages:16
           sub.b       r0l, r0l
-          mov.b       r0l, @DAT_f7e4
+          mov.b       r0l, @lcdPageOffset
           mov.b       #H'40, r0l
           jsr         @drv_lcd_clear_pages:16
           bclr        #H'1, @PDR1
@@ -13880,7 +13880,7 @@ drv_lcd_set_contrast:
           bclr        #H'1, @PDR1
           mov.b       #H'81, r0l
           jsr         @drv_lcd_send_u8:16
-          mov.b       @DAT_f7a9, r0l
+          mov.b       @lcdShadeBase, r0l
           add.b       r6l, r0l
           jsr         @drv_lcd_send_u8:16
 LAB_7c46:
@@ -13924,7 +13924,7 @@ LAB_7c8a:
           mov.b       @SSSR, r0l
           bld         #H'2, r0l
           bcc         LAB_7c8a:8
-          mov.b       @DAT_f7e4, r0l
+          mov.b       @lcdPageOffset, r0l
           mov.b       #H'8, r0h
           mulxu.b     r0h, r0
           add.b       r3h, r0l
@@ -13942,7 +13942,7 @@ LAB_7ca2:
 ; Called by: sys_main_loop_low_power, sys_init_io_ports, sys_main_loop_active
 ; =============================================================================
 drv_lcd_flip:
-          mov.w       #DAT_f7e4, r1
+          mov.w       #lcdPageOffset, r1
           mov.b       #H'80, r0l
           mov.b       r0l, @SSER
           bclr        #H'0, @PDR1
@@ -14012,7 +14012,7 @@ LAB_7d36:
           bcc         LAB_7d36:8
           bset        #H'0, @PDR1
           xor.b       #H'1, r1l
-          mov.b       r1l, @DAT_f7e4
+          mov.b       r1l, @lcdPageOffset
 LAB_7d48:
           rts
 ; =============================================================================
@@ -14049,7 +14049,7 @@ LAB_7d80:
           mov.b       @SSSR, r0l
           bld         #H'2, r0l
           bcc         LAB_7d80:8
-          mov.b       @DAT_f7e4, r0l
+          mov.b       @lcdPageOffset, r0l
           mov.b       #H'8, r0h
           mulxu.b     r0h, r0
           add.b       r1h, r0l
@@ -14207,7 +14207,7 @@ LAB_7ed6:
           mov.b       @SSSR, r0l
           bld         #H'2, r0l
           bcc         LAB_7ed6:8
-          mov.b       @DAT_f7e4, r0l
+          mov.b       @lcdPageOffset, r0l
           mov.b       #H'8, r0h
           mulxu.b     r0h, r0
           add.b       r5l, r0l
@@ -14382,7 +14382,7 @@ LAB_803e:
           mov.b       @SSSR, r0l
           bld         #H'2, r0l
           bcc         LAB_803e:8
-          mov.b       @DAT_f7e4, r0l
+          mov.b       @lcdPageOffset, r0l
           mov.b       #H'8, r0h
           mulxu.b     r0h, r0
           add.b       r6l, r0l
@@ -14507,7 +14507,7 @@ LAB_814e:
           mov.b       @SSSR, r0l
           bld         #H'2, r0l
           bcc         LAB_814e:8
-          mov.b       @DAT_f7e4, r0l
+          mov.b       @lcdPageOffset, r0l
           mov.b       #H'8, r0h
           mulxu.b     r0h, r0
           add.b       r5h, r0l
@@ -14797,7 +14797,7 @@ LAB_83a8:
           mov.b       @SSSR, r0l
           bld         #H'2, r0l
           bcc         LAB_83a8:8
-          mov.b       @DAT_f7e4, r0l
+          mov.b       @lcdPageOffset, r0l
           mov.b       #H'8, r0h
           mulxu.b     r0h, r0
           add.b       r5l, r0l
@@ -14837,7 +14837,7 @@ LAB_8402:
           mov.b       @SSSR, r0l
           bld         #H'2, r0l
           bcc         LAB_8402:8
-          mov.b       @DAT_f7e4, r0l
+          mov.b       @lcdPageOffset, r0l
           mov.b       #H'8, r0h
           mulxu.b     r0h, r0
           add.b       r5l, r0l
@@ -15071,7 +15071,7 @@ LAB_85d6:
           mov.b       @SSSR, r0l
           bld         #H'2, r0l
           bcc         LAB_85d6:8
-          mov.b       @DAT_f7e4, r0l
+          mov.b       @lcdPageOffset, r0l
           mov.b       #H'8, r0h
           mulxu.b     r0h, r0
           add.b       r6l, r0l
@@ -15152,7 +15152,7 @@ LAB_8686:
           mov.b       r6l, r1l
           extu.w      r1
           add.w       r1, r0
-          mov.b       @(L_BCF4,er0), r0l
+          mov.b       @(font3ByteGlyphs,er0), r0l
           mov.b       r0l, @SSTDR
 LAB_86a0:
           mov.b       @SSSR, r0l
@@ -15163,7 +15163,7 @@ LAB_86a0:
           mov.b       r6l, r1l
           extu.w      r1
           add.w       r1, r0
-          mov.b       @(L_BCF4,er0), r0l
+          mov.b       @(font3ByteGlyphs,er0), r0l
           mov.b       r0l, @SSTDR
           inc.b       r6l
           cmp.b       #H'3, r6l
@@ -15199,7 +15199,7 @@ LAB_86f0:
           mov.b       r6l, r1l
           extu.w      r1
           add.w       r1, r0
-          mov.b       @(L_BCF4,er0), r0l
+          mov.b       @(font3ByteGlyphs,er0), r0l
           mov.b       r0l, @SSTDR
 LAB_870a:
           mov.b       @SSSR, r0l
@@ -15210,7 +15210,7 @@ LAB_870a:
           mov.b       r6l, r1l
           extu.w      r1
           add.w       r1, r0
-          mov.b       @(L_BCF4,er0), r0l
+          mov.b       @(font3ByteGlyphs,er0), r0l
           mov.b       r0l, @SSTDR
           inc.b       r6l
           cmp.b       #H'3, r6l
@@ -15250,7 +15250,7 @@ LAB_8756:
 ;            ... and 1 more
 ; =============================================================================
 diag_lcd_ssu_test_1:
-          mov.w       #DAT_f7e4, r1
+          mov.w       #lcdPageOffset, r1
           mov.b       #H'80, r0l
           mov.b       r0l, @SSER
           bclr        #H'0, @PDR1
@@ -15440,7 +15440,7 @@ LAB_890c:
           mov.b       @SSSR, r0l
           bld         #H'2, r0l
           bcc         LAB_890c:8
-          mov.b       @DAT_f7e4, r0l
+          mov.b       @lcdPageOffset, r0l
           mov.b       #H'8, r0h
           mulxu.b     r0h, r0
           add.b       #H'B6, r0l
@@ -15507,7 +15507,7 @@ LAB_89a6:
           mov.b       @SSSR, r0l
           bld         #H'2, r0l
           bcc         LAB_89a6:8
-          mov.b       @DAT_f7e4, r0l
+          mov.b       @lcdPageOffset, r0l
           mov.b       #H'8, r0h
           mulxu.b     r0h, r0
           add.b       #H'B7, r0l
@@ -15594,7 +15594,7 @@ LAB_8a60:
           mov.b       @SSSR, r0l
           bld         #H'2, r0l
           bcc         LAB_8a60:8
-          mov.b       @DAT_f7e4, r0l
+          mov.b       @lcdPageOffset, r0l
           mov.b       #H'8, r0h
           mulxu.b     r0h, r0
           add.b       #H'B6, r0l
@@ -16111,7 +16111,7 @@ LAB_8e4e:
           blt         LAB_8e20:8
           jmp         @switchD_8dd2__default:16
 switchD_8dd2__caseD_4:
-          mov.b       @DAT_f7ac, r0l
+          mov.b       @animTick, r0l
           and.b       #H'1, r0l
           mov.b       #H'C0, r0h
           mulxu.b     r0h, r0
@@ -16196,7 +16196,7 @@ switchD_8dd2__caseD_9:
           mov.w       #H'3000, r0
           jsr         @gfx_draw_event_item_name:16
 switchD_8dd2__default:
-          mov.b       @DAT_f7ac, r4l
+          mov.b       @animTick, r4l
           and.b       #H'1, r4l
           extu.w      r4
           add.w       #H'3, r4
@@ -16490,7 +16490,7 @@ ui_render_items_stats:
           mov.b       r1h, r0h
           mov.b       #H'3C, r0l
           jsr         @r3
-          mov.b       @DAT_f7ac, r0l
+          mov.b       @animTick, r0l
           and.b       #H'1, r0l
           extu.w      r0
           add.w       #H'3, r0
@@ -16632,8 +16632,8 @@ game_reset_pedometer_flags:
           sub.b       r0l, r0l
           mov.b       r0l, @DAT_f8ee
           sub.l       er1, er1
-          mov.l       er1, @DAT_f8ea
-          mov.l       er1, @DAT_f8e6
+          mov.l       er1, @pendingStepDetect
+          mov.l       er1, @stepDetectAccum
           mov.b       r0l, @isNotWalking
           rts
 ; =============================================================================
@@ -16815,7 +16815,7 @@ LAB_947a:
           inc.b       r0l
           mov.b       r0l, @gCurSubstateA
           mov.w       @accelXPos, r0
-          mov.w       @DAT_f7da, e0
+          mov.w       @axisStepThresholdLo, e0
           cmp.w       e0, r0
           bcc         LAB_94e2:8
           mov.b       #H'18, r0l
@@ -16834,7 +16834,7 @@ LAB_94f0:
           mov.b       r0l, @currentlyActiveView
 LAB_94fe:
           mov.w       @accelXPos, r0
-          mov.w       @DAT_f7dc, e0
+          mov.w       @axisStepThresholdHi, e0
           cmp.w       e0, r0
           bls         LAB_9510:8
           mov.b       #H'18, r0l
@@ -16857,7 +16857,7 @@ LAB_952e:
           mov.b       @DAT_f7d8_1, r0h
           cmp.b       r0h, r0l
           bcc         LAB_9560:8
-          mov.w       @DAT_f7de, r1
+          mov.w       @axisIdleThreshold, r1
           mov.w       @accelXPos, r0
           cmp.w       r1, r0
           bcc         LAB_9560:8
@@ -16874,34 +16874,34 @@ LAB_9560:
           mov.l       er6, er6
           bne         LAB_9570:8
           sub.l       er0, er0
-          mov.l       er0, @DAT_f8ea
+          mov.l       er0, @pendingStepDetect
           jmp         @LAB_9682:16
 LAB_9570:
           mov.w       #statusFlags, r0
           bset        #H'7, @r0
-          mov.l       @DAT_f8ea, er0
+          mov.l       @pendingStepDetect, er0
           beq         LAB_9644:16
-          mov.l       @DAT_f8e6, er1
+          mov.l       @stepDetectAccum, er1
           add.l       er0, er1
-          mov.l       er1, @DAT_f8e6
+          mov.l       er1, @stepDetectAccum
           sub.l       er0, er0
-          mov.l       er0, @DAT_f8ea
+          mov.l       er0, @pendingStepDetect
           mov.l       er1, er0
           shar.l      er0
           mov.b       r0h, @stepBatchSize
           mov.l       er1, er0
           and.l       #H'1FF, er0
-          mov.l       er0, @DAT_f8e6
+          mov.l       er0, @stepDetectAccum
           mov.b       @stepBatchSize, r0l
           extu.w      r0
-          mov.w       @DAT_f7a0, e0
+          mov.w       @recentSessionSteps, e0
           add.w       r0, e0
-          mov.w       e0, @DAT_f7a0
-          mov.w       @DAT_f7a0, r0
+          mov.w       e0, @recentSessionSteps
+          mov.w       @recentSessionSteps, r0
           cmp.w       #H'270F, r0
           bls         LAB_95d0:8
           mov.w       #H'270F, r0
-          mov.w       r0, @DAT_f7a0
+          mov.w       r0, @recentSessionSteps
 LAB_95d0:
           sub.l       er0, er0
           mov.b       @stepBatchSize, r0l
@@ -16937,23 +16937,23 @@ LAB_95fe:
 LAB_9640:
           mov.w       r0, @watts
 LAB_9644:
-          mov.l       @DAT_f8e6, er0
+          mov.l       @stepDetectAccum, er0
           add.l       er6, er0
-          mov.l       er0, @DAT_f8e6
+          mov.l       er0, @stepDetectAccum
           shar.l      er0
           mov.b       r0h, @stepBatchSize
-          mov.l       @DAT_f8e6, er0
+          mov.l       @stepDetectAccum, er0
           and.l       #H'1FF, er0
-          mov.l       er0, @DAT_f8e6
+          mov.l       er0, @stepDetectAccum
           mov.b       @stepBatchSize, r0l
           beq         LAB_9676:8
           mov.b       #H'1E, r0l
           mov.b       r0l, @stepTimer
 LAB_9676:
           sub.b       r0l, r0l
-          mov.b       r0l, @DAT_f7b3
+          mov.b       r0l, @subStepCount
           mov.b       #H'20, r0l
-          mov.b       r0l, @DAT_f7b4
+          mov.b       r0l, @batchAccumulator
 LAB_9682:
           pop.l       er6
           pop.l       er5
@@ -17039,7 +17039,7 @@ LAB_971a:
           bne         LAB_9732:8
           sub.l       er0, er0
           mov.b       r0l, @DAT_f8ee
-          mov.l       er0, @DAT_f8ea
+          mov.l       er0, @pendingStepDetect
           mov.b       #H'1, r1l
           mov.b       r1l, @isNotWalking
           bra         LAB_9748:8
@@ -17088,7 +17088,7 @@ LAB_9774:
           mov.b       r0l, r0l
           beq         LAB_98be:16
           mov.w       @watts, r1
-          mov.w       #DAT_bf0e, r6
+          mov.w       #menuItemCostTable, r6
           mov.b       @menu_cursor, r0l
           extu.w      r0
           add.w       r6, r0
@@ -17305,7 +17305,7 @@ LAB_997e:
           extu.w      r0
           cmp.w       r0, e6
           bne         LAB_99dc:8
-          mov.b       @DAT_f7ac, r3l
+          mov.b       @animTick, r3l
           and.b       #H'1, r3l
           extu.w      r3
           add.w       #H'3, r3
@@ -17323,7 +17323,7 @@ LAB_997e:
           mov.b       #H'10, r0l
           push.w      r0
           mov.w       e6, r1
-          mov.b       @(L_BF14,er1), r1h
+          mov.b       @(mainMenuYCoords,er1), r1h
           add.b       #H'F8, r1h
           mov.w       r5, e1
           mov.b       #H'4, r1l
@@ -17348,7 +17348,7 @@ LAB_99dc:
           mov.b       #H'10, r0l
           push.w      r0
           mov.w       e6, r1
-          mov.b       @(L_BF14,er1), r1h
+          mov.b       @(mainMenuYCoords,er1), r1h
           mov.w       r5, e1
           sub.b       r1l, r1l
           mov.w       r6, e0
@@ -17591,7 +17591,7 @@ game_generate_encounter_dowsing:
           mov.b       @RamCache_settingsByte, r0l
           bld         #H'0, r0l
           bcc         LAB_9cea:16
-          mov.w       #H'BF7A, r0
+          mov.w       #factoryStr_EEP, r0
           jsr         @drv_eeprom_read_u8:16
           mov.b       r0l, r6l
           jsr         @sys_init_heap:16
@@ -17725,7 +17725,7 @@ game_pokeradar_init:
           mov.b       r0h, @accelYPos
           mov.b       r0l, r1l
           extu.w      r1
-          mov.b       @(L_BF1A,er1), r1l
+          mov.b       @(radarStateXTable,er1), r1l
           mov.b       r1l, @DAT_f7d5
           jsr         @sys_get_rng:16
           shll.w      r0
@@ -17878,7 +17878,7 @@ LAB_9efc:
           mov.b       @DAT_f7d1, r1l
           extu.w      r1
           extu.w      r0
-          mov.b       @(L_BF1E,er1), r1l
+          mov.b       @(radarStateYDivisor,er1), r1l
           divxu.b     r1l, r0
           add.b       #H'10, r0h
           mov.b       r0h, @accelYPos
@@ -17886,7 +17886,7 @@ LAB_9efc:
           inc.b       r0l
           mov.b       r0l, @DAT_f7d1
           extu.w      r0
-          mov.b       @(L_BF1A,er0), r0l
+          mov.b       @(radarStateXTable,er0), r0l
           mov.b       r0l, @DAT_f7d5
           jsr         @sys_get_rng:16
           shll.w      r0
@@ -17909,7 +17909,7 @@ ui_render_pokeradar:
           mov.w       e5, r0
           jsr         @sbrk:16
           mov.w       r0, r6
-          mov.b       @DAT_f7ac, r4l
+          mov.b       @animTick, r4l
           and.b       #H'1, r4l
           extu.w      r4
           add.w       #H'9, r4
@@ -17930,7 +17930,7 @@ ui_render_pokeradar:
           add.b       #H'8, r0l
           mov.b       r4l, r1l
           extu.w      r1
-          mov.b       @(L_BF25,er1), r1l
+          mov.b       @(radarYCoordTable,er1), r1l
           add.b       #H'F8, r1l
           mov.w       r6, e0
           mov.b       #H'8, r1h
@@ -17953,7 +17953,7 @@ LAB_9fbc:
           mulxu.b     r0h, r0
           mov.b       r0l, r0h
           mov.w       e6, r1
-          mov.b       @(L_BF25,er1), r0l
+          mov.b       @(radarYCoordTable,er1), r0l
           mov.w       r6, e0
           mov.w       #H'1820, r1
           jsr         @drv_lcd_blit:16
@@ -17976,7 +17976,7 @@ LAB_9fbc:
           mulxu.b     r0h, r0
           mov.b       r4l, r1l
           extu.w      r1
-          mov.b       @(L_BF25,er1), r1l
+          mov.b       @(radarYCoordTable,er1), r1l
           add.b       #H'10, r1l
           mov.w       r6, e0
           mov.b       #H'10, r1h
@@ -18051,7 +18051,7 @@ LAB_a0a2:
           jsr         @drv_eeprom_read_block:16
           mov.b       @DAT_f7d1, r0l
           extu.w      r0
-          mov.b       @(L_BF21,er0), r0l
+          mov.b       @(radarFrameMultiplier,er0), r0l
           extu.w      r0
           mov.w       #H'40, e0
           mulxu.w     e0, er0
@@ -18063,7 +18063,7 @@ LAB_a0a2:
           mulxu.b     r0h, r0
           mov.b       r4l, r1l
           extu.w      r1
-          mov.b       @(L_BF25,er1), r1l
+          mov.b       @(radarYCoordTable,er1), r1l
           add.b       #H'10, r1l
           mov.w       r6, e0
           mov.b       #H'10, r1h
@@ -18122,7 +18122,7 @@ LAB_a14c:
           mov.b       r0l, r0h
           mov.w       r5, e0
           mov.w       #H'1820, r1
-          mov.b       @(L_BF25,er6), r0l
+          mov.b       @(radarYCoordTable,er6), r0l
           jsr         @drv_lcd_blit:16
           inc.w       #1, r6
           cmp.w       #H'4, r6
@@ -18389,24 +18389,24 @@ game_dispatch_pedometer_task:
           mov.b       @statusFlags, r0l
           bld         #H'5, r0l
           bcs         LAB_a388:8
-          mov.b       @DAT_f7a7, r0l
+          mov.b       @pedTaskFlags, r0l
           btst        #H'0, r0l
           beq         LAB_a368:8
           bsr         game_pedometer_init_counters:8
 LAB_a368:
-          mov.b       @DAT_f7a7, r0l
+          mov.b       @pedTaskFlags, r0l
           btst        #H'1, r0l
           beq         LAB_a372:8
           bsr         game_pedometer_increment_step:8
 LAB_a372:
-          mov.b       @DAT_f7a7, r0l
+          mov.b       @pedTaskFlags, r0l
           btst        #H'2, r0l
           beq         LAB_a37e:8
           jsr         @game_rotate_step_history:16
 LAB_a37e:
-          mov.b       @DAT_f7a7, r0l
+          mov.b       @pedTaskFlags, r0l
           and.b       #H'F8, r0l
-          mov.b       r0l, @DAT_f7a7
+          mov.b       r0l, @pedTaskFlags
 LAB_a388:
           pop.l       er6
           pop.w       r5
@@ -18420,12 +18420,12 @@ LAB_a388:
 ; Called by: game_dispatch_pedometer_task
 ; =============================================================================
 game_pedometer_init_counters:
-          mov.w       @DAT_f790, r0
+          mov.w       @sessionTicksElapsed, r0
           inc.w       #1, r0
           beq         LAB_a3a8:8
-          mov.w       @DAT_f790, r0
+          mov.w       @sessionTicksElapsed, r0
           inc.w       #1, r0
-          mov.w       r0, @DAT_f790
+          mov.w       r0, @sessionTicksElapsed
 LAB_a3a8:
           rts
 ; =============================================================================
@@ -18481,12 +18481,12 @@ LAB_a3de:
           adds        #2, er7
 LAB_a440:
           sub.w       r0, r0
-          mov.w       r0, @DAT_f7a0
-          mov.b       @DAT_f7a8, r0l
-          mov.b       @DAT_f7a6, r0h
+          mov.w       r0, @recentSessionSteps
+          mov.b       @scheduledNotifyHour, r0l
+          mov.b       @rtcHour, r0h
           cmp.b       r0h, r0l
           bne         LAB_a45a:8
-          mov.w       #DAT_f7a7, r0
+          mov.w       #pedTaskFlags, r0
           bset        #H'2, @r0
 LAB_a45a:
           adds        #2, er7
@@ -18499,11 +18499,11 @@ LAB_a45a:
 ; =============================================================================
 game_rotate_step_history:
           mov.w       #H'1C, e6
-          mov.w       @DAT_f78c, r0
+          mov.w       @dayCounter, r0
           cmp.w       #H'270F, r0
           bcc         LAB_a472:8
           inc.w       #1, r0
-          mov.w       r0, @DAT_f78c
+          mov.w       r0, @dayCounter
 LAB_a472:
           mov.w       #H'18, e1
           mov.w       #totalSteps, r1
@@ -18613,9 +18613,9 @@ drv_rtc_set_time:
           mov.w       e0, r0
           or.b        r0l, r5l
           mov.b       r5l, r6l
-          mov.b       r6l, @DAT_f7a6
-          mov.b       r3h, @DAT_f7a5
-          mov.b       r3l, @DAT_f7a4
+          mov.b       r6l, @rtcHour
+          mov.b       r3h, @rtcMin
+          mov.b       r3l, @rtcSec
           bset        #H'0, @CKSTPR1
           mov.w       #RTCCR1, r0
           bclr        #H'7, @r0
@@ -18733,18 +18733,18 @@ drv_rtc_handle_sec:
           mov.b       @RSECDR, r0l
           btst        #H'7, r0l
           bne         LAB_a692:8
-          mov.b       r0l, @DAT_f7a4
+          mov.b       r0l, @rtcSec
 LAB_a692:
-          mov.l       @DAT_f788, er0
+          mov.l       @rtcTime, er0
           inc.l       #1, er0
-          mov.l       er0, @DAT_f788
-          mov.w       @DAT_f7a2, r0
+          mov.l       er0, @rtcTime
+          mov.w       @idleSeconds, r0
           inc.w       #1, r0
           cmp.w       #H'E10, r0
           bls         LAB_a6b0:8
           mov.w       #H'E10, r0
 LAB_a6b0:
-          mov.w       r0, @DAT_f7a2
+          mov.w       r0, @idleSeconds
           mov.b       @activityTimer, r0l
           beq         LAB_a6c4:8
           mov.b       @activityTimer, r0l
@@ -18772,9 +18772,9 @@ drv_rtc_handle_min:
           mov.b       @RMINDR, r0l
           btst        #H'7, r0l
           bne         LAB_a6f0:8
-          mov.b       r0l, @DAT_f7a5
+          mov.b       r0l, @rtcMin
 LAB_a6f0:
-          mov.w       #DAT_f7a7, r0
+          mov.w       #pedTaskFlags, r0
           bset        #H'0, @r0
           mov.w       #RTCFLG, r0
           bclr        #H'3, @r0
@@ -18792,9 +18792,9 @@ drv_rtc_handle_hour:
           btst        #H'7, r0l
           bne         LAB_a716:8
           mov.b       @RHRDR, r0l
-          mov.b       r0l, @DAT_f7a6
+          mov.b       r0l, @rtcHour
 LAB_a716:
-          mov.w       #DAT_f7a7, r0
+          mov.w       #pedTaskFlags, r0
           bset        #H'1, @r0
           mov.w       #RTCFLG, r0
           bclr        #H'4, @r0
@@ -19215,7 +19215,7 @@ switchD_aa8e__caseD_1:
           jsr         @drv_button_is_triggered:16
           mov.b       r0l, r0l
           beq         switchD_aa8e__default:16
-          mov.w       #DAT_bfa2, r0
+          mov.w       #factoryTestSoundData, r0
           jsr         @drv_sound_set_data:16
           mov.b       @gCurSubstateY, r0l
           dec.b       r0l
@@ -19303,7 +19303,7 @@ switchD_aa8e__caseD_11:
           mov.b       @dowsing_item_pos, r0l
           beq         switchD_aa8e__default:8
 LAB_abc0:
-          mov.w       #DAT_bfa2, r0
+          mov.w       #factoryTestSoundData, r0
           jsr         @drv_sound_set_data:16
 LAB_abc8:
           mov.b       @gCurSubstateY, r0l
@@ -19336,7 +19336,7 @@ LAB_abfe:
           mov.b       #H'17, r0l
           mov.b       r0l, @currentlyActiveView
           jsr         @sys_init_debug_mode:16
-          mov.w       #DAT_bfa2, r0
+          mov.w       #factoryTestSoundData, r0
           jsr         @drv_sound_set_data:16
 switchD_aa8e__default:
           rts
@@ -19464,27 +19464,27 @@ switchD_ad20__switchD:
 switchD_ad20__caseD_0:
           mov.b       @gCurSubstateZ, r0l
           bne         switchD_ad20__caseD_d:16
-          mov.w       #H'BF76, e0
+          mov.w       #factoryStr_NG1, e0
           jmp         @LAB_adea:16
 switchD_ad20__caseD_a:
-          mov.w       #H'BF7A, e0
+          mov.w       #factoryStr_EEP, e0
           jmp         @LAB_adea:16
 switchD_ad20__caseD_c:
           mov.b       @dowsing_item_pos, r0l
           bne         switchD_ad20__caseD_d:16
-          mov.w       #H'BF7E, e0
+          mov.w       #factoryStr_NG2, e0
           jmp         @LAB_adea:16
 switchD_ad20__caseD_e:
           mov.b       @dowsing_item_pos, r0l
           bne         switchD_ad20__caseD_d:16
-          mov.w       #H'BF82, e0
+          mov.w       #factoryStr_NG3, e0
           jmp         @LAB_adea:16
 switchD_ad20__caseD_f:
           mov.b       @DAT_f7d1, r0l
           mov.b       @accelXPos, r0h
           cmp.b       r0h, r0l
           bne         switchD_ad20__caseD_d:16
-          mov.w       #H'BF86, e0
+          mov.w       #factoryStr_NG4, e0
           bra         LAB_adea:8
 switchD_ad20__caseD_1:
           mov.b       #H'3, r0l
@@ -19507,35 +19507,35 @@ switchD_ad20__caseD_6:
           jsr         @drv_lcd_test_pixels:16
           jmp         @switchD_ad20__caseD_d:16
 switchD_ad20__caseD_7:
-          mov.b       @DAT_f7ac, r0l
+          mov.b       @animTick, r0l
           extu.w      r0
           shar.w      r0
           btst        #H'0, r0l
           bne         switchD_ad20__caseD_d:16
-          mov.w       #H'BF8A, e0
+          mov.w       #factoryStr_V, e0
           mov.w       #H'3806, r0
           jmp         @LAB_aea6:16
 switchD_ad20__caseD_8:
-          mov.b       @DAT_f7ac, r0l
+          mov.b       @animTick, r0l
           extu.w      r0
           shar.w      r0
           btst        #H'0, r0l
           bne         switchD_ad20__caseD_d:16
-          mov.w       #H'BF8A, e0
+          mov.w       #factoryStr_V, e0
           mov.w       #H'382D, r0
           jmp         @LAB_aea6:16
 switchD_ad20__caseD_9:
-          mov.b       @DAT_f7ac, r0l
+          mov.b       @animTick, r0l
           extu.w      r0
           shar.w      r0
           btst        #H'0, r0l
           bne         switchD_ad20__caseD_d:16
-          mov.w       #H'BF8A, e0
+          mov.w       #factoryStr_V, e0
           jmp         @LAB_aea2:16
 switchD_ad20__caseD_11:
           mov.b       @dowsing_item_pos, r0l
           bne         switchD_ad20__caseD_d:16
-          mov.w       #H'BF8C, e0
+          mov.w       #factoryStr_NG5, e0
 LAB_adea:
           mov.w       #H'820, r0
           jmp         @LAB_aea6:16
@@ -19553,7 +19553,7 @@ LAB_ae08:
           bld         #H'3, r0l
           bcc         LAB_ae08:8
           bset        #H'0, @PDR1
-          mov.w       #H'BF90, e0
+          mov.w       #factoryStr_OK, e0
           mov.w       #H'20, r0
           jsr         @r5
           mov.w       r7, r6
@@ -19564,12 +19564,12 @@ LAB_ae08:
           extu.l      er0
           divxu.w     r1, er0
           and.w       #H'F, r0
-          mov.b       @(L_BFAA,er0), r0l
+          mov.b       @(hexDigits,er0), r0l
           mov.b       r0l, @er6
           mov.b       @accelYPos, r0l
           sub.b       r0h, r0h
           and.w       #H'F, r0
-          mov.b       @(L_BFAA,er0), r0l
+          mov.b       @(hexDigits,er0), r0l
           mov.b       r0l, @(H'1,er6)
           mov.w       @accelYPos, r0
           shlr.w      r0
@@ -19577,27 +19577,27 @@ LAB_ae08:
           shlr.w      r0
           shlr.w      r0
           and.w       #H'F, r0
-          mov.b       @(L_BFAA,er0), r0l
+          mov.b       @(hexDigits,er0), r0l
           mov.b       r0l, @(H'2,er6)
           mov.w       @accelYPos, r0
           and.w       #H'F, r0
-          mov.b       @(L_BFAA,er0), r0l
+          mov.b       @(hexDigits,er0), r0l
           mov.b       r0l, @(H'3,er6)
           mov.w       r6, e0
           mov.w       #H'1820, r0
           jsr         @r5
-          mov.b       @DAT_f7ac, r0l
+          mov.b       @animTick, r0l
           extu.w      r0
           shar.w      r0
           btst        #H'0, r0l
           bne         switchD_ad20__caseD_d:8
-          mov.w       #H'BF8A, e0
+          mov.w       #factoryStr_V, e0
           mov.w       #H'3806, r0
           jsr         @r5
-          mov.w       #H'BF8A, e0
+          mov.w       #factoryStr_V, e0
           mov.w       #H'382D, r0
           jsr         @r5
-          mov.w       #H'BF8A, e0
+          mov.w       #factoryStr_V, e0
 LAB_aea2:
           mov.w       #H'3855, r0
 LAB_aea6:
@@ -19677,91 +19677,91 @@ ui_render_accel_debug:
           mov.w       r6, e0
           mov.b       #H'54, r0l
           jsr         @r4
-          mov.w       @DAT_f7da, r0
+          mov.w       @axisStepThresholdLo, r0
           mov.w       #H'1000, r1
           extu.l      er0
           divxu.w     r1, er0
-          mov.b       @(L_BFAA,er0), r0l
+          mov.b       @(hexDigits,er0), r0l
           mov.b       r0l, @er6
-          mov.b       @DAT_f7da, r0l
+          mov.b       @axisStepThresholdLo, r0l
           sub.b       r0h, r0h
           and.w       #H'F, r0
-          mov.b       @(L_BFAA,er0), r0l
+          mov.b       @(hexDigits,er0), r0l
           mov.b       r0l, @er5
           mov.w       r6, r0
           inc.w       #2, r0
           mov.w       r0, e6
-          mov.w       @DAT_f7da, e0
+          mov.w       @axisStepThresholdLo, e0
           shlr.w      e0
           shlr.w      e0
           shlr.w      e0
           shlr.w      e0
           and.w       #H'F, e0
           mov.w       e0, r1
-          mov.b       @(L_BFAA,er1), r1l
+          mov.b       @(hexDigits,er1), r1l
           mov.b       r1l, @er0
           mov.w       r6, r3
           add.w       #H'3, r3
-          mov.w       @DAT_f7da, e0
+          mov.w       @axisStepThresholdLo, e0
           and.w       #H'F, e0
           mov.w       e0, r1
-          mov.b       @(L_BFAA,er1), r1l
+          mov.b       @(hexDigits,er1), r1l
           mov.b       r1l, @er3
           sub.b       r1l, r1l
           mov.b       r1l, @(H'4,er6)
           mov.w       r6, e0
           mov.w       #H'820, r0
           jsr         @r4
-          mov.w       @DAT_f7dc, r0
+          mov.w       @axisStepThresholdHi, r0
           mov.w       #H'1000, r1
           extu.l      er0
           divxu.w     r1, er0
-          mov.b       @(L_BFAA,er0), r0l
+          mov.b       @(hexDigits,er0), r0l
           mov.b       r0l, @er6
-          mov.b       @DAT_f7dc, r0l
+          mov.b       @axisStepThresholdHi, r0l
           sub.b       r0h, r0h
           and.w       #H'F, r0
-          mov.b       @(L_BFAA,er0), r0l
+          mov.b       @(hexDigits,er0), r0l
           mov.b       r0l, @er5
-          mov.w       @DAT_f7dc, r0
+          mov.w       @axisStepThresholdHi, r0
           shlr.w      r0
           shlr.w      r0
           shlr.w      r0
           shlr.w      r0
           and.w       #H'F, r0
           mov.w       e6, r1
-          mov.b       @(L_BFAA,er0), r0l
+          mov.b       @(hexDigits,er0), r0l
           mov.b       r0l, @er1
-          mov.w       @DAT_f7dc, r0
+          mov.w       @axisStepThresholdHi, r0
           and.w       #H'F, r0
-          mov.b       @(L_BFAA,er0), r0l
+          mov.b       @(hexDigits,er0), r0l
           mov.b       r0l, @er3
           mov.w       r6, e0
           mov.w       #H'840, r0
           jsr         @r4
-          mov.w       @DAT_f7de, r0
+          mov.w       @axisIdleThreshold, r0
           mov.w       #H'1000, r1
           extu.l      er0
           divxu.w     r1, er0
-          mov.b       @(L_BFAA,er0), r0l
+          mov.b       @(hexDigits,er0), r0l
           mov.b       r0l, @er6
-          mov.b       @DAT_f7de, r0l
+          mov.b       @axisIdleThreshold, r0l
           sub.b       r0h, r0h
           and.w       #H'F, r0
-          mov.b       @(L_BFAA,er0), r0l
+          mov.b       @(hexDigits,er0), r0l
           mov.b       r0l, @er5
-          mov.w       @DAT_f7de, r0
+          mov.w       @axisIdleThreshold, r0
           shlr.w      r0
           shlr.w      r0
           shlr.w      r0
           shlr.w      r0
           and.w       #H'F, r0
           mov.w       e6, r1
-          mov.b       @(L_BFAA,er0), r0l
+          mov.b       @(hexDigits,er0), r0l
           mov.b       r0l, @er1
-          mov.w       @DAT_f7de, r0
+          mov.w       @axisIdleThreshold, r0
           and.w       #H'F, r0
-          mov.b       @(L_BFAA,er0), r0l
+          mov.b       @(hexDigits,er0), r0l
           mov.b       r0l, @er3
           mov.w       r6, e0
           mov.w       #LAB_1020, r0
@@ -19797,7 +19797,7 @@ LAB_b086:
           bld         #H'3, r0l
           bcc         LAB_b086:8
           bset        #H'0, @PDR1
-          mov.w       #H'BF90, e0
+          mov.w       #factoryStr_OK, e0
           mov.w       #H'2008, r0
           jsr         @r4
 LAB_b09c:
@@ -19810,7 +19810,7 @@ LAB_b09c:
 ; Called by: ui_dispatch_draw
 ; =============================================================================
 gfx_draw_string_simple:
-          mov.w       #H'BF93, e0
+          mov.w       #factoryStr_NG6, e0
           mov.w       #H'808, r0
           jmp         @gfx_draw_string:16
 ; =============================================================================
@@ -19825,7 +19825,7 @@ LAB_b0b0:
           extu.w      r6
           mov.w       r6, e6
           mov.w       e6, r1
-          mov.b       @(L_BF98,er1), r1l
+          mov.b       @(nintendoMagic,er1), r1l
           mov.w       e6, r0
           jsr         @drv_eeprom_write_u8:16
           inc.b       r6l
@@ -19848,7 +19848,7 @@ LAB_b0cc:
           jsr         @drv_eeprom_read_u8:16
           extu.w      r0
           mov.w       e6, r1
-          mov.b       @(L_BF98,er1), r1l
+          mov.b       @(nintendoMagic,er1), r1l
           exts.w      r1
           cmp.w       r1, r0
           beq         LAB_b0e8:8
@@ -19898,20 +19898,20 @@ game_reset_step_data:
           beq         LAB_b146:8
           sub.l       er0, er0
           mov.l       er0, @totalSteps
-          mov.w       r0, @DAT_f78c
+          mov.w       r0, @dayCounter
           mov.l       #H'D2B0B80, er1
-          mov.l       er1, @DAT_f788
+          mov.l       er1, @rtcTime
           mov.l       er0, @RamCache_STEP_COUNT_maybe
 LAB_b146:
           sub.w       r0, r0
-          mov.w       r0, @DAT_f790
+          mov.w       r0, @sessionTicksElapsed
           mov.w       r0, @watts
           mov.b       r0l, @stepWattCounter
           mov.b       @RamCache_settingsByte, r1l
           and.b       #H'A4, r1l
           or.b        #H'24, r1l
           mov.b       r1l, @RamCache_settingsByte
-          mov.b       r0l, @DAT_f793
+          mov.b       r0l, @peerSlotIndex
           mov.w       #H'18, e1
           mov.w       #totalSteps, r1
           mov.l       #H'2560156, er0
@@ -19955,7 +19955,7 @@ sys_factory_reset_eeprom:
           mov.b       r0h, r4l
           mov.l       er5, @sessionSteps
           sub.w       e0, e0
-          mov.w       e0, @DAT_f7a0
+          mov.w       e0, @recentSessionSteps
           mov.w       #walker_status_flags, r1
           bclr        #H'1, @r1
           bclr        #H'2, @r1
@@ -20131,7 +20131,7 @@ LAB_b3a6:
           jsr         @sys_delay_short:16
           dec.w       #1, r6
           bne         LAB_b3a6:8
-          mov.l       @DAT_f788, er0
+          mov.l       @rtcTime, er0
           jsr         @drv_rtc_set_time:16
           jmp         @sys_epilogue_0700:16
 ; =============================================================================
@@ -20335,7 +20335,7 @@ LAB_b52a:
           mov.w       e6, r1
           mov.w       r6, e0
           jsr         @r3
-          mov.b       @DAT_f7a6, r0l
+          mov.b       @rtcHour, r0l
           extu.w      r0
           shar.w      r0
           shar.w      r0
@@ -20349,7 +20349,7 @@ LAB_b52a:
           mov.w       #H'1008, r1
           mov.w       #H'3020, r0
           jsr         @r5
-          mov.b       @DAT_f7a6, r0l
+          mov.b       @rtcHour, r0l
           and.b       #H'F, r0l
           extu.w      r0
           mov.w       #H'20, e0
@@ -20359,7 +20359,7 @@ LAB_b52a:
           mov.w       #H'1008, r1
           mov.w       #H'3028, r0
           jsr         @r5
-          mov.b       @DAT_f7a5, r0l
+          mov.b       @rtcMin, r0l
           extu.w      r0
           shar.w      r0
           shar.w      r0
@@ -20373,7 +20373,7 @@ LAB_b52a:
           mov.w       #H'1008, r1
           mov.w       #H'3038, r0
           jsr         @r5
-          mov.b       @DAT_f7a5, r0l
+          mov.b       @rtcMin, r0l
           and.b       #H'F, r0l
           extu.w      r0
           mov.w       #H'20, e0
@@ -20383,7 +20383,7 @@ LAB_b52a:
           mov.w       #H'1008, r1
           mov.w       #H'3040, r0
           jsr         @r5
-          mov.b       @DAT_f7a4, r0l
+          mov.b       @rtcSec, r0l
           extu.w      r0
           shar.w      r0
           shar.w      r0
@@ -20397,7 +20397,7 @@ LAB_b52a:
           mov.w       #H'1008, r1
           mov.w       #H'3050, r0
           jsr         @r5
-          mov.b       @DAT_f7a4, r0l
+          mov.b       @rtcSec, r0l
           and.b       #H'F, r0l
           extu.w      r0
           mov.w       #H'20, e0
@@ -20537,7 +20537,7 @@ LAB_b6e2:
           adds        #2, er7
           sub.b       r0l, r0l
           push.w      r0
-          mov.w       @DAT_f78c, r1
+          mov.w       @dayCounter, r1
           extu.l      er1
           mov.w       #LAB_2058, r0
           jsr         @gfx_draw_numeric_value:16
@@ -20994,15 +20994,15 @@ switchD_3296__switchdataD_baea:
           .DATA.W    switchD_3296__caseD_f
           .DATA.W    switchD_3296__caseD_10
           .DATA.W    switchD_3296__caseD_11
-DAT_bb0e:
+battleAnimP1XFrames:
           .RES.B      4
-DAT_bb12:
+battleAnimP3YFrames:
           .RES.B      1
-DAT_bb13:
+battleAnimP3XFrames:
           .RES.B      17
-DAT_bb24:
+battleAnimP4YFrames:
           .RES.B      1
-DAT_bb25:
+battleAnimP4XFrames:
           .RES.B      18
 DAT_bb37:
           .RES.B      1
@@ -21010,7 +21010,7 @@ DAT_bb38:
           .RES.B      12
 DAT_bb44:
           .RES.B      1
-L_BB45:
+captureSuccessProbs:
           .RES.B      5
 PERIODTAB:
           .DATA.B     H'F4,H'E6,H'D9,H'CD,H'C2,H'B7,H'AC,H'A3,H'9A,H'91,H'89,H'81,H'7A,H'73,H'6C,H'66
@@ -21020,22 +21020,22 @@ IMG_POKEWALKER_LARGE:
           .DATA.B     H'00
 IMG_POKEWALKER_LARGE_1_:
           .RES.B      255
-DAT_bc74:
+walkerFaceNeutral:
           .DATA.B     H'00
 DAT_bc75:
           .DATA.B     H'00
           .RES.B      30
-DAT_bc94:
+walkerFaceHappy:
           .DATA.B     H'00
 DAT_bc95:
           .DATA.B     H'00
           .RES.B      30
-DAT_bcb4:
+walkerFaceSad:
           .DATA.B     H'00
 DAT_bcb5:
           .DATA.B     H'00
           .RES.B      30
-DAT_bcd4:
+walkerEmptyExtraGlyph:
           .DATA.B     H'08
 DAT_bcd5:
           .DATA.B     H'08
@@ -21044,7 +21044,7 @@ IMG_POKEWALKER_IR_ACTIVE:
           .RES.B      5
           .DATA.B     H'11
           .RES.B      10
-L_BCF4:
+font3ByteGlyphs:
           .RES.B      76
 DAT_bd40:
           .RES.B      32
@@ -21057,23 +21057,23 @@ switchD_3ffa__switchdataD_bd60:
           .DATA.W    switchD_3ffa__caseD_5
           .DATA.W    switchD_3ffa__caseD_6
           .DATA.W    switchD_3ffa__caseD_7
-L_BD70:
+ballDropAnimYTable:
           .RES.B      6
-DAT_bd76:
+sparklesAnimXYTable:
           .RES.B      6
-L_BD7C:
+cloudAnimYTable:
           .RES.B      6
 L_BD82:
           .RES.B      2
-L_BD84:
+interactionRewardPtrTable:
           .RES.B      76
-DAT_bdd0:
+fftTwiddleTable:
           .RES.B      160
-L_BE70:
+musicNoteYTableA:
           .RES.B      1
-L_BE71:
+musicNoteYTableB:
           .RES.B      1
-DAT_be72:
+musicNoteInitialState:
           .DATA.B     H'02
           .RES.B      3
 switchD_72ce__switchdataD_be76:
@@ -21085,9 +21085,9 @@ switchD_741e__switchdataD_be96:
           .DATA.B     H'00,H'26,H'2C,H'32,H'38,H'98,H'3E,H'44,H'4A,H'56,H'50,H'5C,H'1A,H'20,H'62,H'76
           .DATA.B     H'7C,H'82,H'98,H'98,H'98,H'98,H'88,H'8E,H'94
           .RES.B      1
-L_BEB0:
+routeIconIndices:
           .RES.B      8
-L_BEB8:
+lcdInitFallbackSeq:
           .DATA.B     H'14
 DAT_beb9:
           .DATA.B     H'48
@@ -21121,17 +21121,17 @@ switchD_97b0__switchdataD_bf02:
           .DATA.W    switchD_97b0__caseD_3
           .DATA.W    switchD_97b0__caseD_4
           .DATA.W    switchD_97b0__caseD_5
-DAT_bf0e:
+menuItemCostTable:
           .RES.B      6
-L_BF14:
+mainMenuYCoords:
           .RES.B      6
-L_BF1A:
+radarStateXTable:
           .RES.B      4
-L_BF1E:
+radarStateYDivisor:
           .RES.B      3
-L_BF21:
+radarFrameMultiplier:
           .RES.B      4
-L_BF25:
+radarYCoordTable:
           .RES.B      5
 switchD_aa8e__switchdataD_bf2a:
           .DATA.W    switchD_aa8e__caseD_0
@@ -21173,13 +21173,31 @@ switchD_ad20__switchdataD_bf50:
           .DATA.W    switchD_ad20__caseD_d
           .DATA.W    switchD_ad20__caseD_11
           .DATA.W    switchD_ad20__caseD_12
-          .RES.B      34
-L_BF98:
+factoryStr_NG1:
+          .SDATAZ     "NG1"
+factoryStr_EEP:
+          .SDATAZ     "EEP"
+factoryStr_NG2:
+          .SDATAZ     "NG2"
+factoryStr_NG3:
+          .SDATAZ     "NG3"
+factoryStr_NG4:
+          .SDATAZ     "NG4"
+factoryStr_V:
+          .SDATAZ     "V"
+factoryStr_NG5:
+          .SDATAZ     "NG5"
+factoryStr_OK:
+          .SDATAZ     "OK"
+factoryStr_NG6:
+          .SDATAZ     "NG6"
+          .RES.B      1
+nintendoMagic:
           .SDATAZ     "nintendo"
           .RES.B      1
-DAT_bfa2:
+factoryTestSoundData:
           .RES.B      8
-L_BFAA:
+hexDigits:
           .RES.B      16
 rom_data_start:
           .DATA.W    DAT_bfc4
@@ -21313,17 +21331,17 @@ totalSteps_1:
           .RES.B      3
 RamCache_STEP_COUNT_maybe:
           .RES.B      4
-DAT_f788:
+rtcTime:
           .RES.B      4
-DAT_f78c:
+dayCounter:
           .RES.B      2
 watts:
           .RES.B      2
-DAT_f790:
+sessionTicksElapsed:
           .RES.B      2
 stepWattCounter:
           .RES.B      1
-DAT_f793:
+peerSlotIndex:
           .RES.B      4
 RamCache_settingsByte:
           .RES.B      1
@@ -21337,29 +21355,29 @@ buttonHoldDuration:
           .RES.B      1
 sessionSteps:
           .RES.B      4
-DAT_f7a0:
+recentSessionSteps:
           .RES.B      2
-DAT_f7a2:
+idleSeconds:
           .RES.B      2
-DAT_f7a4:
+rtcSec:
           .RES.B      1
-DAT_f7a5:
+rtcMin:
           .RES.B      1
-DAT_f7a6:
+rtcHour:
           .RES.B      1
-DAT_f7a7:
+pedTaskFlags:
           .RES.B      1
-DAT_f7a8:
+scheduledNotifyHour:
           .RES.B      1
-DAT_f7a9:
+lcdShadeBase:
           .RES.B      1
 menu_cursor:
           .RES.B      1
 DAT_f7ab:
           .RES.B      1
-DAT_f7ac:
+animTick:
           .RES.B      1
-DAT_f7ad:
+irResultCode:
           .RES.B      1
 accelSampleCount:
           .RES.B      1
@@ -21371,9 +21389,9 @@ currentlyActiveView:
           .RES.B      1
 stepBatchSize:
           .RES.B      1
-DAT_f7b3:
+subStepCount:
           .RES.B      1
-DAT_f7b4:
+batchAccumulator:
           .RES.B      1
 statusFlags:
           .RES.B      1
@@ -21421,17 +21439,17 @@ DAT_f7d8:
           .RES.B      1
 DAT_f7d8_1:
           .RES.B      1
-DAT_f7da:
+axisStepThresholdLo:
           .RES.B      2
-DAT_f7dc:
+axisStepThresholdHi:
           .RES.B      2
-DAT_f7de:
+axisIdleThreshold:
           .RES.B      2
 currentEventLoopFunc:
           .RES.B      2
-DAT_f7e2:
+savedEventLoopFunc:
           .RES.B      2
-DAT_f7e4:
+lcdPageOffset:
           .RES.B      2
 DAT_f7e6:
           .RES.B      4
@@ -21457,11 +21475,11 @@ DAT_f843:
           .RES.B      1
 DAT_f844:
           .RES.B      2
-DAT_f846:
+peerRcvdRtcTime:
           .RES.B      8
-DAT_f84e:
+trainerRecBuf:
           .RES.B      8
-DAT_f856:
+trainerRecBuf_loc:
           .RES.B      16
 ACCEL_SAMPLES_Y:
           .RES.B      32
@@ -21475,59 +21493,59 @@ ACCEL_SAMPLES_Z:
           .RES.B      3
 DAT_f8a9:
           .RES.B      13
-DAT_f8b6:
+nextSessionKey:
           .RES.B      4
-DAT_f8ba:
+sessionKey:
           .RES.B      4
-DAT_f8be:
+irHandshakeStep:
           .RES.B      1
-DAT_f8bf:
+irTimeoutRetryCount:
           .RES.B      2
 DAT_f8c1:
           .RES.B      1
-DAT_f8c2:
+irCrcRetryCount:
           .RES.B      1
-DAT_f8c3:
+irPacketReceivedFlag:
           .RES.B      1
 REQUESTED_POKEMON_ACTION_TYPE:
           .RES.B      1
-DAT_f8c5:
+irSessionPhase:
           .RES.B      1
-DAT_f8c6:
+irXferRemaining:
           .RES.B      2
-DAT_f8c8:
+irXferSrc:
           .RES.B      2
-DAT_f8ca:
+irXferDst:
           .RES.B      2
-DAT_f8cc:
+irXferChunkCount:
           .RES.B      1
 rdr_data:
           .RES.B      1
 commandType:
           .RES.B      1
-DAT_f8cf:
+commandSubtype:
           .RES.B      1
-DAT_f8d0:
+commandCrcLo:
           .RES.B      1
-DAT_f8d1:
+commandCrcHi:
           .RES.B      1
-DAT_f8d2:
+commandSessionToken:
           .RES.B      4
-TX_PACKET_payload:
+irPacketPayload:
           .RES.B      1
 DAT_f8d7:
           .RES.B      1
 DAT_f8d8:
           .RES.B      14
-DAT_f8e6:
+stepDetectAccum:
           .RES.B      4
-DAT_f8ea:
+pendingStepDetect:
           .RES.B      4
 DAT_f8ee:
           .RES.B      1
 isNotWalking:
           .RES.B      103
-DAT_f956:
+eepromPageScratch:
           .RES.B      1
 DAT_f957:
           .RES.B      12

@@ -249,7 +249,7 @@ void ui_handle_debug_input(void) {
     if (drv_button_is_triggered(0x04) == 0) {
       return;
     }
-    drv_sound_set_data((uint8_t *)0xBFA2);
+    drv_sound_set_data((uint8_t *)factoryTestSoundData);
     subY = gCurSubstateY - 1;
     goto set_substate_y_and_clear_a;
 
@@ -311,7 +311,7 @@ void ui_handle_debug_input(void) {
 
   case 0x0D: {
     uint16_t val;
-    save_read_reliable(0x0080, 0x0180, (void *)&accelYPos, 2);
+    save_read_reliable(EEPROM_ACCEL_CAL, EEPROM_ACCEL_CAL_BACKUP, (void *)&accelYPos, 2);
     val = accelYPos;
     dowsing_item_pos = drv_adc_validate_calib_checksum(val);
     if (val != 0) {
@@ -364,7 +364,7 @@ void ui_handle_debug_input(void) {
     PDR1 |= 0x01;
     currentlyActiveView = 0x17;
     sys_init_debug_mode();
-    drv_sound_set_data((uint8_t *)0xBFA2);
+    drv_sound_set_data((uint8_t *)factoryTestSoundData);
     return;
 
   default:
@@ -372,7 +372,7 @@ void ui_handle_debug_input(void) {
   }
 
 do_sound_and_inc:
-  drv_sound_set_data((uint8_t *)0xBFA2);
+  drv_sound_set_data((uint8_t *)factoryTestSoundData);
 do_inc:
   subY = gCurSubstateY + 1;
 set_substate_y_and_clear_a:
@@ -399,7 +399,7 @@ void ui_render_debug(void) {
     if (gCurSubstateZ != 0) {
       goto case_d;
     }
-    fn858a(0x20, 0x08, (const char *)0xBF76);
+    fn858a(0x20, 0x08, factoryStr_NG1);
     goto case_d;
 
   case 0x01:
@@ -427,56 +427,56 @@ void ui_render_debug(void) {
     goto case_d;
 
   case 0x07:
-    if (((uint16_t)DAT_f7ac >> 1) & 1) {
+    if (((uint16_t)animTick >> 1) & 1) {
       goto case_d;
     }
-    fn858a(0x06, 0x38, (const char *)0xBF8A);
+    fn858a(0x06, 0x38, factoryStr_V);
     goto case_d;
 
   case 0x08:
-    if (((uint16_t)DAT_f7ac >> 1) & 1) {
+    if (((uint16_t)animTick >> 1) & 1) {
       goto case_d;
     }
-    fn858a(0x2D, 0x38, (const char *)0xBF8A);
+    fn858a(0x2D, 0x38, factoryStr_V);
     goto case_d;
 
   case 0x09:
-    if (((uint16_t)DAT_f7ac >> 1) & 1) {
+    if (((uint16_t)animTick >> 1) & 1) {
       goto case_d;
     }
-    fn858a(0x55, 0x38, (const char *)0xBF8A);
+    fn858a(0x55, 0x38, factoryStr_V);
     goto case_d;
 
   case 0x0A:
-    fn858a(0x20, 0x08, (const char *)0xBF7A);
+    fn858a(0x20, 0x08, factoryStr_EEP);
     goto case_d;
 
   case 0x0C:
     if (dowsing_item_pos != 0) {
       goto case_d;
     }
-    fn858a(0x20, 0x08, (const char *)0xBF7E);
+    fn858a(0x20, 0x08, factoryStr_NG2);
     goto case_d;
 
   case 0x0E:
     if (dowsing_item_pos != 0) {
       goto case_d;
     }
-    fn858a(0x20, 0x08, (const char *)0xBF82);
+    fn858a(0x20, 0x08, factoryStr_NG3);
     goto case_d;
 
   case 0x0F:
     if (DAT_f7d1 != *(uint8_t *)(&accelXPos)) {
       goto case_d;
     }
-    fn858a(0x20, 0x08, (const char *)0xBF86);
+    fn858a(0x20, 0x08, factoryStr_NG4);
     goto case_d;
 
   case 0x11:
     if (dowsing_item_pos != 0) {
       goto case_d;
     }
-    fn858a(0x20, 0x08, (const char *)0xBF8C);
+    fn858a(0x20, 0x08, factoryStr_NG5);
     goto case_d;
 
   case 0x12:
@@ -492,10 +492,10 @@ void ui_render_debug(void) {
 
     /* Draw hex digits of accelYPos */
     {
-      uint8_t *hexTable = (uint8_t *)0xBFAA;
+      const uint8_t *hexTable = hexDigits;
       uint16_t val = accelYPos;
 
-      fn858a(0x20, 0x00, (const char *)0xBF90);
+      fn858a(0x20, 0x00, factoryStr_OK);
 
       buf[4] = 0;
       buf[0] = hexTable[(val >> 12) & 0xF];
@@ -507,10 +507,10 @@ void ui_render_debug(void) {
       fn858a(0x20, 0x18, (const char *)buf);
     }
 
-    if (!(((uint16_t)DAT_f7ac >> 1) & 1)) {
-      fn858a(0x06, 0x38, (const char *)0xBF8A);
-      fn858a(0x2D, 0x38, (const char *)0xBF8A);
-      fn858a(0x55, 0x38, (const char *)0xBF8A);
+    if (!(((uint16_t)animTick >> 1) & 1)) {
+      fn858a(0x06, 0x38, factoryStr_V);
+      fn858a(0x2D, 0x38, factoryStr_V);
+      fn858a(0x55, 0x38, factoryStr_V);
     }
     goto case_d;
 
@@ -568,11 +568,11 @@ void ui_render_accel_debug(void) {
   *q = 0;
   fn858a(0x54, 0x00, (const char *)p);
 
-  hexTable = (uint8_t *)0xBFAA;
+  hexTable = (uint8_t *)hexDigits;
 
-  /* Draw hex digits of DAT_f7da at 0x820 */
+  /* Draw hex digits of axisStepThresholdLo at 0x820 */
   {
-    uint16_t val = DAT_f7da;
+    uint16_t val = axisStepThresholdLo;
     uint16_t tmp;
     uint8_t *d;
     d = p;
@@ -598,9 +598,9 @@ void ui_render_accel_debug(void) {
     fn858a(0x20, 0x08, (const char *)p);
   }
 
-  /* Draw hex digits of DAT_f7dc at 0x840 */
+  /* Draw hex digits of axisStepThresholdHi at 0x840 */
   {
-    uint16_t val = DAT_f7dc;
+    uint16_t val = axisStepThresholdHi;
     *p = hexTable[(val >> 12) & 0xF];
     *q = hexTable[(val >> 8) & 0xF];
     *(p + 2) = hexTable[(val >> 4) & 0xF];
@@ -609,9 +609,9 @@ void ui_render_accel_debug(void) {
     fn858a(0x40, 0x08, (const char *)p);
   }
 
-  /* Draw hex digits of DAT_f7de at 0x1020 */
+  /* Draw hex digits of axisIdleThreshold at 0x1020 */
   {
-    uint16_t val = DAT_f7de;
+    uint16_t val = axisIdleThreshold;
     *p = hexTable[(val >> 12) & 0xF];
     *q = hexTable[(val >> 8) & 0xF];
     *(p + 2) = hexTable[(val >> 4) & 0xF];
@@ -639,7 +639,7 @@ void ui_render_accel_debug(void) {
     while (!SSSR_BIT.TEND)
       ;
     PDR1 |= 0x01;
-    fn858a(0x08, 0x20, (const char *)0xBF90);
+    fn858a(0x08, 0x20, factoryStr_OK);
   }
 }
 
@@ -659,7 +659,7 @@ void diag_lcd_ssu_test_1(void) {
   SSTDR = 0x00;
   while (!SSSR_BIT.TDRE)
     ;
-  SSTDR = 0xB4 + (DAT_f7e4 * 8);
+  SSTDR = 0xB4 + (lcdPageOffset * 8);
   while (!SSSR_BIT.TEND)
     ;
   PDR1 |= 0x02;
@@ -693,7 +693,7 @@ void diag_lcd_ssu_test_1(void) {
   SSTDR = 0x00;
   while (!SSSR_BIT.TDRE)
     ;
-  SSTDR = 0xB5 + (DAT_f7e4 * 8);
+  SSTDR = 0xB5 + (lcdPageOffset * 8);
   while (!SSSR_BIT.TEND)
     ;
   PDR1 |= 0x02;
@@ -715,7 +715,7 @@ void diag_lcd_ssu_test_1(void) {
   SSTDR = 0x0F;
   while (!SSSR_BIT.TDRE)
     ;
-  SSTDR = 0xB5 + (DAT_f7e4 * 8);
+  SSTDR = 0xB5 + (lcdPageOffset * 8);
   while (!SSSR_BIT.TEND)
     ;
   PDR1 |= 0x02;
@@ -749,7 +749,7 @@ void diag_lcd_ssu_test_2(void) {
   SSTDR = 0x00;
   while (!SSSR_BIT.TDRE)
     ;
-  SSTDR = 0xB6 + (DAT_f7e4 * 8);
+  SSTDR = 0xB6 + (lcdPageOffset * 8);
   while (!SSSR_BIT.TEND)
     ;
   PDR1 |= 0x02;
@@ -783,7 +783,7 @@ void diag_lcd_ssu_test_2(void) {
   SSTDR = 0x00;
   while (!SSSR_BIT.TDRE)
     ;
-  SSTDR = 0xB7 + (DAT_f7e4 * 8);
+  SSTDR = 0xB7 + (lcdPageOffset * 8);
   while (!SSSR_BIT.TEND)
     ;
   PDR1 |= 0x02;
@@ -831,7 +831,7 @@ void diag_lcd_ssu_test_3(void) {
   SSTDR = 0x00;
   while (!SSSR_BIT.TDRE)
     ;
-  SSTDR = 0xB6 + (DAT_f7e4 * 8);
+  SSTDR = 0xB6 + (lcdPageOffset * 8);
   while (!SSSR_BIT.TEND)
     ;
   PDR1 |= 0x02;

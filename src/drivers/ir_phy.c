@@ -58,7 +58,7 @@ void drv_ir_init_hw(void) {
 
 // ROM: 0x075c  97.5%
 uint8_t *drv_ir_get_rx_ptr(void) {
-  return (uint8_t *)(uintptr_t)&TX_PACKET_payload;
+  return (uint8_t *)(uintptr_t)&irPacketPayload;
 }
 
 // ROM: 0x0762  97.9%
@@ -81,7 +81,7 @@ void drv_ir_send_packet(uint8_t cmdType, uint8_t pktLen, uint8_t subtype) {
 
   pkt[0] = cmdType;
   pkt[1] = subtype;
-  *(uint32_t *)(pkt + 4) = DAT_f8ba;
+  *(uint32_t *)(pkt + 4) = sessionKey;
   pkt[2] = 0;
   pkt[3] = 0;
 
@@ -110,18 +110,18 @@ void drv_ir_send_packet(uint8_t cmdType, uint8_t pktLen, uint8_t subtype) {
 // ROM: 0x0880  79.2%
 void drv_ir_send_discovery(void) {
   drv_ir_init_hw();
-  DAT_f7ad = 0x00;
-  DAT_f8b6 = nextRandom;
-  DAT_f8ba = DAT_f8b6;
-  DAT_f8be = 0x01;
-  DAT_f8bf = 0x00;
-  DAT_f8c2 = 0x00;
+  irResultCode = 0x00;
+  nextSessionKey = nextRandom;
+  sessionKey = nextSessionKey;
+  irHandshakeStep = 0x01;
+  irTimeoutRetryCount = 0x00;
+  irCrcRetryCount = 0x00;
   REQUESTED_POKEMON_ACTION_TYPE = 0xFF;
-  *(uint8_t *)&DAT_f8c3 &= ~0x01;
+  irPacketReceivedFlag_BIT.b0 = 0;
   commandPos = 0x00;
   DAT_f8c1 = 0x00;
   lastCommandTime = TCNT;
-  DAT_f8c5 = 0x00;
+  irSessionPhase = 0x00;
   drv_ir_tx_u8(0xFC);
 }
 

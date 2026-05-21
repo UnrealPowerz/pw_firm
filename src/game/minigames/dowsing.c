@@ -11,11 +11,11 @@ void game_generate_encounter_dowsing(void) {
 
   gCurSubstateY = 0;
   if (((RamCache_settingsByte & 1)) != 0) {
-    uint8_t byte_bf7a = drv_eeprom_read_u8(0xBF7A);
+    uint8_t byte_bf7a = drv_eeprom_read_u8(EEPROM_EEP_STR);
     sys_init_heap();
     ram_ptr = sbrk(0x68);
     if (gfx_xor_rect_ram(ram_ptr, byte_bf7a) != 0) {
-      if ((drv_eeprom_read_u8(0xB800) & 0x20) != 0) {
+      if ((drv_eeprom_read_u8(EEPROM_STEP_HIST_FLAGS) & 0x20) != 0) {
         sys_init_heap();
         ram_ptr = sbrk(4);
         drv_eeprom_read_block(0xBF44, ram_ptr, 4);
@@ -35,12 +35,12 @@ void game_generate_encounter_dowsing(void) {
   /* LAB_9cea */
   sys_init_heap();
   ram_ptr = sbrk(0x30);
-  drv_eeprom_read_block(0xCE8C, ram_ptr, 0x30);
+  drv_eeprom_read_block(EEPROM_LOG_CONTEXT, ram_ptr, 0x30);
   rem = (uint8_t)(sys_get_rng() % 100);
 
   sys_init_heap();
   be_ptr = sbrk(0xBE);
-  drv_eeprom_read_block(0x8F00, be_ptr, 0xBE);
+  drv_eeprom_read_block(EEPROM_TRAINER_PROFILE, be_ptr, 0xBE);
 
   for (r6l = 0; r6l < 3; r6l++) {
     if (game_check_step_unlock((uint16_t)(r6l * 2), 0x82)) {
@@ -167,14 +167,14 @@ state2:
       ui_set_view(7);
       return;
     }
-    drv_eeprom_write_block((uint16_t)slot * 4 + 0xCEBC, (void *)&DAT_f7d8, 0x2);
+    drv_eeprom_write_block((uint16_t)slot * 4 + EEPROM_LOG_ITEMS, (void *)&DAT_f7d8, 0x2);
   }
   if (walker_status_flags_BIT.walking) {
     uint8_t *trainer_buf;
     uint8_t *gift_buf;
 
     trainer_buf = (uint8_t *)sbrk(0xBE);
-    drv_eeprom_read_block(0x8F00, trainer_buf, 0xBE);
+    drv_eeprom_read_block(EEPROM_TRAINER_PROFILE, trainer_buf, 0xBE);
     gift_buf = (uint8_t *)sbrk(0x88);
     game_log_interaction(trainer_buf, gift_buf, 0x0B, 0x00, (uint16_t)DAT_f7d8);
   }
@@ -216,7 +216,7 @@ state4:
 // ROM: 0x499c  52.5%
 void game_read_wild_poke(void *ram_dst) {
   /* Wrap drv_eeprom_read_block for encounter data */
-  drv_eeprom_read_block(0xBD40, ram_dst, 0x188);
+  drv_eeprom_read_block(EEPROM_WILD_POKE, ram_dst, 0x188);
   (void)0;
 }
 
@@ -228,7 +228,7 @@ void game_read_wild_poke(void *ram_dst) {
 // ROM: 0x49ae  52.5%
 void game_write_wild_poke(void *ram_src) {
   /* Wrap drv_eeprom_write_block for encounter data */
-  drv_eeprom_write_block(0xBD40, ram_src, 0x188);
+  drv_eeprom_write_block(EEPROM_WILD_POKE, ram_src, 0x188);
   (void)0;
 }
 
@@ -286,7 +286,7 @@ encounter:
   {
     uint8_t *trainer_buf;
     trainer_buf = (uint8_t *)sbrk(0xBE);
-    drv_eeprom_read_block(0x8F00, trainer_buf, 0xBE);
+    drv_eeprom_read_block(EEPROM_TRAINER_PROFILE, trainer_buf, 0xBE);
 
     gCurSubstateY = 0x0A;
 
@@ -299,9 +299,9 @@ encounter:
 
     {
       uint8_t flags;
-      flags = drv_eeprom_read_u8(0xB800);
+      flags = drv_eeprom_read_u8(EEPROM_STEP_HIST_FLAGS);
       flags |= 0x40;
-      drv_eeprom_write_u8(0xB800, flags);
+      drv_eeprom_write_u8(EEPROM_STEP_HIST_FLAGS, flags);
     }
 
     if (walker_status_flags_BIT.walking) {
@@ -326,7 +326,7 @@ void ui_handle_dowsing_selection(void) {
 
   sys_init_heap();
   item_table = (uint8_t *)sbrk(0x0C);
-  drv_eeprom_read_block(0xCEBC, item_table, 0x0C);
+  drv_eeprom_read_block(EEPROM_LOG_ITEMS, item_table, 0x0C);
 
   accelZPos = save_find_empty_slot_32bit(item_table);
 
@@ -336,7 +336,7 @@ void ui_handle_dowsing_selection(void) {
   }
 
   trainer_buf = (uint8_t *)sbrk(0xBE);
-  drv_eeprom_read_block(0x8F00, trainer_buf, 0xBE);
+  drv_eeprom_read_block(EEPROM_TRAINER_PROFILE, trainer_buf, 0xBE);
 
   for (i = 0; i < 10; i++) {
     uint16_t rnd_pct;
@@ -419,7 +419,7 @@ void ui_render_dowsing_grass(void) {
   /* Bobbing grass */
   {
     uint8_t anim;
-    anim = DAT_f7ac & 0x03;
+    anim = animTick & 0x03;
     gfx_draw_animated_grass(
         0x10, 0x10, (int8_t)*((volatile uint8_t *)(0xBD82 + anim)), buf);
   }
@@ -501,7 +501,7 @@ void ui_render_dowsing(void) {
   if (gCurSubstateZ == 0) {
     /* Idle: dousing rod animated */
     uint8_t anim_sel;
-    anim_sel = DAT_f7ac & 0x01;
+    anim_sel = animTick & 0x01;
     drv_eeprom_read_block(0x278 + base + (uint16_t)anim_sel * 0x10, buf, 0x10);
     {
       uint8_t rod_x;

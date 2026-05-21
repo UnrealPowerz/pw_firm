@@ -16,7 +16,7 @@ void ui_render_battle(void) {
   e2_buf = (uint8_t *)sbrk(0x08);
 
   /* Background drawing */
-  addr = (uint16_t)(DAT_f7ac & 1) * 0xC0 + 0x91BE;
+  addr = (uint16_t)(animTick & 1) * 0xC0 + 0x91BE;
   readEeprom(addr, sprite_buf, 0xC0);
   drawToScreen(sprite_buf, 0x20, 0x18, (uint8_t)accelYPos, 8);
 
@@ -41,12 +41,12 @@ void ui_render_battle(void) {
       readEeprom(0x8F52 + (uint16_t)(s_y - 1) * 16, sprite_buf, 0x10);
       flip = sprite_buf[0x0E] & 0x01;
       addr = 0x9A7E + (uint16_t)(s_y - 1) * 0x180 +
-             (uint16_t)(DAT_f7ac & 1) * 0xC0;
+             (uint16_t)(animTick & 1) * 0xC0;
     } else {
       /* Peer Pokemon pattern */
       readEeprom(0xBF08, sprite_buf, 0x10);
       flip = sprite_buf[0x0E] & 0x01;
-      addr = 0xBF7C + (uint16_t)(DAT_f7ac & 1) * 0xC0;
+      addr = 0xBF7C + (uint16_t)(animTick & 1) * 0xC0;
     }
 
     readEeprom(addr, sprite_buf, 0x180);
@@ -56,7 +56,7 @@ void ui_render_battle(void) {
 
     if (gCurSubstateZ == 10) {
       uint8_t x_offset = 0x2C - (accelXPos << 2);
-      uint16_t val = DAT_bdd0[x_offset];
+      uint16_t val = fftTwiddleTable[x_offset];
       uint8_t y_screen = 0x14 - (uint8_t)(val >> 8);
 
       readEeprom(0x280 + 0x1E0, e3_buf, 0x10);
@@ -96,7 +96,7 @@ void ui_render_battle(void) {
       }
       break;
     case 2:
-      readEeprom(0x1DD0 + (DAT_f7ac & 1) * 0xC0, sprite_buf, 0x300);
+      readEeprom(0x1DD0 + (animTick & 1) * 0xC0, sprite_buf, 0x300);
       drawToScreen(sprite_buf, 0x60, 0x20, 0x20, 0x60);
       goto switch_default;
     case 3: {
@@ -104,7 +104,7 @@ void ui_render_battle(void) {
       if (move_type == 0) {
         if (accelXPos == 4) {
           drv_sound_play(0x0B);
-          readEeprom(0x1BF0 + (DAT_f7ac & 1) * 0xC0, sprite_buf, 0x1E0);
+          readEeprom(0x1BF0 + (animTick & 1) * 0xC0, sprite_buf, 0x1E0);
           drawToScreen(sprite_buf, 0x10, 0x20, 0x28, 0x10);
         } else if (accelXPos < 4) {
           gfx_draw_own_pokemon_name(0x00, 0x20, 5);
@@ -126,7 +126,7 @@ void ui_render_battle(void) {
       } else if (move_type == 2) {
         if (accelXPos == 4) {
           drv_sound_play(0x0D);
-          readEeprom(0x1C70 + (DAT_f7ac & 1) * 0xC0, sprite_buf, 0x1E0);
+          readEeprom(0x1C70 + (animTick & 1) * 0xC0, sprite_buf, 0x1E0);
           drawToScreen(sprite_buf, 0x10, 0x20, 0x28, 0x10);
         } else if (accelXPos < 4) {
           gfx_draw_text_box(0x20, 0x25, 0x0D, 0x00);
@@ -141,7 +141,7 @@ void ui_render_battle(void) {
       if (m_type == 0) {
         if (accelXPos == 4) {
           drv_sound_play(0x0B);
-          readEeprom(0x1BF0 + (DAT_f7ac & 1) * 0xC0, sprite_buf, 0x1E0);
+          readEeprom(0x1BF0 + (animTick & 1) * 0xC0, sprite_buf, 0x1E0);
           drawToScreen(sprite_buf, 0x10, 0x20, 0x28, 0x10);
         } else if (accelXPos < 4) {
           if (gCurSubstateY < 4) {
@@ -210,7 +210,7 @@ void ui_render_battle(void) {
       break;
 
     case 13: {
-      uint8_t bx = DAT_f7ac & 3;
+      uint8_t bx = animTick & 3;
       uint8_t dx;
       if (bx == 0)
         dx = 0x13;
@@ -291,9 +291,9 @@ void game_battle_process_turn(void) {
   move_type = (uint8_t)((DAT_f7d8 >> 5) & 0x07);
   index = (uint8_t)(move_type * 3);
 
-  if (r < DAT_bb36[index + 2]) {
+  if (r < battleMoveOutcomeWeights[index + 2]) {
     DAT_f7d8 = (DAT_f7d8 & 0xE7) | 0x10;
-  } else if (r < DAT_bb36[index + 2] + DAT_bb36[index + 1]) {
+  } else if (r < battleMoveOutcomeWeights[index + 2] + battleMoveOutcomeWeights[index + 1]) {
     DAT_f7d8 = (DAT_f7d8 & 0xE7) | 0x08;
   } else {
     DAT_f7d8 = (DAT_f7d8 & 0xE7);
@@ -350,7 +350,7 @@ uint8_t game_battle_check_capture_success(void) {
 
   if (DAT_f7d1 == 0)
     return 0;
-  if (L_BB45[DAT_f7d1 - 1] > mod)
+  if (captureSuccessProbs[DAT_f7d1 - 1] > mod)
     return 1;
   return 0;
 }
@@ -370,7 +370,7 @@ void game_battle_handle_finish(void) {
 
     sys_init_heap();
     buffer_30 = sbrk(0x30);
-    drv_eeprom_read_block(0xCE8C, buffer_30, 0x30);
+    drv_eeprom_read_block(EEPROM_LOG_CONTEXT, buffer_30, 0x30);
 
     sub_result = save_find_empty_reward_slot(buffer_30);
     if (sub_result >= 3) {
@@ -380,12 +380,12 @@ void game_battle_handle_finish(void) {
       return;
     }
 
-    drv_eeprom_read_block(0x8F52 + (uint16_t)sub_result * 16,
+    drv_eeprom_read_block(EEPROM_POKEMON_SLOTS + (uint16_t)sub_result * 16,
                           (uint8_t *)buffer_30 + (uint16_t)sub_result * 16, 16);
-    drv_eeprom_write_block(0xCE8C, buffer_30, 0x30);
+    drv_eeprom_write_block(EEPROM_LOG_CONTEXT, buffer_30, 0x30);
 
     battle_context = sbrk(0xBE);
-    drv_eeprom_read_block(0x8F00, battle_context, 0xBE);
+    drv_eeprom_read_block(EEPROM_TRAINER_PROFILE, battle_context, 0xBE);
 
     sbrk(0x88);
   } else {
@@ -396,12 +396,12 @@ void game_battle_handle_finish(void) {
 
     sys_init_heap();
     buffer_68 = sbrk(0x68);
-    val = drv_eeprom_read_u8(0xBF7A);
+    val = drv_eeprom_read_u8(EEPROM_EEP_STR);
 
     if (gfx_xor_rect_ram(buffer_68, val) != 0)
       return;
 
-    val2 = drv_eeprom_read_u8(0xB800);
+    val2 = drv_eeprom_read_u8(EEPROM_STEP_HIST_FLAGS);
     if (val2 & 0x20)
       return;
 
@@ -419,11 +419,11 @@ void game_battle_handle_finish(void) {
     drv_eeprom_read_block(0xC6FC, m_context, 0x140);
     drv_eeprom_write_block(0xBC00, m_context, 0x140);
 
-    drv_eeprom_write_u8(0xB800, val2 | 0x20);
+    drv_eeprom_write_u8(EEPROM_STEP_HIST_FLAGS, val2 | 0x20);
     save_set_event_bit(buffer_68, val);
 
     m_context = sbrk(0xBE);
-    drv_eeprom_read_block(0x8F00, m_context, 0xBE);
+    drv_eeprom_read_block(EEPROM_TRAINER_PROFILE, m_context, 0xBE);
 
     poke_buf = (void *)sbrk(0x88);
     game_log_interaction(m_context, poke_buf, 0x0E, 0x01,
@@ -455,10 +455,10 @@ void ui_handle_battle(void) {
     break;
 
   case 1:
-    DAT_f7d5 = DAT_bb0e[x];
+    DAT_f7d5 = battleAnimP1XFrames[x];
     if (accelXPos < dowsing_item_pos)
       return;
-    DAT_f7d8 |= 0x01;
+    DAT_f7d8_BIT.b0 = 1;
     if (drv_sound_is_playing())
       return;
     if (drv_button_is_triggered(0x0E)) {
@@ -468,8 +468,8 @@ void ui_handle_battle(void) {
 
   case 3: {
     uint8_t move_type;
-    accelYPos = DAT_bb12[x];
-    DAT_f7d5 = DAT_bb13[x];
+    accelYPos = battleAnimP3YFrames[x];
+    DAT_f7d5 = battleAnimP3XFrames[x];
     if (drv_sound_is_playing())
       return;
     if (x < item_pos)
@@ -504,8 +504,8 @@ void ui_handle_battle(void) {
 
   case 4: {
     uint8_t m_type;
-    accelYPos = DAT_bb24[x];
-    DAT_f7d5 = DAT_bb25[x];
+    accelYPos = battleAnimP4YFrames[x];
+    DAT_f7d5 = battleAnimP4XFrames[x];
     if (drv_sound_is_playing())
       return;
     if (x < item_pos)
@@ -543,7 +543,7 @@ void ui_handle_battle(void) {
       void *ctx;
       sys_init_heap();
       buf = sbrk(0xBE);
-      drv_eeprom_read_block(0x8F00, buf, 0xBE);
+      drv_eeprom_read_block(EEPROM_TRAINER_PROFILE, buf, 0xBE);
       if (gCurSubstateY < 4) {
         ctx = sbrk(0x10);
         game_log_interaction(ctx, buf, 0x10, 0x00, (uint16_t)gCurSubstateY);
@@ -557,7 +557,7 @@ void ui_handle_battle(void) {
         accelZPos = (uint8_t)watts;
       }
       watts -= accelZPos;
-      save_write_reliable(0x0156, 0x0256, (void *)&totalSteps, 0x18);
+      save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (void *)&totalSteps, 0x18);
     }
     gCurSubstateZ = 6;
     accelXPos = 0;
@@ -575,13 +575,13 @@ void ui_handle_battle(void) {
     if (x > 3) {
       DAT_f7d5 = 0xE0;
     } else {
-      DAT_f7d5 = DAT_bb0e[3 - x];
+      DAT_f7d5 = battleAnimP1XFrames[3 - x];
     }
     if (drv_button_is_triggered(0x0E)) {
       void *buf, *ctx;
       sys_init_heap();
       buf = sbrk(0xBE);
-      drv_eeprom_read_block(0x8F00, buf, 0xBE);
+      drv_eeprom_read_block(EEPROM_TRAINER_PROFILE, buf, 0xBE);
       if (gCurSubstateY < 4) {
         ctx = sbrk(0x10);
         game_log_interaction(ctx, buf, 0x0F, 0x00, (uint16_t)gCurSubstateY);

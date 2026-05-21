@@ -2,8 +2,7 @@
 
 // ROM: 0x694c  0.0%
 void ui_start_connection_app(void) {
-  sys_init_io_ports(currentEventLoopFunc,
-                    (uint16_t)(uintptr_t)sys_main_loop_low_power);
+  sys_init_io_ports(currentEventLoopFunc, sys_main_loop_low_power);
 }
 
 // ROM: 0x6a3e  92.5%
@@ -64,7 +63,7 @@ void ui_render_home_route(void) {
 
   if (gCurSubstateZ != 0) {
     uint8_t idx;
-    idx = *(uint8_t *)(0xBEB0 + (uint16_t)(gCurSubstateY - 1));
+    idx = routeIconIndices[gCurSubstateY - 1];
     gfx_draw_small_route_icon(idx);
   }
   ui_render_route_image();
@@ -72,21 +71,21 @@ void ui_render_home_route(void) {
     return;
   }
   subA = gCurSubstateA;
-  if (!(DAT_f7d1 & 0x02)) {
+  if (!DAT_f7d1_BIT.b1) {
     gfx_draw_home_pokemon(subA, 0);
-  } else if (!(DAT_f7d1 & 0x04)) {
+  } else if (!DAT_f7d1_BIT.b2) {
     gfx_draw_own_pokemon_small(subA, 0x18);
   } else {
     sys_init_heap();
     buf = sbrk(0x10);
-    drv_eeprom_read_block(0x8F00, buf, 0x10);
-    if (!(buf[0x0E] & 0x01)) {
+    drv_eeprom_read_block(EEPROM_TRAINER_PROFILE, buf, 0x10);
+    if (!((byte_bits_t *)&buf[0x0E])->BIT.b0) {
       gfx_draw_own_pokemon_small_flipped(subA, 0x18);
     } else {
       gfx_draw_own_pokemon_small(subA, 0x18);
     }
   }
-  if (DAT_f7d1 & 0x02) {
+  if (DAT_f7d1_BIT.b1) {
     sys_update_standby_state();
   } else {
     sys_enter_standby();
@@ -191,7 +190,7 @@ void ui_handle_settings(void) {
       drv_sound_play(0);
       ui_reset_substate();
       ui_set_view(0);
-      save_write_reliable(0x0156, 0x0256, (void *)&totalSteps, 0x18);
+      save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (void *)&totalSteps, 0x18);
     }
   }
 }
@@ -224,13 +223,13 @@ void ui_render_settings(void) {
   tmp = gCurSubstateZ * 0x30;
 
   if (gCurSubstateY == 0) {
-    animOff = ((DAT_f7ac & 0x01) + 9) * 0x10;
+    animOff = ((animTick & 0x01) + 9) * 0x10;
     drv_lcd_blit(tmp, 0x14, buf + animOff, 8, 8);
   } else if (gCurSubstateY == 1) {
     drv_lcd_blit(tmp, 0x14, buf + 0xB0, 8, 8);
 
     volVal = (RamCache_settingsByte >> 1) & 0x03;
-    animOff = ((DAT_f7ac & 0x01) + 9) * 0x10;
+    animOff = ((animTick & 0x01) + 9) * 0x10;
     drv_lcd_blit((uint8_t)(volVal * 0x20), 0x2C, buf + animOff, 8, 8);
 
     drv_eeprom_read_block(0x17D0, buf, 0x120);
@@ -240,7 +239,7 @@ void ui_render_settings(void) {
   } else if (gCurSubstateY == 2) {
     shVal = (RamCache_settingsByte >> 3) & 0x0F;
     shadeOff = shVal * 8 + 8;
-    animOff = ((DAT_f7ac & 0x01) + 3) * 0x10;
+    animOff = ((animTick & 0x01) + 3) * 0x10;
 
     drv_lcd_blit((uint8_t)shadeOff, 0x20, buf + animOff, 8, 8);
     drv_lcd_blit((uint8_t)(gCurSubstateZ * 0x30), 0x14, buf + 0xB0, 8, 8);
@@ -272,24 +271,24 @@ void ui_render_empty_eeprom(void) {
 
   for (i = 0; i < 0x20; i++) {
     uint8_t pix;
-    pix = DAT_bc74[i];
+    pix = walkerFaceNeutral[i];
     buf[0x50 + i] |= (pix * 8);
     buf[0x50 + i + 0x40] |= (pix / 0x20);
   }
 
   {
     uint8_t frame;
-    frame = (DAT_f7ac >> 2) & 1;
+    frame = (animTick >> 2) & 1;
     if (frame) {
       for (i = 0; i < 0x10; i++) {
         uint8_t pix;
-        pix = DAT_bcd4[i];
+        pix = walkerEmptyExtraGlyph[i];
         buf[0xD8 + i] |= (pix * 0x10);
       }
       drv_lcd_blit(0x20, 0x10, buf, 0x20, 0x20);
 
       for (i = 0; i < 0x10; i++) {
-        buf[i] = DAT_bcd4[i] / 0x10;
+        buf[i] = walkerEmptyExtraGlyph[i] / 0x10;
       }
       drv_lcd_blit(8, 8, buf, 8, 8);
     } else {
@@ -314,7 +313,7 @@ void ui_render_sad_walker(void) {
   dst = buf + 0x50;
   for (i = 0; i < 0x20; i++) {
     uint8_t pix;
-    pix = DAT_bcb4[i];
+    pix = walkerFaceSad[i];
     dst[i] |= (pix * 8);
     dst[i + 0x40] |= (pix / 0x20);
   }
@@ -351,7 +350,7 @@ void ui_render_happy_walker(uint8_t show_ir) {
   dst = buf + 0x50;
   for (i = 0; i < 0x20; i++) {
     uint8_t pix;
-    pix = DAT_bc94[i];
+    pix = walkerFaceHappy[i];
     dst[i] |= (pix * 8);
     dst[i + 0x40] |= (pix / 0x20);
   }
@@ -386,7 +385,7 @@ void ui_render_home_bar(void) {
 
   base = 0x280;
   diag_lcd_ssu_test_3();
-  flags = drv_eeprom_read_u8(0xB800);
+  flags = drv_eeprom_read_u8(EEPROM_STEP_HIST_FLAGS);
 
   sys_init_heap();
   buf = sbrk(0x180);
@@ -401,7 +400,7 @@ void ui_render_home_bar(void) {
 
   if (flags & 0x40) {
     uint16_t hasRoute;
-    drv_eeprom_read_block(0xBD40, buf, 8);
+    drv_eeprom_read_block(EEPROM_WILD_POKE, buf, 8);
     hasRoute = *(uint16_t *)(buf + 6);
     if (hasRoute != 0) {
       drv_eeprom_read_block(0x218 + base, buf, 0x10);
@@ -435,7 +434,7 @@ void ui_render_home_bar(void) {
   }
 
   drv_eeprom_read_block(0x1E0 + base, buf, 0x10);
-  drv_eeprom_read_block(0xCE8C, itemArea, 0x30);
+  drv_eeprom_read_block(EEPROM_LOG_CONTEXT, itemArea, 0x30);
 
   for (i = 0; i < 3; i++) {
     uint16_t entry;
@@ -448,7 +447,7 @@ void ui_render_home_bar(void) {
   }
 
   drv_eeprom_read_block(0x208 + base, buf, 0x10);
-  drv_eeprom_read_block(0xCEBC, itemArea, 0x0C);
+  drv_eeprom_read_block(EEPROM_LOG_ITEMS, itemArea, 0x0C);
 
   for (i = 0; i < 3; i++) {
     uint16_t entry;
@@ -477,7 +476,7 @@ void ui_render_home_bar(void) {
 // ROM: 0x9756  67.6%
 void ui_handle_main_menu(void) {
   uint16_t cost;
-  uint8_t *costTable = (uint8_t *)0xBF0E;
+  const uint8_t *costTable = menuItemCostTable;
 
   if (gCurSubstateY != 0) {
     if (drv_button_is_triggered(0x0E)) {
@@ -512,7 +511,7 @@ void ui_handle_main_menu(void) {
         } else {
           watts -= cost;
         }
-        save_write_reliable(0x0156, 0x0256, (uint8_t *)&totalSteps, 0x18);
+        save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (uint8_t *)&totalSteps, 0x18);
         ui_set_view(3);
         game_pokeradar_init();
         return;
@@ -523,7 +522,7 @@ void ui_handle_main_menu(void) {
         } else {
           watts -= cost;
         }
-        save_write_reliable(0x0156, 0x0256, (uint8_t *)&totalSteps, 0x18);
+        save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (uint8_t *)&totalSteps, 0x18);
         game_init_dowsing();
         ui_set_view(2);
         return;
@@ -605,7 +604,7 @@ void ui_render_main_menu(void) {
     }
 
     if (i == menu_cursor) {
-      uint16_t cursor_addr = (uint16_t)((DAT_f7ac & 1) + 3) * 0x10 + 0x278;
+      uint16_t cursor_addr = (uint16_t)((animTick & 1) + 3) * 0x10 + 0x278;
       drv_eeprom_read_block(cursor_addr, sprite_buf, 0x10);
       gfx_blit_to_buffer(0x08, 0xF8, 0x08, 0x08, sprite_buf, e0_buf, 0x10);
     }
@@ -616,7 +615,7 @@ void ui_render_main_menu(void) {
       gfx_blit_to_buffer(0x00, 0x00, 0x10, 0x20, sprite_buf, e0_buf, 0x10);
     }
 
-    drv_lcd_blit(0x10, 0x20, e0_buf, 0x10, L_BF14[i]);
+    drv_lcd_blit(0x10, 0x20, e0_buf, 0x10, mainMenuYCoords[i]);
   }
 
   if (gCurSubstateY == 0) {

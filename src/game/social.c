@@ -1,5 +1,16 @@
 #include "all_headers.h"
 
+/*
+ * `a` is a 0xBE-byte pokemon/profile record (e.g. from EEPROM_TRAINER_PROFILE):
+ *   0x00 trainer id, 0x0A loc, 0x0D gender/ability bits, 0x0E flag-byte,
+ *   0x10..0x25 nickname (0x16), 0x26..0x27 misc bytes,
+ *   0x28..0x51 poke data (0x2A), 0x52+ moves[0x10]
+ * `b` is a 0x88-byte peer-log slot (written to EEPROM_PEER_SLOT_BASE+i*0x88):
+ *   0x00 id, 0x0A loc, 0x0C move-id, 0x0E val_high, 0x20 nick, 0x4C poke,
+ *   0x76 hour, 0x77 misc, 0x78 recent-steps, 0x7C session-steps,
+ *   0x84 interaction-type, 0x85/0x86 packed bitfields
+ * Not a trainer_record — kept as raw byte access pending peer_log_record type.
+ */
 // ROM: 0x4546  56.9%  saves: r3,r4,er5,er6 -> er5,er6
 #pragma option speed =loop=1 /* pragma:auto */
 void game_log_interaction(uint8_t *a, uint8_t *b, uint8_t d_low, uint8_t d_high,
@@ -8,7 +19,7 @@ void game_log_interaction(uint8_t *a, uint8_t *b, uint8_t d_low, uint8_t d_high,
   uint16_t slot_off;
   uint8_t eeprom_val;
 
-  slot_off = (uint16_t)DAT_f793 * 0x88 + 0xCF0C;
+  slot_off = (uint16_t)peerSlotIndex * 0x88 + 0xCF0C;
   eeprom_val = drv_eeprom_read_u8(slot_off + 0x84);
 
   if (eeprom_val != 0) {
@@ -18,8 +29,8 @@ void game_log_interaction(uint8_t *a, uint8_t *b, uint8_t d_low, uint8_t d_high,
   }
 
   if (eeprom_val == 0x19) {
-    DAT_f793 = (uint8_t)((int16_t)((uint16_t)DAT_f793 + 1) % 23);
-    slot_off = (uint16_t)DAT_f793 * 0x88 + 0xCF0C;
+    peerSlotIndex = (uint8_t)((int16_t)((uint16_t)peerSlotIndex + 1) % 23);
+    slot_off = (uint16_t)peerSlotIndex * 0x88 + 0xCF0C;
   }
 
   if (d_low > 0x0A) {
@@ -31,7 +42,7 @@ void game_log_interaction(uint8_t *a, uint8_t *b, uint8_t d_low, uint8_t d_high,
   b[0x84] = d_low;
   *((uint16_t *)(b + 0x0E)) = val_high;
   *((uint32_t *)b) = *((uint32_t *)a);
-  *((uint16_t *)(b + 0x78)) = DAT_f7a0;
+  *((uint16_t *)(b + 0x78)) = recentSessionSteps;
   *((uint32_t *)(b + 0x7C)) = sessionSteps;
   *((uint16_t *)(b + 0x0A)) = *((uint16_t *)a);
 
@@ -67,7 +78,7 @@ void game_log_interaction(uint8_t *a, uint8_t *b, uint8_t d_low, uint8_t d_high,
       b[0x4C + i] = a[0x28 + i];
     }
   } else {
-    b[0x76] = drv_eeprom_read_u8(0xBF06);
+    b[0x76] = drv_eeprom_read_u8(EEPROM_HOUR_MARKER);
     drv_eeprom_read_block(0xBF50, b + 0x4C, 0x2A);
   }
 
@@ -105,7 +116,7 @@ void game_log_interaction(uint8_t *a, uint8_t *b, uint8_t d_low, uint8_t d_high,
     }
     drv_eeprom_read_block(src_addr, b + 0x0C, 0x2);
 
-    sp_byte = drv_eeprom_read_u8(0xBF0D);
+    sp_byte = drv_eeprom_read_u8(EEPROM_SPECIAL_BYTE);
     lo_bits = sp_byte & 0x1F;
     hi_bits = b[0x86] & 0xE0;
     b[0x86] = hi_bits | lo_bits;
@@ -119,9 +130,9 @@ void game_log_interaction(uint8_t *a, uint8_t *b, uint8_t d_low, uint8_t d_high,
   drv_eeprom_write_block(slot_off, b, 0x88);
 
   /* Advance slot */
-  DAT_f793 = (uint8_t)((int16_t)((uint16_t)DAT_f793 + 1) % 23);
+  peerSlotIndex = (uint8_t)((int16_t)((uint16_t)peerSlotIndex + 1) % 23);
 
-  save_write_reliable(0x0156, 0x0256, (void *)&totalSteps, 0x18);
+  save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (void *)&totalSteps, 0x18);
 }
 
 // ROM: 0x3a68  98.3%
@@ -142,14 +153,14 @@ void game_log_poke_interaction(void) {
 
   sys_init_heap();
   ctx = sbrk(0x30);
-  drv_eeprom_read_block(0xCE8C, ctx, 0x30);
+  drv_eeprom_read_block(EEPROM_LOG_CONTEXT, ctx, 0x30);
 
-  drv_eeprom_read_block(0x8F52 + ((gCurSubstateY - 1) * 0x10),
+  drv_eeprom_read_block(EEPROM_POKEMON_SLOTS + ((gCurSubstateY - 1) * 0x10),
                         ctx + (gCurSubstateZ * 0x10), 0x10);
-  drv_eeprom_write_block(0xCE8C, ctx, 0x30);
+  drv_eeprom_write_block(EEPROM_LOG_CONTEXT, ctx, 0x30);
 
   tmp = sbrk(0xBE);
-  drv_eeprom_read_block(0x8F00, tmp, 0xBE);
+  drv_eeprom_read_block(EEPROM_TRAINER_PROFILE, tmp, 0xBE);
 
   sy = gCurSubstateY;
   buf = sbrk(0x88);
@@ -165,14 +176,14 @@ void game_log_item_interaction(void) {
 
   sys_init_heap();
   ctx = sbrk(0x0C);
-  drv_eeprom_read_block(0xCEBC, ctx, 0x0C);
+  drv_eeprom_read_block(EEPROM_LOG_ITEMS, ctx, 0x0C);
 
-  drv_eeprom_read_block(0x8F8C + (gCurSubstateY * 2), ctx + (gCurSubstateZ * 4),
+  drv_eeprom_read_block(EEPROM_SUBY_LOOKUP_TABLE + (gCurSubstateY * 2), ctx + (gCurSubstateZ * 4),
                         0x02);
-  drv_eeprom_write_block(0xCEBC, ctx, 0x0C);
+  drv_eeprom_write_block(EEPROM_LOG_ITEMS, ctx, 0x0C);
 
   tmp = sbrk(0xBE);
-  drv_eeprom_read_block(0x8F00, tmp, 0xBE);
+  drv_eeprom_read_block(EEPROM_TRAINER_PROFILE, tmp, 0xBE);
 
   buf = sbrk(0x88);
   val = ((uint32_t)(*(uint16_t *)(tmp + (gCurSubstateY * 2) + 0x8C)) << 16) |
@@ -184,24 +195,24 @@ void game_log_item_interaction(void) {
 // ROM: 0x5c0a  77.6%  saves: er6
 #pragma option speed =register /* pragma:auto */
 void game_init_peer_identity(void) {
-  register uint8_t *buf;
+  register struct trainer_record *rec;
   register uint8_t *temp_buf;
   uint16_t i;
 
-  DAT_f7a0 = 0;
+  recentSessionSteps = 0;
   walker_status_flags_BIT.walking = 1;
 
   sys_init_heap();
-  buf = (uint8_t *)sbrk(0x68);
-  save_read_reliable(0x00ED, 0x01ED, buf, 0x68);
+  rec = (struct trainer_record *)sbrk(sizeof(*rec));
+  save_read_reliable(EEPROM_TRAINER_REC, EEPROM_TRAINER_REC_BACKUP, rec, sizeof(*rec));
 
-  if (!(buf[0x5B] & 0x02)) {
-    buf[0x5B] |= 0x02;
-    *(uint32_t *)&buf[4] = *(uint32_t *)&buf[0];
-    *(uint16_t *)&buf[10] = *(uint16_t *)&buf[8];
-    buf[0x5B] |= 0x04;
+  if (!(rec->flags_5b & 0x02)) {
+    rec->flags_5b |= 0x02;
+    rec->id_backup = rec->id;
+    rec->loc_backup = rec->loc;
+    rec->flags_5b |= 0x04;
 
-    save_write_reliable(0x00ED, 0x01ED, buf, 0x68);
+    save_write_reliable(EEPROM_TRAINER_REC, EEPROM_TRAINER_REC_BACKUP, rec, sizeof(*rec));
 
     sys_init_heap();
     temp_buf = (uint8_t *)sbrk(0x180);
@@ -216,7 +227,7 @@ void game_init_peer_identity(void) {
 
     sys_init_heap();
     temp_buf = (uint8_t *)sbrk(0xBE);
-    drv_eeprom_read_block(0x8F00, temp_buf, 0xBE);
+    drv_eeprom_read_block(EEPROM_TRAINER_PROFILE, temp_buf, 0xBE);
 
     memcpy(temp_buf + 0x72, temp_buf, 0x10);
     temp_buf[0x0D] &= ~0x80;
@@ -226,10 +237,10 @@ void game_init_peer_identity(void) {
       temp_buf[0x10 + i] = 0;
     }
 
-    drv_eeprom_write_block(0x8F00, temp_buf, 0xBE);
-    DAT_f790 = 0;
+    drv_eeprom_write_block(EEPROM_TRAINER_PROFILE, temp_buf, 0xBE);
+    sessionTicksElapsed = 0;
 
-    save_write_reliable(0x0156, 0x0256, (void *)&totalSteps, 0x18);
+    save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (void *)&totalSteps, 0x18);
     save_init_defaults();
   }
 }
@@ -241,24 +252,24 @@ void game_process_interaction_reward(uint8_t type) {
   uint8_t index;
 
   gCurSubstateY = type;
-  accelXPos = ((uint16_t *)0xBD84)[type];
+  accelXPos = ((const uint16_t *)interactionRewardPtrTable)[type];
   ui_set_view(0x0C);
-  DAT_f7a2 = 0;
+  idleSeconds = 0;
 
   switch (type) {
   case 1:
-    if (DAT_f7a0 < 4500) {
-      gCurSubstateZ = (int8_t)(9 - (DAT_f7a0 / 500));
+    if (recentSessionSteps < 4500) {
+      gCurSubstateZ = (int8_t)(9 - (recentSessionSteps / 500));
     } else {
       gCurSubstateZ = 0;
     }
     gfx_get_sprite_addr((uint8_t)gCurSubstateZ);
     sys_init_heap();
     buf = sbrk(0x0C);
-    drv_eeprom_read_block(0xCEBC, buf, 0x0C);
+    drv_eeprom_read_block(EEPROM_LOG_ITEMS, buf, 0x0C);
     index = save_find_empty_slot_32bit(buf);
     if (index < 3) {
-      drv_eeprom_write_block(0xCEBC, buf, 0x0C);
+      drv_eeprom_write_block(EEPROM_LOG_ITEMS, buf, 0x0C);
     }
     break;
   case 2:
@@ -283,7 +294,7 @@ void game_process_interaction_reward(uint8_t type) {
 
   sys_init_heap();
   settings = sbrk(0xBE);
-  drv_eeprom_read_block(0x8F00, settings, 0xBE);
+  drv_eeprom_read_block(EEPROM_TRAINER_PROFILE, settings, 0xBE);
 
   {
     uint8_t param = ((RamCache_settingsByte & 1));
@@ -392,24 +403,24 @@ void game_check_periodic_events(void) {
     return;
 
   if (!(walker_status_flags_BIT.walking)) {
-    dailyStepCap = DAT_f7a0;
+    dailyStepCap = recentSessionSteps;
     if (dailyStepCap < 300)
       return;
     gCurSubstateY = 0x07;
   } else {
-    if (DAT_f7a2 < 3600)
+    if (idleSeconds < 3600)
       return;
 
     sys_init_heap();
     pEeprom = (uint8_t *)sbrk(0xBE);
-    drv_eeprom_read_block(0x8F00, pEeprom, 0xBE);
+    drv_eeprom_read_block(EEPROM_TRAINER_PROFILE, pEeprom, 0xBE);
     prob = pEeprom[0x26];
 
     sys_init_heap();
     pEeprom = (uint8_t *)sbrk(0x0C);
-    drv_eeprom_read_block(0xCEBC, pEeprom, 0x0C);
+    drv_eeprom_read_block(EEPROM_LOG_ITEMS, pEeprom, 0x0C);
 
-    dailyStepCap = DAT_f7a0;
+    dailyStepCap = recentSessionSteps;
     if (save_find_empty_slot_32bit(pEeprom) < 3 && prob >= 90 &&
         dailyStepCap >= 500) {
       gCurSubstateY = 0x01;
@@ -419,7 +430,7 @@ void game_check_periodic_events(void) {
       gCurSubstateY = 0x03;
     } else if (dailyStepCap >= 100) {
       gCurSubstateY = 0x04;
-    } else if (DAT_f790 >= 60 && dailyStepCap <= 50) {
+    } else if (sessionTicksElapsed >= 60 && dailyStepCap <= 50) {
       gCurSubstateY = 0x05;
     } else {
       return;
@@ -448,7 +459,7 @@ void game_calculate_interaction_reward(void) {
   drv_eeprom_read_block(0xCEC8, item_table, 0x28);
 
   steps_val = sessionSteps + *(uint32_t *)items_info;
-  total_daily_steps = DAT_f7a0 + *(uint16_t *)(items_info + 4);
+  total_daily_steps = recentSessionSteps + *(uint16_t *)(items_info + 4);
   steps_val += (uint32_t)total_daily_steps * 10;
 
   if (steps_val > 20000) {
@@ -554,7 +565,7 @@ void game_rotate_interaction_log_record(void) {
 
   sys_init_heap();
   r3_settings = (uint8_t *)sbrk(0xBE);
-  drv_eeprom_read_block(0x8F00, r3_settings, 0xBE);
+  drv_eeprom_read_block(EEPROM_TRAINER_PROFILE, r3_settings, 0xBE);
 
   r5_contact = (uint8_t *)sbrk(0x38);
   drv_eeprom_read_block(0xF6C0, r5_contact, 0x38);
@@ -685,12 +696,12 @@ void ui_render_peer_play(void) {
         limit = 2;
       table_idx = 1;
     } else if (DAT_f7d1 == 0x30) {
-      ui_draw_music_note(0x2C, DAT_be72[0], 0);
+      ui_draw_music_note(0x2C, musicNoteInitialState[0], 0);
       goto music_done;
     }
 
     for (i = 0; i < limit; i++) {
-      uint8_t note_y = (table_idx == 0) ? L_BE70[i] : L_BE71[i];
+      uint8_t note_y = (table_idx == 0) ? musicNoteYTableA[i] : musicNoteYTableB[i];
       ui_draw_music_note((uint8_t)(i * 8 + 0x1C), note_y, 0);
     }
   music_done:
@@ -732,7 +743,7 @@ uint8_t game_find_seen_peer(void *trainer_ptr) {
   uint8_t r6h;
   uint8_t r6l;
   uint16_t r3 = 0xDE24;
-  uint8_t *r5 = (uint8_t *)0xF956;
+  uint8_t *r5 = eepromPageScratch;
   uint8_t *e5 = (uint8_t *)trainer_ptr;
 
   for (r4l = 0; r4l < 10; r4l++) {

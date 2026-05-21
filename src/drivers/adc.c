@@ -22,7 +22,7 @@ uint8_t drv_adc_test(void) {
   sys_delay_short();
 
   val = drv_adc_add_calib_checksum(val);
-  save_write_reliable(0x0080, 0x0180, (uint8_t *)&val, 2);
+  save_write_reliable(EEPROM_ACCEL_CAL, EEPROM_ACCEL_CAL_BACKUP, (uint8_t *)&val, 2);
   return 1;
 }
 
@@ -94,12 +94,12 @@ uint8_t drv_adc_check_low_battery(uint16_t threshold) {
   uint16_t target;
 
   /* Read calibration data from EEPROM */
-  save_read_reliable(0x0080, 0x0180, &calib, 2);
+  save_read_reliable(EEPROM_ACCEL_CAL, EEPROM_ACCEL_CAL_BACKUP, &calib, 2);
 
   /* Validate CRC */
   if (drv_adc_validate_calib_checksum(calib) == 0) {
     calib = 0;
-    save_write_reliable(0x0080, 0x0180, &calib, 2);
+    save_write_reliable(EEPROM_ACCEL_CAL, EEPROM_ACCEL_CAL_BACKUP, &calib, 2);
   }
 
   /* Mask calibration bits and scale threshold */

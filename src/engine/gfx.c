@@ -6,11 +6,11 @@ void gfx_draw_home_pokemon(uint8_t x, uint8_t y) {
   uint16_t addr;
   sys_init_heap();
   ptr = sbrk(0x300);
-  drv_eeprom_read_block(0x8F00, ptr, 0x10);
+  drv_eeprom_read_block(EEPROM_TRAINER_PROFILE, ptr, 0x10);
   if (gCurSubstateZ != 0) {
     addr = 0x933E;
   } else {
-    addr = (uint16_t)((DAT_f7ac >> 1) & 1) * 0x300 + 0x933E;
+    addr = (uint16_t)((animTick >> 1) & 1) * 0x300 + 0x933E;
   }
   drv_eeprom_read_block(addr, ptr, 0x300);
   drv_lcd_blit(x, y, ptr, 0x40, 0x30);
@@ -65,7 +65,7 @@ void gfx_draw_string(uint8_t x, uint8_t y_raw, const char *str) {
 
   while (!SSSR_BIT.TDRE)
     ;
-  SSTDR = 0xB0 | (DAT_f7e4 * 8 + y_page);
+  SSTDR = 0xB0 | (lcdPageOffset * 8 + y_page);
   while (!SSSR_BIT.TEND)
     ;
   PDR1 |= 0x02;
@@ -83,7 +83,7 @@ void gfx_draw_string(uint8_t x, uint8_t y_raw, const char *str) {
         idx = c + 0xD0;
       else
         idx = c + 0xC9;
-      bmp = &L_BCF4[idx * 3];
+      bmp = &font3ByteGlyphs[idx * 3];
       while (!SSSR_BIT.TDRE)
         ;
       SSTDR = bmp[0];
@@ -149,7 +149,7 @@ void gfx_draw_own_pokemon_small(uint8_t x, uint8_t y) {
 
   sys_init_heap();
   buf = (uint8_t *)sbrk(0xC0);
-  addr = (uint16_t)(DAT_f7ac & 1) * 0xC0 + 0x91BE;
+  addr = (uint16_t)(animTick & 1) * 0xC0 + 0x91BE;
   drv_eeprom_read_block(addr, buf, 0xC0);
   drv_lcd_blit(x, y, buf, 0x20, 0x18);
 }
@@ -162,7 +162,7 @@ void gfx_draw_own_pokemon_small_flipped(uint8_t x, uint8_t y) {
   sys_init_heap();
   buf = (uint8_t *)sbrk(0xC0);
 
-  addr = 0x91BE + (uint16_t)(DAT_f7ac & 0x01) * 0xC0;
+  addr = 0x91BE + (uint16_t)(animTick & 0x01) * 0xC0;
   drv_eeprom_read_block(addr, buf, 0xC0);
 
   gfx_flip_horiz(0x20, 0x18, buf);
@@ -362,7 +362,7 @@ uint8_t gfx_xor_rect_ram(void *ptr, uint8_t val) {
 
   if (val == 0)
     return 0;
-  save_read_reliable(0x00ED, 0x01ED, p, 0x68);
+  save_read_reliable(EEPROM_TRAINER_REC, EEPROM_TRAINER_REC_BACKUP, p, 0x68);
   if (p[0x38 + offset] & (1 << bit)) {
     return 1;
   }
@@ -425,7 +425,7 @@ uint16_t gfx_get_sprite_addr(uint8_t index) {
 
   sys_init_heap();
   buf = (uint8_t *)sbrk(0xBE);
-  drv_eeprom_read_block(0x8F00, buf, 0xBE);
+  drv_eeprom_read_block(EEPROM_TRAINER_PROFILE, buf, 0xBE);
 
   result = *(uint16_t *)(buf + 0x8C + (uint16_t)index * 2);
   return result;
@@ -439,7 +439,7 @@ void gfx_draw_route_pokemon(uint8_t x, uint8_t y, uint8_t index) {
   sys_init_heap();
   buf = (uint8_t *)sbrk(0xC0);
 
-  addr = (uint16_t)index * 0x180 + (uint16_t)(DAT_f7ac & 1) * 0xC0 + 0x9A7E;
+  addr = (uint16_t)index * 0x180 + (uint16_t)(animTick & 1) * 0xC0 + 0x9A7E;
   drv_eeprom_read_block(addr, buf, 0xC0);
 
   drv_lcd_blit(x, y, buf, 0x20, 0x18);
@@ -459,7 +459,7 @@ void gfx_draw_text_box(uint8_t y, uint8_t index, uint8_t borders,
   drv_eeprom_read_block(0x2530 + (uint16_t)index * 0x180, buf, 0x180);
   gfx_add_borders_to_text(buf, 0x60, 0x10, borders);
 
-  if (flags != 0 && ((DAT_f7ac >> 1) & 0x01)) {
+  if (flags != 0 && ((animTick >> 1) & 0x01)) {
     drv_eeprom_read_block(0x638, e16_buf, 0x18);
     for (i = 0; i < 8; i++) {
       uint16_t off = 0x170 + i * 2;
@@ -507,8 +507,8 @@ void gfx_draw_battery_low(uint8_t x, uint8_t y) {
     return;
   }
 
-  /* Blinking logic: DAT_f7ac >> 2 bit 0 */
-  if ((DAT_f7ac >> 2) & 0x01) {
+  /* Blinking logic: animTick >> 2 bit 0 */
+  if ((animTick >> 2) & 0x01) {
     return;
   }
 
@@ -526,7 +526,7 @@ void gfx_draw_peer_pokemon(uint8_t x, uint8_t y, uint8_t flip) {
   sys_init_heap();
   buf = (uint8_t *)sbrk(0xC0);
 
-  addr = (uint16_t)(DAT_f7ac & 1) * 0xC0 + 0xF400;
+  addr = (uint16_t)(animTick & 1) * 0xC0 + 0xF400;
   drv_eeprom_read_block(addr, buf, 0xC0);
 
   if (flip) {
@@ -609,7 +609,7 @@ void gfx_fill_rect(uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint8_t color) {
     SSTDR = x & 0x0F;
     while (!SSSR_BIT.TDRE)
       ;
-    SSTDR = 0xB0 | (uint8_t)(p + (DAT_f7e4 << 3));
+    SSTDR = 0xB0 | (uint8_t)(p + (lcdPageOffset << 3));
     while (!SSSR_BIT.TEND)
       ;
     PDR1 |= 0x02;
@@ -669,7 +669,7 @@ void gfx_draw_sprite_simple(uint8_t x, uint8_t y, uint16_t w, uint16_t h,
     SSTDR = x & 0x0F;
     while (!SSSR_BIT.TDRE)
       ;
-    SSTDR = 0xB0 | (uint8_t)(p + (DAT_f7e4 << 3));
+    SSTDR = 0xB0 | (uint8_t)(p + (lcdPageOffset << 3));
     while (!SSSR_BIT.TEND)
       ;
     PDR1 |= 0x02; // A0 high

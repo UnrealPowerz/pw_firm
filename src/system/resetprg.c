@@ -16,9 +16,9 @@ __entry(vect = 0) void PowerON_Reset(void) {
   drv_accel_init();
 
   if (TCSRWD1_BIT.WRST) {
-    cnt = drv_eeprom_read_u8(0x0072);
+    cnt = drv_eeprom_read_u8(EEPROM_BOOT_COUNTER);
     cnt++;
-    drv_eeprom_write_u8(0x0072, cnt);
+    drv_eeprom_write_u8(EEPROM_BOOT_COUNTER, cnt);
   }
 
   /* totalSteps is volatile uint32_t, cast to uint8_t* for zeroing */
@@ -26,13 +26,13 @@ __entry(vect = 0) void PowerON_Reset(void) {
     ((uint8_t *)&totalSteps)[i] = 0;
   }
 
-  DAT_f7a8 = 0;
+  scheduledNotifyHour = 0;
   statusFlags_BIT.lcd_dirty = 1;
   walker_status_flags = (walker_status_flags & 0xE7) | 0x10;
 
   activityTimer = 0x3C;
   stepTimer = 0x5A;
-  DAT_f7a2 = 0xE10;
+  idleSeconds = 0xE10;
 
   game_reset_pedometer_flags();
   sys_factory_test();
@@ -64,13 +64,13 @@ __entry(vect = 0) void PowerON_Reset(void) {
   drv_buttons_init_irqs();
   drv_accel_init();
 
-  sys_set_handler((void (*)(void))sys_main_loop_low_power);
+  sys_set_handler(sys_main_loop_low_power);
   ui_reset_substate();
   currentlyActiveView = 0;
   drv_rtc_init_timer_b();
 
   set_ccr(0x00);
-  ((void (*)(void))currentEventLoopFunc)();
+  currentEventLoopFunc();
 
   sleep();
 }

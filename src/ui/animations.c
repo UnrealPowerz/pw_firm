@@ -17,7 +17,7 @@ void ui_draw_ball_drop_anim(void) {
 
   drv_eeprom_read_block(offset, ptr, 0x10);
   drv_lcd_blit(
-      0x2c, (uint8_t)(*((uint8_t *)(uintptr_t)(0xbd70 + gCurSubstateZ))),
+      0x2c, ballDropAnimYTable[gCurSubstateZ],
       (void *)ptr, 8, 8);
 
   gfx_fill_rect(0, 0, 0x60, 8, 3);
@@ -39,7 +39,7 @@ void ui_draw_ball_sparkles_anim(void) {
 
   drv_eeprom_read_block(0x2040, ptr, 0x10);
   {
-    uint16_t packed = *((uint16_t *)(0xbd76 + (gCurSubstateZ << 1)));
+    uint16_t packed = ((const uint16_t *)sparklesAnimXYTable)[gCurSubstateZ];
     drv_lcd_blit((uint8_t)packed, (uint8_t)(packed >> 8), ptr, 8, 8);
   }
 
@@ -116,7 +116,7 @@ void ui_render_arrival_reward_info(void) {
   if (gCurSubstateA <= 7) {
     switch (gCurSubstateA) {
     case 0:
-      drv_eeprom_read_block(0xba80 + ((DAT_f7ac & 1) * 0xc0), ptr, 0x180);
+      drv_eeprom_read_block(0xba80 + ((animTick & 1) * 0xc0), ptr, 0x180);
       drv_lcd_blit(0x20, 8, ptr, 0x20, 0x18);
       break;
     case 1:
@@ -127,7 +127,7 @@ void ui_render_arrival_reward_info(void) {
         off += 0x14f0;
       }
       drv_eeprom_read_block(off, ptr, 0x280);
-      drv_lcd_blit((uint8_t)((DAT_f7ac & 1) * 0x80), 8, ptr, 0x20, 0x28);
+      drv_lcd_blit((uint8_t)((animTick & 1) * 0x80), 8, ptr, 0x20, 0x28);
       gfx_draw_event_item_name(0x20, 0x13, 0x0D, 0);
       break;
     case 3:
@@ -246,7 +246,7 @@ void ui_handle_event_reward(void) {
     void *ptr3;
     sys_init_heap();
     ptr1 = sbrk(0xBE);
-    drv_eeprom_read_block(0x8F00, ptr1, 0xBE);
+    drv_eeprom_read_block(EEPROM_TRAINER_PROFILE, ptr1, 0xBE);
     sbrk(0x10);
     drv_eeprom_read_block(0xBA44, ptr1,
                           0x10); /* reusing ptr1 to save register */
@@ -260,9 +260,9 @@ void ui_handle_event_reward(void) {
     void *ptr3;
     sys_init_heap();
     ptr1 = sbrk(0xBE);
-    drv_eeprom_read_block(0x8F00, ptr1, 0xBE);
+    drv_eeprom_read_block(EEPROM_TRAINER_PROFILE, ptr1, 0xBE);
     ptr2 = (uint16_t *)sbrk(0x188);
-    drv_eeprom_read_block(0xBD40, ptr2, 0x188);
+    drv_eeprom_read_block(EEPROM_WILD_POKE, ptr2, 0x188);
     stackVar = ((RamCache_settingsByte & 1)) << 8;
     ptr3 = sbrk(0x88);
     game_log_interaction(ptr3, ptr1, 0x1C,
@@ -335,7 +335,7 @@ void ui_draw_cloud_anim(void) {
   if (gCurSubstateZ <= 4) {
     drv_eeprom_read_block(0x2480, ptr, 0x10);
     drv_lcd_blit(
-        0x2c, (uint8_t)(*((uint8_t *)(uintptr_t)(0xbd7c + gCurSubstateZ))),
+        0x2c, cloudAnimYTable[gCurSubstateZ],
         (void *)ptr, 8, 8);
   }
 

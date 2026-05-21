@@ -1,8 +1,8 @@
 #include "all_headers.h"
 
 // ROM: 0x6954  91.7%
-void sys_init_io_ports(uint16_t r0, uint16_t r1) {
-  if (r0 != r1) {
+void sys_init_io_ports(event_loop_func_t a, event_loop_func_t b) {
+  if (a != b) {
     return;
   }
   if (!(walker_status_flags_BIT.session_active)) {
@@ -47,7 +47,7 @@ void sys_main_loop_low_power(void) {
     if (currentlyActiveView == 0) {
       game_check_periodic_events();
       ui_dispatch_event();
-      if (currentEventLoopFunc == (uint16_t)(uintptr_t)ir_comm_loop) {
+      if (currentEventLoopFunc == ir_comm_loop) {
         goto end;
       }
     }
@@ -64,7 +64,7 @@ void sys_main_loop_low_power(void) {
       drv_lcd_clear_pages(0x40);
       ui_dispatch_draw();
       drv_lcd_flip();
-      DAT_f7ac++;
+      animTick++;
     }
     statusFlags_BIT.tick = 0;
   } else {
@@ -112,7 +112,7 @@ void sys_main_loop_active(void) {
       drv_lcd_clear_pages(0x40);
       ui_dispatch_draw();
       drv_lcd_flip();
-      DAT_f7ac++;
+      animTick++;
     }
     statusFlags_BIT.tick = 0;
   }

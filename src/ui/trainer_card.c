@@ -11,7 +11,7 @@ void ui_render_step_history_graph(void) {
   drv_eeprom_read_block(0x2350, buf, 0x100);
   drv_lcd_blit(0x20, 0x20, buf, 0x20, 0x10);
 
-  day = DAT_f7ad - 1;
+  day = irResultCode - 1;
   if (day > 7) {
     gfx_draw_battery_low(0x58, 0);
     return;
@@ -174,15 +174,15 @@ void ui_render_trainer_card_time(void) {
 
   /* Time values */
   {
-    uint8_t hr = DAT_f7a6;
+    uint8_t hr = rtcHour;
     draw_img(buf + ((((uint16_t)hr >> 4) & 7) * 0x20), 8, 0x10, 0x20, 0x30);
     draw_img(buf + ((uint16_t)(hr & 0xF) * 0x20), 8, 0x10, 0x28, 0x30);
 
-    hr = DAT_f7a5; /* mn */
+    hr = rtcMin; /* mn */
     draw_img(buf + ((((uint16_t)hr >> 4) & 7) * 0x20), 8, 0x10, 0x38, 0x30);
     draw_img(buf + ((uint16_t)(hr & 0xF) * 0x20), 8, 0x10, 0x40, 0x30);
 
-    hr = DAT_f7a4; /* sc */
+    hr = rtcSec; /* sc */
     draw_img(buf + ((((uint16_t)hr >> 4) & 7) * 0x20), 8, 0x10, 0x50, 0x30);
     draw_img(buf + ((uint16_t)(hr & 0xF) * 0x20), 8, 0x10, 0x58, 0x30);
   }
@@ -249,7 +249,7 @@ void ui_render_daily_step_history(void) {
     gfx_draw_numeric_value(0x30, 0x10, (uint32_t)step_data, 0);
   }
 
-  gfx_draw_numeric_value(0x58, 0x20, (uint32_t)DAT_f78c, 0);
+  gfx_draw_numeric_value(0x58, 0x20, (uint32_t)dayCounter, 0);
   gfx_draw_numeric_value(0x30, 0x30, totalSteps, 0);
 }
 

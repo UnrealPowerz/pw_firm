@@ -10,23 +10,23 @@ void ui_render_pokeradar(void) {
   sys_init_heap();
   buf = sbrk(0x100);
 
-  drv_eeprom_read_block(0x278 + 0x280 + (((DAT_f7ac & 1) + 9) * 0x10), buf,
+  drv_eeprom_read_block(0x278 + 0x280 + (((animTick & 1) + 9) * 0x10), buf,
                         0x10);
 
   a = gCurSubstateA;
-  drv_lcd_blit(8, 8, buf, (a & 1) * 0x18 + 8, L_BF25[a] - 8);
+  drv_lcd_blit(8, 8, buf, (a & 1) * 0x18 + 8, radarYCoordTable[a] - 8);
 
   drv_eeprom_read_block(0x1A30 + 0x280, buf, 0xC0);
 
   for (i = 0; i < 4; i++) {
-    drv_lcd_blit(0x20, 0x18, buf, (i & 1) * 0x18, L_BF25[i]);
+    drv_lcd_blit(0x20, 0x18, buf, (i & 1) * 0x18, radarYCoordTable[i]);
   }
 
   if (accelZPos != 0) {
     drv_eeprom_read_block(0x1AF0 + 0x280, buf, 0x100);
     drv_lcd_blit(0x10, 0x10, (uint8_t *)buf + 0xC0,
                        (dowsing_item_pos & 1) * 0x18,
-                       L_BF25[dowsing_item_pos] + 0x10);
+                       radarYCoordTable[dowsing_item_pos] + 0x10);
 
     if (gCurSubstateZ == 3) {
       gfx_draw_text_box(0x30, 0x1D, 0x0F, 0x00);
@@ -42,9 +42,9 @@ void ui_render_pokeradar(void) {
     gfx_draw_text_box(0x30, 0x1C, 0x0F, 0x00);
     if (accelYPos == 0) {
       drv_eeprom_read_block(0x1AF0 + 0x280, buf, 0x100);
-      drv_lcd_blit(0x10, 0x10, (uint8_t *)buf + L_BF21[DAT_f7d1] * 0x40,
+      drv_lcd_blit(0x10, 0x10, (uint8_t *)buf + radarFrameMultiplier[DAT_f7d1] * 0x40,
                          (dowsing_item_pos & 1) * 0x18,
-                         L_BF25[dowsing_item_pos] + 0x10);
+                         radarYCoordTable[dowsing_item_pos] + 0x10);
     }
   }
 
@@ -132,9 +132,9 @@ void ui_handle_pokeradar(void) {
 
   gCurSubstateZ = 0;
   r = sys_get_rng() >> 2;
-  accelYPos = (uint8_t)((uint16_t)r / L_BF1E[DAT_f7d1] + 0x10);
+  accelYPos = (uint8_t)((uint16_t)r / radarStateYDivisor[DAT_f7d1] + 0x10);
   DAT_f7d1++;
-  DAT_f7d5 = L_BF1A[DAT_f7d1];
+  DAT_f7d5 = radarStateXTable[DAT_f7d1];
   dowsing_item_pos = (uint8_t)((sys_get_rng() << 3) & 3);
 }
 
