@@ -204,7 +204,7 @@ void game_init_peer_identity(void) {
 
   sys_init_heap();
   rec = (struct trainer_record *)sbrk(sizeof(*rec));
-  save_read_reliable(EEPROM_TRAINER_REC, EEPROM_TRAINER_REC_BACKUP, rec, sizeof(*rec));
+  save_read_reliable(EEPROM_TRAINER_REC, EEPROM_TRAINER_REC_BACKUP, (uint8_t *)rec, sizeof(*rec));
 
   if (!(rec->flags_5b & 0x02)) {
     rec->flags_5b |= 0x02;
@@ -212,7 +212,7 @@ void game_init_peer_identity(void) {
     rec->loc_backup = rec->loc;
     rec->flags_5b |= 0x04;
 
-    save_write_reliable(EEPROM_TRAINER_REC, EEPROM_TRAINER_REC_BACKUP, rec, sizeof(*rec));
+    save_write_reliable(EEPROM_TRAINER_REC, EEPROM_TRAINER_REC_BACKUP, (uint8_t *)rec, sizeof(*rec));
 
     sys_init_heap();
     temp_buf = (uint8_t *)sbrk(0x180);
@@ -229,7 +229,9 @@ void game_init_peer_identity(void) {
     temp_buf = (uint8_t *)sbrk(0xBE);
     drv_eeprom_read_block(EEPROM_TRAINER_PROFILE, temp_buf, 0xBE);
 
-    memcpy(temp_buf + 0x72, temp_buf, 0x10);
+    for (i = 0; i < 0x10; i++) {
+      temp_buf[0x72 + i] = temp_buf[i];
+    }
     temp_buf[0x0D] &= ~0x80;
     temp_buf[0x26] = 0x46;
 

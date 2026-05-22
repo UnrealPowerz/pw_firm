@@ -356,14 +356,14 @@ void gfx_draw_present_icon(uint8_t x, uint8_t y) {
 // ROM: 0x1d7a  60.7%  saves: r6,r5
 #pragma option speed =register /* pragma:auto */
 uint8_t gfx_xor_rect_ram(void *ptr, uint8_t val) {
-  uint8_t *p = (uint8_t *)ptr;
+  struct trainer_record *rec = (struct trainer_record *)ptr;
   uint8_t bit = val & 0x7;
   uint8_t offset = val >> 3;
 
   if (val == 0)
     return 0;
-  save_read_reliable(EEPROM_TRAINER_REC, EEPROM_TRAINER_REC_BACKUP, p, 0x68);
-  if (p[0x38 + offset] & (1 << bit)) {
+  save_read_reliable(EEPROM_TRAINER_REC, EEPROM_TRAINER_REC_BACKUP, (uint8_t *)rec, sizeof(*rec));
+  if (rec->flags_38[offset] & (1 << bit)) {
     return 1;
   }
   return 0;
