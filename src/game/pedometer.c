@@ -80,7 +80,7 @@ void game_render_step_counter(void) {
   gfx_draw_battery_low(0, 0);
 }
 
-// ROM: 0xa1a8  83.6%  saves: r6,r5
+// ROM: 0xa1a8  54.4%  saves: r6,r5
 uint8_t game_detect_activity(void) {
   uint16_t total;
   uint16_t prev;
@@ -297,7 +297,7 @@ success:
       peakBin, (uint16_t)(uint32_t)binBase);
 }
 
-// ROM: 0x945a  77.3%  saves: er2,er3,er4,er5,er6
+// ROM: 0x945a  60.4%  saves: er2,er3,er4,er5,er6
 void game_process_accel_data(void) {
   uint32_t steps;
   uint16_t i;

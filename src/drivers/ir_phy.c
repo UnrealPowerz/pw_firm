@@ -56,12 +56,12 @@ void drv_ir_init_hw(void) {
   }
 }
 
-// ROM: 0x075c  97.5%
+// ROM: 0x075c  47.5%
 uint8_t *drv_ir_get_rx_ptr(void) {
   return (uint8_t *)(uintptr_t)&irPacketPayload;
 }
 
-// ROM: 0x0762  97.9%
+// ROM: 0x0762  98.6%
 void drv_ir_init_pins(void) {
   DAT_f088 = 0x03;
   PDR3 = 0x01;
@@ -107,7 +107,7 @@ void drv_ir_send_packet(uint8_t cmdType, uint8_t pktLen, uint8_t subtype) {
   }
 }
 
-// ROM: 0x0880  79.2%
+// ROM: 0x0880  52.0%
 void drv_ir_send_discovery(void) {
   drv_ir_init_hw();
   irResultCode = 0x00;

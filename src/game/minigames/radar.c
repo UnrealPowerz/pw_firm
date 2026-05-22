@@ -51,7 +51,7 @@ void ui_render_pokeradar(void) {
   gfx_draw_battery_low(0, 0);
 }
 
-// ROM: 0x9dce  87.6%
+// ROM: 0x9dce  88.8%
 void ui_handle_radar_grass_menu(void) {
   if (drv_button_is_triggered(0x04) != 0) {
     gCurSubstateA = (gCurSubstateA + 3) & 3;
@@ -91,7 +91,7 @@ void ui_handle_radar_grass_menu(void) {
   ui_set_view(6);
 }
 
-// ROM: 0x9e72  60.4%
+// ROM: 0x9e72  63.1%
 void ui_handle_pokeradar(void) {
   uint32_t r;
   if (drv_sound_is_playing())
@@ -148,7 +148,7 @@ void ui_handle_radar_failure(void) {
   }
 }
 
-// ROM: 0x9d92  85.0%
+// ROM: 0x9d92  85.5%
 void game_pokeradar_init(void) {
   uint8_t *ram_ptr;
   game_generate_encounter_dowsing();

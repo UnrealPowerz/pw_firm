@@ -1,6 +1,6 @@
 #include "all_headers.h"
 
-// ROM: 0x694c  0.0%
+// ROM: 0x694c  40.0%
 void ui_start_connection_app(void) {
   sys_init_io_ports(currentEventLoopFunc, sys_main_loop_low_power);
 }
@@ -56,7 +56,7 @@ void ui_render_route_image(void) {
   drv_lcd_blit(0, 0x18, ptr, 0x20, 0x18);
 }
 
-// ROM: 0x6bf8  69.7%
+// ROM: 0x6bf8  76.1%
 void ui_render_home_route(void) {
   uint8_t *buf;
   uint8_t subA;
@@ -147,7 +147,7 @@ void ui_handle_volume_menu(void) {
   }
 }
 
-// ROM: 0x6d6c  69.9%
+// ROM: 0x6d6c  70.1%
 void ui_handle_shade_menu(void) {
   uint8_t shade;
 

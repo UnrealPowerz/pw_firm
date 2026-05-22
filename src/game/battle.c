@@ -1,6 +1,6 @@
 #include "all_headers.h"
 
-// ROM: 0x30a6  44.1%
+// ROM: 0x30a6  45.0%
 #pragma option noregexpansion /* pragma:auto */
 void ui_render_battle(void) {
   uint8_t *sprite_buf, *e2_buf, *e3_buf;
@@ -261,7 +261,7 @@ void ui_render_battle(void) {
   }
 }
 
-// ROM: 0x2938  90.5%
+// ROM: 0x2938  96.9%
 void game_start_battle(void) {
   gCurSubstateZ = 0;
   gCurSubstateA = 4;
@@ -275,7 +275,7 @@ void game_start_battle(void) {
   drv_sound_play(10);
 }
 
-// ROM: 0x2972  63.4%
+// ROM: 0x2972  63.8%
 #pragma option speed =expression /* pragma:auto */
 void game_battle_process_turn(void) {
   uint32_t rnd;
@@ -431,7 +431,7 @@ void game_battle_handle_finish(void) {
   }
 }
 
-// ROM: 0x2c62  48.8%
+// ROM: 0x2c62  50.2%
 void ui_handle_battle(void) {
   uint8_t sub_z = (uint8_t)gCurSubstateZ;
   uint8_t x = accelXPos;

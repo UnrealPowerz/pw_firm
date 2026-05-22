@@ -353,7 +353,7 @@ void gfx_draw_present_icon(uint8_t x, uint8_t y) {
   drv_lcd_blit(x, y, buf, 0x18, 0x08);
 }
 
-// ROM: 0x1d7a  60.7%  saves: r6,r5
+// ROM: 0x1d7a  63.3%  saves: r6,r5
 #pragma option speed =register /* pragma:auto */
 uint8_t gfx_xor_rect_ram(void *ptr, uint8_t val) {
   struct trainer_record *rec = (struct trainer_record *)ptr;
@@ -589,7 +589,7 @@ void gfx_flip_horiz(uint8_t w, uint8_t h, void *buf) {
   }
 }
 
-// ROM: 0x7e58  24.6%  saves: r4,er5,er6 -> er5,er6
+// ROM: 0x7e58  24.5%  saves: r4,er5,er6 -> er5,er6
 #pragma option speed =loop=1 /* pragma:auto */
 void gfx_fill_rect(uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint8_t color) {
   uint16_t p, col;
@@ -643,7 +643,7 @@ void gfx_fill_rect(uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint8_t color) {
   PDR1 |= 0x01;
 }
 
-// ROM: 0x82ea  34.1%  saves: r3,r4,er5,er6 -> er5,er6
+// ROM: 0x82ea  32.9%  saves: r3,r4,er5,er6 -> er5,er6
 #pragma option noregexpansion /* pragma:auto */
 void gfx_draw_sprite_simple(uint8_t x, uint8_t y, uint16_t w, uint16_t h,
                             void *buffer) {

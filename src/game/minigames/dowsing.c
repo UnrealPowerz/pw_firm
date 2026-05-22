@@ -1,6 +1,6 @@
 #include "all_headers.h"
 
-// ROM: 0x9c48  73.6%
+// ROM: 0x9c48  75.1%
 void game_generate_encounter_dowsing(void) {
   uint32_t val;
   uint8_t *ram_ptr;
@@ -63,7 +63,7 @@ void game_generate_encounter_dowsing(void) {
  * Address: 0x4792  Size: 60 bytes
  * ===========================================================================
  */
-// ROM: 0x4792  80.5%
+// ROM: 0x4792  81.4%
 void game_init_dowsing(void) {
   uint16_t rnd;
   uint16_t item_slot;
@@ -86,7 +86,7 @@ void game_init_dowsing(void) {
  * Address: 0x47CE  Size: 462 bytes
  * ===========================================================================
  */
-// ROM: 0x47ce  78.0%
+// ROM: 0x47ce  80.3%
 void ui_handle_dowsing(void) {
   uint8_t subZ;
 
@@ -232,7 +232,7 @@ void game_write_wild_poke(void *ram_src) {
   (void)0;
 }
 
-// ROM: 0x49c0  81.7%
+// ROM: 0x49c0  81.8%
 #pragma option noregexpansion /* pragma:auto */
 void game_check_wild_encounter(void) {
   uint8_t *battle_buf;
@@ -367,7 +367,7 @@ void ui_handle_dowsing_selection(void) {
  * Address: 0x4B9C  Size: 314 bytes
  * ===========================================================================
  */
-// ROM: 0x4b9c  66.4%  saves: r5
+// ROM: 0x4b9c  67.7%  saves: r5
 void ui_render_dowsing_grass(void) {
   uint8_t *buf;
   uint16_t base;
@@ -434,7 +434,7 @@ void ui_render_dowsing_grass(void) {
   gfx_draw_text_box(0x30, 0x11, 0x22, 0x00);
 }
 
-// ROM: 0x4cd6  61.7%
+// ROM: 0x4cd6  62.8%
 #pragma option speed =loop=1 /* pragma:auto */
 void ui_render_dowsing(void) {
   uint8_t *buf;

@@ -2,7 +2,7 @@
 
 #pragma section P
 
-// ROM: 0x02c4  80.7%
+// ROM: 0x02c4  79.7%
 __entry(vect = 0) void PowerON_Reset(void) {
   uint16_t i;
   uint8_t cnt;

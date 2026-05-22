@@ -192,7 +192,7 @@ void game_log_item_interaction(void) {
                        *(uint16_t *)(tmp + (gCurSubstateY * 2) + 0x8C));
 }
 
-// ROM: 0x5c0a  77.6%  saves: er6
+// ROM: 0x5c0a  70.2%  saves: er6
 #pragma option speed =register /* pragma:auto */
 void game_init_peer_identity(void) {
   register struct trainer_record *rec;
@@ -247,7 +247,7 @@ void game_init_peer_identity(void) {
   }
 }
 
-// ROM: 0x5d52  73.0%
+// ROM: 0x5d52  73.7%
 void game_process_interaction_reward(uint8_t type) {
   void *buf;
   void *settings;
@@ -311,7 +311,7 @@ void game_process_interaction_reward(uint8_t type) {
   }
 }
 
-// ROM: 0x5e9e  70.8%
+// ROM: 0x5e9e  65.8%
 void ui_handle_bored_gift(void) {
   uint8_t *dest;
   if (drv_button_is_triggered(0x02)) {
@@ -329,7 +329,7 @@ void ui_handle_bored_gift(void) {
   }
 }
 
-// ROM: 0x5edc  5.1%
+// ROM: 0x5edc  3.9%
 void ui_render_social_feelings(void) {
   uint8_t flags;
   uint8_t *ptr;
@@ -379,7 +379,7 @@ void ui_render_social_feelings(void) {
   gfx_draw_battery_low(0, 0);
 }
 
-// ROM: 0x5fc2  51.5%  saves: r2,r5,r6 -> sys_epilogue_r2_r5_r6
+// ROM: 0x5fc2  51.3%  saves: r2,r5,r6 -> sys_epilogue_r2_r5_r6
 #pragma option speed =register /* pragma:auto */
 void game_check_periodic_events(void) {
   uint16_t dailyStepCap;
@@ -444,7 +444,7 @@ void game_check_periodic_events(void) {
 // ROM: 0x6380  100.0%
 void ui_handle_peer_play(void) { (void)0; }
 
-// ROM: 0x6382  70.1%
+// ROM: 0x6382  70.4%
 void game_calculate_interaction_reward(void) {
   uint32_t steps_val;
   uint8_t *items_info;
@@ -739,7 +739,7 @@ void ui_render_peer_play(void) {
   gfx_draw_battery_low(0, 0);
 }
 
-// ROM: 0x6784  67.1%  saves: er3,er4,er5,er6
+// ROM: 0x6784  67.2%  saves: er3,er4,er5,er6
 uint8_t game_find_seen_peer(void *trainer_ptr) {
   uint8_t r4l;
   uint8_t r6h;

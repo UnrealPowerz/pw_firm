@@ -1,12 +1,12 @@
 #include "all_headers.h"
 
-// ROM: 0x9108  96.2%
+// ROM: 0x9108  70.0%
 void ui_set_stats_view_item(void) {
   gCurSubstateY = 9;
   ui_stats_find_index(accelXPos);
 }
 
-// ROM: 0x8d02  73.1%
+// ROM: 0x8d02  72.9%
 void ui_handle_poke_items(void) {
   uint8_t sid;
   if (drv_button_is_triggered(0x04) != 0) {
@@ -52,7 +52,7 @@ do_play_sound:
   drv_sound_play(sid);
 }
 
-// ROM: 0x9116  78.5%
+// ROM: 0x9116  73.5%
 void ui_handle_gifts(void) {
   uint8_t sid;
   if (drv_button_is_triggered(0x04) != 0) {
@@ -92,7 +92,7 @@ do_play_sound:
   drv_sound_play(sid);
 }
 
-// ROM: 0x8d88  69.8%
+// ROM: 0x8d88  69.7%
 #pragma option speed=loop=1  /* pragma:auto */
 void ui_render_pokemon_stats(void) {
   uint32_t romBase = 0x100280;
@@ -219,7 +219,7 @@ void ui_render_pokemon_stats(void) {
   gfx_draw_battery_low(0x58, 0);
 }
 
-// ROM: 0x918c  57.6%
+// ROM: 0x918c  56.3%
 void ui_render_items_stats(void) {
   void (*blit)(void *, uint8_t, uint8_t, uint8_t, uint8_t);
   void (*eread)(uint16_t, void *, uint16_t);

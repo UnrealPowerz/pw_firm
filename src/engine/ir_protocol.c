@@ -223,7 +223,7 @@ uint16_t ir_calc_packet_checksum(uint8_t length, uint8_t *data) {
   return (uint16_t)sum;
 }
 
-// ROM: 0x08d6  38.1%  saves: er3,er4,er5,er6
+// ROM: 0x08d6  66.6%  saves: er3,er4,er5,er6
 #pragma option speed =inline /* pragma:auto */
 void ir_comm_loop(void) {
   uint16_t timerDelta;

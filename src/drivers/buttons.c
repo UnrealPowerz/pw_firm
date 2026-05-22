@@ -32,7 +32,7 @@ void drv_buttons_init_irqs(void) {
   set_ccr(0x00);
 }
 
-// ROM: 0x9b84  95.0%
+// ROM: 0x9b84  94.4%
 void drv_button_read(void) {
   buttonInputRaw = 0;
 

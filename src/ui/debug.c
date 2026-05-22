@@ -202,7 +202,7 @@ cleanup:
   set_ccr(0x00);
 }
 
-// ROM: 0xaa42  97.2%
+// ROM: 0xaa42  96.5%
 void diag_init_test_mode(void) {
   gCurSubstateY = 0;
   gCurSubstateA = 0;
@@ -212,7 +212,7 @@ void diag_init_test_mode(void) {
   drv_lcd_set_contrast(4);
 }
 
-// ROM: 0xaa6c  71.1%
+// ROM: 0xaa6c  70.3%
 void ui_handle_debug_input(void) {
   uint8_t subY;
   uint8_t subA;
@@ -380,7 +380,7 @@ set_substate_y_and_clear_a:
   gCurSubstateA = 0;
 }
 
-// ROM: 0xad06  54.9%
+// ROM: 0xad06  55.7%
 void ui_render_debug(void) {
   uint8_t buf[6];
   void (*fn858a)(uint8_t, uint8_t, const char *);
@@ -525,7 +525,7 @@ case_d:
   }
 }
 
-// ROM: 0xaebc  96.2%
+// ROM: 0xaebc  71.2%
 void sys_init_debug_mode(void) {
   accelSampleCount = 0;
   gCurSubstateY = 0x10;
@@ -541,7 +541,7 @@ void sys_init_debug_mode(void) {
 // ROM: 0xaef8  100.0%
 void sys_noop(void) {}
 
-// ROM: 0xaefa  41.7%
+// ROM: 0xaefa  42.3%
 #pragma option noregexpansion /* pragma:auto */
 void ui_render_accel_debug(void) {
   uint8_t buf[6];

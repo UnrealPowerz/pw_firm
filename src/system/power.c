@@ -1,6 +1,6 @@
 #include "all_headers.h"
 
-// ROM: 0x6b4c  83.0%
+// ROM: 0x6b4c  87.1%
 void sys_enter_standby(void) {
   if (!DAT_f7d1_BIT.b2) {
     gCurSubstateA += 0xFC;
@@ -22,7 +22,7 @@ void sys_enter_standby(void) {
   }
 }
 
-// ROM: 0x6ba0  85.6%
+// ROM: 0x6ba0  89.5%
 void sys_update_standby_state(void) {
   uint8_t s;
   if ((animTick & 0x03) != 0) {
@@ -60,7 +60,7 @@ void sys_wdt_kick(void) {
   TCSRWD1 = 0x9E;
 }
 
-// ROM: 0xa180  96.9%
+// ROM: 0xa180  90.8%
 void sys_power_save_low_power(void) {
   CKSTPR1 |= 0x04;
   walker_status_flags = (walker_status_flags & 0xE7) | 0x08;
@@ -69,7 +69,7 @@ void sys_power_save_low_power(void) {
   statusFlags_BIT.sleeping = 0;
 }
 
-// ROM: 0xa29c  97.3%
+// ROM: 0xa29c  92.6%
 void sys_enter_deep_sleep(void) {
   activityTimer = 0x3C;
   stepTimer = 0x5A;
@@ -83,7 +83,7 @@ void sys_enter_deep_sleep(void) {
   }
 }
 
-// ROM: 0xa2da  96.6%
+// ROM: 0xa2da  94.9%
 void sys_wake_from_low_power(void) {
   drv_timerw_disable();
   CKSTPR1 &= ~0x04;

@@ -1,6 +1,6 @@
 #include "all_headers.h"
 
-// ROM: 0x6954  91.7%
+// ROM: 0x6954  88.9%
 void sys_init_io_ports(event_loop_func_t a, event_loop_func_t b) {
   if (a != b) {
     return;
@@ -26,7 +26,7 @@ void sys_init_io_ports(event_loop_func_t a, event_loop_func_t b) {
   sys_set_handler(ir_comm_loop);
 }
 
-// ROM: 0x7882  91.1%
+// ROM: 0x7882  91.0%
 void sys_main_loop_low_power(void) {
   IENR2 |= 0x04;
   sys_enter_sleep(1);
@@ -95,7 +95,7 @@ end:
   accelSampleCount = (accelSampleCount + 1) & 0x3F;
 }
 
-// ROM: 0x7998  96.6%
+// ROM: 0x7998  96.2%
 void sys_main_loop_active(void) {
   SYSCR1 = 0x27;
   SYSCR2 = 0xE0;

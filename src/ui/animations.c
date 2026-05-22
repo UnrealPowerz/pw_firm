@@ -1,6 +1,6 @@
 #include "all_headers.h"
 
-// ROM: 0x3dbc  80.3%  saves: r2,r5,r6 -> sys_epilogue_r2_r5_r6
+// ROM: 0x3dbc  82.8%  saves: r2,r5,r6 -> sys_epilogue_r2_r5_r6
 void ui_draw_ball_drop_anim(void) {
   void *ptr;
   uint16_t offset;
@@ -26,7 +26,7 @@ void ui_draw_ball_drop_anim(void) {
   gCurSubstateZ++;
 }
 
-// ROM: 0x3e34  73.6%  saves: r2,r5,r6 -> sys_epilogue_r2_r5_r6
+// ROM: 0x3e34  74.6%  saves: r2,r5,r6 -> sys_epilogue_r2_r5_r6
 void ui_draw_ball_sparkles_anim(void) {
   void *ptr;
   uint16_t dummy;
@@ -324,7 +324,7 @@ void ui_draw_cloud_departure_anim(void) {
   gCurSubstateZ = 0;
 }
 
-// ROM: 0x4372  78.2%  saves: r2,r5,r6 -> sys_epilogue_r2_r5_r6
+// ROM: 0x4372  80.8%  saves: r2,r5,r6 -> sys_epilogue_r2_r5_r6
 void ui_draw_cloud_anim(void) {
   void *ptr;
   uint16_t uninitializedE0;

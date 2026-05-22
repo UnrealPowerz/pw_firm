@@ -62,7 +62,7 @@ uint8_t drv_accel_factory_test(void) {
   return 1;
 }
 
-// ROM: 0x76aa  77.5%  saves: r4,r5,r6
+// ROM: 0x76aa  61.9%  saves: r4,r5,r6
 void drv_accel_sample(void) {
   uint8_t buf[6];
   register uint8_t *pBuf;

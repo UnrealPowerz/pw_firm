@@ -1,6 +1,6 @@
 #include "all_headers.h"
 
-// ROM: 0x693a  61.7%  saves: r6
+// ROM: 0x693a  51.7%  saves: r6
 void sys_set_handler(event_loop_func_t func) {
   savedEventLoopFunc = currentEventLoopFunc;
   currentEventLoopFunc = func;
