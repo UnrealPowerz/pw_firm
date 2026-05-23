@@ -9,7 +9,7 @@ void ui_draw_ball_drop_anim(void) {
   sys_init_heap();
   ptr = sbrk(0x180);
 
-  if (currentlyActiveView != 0x11) {
+  if (currentlyActiveView != VIEW_EVENT_REWARD_ANIM) {
     offset = 0x2480;
   } else {
     offset = 0x460;
@@ -97,7 +97,7 @@ void ui_render_arrival_success(void) {
   if (drv_sound_is_playing() == 0) {
     if (gCurSubstateZ > 8) {
       ui_reset_substate();
-      ui_set_view(0);
+      ui_set_view(VIEW_HOME);
     }
   }
 }
@@ -162,7 +162,7 @@ void ui_render_arrival_reward_info(void) {
 }
 
 // ROM: 0x40f8  94.5%
-void ui_handle_return_from_walk(void) {
+void ui_handle_walk_arrival_anim(void) {
   uint8_t z;
   uint8_t y;
   z = gCurSubstateZ;
@@ -192,7 +192,7 @@ done:;
 }
 
 // ROM: 0x4148  96.1%
-void ui_render_joined_walk_anim(void) {
+void ui_render_walk_arrival_anim(void) {
   uint8_t y = gCurSubstateY;
   if (y == 0) goto case0;
   if (y == 1) goto case1;
@@ -216,7 +216,7 @@ done: gfx_draw_battery_low(0, 0);
  * may require shift-based access to match.
  * Class: do-not-bit-field */
 // ROM: 0x4178  60.9%
-void ui_handle_event_reward(void) {
+void ui_handle_event_reward_anim(void) {
   uint16_t stackVar;
   if (gCurSubstateY == 0) {
     if (gCurSubstateZ > 4) {
@@ -269,15 +269,15 @@ void ui_handle_event_reward(void) {
                           (uint8_t)((RamCache_settingsByte & 1)), ptr2[3]);
   } else {
     ui_reset_substate();
-    ui_set_view(0);
+    ui_set_view(VIEW_HOME);
     return;
   }
   ui_reset_substate();
-  ui_set_view(0);
+  ui_set_view(VIEW_HOME);
 }
 
 // ROM: 0x42a0  96.1%
-void ui_render_return_from_walk_anim(void) {
+void ui_render_event_reward_anim(void) {
   uint8_t y = gCurSubstateY;
   if (y == 0) goto case0;
   if (y == 4) goto case4;
@@ -362,7 +362,7 @@ void ui_render_departure_success(void) {
   if (drv_sound_is_playing() == 0) {
     if (gCurSubstateZ > 8) {
       ui_reset_substate();
-      ui_set_view(0);
+      ui_set_view(VIEW_HOME);
     }
   }
 }
@@ -386,13 +386,13 @@ void ui_render_operation_completed(void) {
   if (drv_sound_is_playing() == 0) {
     if (gCurSubstateZ > 8) {
       ui_reset_substate();
-      ui_set_view(0);
+      ui_set_view(VIEW_HOME);
     }
   }
 }
 
 // ROM: 0x449e  91.5%
-void ui_handle_start_walk(void) {
+void ui_handle_walk_departure_anim(void) {
   uint8_t z;
   uint8_t y;
   z = gCurSubstateZ;
@@ -427,7 +427,7 @@ done:
 }
 
 // ROM: 0x44f4  94.0%
-void ui_render_start_walk_anim(void) {
+void ui_render_walk_departure_anim(void) {
   uint8_t y = gCurSubstateY;
   if (y == 2) goto case2;
   if (y == 1) goto case1;

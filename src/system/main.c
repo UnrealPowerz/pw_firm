@@ -44,7 +44,7 @@ void sys_main_loop_low_power(void) {
       sys_power_save_low_power();
     }
   } else if ((walker_status_flags & 0x18) == 0x10) {
-    if (currentlyActiveView == 0) {
+    if (currentlyActiveView == VIEW_HOME) {
       game_check_periodic_events();
       ui_dispatch_event();
       if (currentEventLoopFunc == ir_comm_loop) {

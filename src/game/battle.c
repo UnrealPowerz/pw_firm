@@ -1,14 +1,14 @@
 #include "all_headers.h"
 
-// ROM: 0x30a6  45.0%
+// ROM: 0x30a6  47.9%
 #pragma option noregexpansion /* pragma:auto */
 void ui_render_battle(void) {
   uint8_t *sprite_buf, *e2_buf, *e3_buf;
   uint16_t addr;
   uint8_t i, flip;
   void (*readEeprom)(uint16_t, void *, uint16_t) = drv_eeprom_read_block;
-  void (*drawToScreen)(void *, uint8_t, uint8_t, uint8_t, uint8_t) =
-      (void (*)(void *, uint8_t, uint8_t, uint8_t, uint8_t))drv_lcd_blit;
+  void (*drawToScreen)(uint8_t, uint8_t, void *, uint8_t, uint8_t) =
+      drv_lcd_blit;
 
   sys_init_heap();
   sprite_buf = (uint8_t *)sbrk(0x300);
@@ -18,18 +18,18 @@ void ui_render_battle(void) {
   /* Background drawing */
   addr = (uint16_t)(animTick & 1) * 0xC0 + 0x91BE;
   readEeprom(addr, sprite_buf, 0xC0);
-  drawToScreen(sprite_buf, 0x20, 0x18, (uint8_t)accelYPos, 8);
+  drawToScreen((uint8_t)accelYPos, 8, sprite_buf, 0x20, 0x18);
 
   /* Digit drawing loop A */
   readEeprom(0x280 + 0x1DB0, sprite_buf, 0x10);
   for (i = 0; i < gCurSubstateA; i++) {
-    drawToScreen(sprite_buf, 8, 8, (uint8_t)(0x38 + (i << 3)), 8);
+    drawToScreen((uint8_t)(0x38 + (i << 3)), 8, sprite_buf, 8, 8);
   }
 
   /* Digit drawing loop D (conditional) */
   if (DAT_f7d8 & 0x01) {
     for (i = 0; i < DAT_f7d1; i++) {
-      drawToScreen(sprite_buf, 8, 8, (uint8_t)(0x08 + (i << 3)), 0x18);
+      drawToScreen((uint8_t)(0x08 + (i << 3)), 0x18, sprite_buf, 8, 8);
     }
   }
 
@@ -62,10 +62,10 @@ void ui_render_battle(void) {
       readEeprom(0x280 + 0x1E0, e3_buf, 0x10);
       readEeprom(0x280 + 0x200, e2_buf, 0x08);
 
-      drawToScreen(e3_buf, 8, 8, (uint8_t)x_offset, y_screen);
+      drawToScreen((uint8_t)x_offset, y_screen, e3_buf, 8, 8);
       gfx_alpha_blend(sprite_buf, 0x20, 0x18, e2_buf, e3_buf,
                       x_offset - DAT_f7d5, y_screen, 0x08);
-      drawToScreen(sprite_buf, 0x20, 0x18, (uint8_t)DAT_f7d5, 0);
+      drawToScreen((uint8_t)DAT_f7d5, 0, sprite_buf, 0x20, 0x18);
     } else {
       gfx_draw_sprite_simple((uint8_t)DAT_f7d5, 0, 0x20, 0x18, sprite_buf);
     }
@@ -97,7 +97,7 @@ void ui_render_battle(void) {
       break;
     case 2:
       readEeprom(0x1DD0 + (animTick & 1) * 0xC0, sprite_buf, 0x300);
-      drawToScreen(sprite_buf, 0x60, 0x20, 0x20, 0x60);
+      drawToScreen(0x20, 0x60, sprite_buf, 0x60, 0x20);
       goto switch_default;
     case 3: {
       uint8_t move_type = (DAT_f7d8 >> 3) & 0x03;
@@ -105,7 +105,7 @@ void ui_render_battle(void) {
         if (accelXPos == 4) {
           drv_sound_play(0x0B);
           readEeprom(0x1BF0 + (animTick & 1) * 0xC0, sprite_buf, 0x1E0);
-          drawToScreen(sprite_buf, 0x10, 0x20, 0x28, 0x10);
+          drawToScreen(0x28, 0x10, sprite_buf, 0x10, 0x20);
         } else if (accelXPos < 4) {
           gfx_draw_own_pokemon_name(0x00, 0x20, 5);
           goto switch_default;
@@ -127,7 +127,7 @@ void ui_render_battle(void) {
         if (accelXPos == 4) {
           drv_sound_play(0x0D);
           readEeprom(0x1C70 + (animTick & 1) * 0xC0, sprite_buf, 0x1E0);
-          drawToScreen(sprite_buf, 0x10, 0x20, 0x28, 0x10);
+          drawToScreen(0x28, 0x10, sprite_buf, 0x10, 0x20);
         } else if (accelXPos < 4) {
           gfx_draw_text_box(0x20, 0x25, 0x0D, 0x00);
           gfx_draw_text_box(0x30, 0x26, 0x0E, 0x00);
@@ -142,7 +142,7 @@ void ui_render_battle(void) {
         if (accelXPos == 4) {
           drv_sound_play(0x0B);
           readEeprom(0x1BF0 + (animTick & 1) * 0xC0, sprite_buf, 0x1E0);
-          drawToScreen(sprite_buf, 0x10, 0x20, 0x28, 0x10);
+          drawToScreen(0x28, 0x10, sprite_buf, 0x10, 0x20);
         } else if (accelXPos < 4) {
           if (gCurSubstateY < 4) {
             gfx_draw_special_poke_name(0, 0x20, 5);
@@ -200,13 +200,13 @@ void ui_render_battle(void) {
       goto switch_default;
     case 11:
       readEeprom((uint16_t)&gfx_draw_present_icon + 0x280, sprite_buf, 0xC0);
-      drawToScreen(sprite_buf, 0x18, 0x08, 0x08, 0x18);
+      drawToScreen(0x08, 0x18, sprite_buf, 0x18, 0x08);
       break;
 
     case 12:
     case 14:
       readEeprom(0x460, sprite_buf, 0x10);
-      drawToScreen(sprite_buf, 0x0C, 20, 20, 0x0C);
+      drawToScreen(20, 0x0C, sprite_buf, 0x0C, 20);
       break;
 
     case 13: {
@@ -219,25 +219,29 @@ void ui_render_battle(void) {
       else
         dx = 0x14;
       readEeprom(0x460, sprite_buf, 0x10);
-      drawToScreen(sprite_buf, 0x0C, 0x14, dx, 0x0C);
+      drawToScreen(dx, 0x0C, sprite_buf, 0x0C, 0x14);
       break;
     }
 
     case 15:
       readEeprom(0x460, sprite_buf, 0x10);
-      drawToScreen(sprite_buf, 0x0C, 20, 20, 0x0C);
+      drawToScreen(20, 0x0C, sprite_buf, 0x0C, 20);
       readEeprom(0x2040, sprite_buf, 0x10);
-      drawToScreen(sprite_buf, (uint8_t)(10 - 2 * accelXPos),
-                   (uint8_t)(12 - accelXPos), (uint8_t)(12 - accelXPos),
-                   (uint8_t)(10 - 2 * accelXPos));
-      drawToScreen(sprite_buf, (uint8_t)(12 - 2 * accelXPos),
-                   (uint8_t)(28 + accelXPos), (uint8_t)(28 + accelXPos),
-                   (uint8_t)(12 - 2 * accelXPos));
+      drawToScreen((uint8_t)(12 - accelXPos),
+                   (uint8_t)(10 - 2 * accelXPos),
+                   sprite_buf,
+                   (uint8_t)(10 - 2 * accelXPos),
+                   (uint8_t)(12 - accelXPos));
+      drawToScreen((uint8_t)(28 + accelXPos),
+                   (uint8_t)(12 - 2 * accelXPos),
+                   sprite_buf,
+                   (uint8_t)(12 - 2 * accelXPos),
+                   (uint8_t)(28 + accelXPos));
       break;
 
     case 16:
       readEeprom(0x460, sprite_buf, 0x10);
-      drawToScreen(sprite_buf, 0x0C, 20, 20, 0x0C);
+      drawToScreen(20, 0x0C, sprite_buf, 0x0C, 20);
       if (gCurSubstateY >= 4) {
         gfx_draw_route_pokemon_name(0x00, 0x20, (uint8_t)(gCurSubstateY - 1),
                                     0x05);
@@ -249,7 +253,7 @@ void ui_render_battle(void) {
 
     case 17:
       readEeprom((uint16_t)&gfx_draw_present_icon + 0x280, sprite_buf, 0xC0);
-      drawToScreen(sprite_buf, 0x18, 0x08, 8, 0x18);
+      drawToScreen(8, 0x18, sprite_buf, 0x18, 0x08);
       break;
     }
   switch_default:
@@ -376,7 +380,7 @@ void game_battle_handle_finish(void) {
     if (sub_result >= 3) {
       gCurSubstateA = 0;
       game_start_peer_session();
-      ui_set_view(7);
+      ui_set_view(VIEW_CAUGHT_STATS);
       return;
     }
 
@@ -431,6 +435,13 @@ void game_battle_handle_finish(void) {
   }
 }
 
+// Reason: ROM hoists `mov.l #0x880000, er5` (ER-packing of constants 0x88
+//   and 0) plus `mov.w #0xBE, e6` at entry, and pre-loads accelXPos/
+//   dowsing_item_pos into r6l/r6h before the dispatch. ch38 inlines all of
+//   these at their use sites. ROM has no prologue; ch38 emits `$sp_regsv$3`.
+//   Body switch-jump-table structure matches.
+// Class: cannot-fix-without-compiler-change (ER-packing + no-prologue + constant
+//   hoisting). Same Tier-3 cluster as ui_render_battle / gfx_blit_to_buffer.
 // ROM: 0x2c62  50.2%
 void ui_handle_battle(void) {
   uint8_t sub_z = (uint8_t)gCurSubstateZ;
@@ -567,7 +578,7 @@ void ui_handle_battle(void) {
   case 6:
     if (drv_button_is_triggered(0x0E)) {
       ui_reset_substate();
-      ui_set_view(0);
+      ui_set_view(VIEW_HOME);
     }
     break;
 
@@ -591,7 +602,7 @@ void ui_handle_battle(void) {
       }
       drv_sound_play(4);
       ui_reset_substate();
-      ui_set_view(0);
+      ui_set_view(VIEW_HOME);
     }
     break;
 

@@ -11,6 +11,12 @@
  *   0x84 interaction-type, 0x85/0x86 packed bitfields
  * Not a trainer_record — kept as raw byte access pending peer_log_record type.
  */
+// Reason: ROM uses inline prologue `push.w r3; push.w r4; push.l er5; push.l
+//   er6; subs #2, r7` (14 bytes); ch38 uses `$sp_regsv$3 + subs #2`. Stack
+//   layout differs throughout. Body structure (slot_off calc, EEPROM read,
+//   reward zero loop, byte copies, bit-field updates, d_high dispatch)
+//   appears correct.
+// Class: cannot-fix-without-compiler-change (sp_regsv$3 helper)
 // ROM: 0x4546  56.9%  saves: r3,r4,er5,er6 -> er5,er6
 #pragma option speed =loop=1 /* pragma:auto */
 void game_log_interaction(uint8_t *a, uint8_t *b, uint8_t d_low, uint8_t d_high,
@@ -255,7 +261,7 @@ void game_process_interaction_reward(uint8_t type) {
 
   gCurSubstateY = type;
   accelXPos = ((const uint16_t *)interactionRewardPtrTable)[type];
-  ui_set_view(0x0C);
+  ui_set_view(VIEW_BORED_GIFT);
   idleSeconds = 0;
 
   switch (type) {
@@ -318,7 +324,7 @@ void ui_handle_bored_gift(void) {
     dest = (uint8_t *)(uintptr_t)accelXPos;
     if (*dest & 0x01) {
       ui_reset_substate();
-      ui_set_view(0);
+      ui_set_view(VIEW_HOME);
     } else {
       dest += 4;
       accelXPos = (uint16_t)(uintptr_t)dest;
@@ -329,52 +335,52 @@ void ui_handle_bored_gift(void) {
   }
 }
 
-// ROM: 0x5edc  3.9%
+// ROM: 0x5edc  56.6%
 void ui_render_social_feelings(void) {
-  uint8_t flags;
   uint8_t *ptr;
+  uint8_t v;
   uint8_t r6l;
 
   sys_init_heap();
   sbrk(0xC0);
-  ptr = (uint8_t *)(uintptr_t)accelXPos;
 
+  ptr = (uint8_t *) *(volatile uint16_t *) &accelXPos;
   if (*ptr & 0x02) {
     gfx_draw_own_pokemon_small(0x20, 0x18);
   }
 
-  flags = *ptr;
-  if ((flags & 0xE0) != 0xE0) {
-    uint8_t r0l = (uint8_t)((flags << 3) | (flags >> 5)) & 0x07;
-    gfx_draw_small_route_icon(r0l);
+  ptr = (uint8_t *) *(volatile uint16_t *) &accelXPos;
+  v = *ptr;
+  if ((v & 0xE0) != 0xE0) {
+    gfx_draw_small_route_icon((uint8_t)(((v << 3) | (v >> 5)) & 0x07));
   }
 
+  ptr = (uint8_t *) *(volatile uint16_t *) &accelXPos;
   if (*ptr & 0x04) {
     gfx_draw_item_symbol(0x14, 0x14);
   }
 
   r6l = gCurSubstateZ;
-  if (flags == 0xFC) {
+  ptr = (uint8_t *) *(volatile uint16_t *) &accelXPos;
+  v = ptr[2];
+  if (v == 0xFC) {
     gfx_draw_own_pokemon_name(0x00, 0x20, 5);
-  } else if (flags == 0xFD) {
-    gfx_draw_item_name(0x00, 0x20, 0x0D, r6l);
-  } else if (flags == 0xFE) {
-    gfx_draw_value_with_icon(2, 0x20, 0x0D, (uint16_t)r6l);
-  } else if (flags != 0xFF) {
-    gfx_draw_text_box((uint8_t)(flags >> 8), (uint8_t)(flags & 0xFF),
-                      (uint8_t)(flags >> 8), (uint8_t)flags);
-    gfx_draw_text_box(0x20, (uint8_t)flags, 0x0D, 0);
+  } else if (v == 0xFD) {
+    gfx_draw_item_name(0x00, 0x20, r6l, 0x0D);
+  } else if (v == 0xFE) {
+    gfx_draw_value_with_icon(0x02, 0x20, 0x0D, (uint16_t)r6l);
+  } else if (v != 0xFF) {
+    gfx_draw_text_box(0x20, v, 0x0D, 0);
   }
 
-  flags = *ptr;
-  if ((flags & 0x18) > 8) {
-    gfx_draw_text_box(0x30, 0x10, 0x0E, (uint8_t)(ptr[3] + gCurSubstateA));
+  ptr = (uint8_t *) *(volatile uint16_t *) &accelXPos;
+  v = *ptr;
+  if ((v & 0x18) > 8) {
+    gfx_draw_text_box(0x30, (uint8_t)(ptr[3] + gCurSubstateA), 0x0E, 0x01);
+  } else if (ptr[2] == 0xFF) {
+    gfx_draw_text_box(0x30, ptr[3], 0x0F, 0x01);
   } else {
-    if (ptr[2] == 0xFF) {
-      gfx_draw_text_box(0x30, 0x10, ptr[3], 0x0F);
-    } else {
-      gfx_draw_text_box(0x30, 0x10, ptr[3], 0x0E);
-    }
+    gfx_draw_text_box(0x30, ptr[3], 0x0E, 0x01);
   }
   gfx_draw_battery_low(0, 0);
 }
@@ -388,7 +394,7 @@ void game_check_periodic_events(void) {
 
   if ((walker_status_flags & 0x18) != 0x10)
     return;
-  if (currentlyActiveView != 0)
+  if (currentlyActiveView != VIEW_HOME)
     return;
   if (!(walker_status_flags_BIT.input_pending))
     return;
@@ -643,6 +649,18 @@ void ui_draw_music_note(uint8_t x, uint8_t y, uint8_t shift) {
   drv_lcd_blit(x, y, buf, 8, 8);
 }
 
+// Reason: ROM emits NO prologue (zero pushes) — this function trashes the
+//   caller's r3/r4/r5/r6 freely, like ui_load_inventory_mask. ch38 emits
+//   `push.l er6; push.l er5; push.w r4; push.w r3` (12 bytes), breaking
+//   alignment from byte 0. ROM also uses the `bld/bst` bit-copy idiom
+//   (`bld #1, gCurSubstateY; bst #0, r6l`) for the `r6l = (gCurSubstateY >>
+//   1) & 1` pattern; ch38 emits the `btst/beq/mov #1` triple from the
+//   explicit `if (gCurSubstateY & 2) r6l = 1` form. Rewriting that one site
+//   with byte_bits_t bit-copy might gain ~2pp but the prologue blocker caps
+//   the function regardless. Body's branch structure and call args look
+//   correct.
+// Class: cannot-fix-without-compiler-change (no-prologue convention; same
+//   ABI blocker as ui_load_inventory_mask / gfx_draw_animated_grass)
 // ROM: 0x6574  22.4%
 #pragma option speed =loop=1 /* pragma:auto */
 void ui_render_peer_play(void) {
@@ -734,7 +752,7 @@ void ui_render_peer_play(void) {
 
   if (gCurSubstateZ >= 5) {
     ui_reset_substate();
-    ui_set_view(0);
+    ui_set_view(VIEW_HOME);
   }
   gfx_draw_battery_low(0, 0);
 }

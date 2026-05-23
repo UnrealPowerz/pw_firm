@@ -24,6 +24,17 @@ void game_reset_pedometer_flags(void) {
   isNotWalking = 0;
 }
 
+// Reason: ROM saves r2/e4 (words) + er6 (long) = 8 bytes via mixed
+//   `push.w r2; push.w e4; push.l er6`; ch38 saves er6/er5/r4 = 10 bytes
+//   via `push.l er6; push.l er5; push.w r4`. Different register selection
+//   for the same data. ROM also does `mov.l @r6, er4` (32-bit load of two
+//   adjacent uint16_ts together); ch38 splits into two `mov.w` loads. C
+//   would need explicit `*(uint32_t *)ptr` to coax 32-bit load but the
+//   following body uses both halves separately, so the compiler is right
+//   to split. Body logic (interpolation between consecutive samples)
+//   matches.
+// Class: cannot-fix-without-compiler-change (mixed push.w/push.l + paired
+//   16-bit load fusion)
 // ROM: 0x9342  32.4%  saves: r2,e4,er6
 #pragma option speed =register /* pragma:auto */
 uint32_t game_pedometer_interpolate_batch(uint8_t flags, uint16_t arg2) {
@@ -297,6 +308,13 @@ success:
       peakBin, (uint16_t)(uint32_t)binBase);
 }
 
+// Reason: ROM saves er2/er3/er4/er5/er6 separately (5 push.l = 20 bytes); ch38
+//   saves only er6/er5 (8 bytes). Different register-usage pattern means
+//   stack-arg/local offsets diverge. ROM also unrolls the initial zero-fill
+//   loop by 2 (`mov.w r0, @(addr, r6); inc.w #2, r6; mov.w r0, @(addr, r6);
+//   inc.w #2, r6`); ch38 emits one write + one increment per iteration.
+//   Body's accel-FFT pipeline, threshold checks, and step counting match.
+// Class: cannot-fix-without-compiler-change (callee-save set + loop unroll)
 // ROM: 0x945a  60.4%  saves: er2,er3,er4,er5,er6
 void game_process_accel_data(void) {
   uint32_t steps;
@@ -320,7 +338,7 @@ void game_process_accel_data(void) {
   steps = game_detect_steps_fft(fft_results);
 
   view = currentlyActiveView;
-  if (view == 0x17) {
+  if (view == VIEW_ACCEL_DEBUG) {
     sub = gCurSubstateA;
     limit = DAT_f7d8;
     if (sub < limit) {
@@ -329,23 +347,23 @@ void game_process_accel_data(void) {
         threshold = axisStepThresholdLo;
         tx = accelXPos;
         if (tx < threshold)
-          currentlyActiveView = 0x18;
+          currentlyActiveView = VIEW_TEXT;
         ty = accelYPos;
         if (ty < threshold)
-          currentlyActiveView = 0x18;
+          currentlyActiveView = VIEW_TEXT;
         tz = accelZPos;
         if (tz < threshold)
-          currentlyActiveView = 0x18;
+          currentlyActiveView = VIEW_TEXT;
         threshold = axisStepThresholdHi;
         tx = accelXPos;
         if (tx > threshold)
-          currentlyActiveView = 0x18;
+          currentlyActiveView = VIEW_TEXT;
         ty = accelYPos;
         if (ty > threshold)
-          currentlyActiveView = 0x18;
+          currentlyActiveView = VIEW_TEXT;
         tz = accelZPos;
         if (tz > threshold)
-          currentlyActiveView = 0x18;
+          currentlyActiveView = VIEW_TEXT;
       }
     } else if (DAT_f7d1 < DAT_f7d8_1) {
       threshold = axisIdleThreshold;

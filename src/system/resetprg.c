@@ -66,7 +66,7 @@ __entry(vect = 0) void PowerON_Reset(void) {
 
   sys_set_handler(sys_main_loop_low_power);
   ui_reset_substate();
-  currentlyActiveView = 0;
+  currentlyActiveView = VIEW_HOME;
   drv_rtc_init_timer_b();
 
   set_ccr(0x00);

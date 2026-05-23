@@ -164,7 +164,7 @@ state2:
     if (slot == 3) {
       gCurSubstateA = 1;
       game_start_peer_session();
-      ui_set_view(7);
+      ui_set_view(VIEW_CAUGHT_STATS);
       return;
     }
     drv_eeprom_write_block((uint16_t)slot * 4 + EEPROM_LOG_ITEMS, (void *)&DAT_f7d8, 0x2);
@@ -182,7 +182,7 @@ state2:
 exit_to_main:
   drv_sound_play(0);
   ui_reset_substate();
-  ui_set_view(0);
+  ui_set_view(VIEW_HOME);
   return;
 
 state3:
@@ -196,7 +196,7 @@ state3:
   }
   drv_sound_play(0);
   ui_reset_substate();
-  ui_set_view(0);
+  ui_set_view(VIEW_HOME);
   return;
 
 state4:
@@ -434,6 +434,14 @@ void ui_render_dowsing_grass(void) {
   gfx_draw_text_box(0x30, 0x11, 0x22, 0x00);
 }
 
+// Reason: ROM hoists `mov.w #0x280, r5` at entry as the EEPROM base constant
+//   and reuses it via add.w r5,... at multiple read sites; ch38 inlines the
+//   immediate at each call site. ROM also uses no prologue helper (starts
+//   immediately); ch38 emits `$sp_regsv$3`. ch38 swaps the register choice
+//   for the two sbrk buffers (R6 vs ROM's R4, R5 vs R6) — different
+//   allocator. Body structure (substate dispatch, sprite blit, item icon
+//   draws) matches.
+// Class: cannot-fix-without-compiler-change (constant hoisting + sp_regsv$3)
 // ROM: 0x4cd6  62.8%
 #pragma option speed =loop=1 /* pragma:auto */
 void ui_render_dowsing(void) {

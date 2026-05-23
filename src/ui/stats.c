@@ -12,7 +12,7 @@ void ui_handle_poke_items(void) {
   if (drv_button_is_triggered(0x04) != 0) {
     if (ui_stats_prev_index(gCurSubstateA) != 0) {
       ui_clear_substate_y();
-      ui_set_view(1);
+      ui_set_view(VIEW_MAIN_MENU);
       sid = 1;
       goto do_play_sound;
     }
@@ -24,7 +24,7 @@ void ui_handle_poke_items(void) {
     if (ui_stats_next_index(gCurSubstateA) != 0) {
       if (accelXPos != 0) {
         ui_set_stats_view_item();
-        ui_set_view(0x0B);
+        ui_set_view(VIEW_GIFTS);
         sid = 2;
         goto do_play_sound;
       }
@@ -38,10 +38,10 @@ void ui_handle_poke_items(void) {
   if (drv_button_is_triggered(0x02) != 0) {
     if (accelXPos != 0) {
       ui_set_stats_view_item();
-      ui_set_view(0x0B);
+      ui_set_view(VIEW_GIFTS);
     } else {
       ui_reset_substate();
-      ui_set_view(0);
+      ui_set_view(VIEW_HOME);
     }
     sid = 0;
     goto do_play_sound;
@@ -60,7 +60,7 @@ void ui_handle_gifts(void) {
       if (gCurSubstateA != 0) {
         gCurSubstateY = 0;
         ui_stats_cycle_index(gCurSubstateA);
-        ui_set_view(0xA);
+        ui_set_view(VIEW_POKE_ITEMS);
         sid = 2;
         goto do_play_sound;
       }
@@ -82,7 +82,7 @@ void ui_handle_gifts(void) {
 
   if (drv_button_is_triggered(0x02) != 0) {
     ui_reset_substate();
-    ui_set_view(0);
+    ui_set_view(VIEW_HOME);
     sid = 0;
     goto do_play_sound;
   }
@@ -219,9 +219,9 @@ void ui_render_pokemon_stats(void) {
   gfx_draw_battery_low(0x58, 0);
 }
 
-// ROM: 0x918c  56.3%
+// ROM: 0x918c  82.3%
 void ui_render_items_stats(void) {
-  void (*blit)(void *, uint8_t, uint8_t, uint8_t, uint8_t);
+  void (*blit)(uint8_t, uint8_t, void *, uint8_t, uint8_t);
   void (*eread)(uint16_t, void *, uint16_t);
   void *buf;
   void *namebuf;
@@ -232,21 +232,20 @@ void ui_render_items_stats(void) {
   int i;
   uint16_t item_id[2];
 
-  blit =
-      (void (*)(void *, uint8_t, uint8_t, uint8_t, uint8_t))drv_lcd_blit;
+  blit = drv_lcd_blit;
   eread = drv_eeprom_read_block;
   sys_init_heap();
   buf = sbrk(0x140);
   base = 0x0280;
 
   eread(0x0338 + base, buf, 0x20);
-  blit(buf, 8, 16, 0, 0);
+  blit(0, 0, buf, 8, 16);
 
   eread(0x0B90 + base, buf, 0x140);
-  blit(buf, 0x50, 0x10, 0x08, 0x00);
+  blit(0x08, 0x00, buf, 0x50, 0x10);
 
   eread(0x1810 + base, buf, 0xC0);
-  blit(buf, 0x20, 0x18, 0x3C, 0x18);
+  blit(0x3C, 0x18, buf, 0x20, 0x18);
 
   anim = (uint16_t)((uint16_t)(animTick & 1) + 3) * 0x10;
   eread(0x0278 + base + anim, buf, 0x10);
@@ -254,20 +253,20 @@ void ui_render_items_stats(void) {
   sel = gCurSubstateY;
   col_coord = (uint8_t)((sel % 5) * 8 + 0x10);
   row_coord = (uint8_t)((sel / 5) * 0x10 + 0x10);
-  blit(buf, 8, 8, col_coord, row_coord);
+  blit(col_coord, row_coord, buf, 8, 8);
 
   base += 0x0208;
   eread(base, buf, 0x10);
 
   for (i = 0; i < 5; i++) {
     if (accelXPos & (1 << i)) {
-      blit(buf, 8, 8, (uint8_t)(i * 8 + 0x10), 0x18);
+      blit((uint8_t)(i * 8 + 0x10), 0x18, buf, 8, 8);
     }
   }
 
   for (i = 0; i < 5; i++) {
     if (accelXPos & (0x20 << i)) {
-      blit(buf, 8, 8, (uint8_t)(i * 8 + 0x10), 0x28);
+      blit((uint8_t)(i * 8 + 0x10), 0x28, buf, 8, 8);
     }
   }
 
@@ -289,7 +288,7 @@ void ui_handle_caught_stats_navigation(void) {
   if (drv_button_is_triggered(4)) {
     if (gCurSubstateZ == 0) {
       ui_reset_substate();
-      ui_set_view(0);
+      ui_set_view(VIEW_HOME);
       drv_sound_play(1);
       return;
     }
@@ -313,7 +312,7 @@ void ui_handle_caught_stats_navigation(void) {
       game_log_item_interaction();
     }
     ui_reset_substate();
-    ui_set_view(0);
+    ui_set_view(VIEW_HOME);
     drv_sound_play(0);
   }
 }
@@ -474,7 +473,17 @@ void ui_stats_reset_cursor(void) {
   ui_stats_find_index(*(uint16_t *)&gCurSubstateA);
 }
 
-// ROM: 0x8aca  11.5%
+// Reason: ROM emits no register-save prologue and trashes r3/r4/r5 freely
+//   (a "leaf-like" convention seemingly used only here in the codebase).
+//   ch38 emits the standard `push.l er6; push.l er5; push.w r4; push.w r3`
+//   on entry plus matching pops on exit, and consequently allocates buf_8c8c
+//   to ER3 and buf_8cbc to ER5 (high half) instead of r3/r4 — this propagates
+//   throughout the body as a register-naming mismatch on every memory access.
+//   The shift-by-loop idiom (`2 << i`, `0x40 << i`, `1 << i`) and the bset
+//   sequences DO match ROM; structural body is correct. Stuck until we find a
+//   way to suppress the prologue or force the unusual register allocation.
+// Class: cannot-fix-without-compiler-change (calling-convention helper mismatch)
+// ROM: 0x8aca  12.0%
 void ui_load_inventory_mask(uint16_t *status_mask_ptr) {
   uint16_t *buf_8c8c;
   uint16_t *buf_8cbc;
@@ -484,8 +493,9 @@ void ui_load_inventory_mask(uint16_t *status_mask_ptr) {
   buf_8c8c = (uint16_t *)sbrk(0x30);
   buf_8cbc = (uint16_t *)sbrk(0x34);
 
-  status_mask_ptr[0] = 0;
-  status_mask_ptr[1] = 0;
+  for (i = 0; i < 2; i++) {
+    status_mask_ptr[i] = 0;
+  }
 
   if (walker_status_flags_BIT.walking) {
     status_mask_ptr[0] |= 0x01;

@@ -42,6 +42,16 @@ void gfx_add_font_border(uint16_t *ptr) {
   *ptr |= 0x101;
 }
 
+// Reason: ROM uses the bespoke `$sp_regsv$3` / `$spregld2$3` prologue/epilogue
+//   helpers (saves er3/er4/er5/er6 via a single jsr to a shared helper); ch38
+//   emits its own inline prologue that saves a different register set.
+//   ROM also reorders the SSER/PDR1 setup to happen BEFORE the y_page shift
+//   chain; ch38 does the shifts first. The str pointer is held in r4 by ROM
+//   (using `mov.b @er4+, r6l` for the autoincrement read in the loop); ch38
+//   emits separate `mov.b @erN, ...` + `adds.l #1, erN`. Body structure
+//   matches; alignment broken by the prologue helper + reordering.
+// Class: cannot-fix-without-compiler-change (sp_regsv$3 helper + instruction
+//   scheduling differences; see score_focus.md Tier 3)
 // ROM: 0x858a  18.5%  saves: er3,er4,er5,er6
 void gfx_draw_string(uint8_t x, uint8_t y_raw, const char *str) {
   uint8_t y_page = y_raw >> 3;
@@ -282,6 +292,17 @@ void gfx_draw_item_name(uint8_t x, uint8_t y, uint8_t index, uint8_t flags) {
   drv_lcd_blit(x, y, buf, 0x60, 0x10);
 }
 
+// Reason: ROM uses a very lean prologue (`push.w r4; push.w r6` only — 4
+//   bytes saved). ch38 emits `push.w r6; push.l er5; push.l er4; push.l er3;
+//   push.l er2; subs.l #4, sp` (16 bytes plus 4 locals). The extra register
+//   saves shift the alignment of every body instruction. ROM also calls the
+//   compiler helpers `$DSRUC$3` and `$DSLC$3` for the bit-shift inner loops;
+//   ch38 inlines `dec.b/shll.b/bra` shift loops instead — both produce the
+//   correct value, but cause different byte sequences. Body structure
+//   (shift<0 / shift>0 branches with row/column nested loops, carry-bit blend
+//   into adjacent row) appears correct.
+// Class: cannot-fix-without-compiler-change (calling-convention helper
+//   mismatch + missing $DSRUC$3 / $DSLC$3 helper emission)
 // ROM: 0x1dca  16.5%  saves: r4,r6
 #pragma option speed =loop=1 /* pragma:auto */
 void gfx_draw_animated_grass(uint8_t w, uint8_t h, int8_t shift, void *buf) {
@@ -445,6 +466,13 @@ void gfx_draw_route_pokemon(uint8_t x, uint8_t y, uint8_t index) {
   drv_lcd_blit(x, y, buf, 0x20, 0x18);
 }
 
+// Reason: ROM saves r3/r4/r5/er6 = 10 bytes; ch38 saves r6/r5/r4/er3/r2 = 12
+//   bytes. Different register choice. ROM hoists `mov.w #0x180, e6` (size)
+//   and `mov.w #0x2530, r5` (base addr) at entry and reuses them via
+//   add.w; ch38 inlines both constants at every use site. Called by ~30
+//   functions, so risky to alter signature.
+// Class: cannot-fix-without-compiler-change (callee-save register set +
+//   constant hoisting)
 // ROM: 0x2096  34.7%  saves: r3,r4,r5,er6
 #pragma option speed =register /* pragma:auto */
 void gfx_draw_text_box(uint8_t y, uint8_t index, uint8_t borders,
@@ -536,6 +564,15 @@ void gfx_draw_peer_pokemon(uint8_t x, uint8_t y, uint8_t flip) {
   gfx_draw_sprite_simple(x, y, 0x20, 0x18, buf);
 }
 
+// Reason: ROM saves er2/er3/r4(word)/er5/er6 in that order (18 bytes saved);
+//   ch38 saves er6/er5/er4(long)/er3/er2 in reverse order (20 bytes). The
+//   2-byte size mismatch on what should be `r4` propagates: every stack-arg
+//   access offset shifts (ROM uses @(0x1F/0x21/0x23, er7); ch38's offsets are
+//   2 bytes higher). ROM also hoists `e6 = 0xFF` at entry (used as a mask
+//   later); ch38 doesn't keep this constant in a register. Body structure
+//   (mask AND, data OR, page-shift carry into adjacent row) appears correct.
+// Class: cannot-fix-without-compiler-change (push.l vs push.l+push.w mix +
+//   constant hoisting)
 // ROM: 0x224c  15.7%  saves: er2,er3,r4,er5,er6 -> sys_epilogue_5
 void gfx_alpha_blend(void *buf1, uint8_t w, uint8_t h, void *buf2, void *buf3,
                      uint8_t x, uint8_t y, uint8_t flags) {
@@ -589,6 +626,17 @@ void gfx_flip_horiz(uint8_t w, uint8_t h, void *buf) {
   }
 }
 
+// Reason: ROM saves with `push.w r4; push.l er5; push.l er6` (longword pushes
+//   for ER5/ER6); ch38 saves with five separate `push.w` instructions
+//   (r6/r5/r4/r3/r2). Same registers saved but different encoding/order, which
+//   breaks alignment for the entire body. ROM also packs the y_page / p_end
+//   calculation as `extu.w r1; add.w r1, r2; exts.l er1; divxs.w e0, er1`
+//   (sign-extend to 32-bit then signed div) while ch38 uses
+//   `add.w r1, r2; add.w #7, r2; shlr.w r2 x3` (unsigned div via shifts).
+//   Both produce the right answer for valid inputs but emit different code.
+//   The SPI inner-loop polling (`bld #2, @SSSR; bcc ...`) matches correctly.
+// Class: cannot-fix-without-compiler-change (push.l vs push.w prologue
+//   encoding + integer-division idiom mismatch)
 // ROM: 0x7e58  24.5%  saves: r4,er5,er6 -> er5,er6
 #pragma option speed =loop=1 /* pragma:auto */
 void gfx_fill_rect(uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint8_t color) {
@@ -643,6 +691,15 @@ void gfx_fill_rect(uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint8_t color) {
   PDR1 |= 0x01;
 }
 
+// Reason: ROM saves r3/r4 (words) + er5/er6 (longs) = 12 bytes; ch38 saves
+//   er2/er3/er4/er5/er6 (5 longs) = 20 bytes. Stack-arg offsets diverge by
+//   8 bytes. ROM keeps `buffer` pointer in e4 across the function; ch38
+//   spills it to a stack slot. Also stores byte locals (y_off, shift_r) at
+//   tight @(0xa,r7)/@(0xb,r7) byte offsets; ch38 word-aligns them. Body
+//   structure correct (signed y handling, p_start/p_end pagination, SPI
+//   inner loop). Same cluster as gfx_fill_rect / drv_lcd_blit.
+// Class: cannot-fix-without-compiler-change (push.w/push.l prologue mix +
+//   register allocation for pointer locals)
 // ROM: 0x82ea  32.9%  saves: r3,r4,er5,er6 -> er5,er6
 #pragma option noregexpansion /* pragma:auto */
 void gfx_draw_sprite_simple(uint8_t x, uint8_t y, uint16_t w, uint16_t h,
@@ -710,27 +767,64 @@ void gfx_draw_sprite_simple(uint8_t x, uint8_t y, uint16_t w, uint16_t h,
   PDR1 |= 0x01; // CS high
 }
 
-// ROM: 0x7a40  27.2%  saves: er4,r5,er6
+/* gfx_blit_to_buffer: OR a (w cols x h pixels) sprite into a destination
+ * column-buffer at (x, y) with sub-page bit alignment.
+ *
+ * Layout convention: both src and dst are arranged as 2 bytes per "column"
+ * (i.e. each x-position contributes 2 vertically-stacked bytes per page).
+ * A page is 8 pixels tall. h is in pixels (must be a multiple of 8).
+ * dst_w is the destination's column stride (bytes-per-page-row = 2*dst_w).
+ *
+ * Each source byte gets `<< (y & 7)` deposited into the current page and
+ * `>> (8 - (y & 7))` deposited into the next page (the "carry into next
+ * row"). The function OR-merges into the dst, never overwrites.
+ *
+ * NB: arg order matches the ROM ABI (w, h, x, y) — the prior C declaration
+ * had it as (x, y, w, h) which mis-routed all four byte args; the body was
+ * also half-implemented (1 byte per column instead of 2). */
+/* Remaining mismatches (capping score at ~32%):
+ *   - ROM prologue saves er4/r5/er6 (10 bytes); ch38 saves er6/er5/er4/er3/er2
+ *     (20 bytes) plus a larger SUB.W locals reserve. Extra register saves
+ *     propagate to byte-offset mismatches in @(N,SP) accesses for stack args
+ *     and locals.
+ *   - ROM uses byte-sized SHLR.B on r0h for the h/8 computation; ch38 picks
+ *     16-bit SHLR.W on a promoted operand. Tried storing h/8 in a uint8_t
+ *     local — that regressed because ch38 zero-extends-then-shifts.
+ *   - ROM uses signed SHAR.W for y/8 (matters for negative y values from the
+ *     cursor branch); ch38 picks SHLR.W (unsigned). Mathematically equivalent
+ *     for the small positive y values the real call sites pass, but the
+ *     instructions differ. Tried `(int16_t)(int8_t)y >> 3` — ch38 still
+ *     emitted SHLR.W.
+ *   - ch38 keeps `outer_iters`, `shift_l`, and dst_w on the stack instead of
+ *     in scratch registers ROM uses (sp+0, e6, e1). High register pressure.
+ *
+ * Net of dedicated rewrite session 2026-05-23: 27.2% → 31.8% (+4.6pp);
+ * ui_render_main_menu 64.9% → 67.9% (+3pp). Body is now semantically correct
+ * (was a half-implementation before — 1 byte/col instead of 2). */
+// ROM: 0x7a40  31.8%  saves: er4,r5,er6
 #pragma option speed =register /* pragma:auto */
-void gfx_blit_to_buffer(uint8_t x, uint8_t y, uint8_t w, uint8_t h, void *src,
-                        void *dst, uint8_t dst_w) {
-  uint8_t *s_p = (uint8_t *)src;
-  uint8_t *d_p = (uint8_t *)dst;
-  uint16_t y_page = y / 8;
-  uint16_t shift = y & 7;
-  uint16_t hi, wi;
+void gfx_blit_to_buffer(uint8_t w, uint8_t h, uint8_t x, uint8_t y,
+                        void *src, void *dst, uint8_t dst_w) {
+  register uint8_t *s_p = (uint8_t *)src;
+  register uint8_t *d_p = (uint8_t *)dst;
+  register uint16_t shift_l = (uint16_t)(y & 7);
+  register uint16_t outer_iters = (uint16_t)h >> 3;
+  register uint16_t outer, inner;
 
-  d_p += (uint16_t)y_page * dst_w + x;
+  d_p += 2 * (((uint16_t)y >> 3) * (uint16_t)dst_w + (uint16_t)x);
 
-  for (hi = 0; hi < h; hi++) {
-    for (wi = 0; wi < w; wi++) {
-      uint8_t val = s_p[wi];
-      d_p[wi] |= (val << shift);
-      if (shift) {
-        d_p[wi + dst_w] |= (val >> (8 - shift));
-      }
+  for (outer = 0; outer < outer_iters; outer++) {
+    for (inner = 0; inner < (uint16_t)w; inner++) {
+      uint8_t b0 = s_p[2 * inner];
+      uint8_t b1 = s_p[2 * inner + 1];
+
+      d_p[2 * inner]     |= (uint8_t)(b0 << shift_l);
+      d_p[2 * inner + 1] |= (uint8_t)(b1 << shift_l);
+
+      d_p[2 * ((uint16_t)dst_w + inner)]     |= (uint8_t)(b0 >> (8 - shift_l));
+      d_p[2 * ((uint16_t)dst_w + inner) + 1] |= (uint8_t)(b1 >> (8 - shift_l));
     }
-    s_p += w;
-    d_p += dst_w;
+    s_p += 2 * (uint16_t)w;
+    d_p += 2 * (uint16_t)dst_w;
   }
 }

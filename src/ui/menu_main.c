@@ -25,17 +25,17 @@ void ui_handle_home(void) {
       drv_sound_play(0);
       ui_clear_substate_y();
       menu_cursor = 2;
-      ui_set_view(1);
+      ui_set_view(VIEW_MAIN_MENU);
     } else if (drv_button_is_triggered(4)) {
       menu_cursor = 5;
       drv_sound_play(0);
       ui_clear_substate_y();
-      ui_set_view(1);
+      ui_set_view(VIEW_MAIN_MENU);
     } else if (drv_button_is_triggered(8)) {
       menu_cursor = 0;
       drv_sound_play(0);
       ui_clear_substate_y();
-      ui_set_view(1);
+      ui_set_view(VIEW_MAIN_MENU);
     }
   }
 }
@@ -99,13 +99,12 @@ void ui_show_status_screen(void) {
 }
 
 // ROM: 0x6c94  91.8%
-#pragma option speed =inline /* pragma:auto */
 void ui_handle_settings_menu(void) {
   if (drv_button_is_triggered(4)) {
     if (gCurSubstateZ == 0) {
       drv_sound_play(1);
       ui_clear_substate_y();
-      ui_set_view(1);
+      ui_set_view(VIEW_MAIN_MENU);
       return;
     } else {
       gCurSubstateZ = 0;
@@ -173,7 +172,7 @@ void ui_handle_shade_menu(void) {
   }
 }
 
-// ROM: 0x6dfc  6.6%
+// ROM: 0x6dfc  78.1%
 void ui_handle_settings(void) {
   if (gCurSubstateY == 0) {
     ui_handle_settings_menu();
@@ -189,7 +188,7 @@ void ui_handle_settings(void) {
     } else {
       drv_sound_play(0);
       ui_reset_substate();
-      ui_set_view(0);
+      ui_set_view(VIEW_HOME);
       save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (void *)&totalSteps, 0x18);
     }
   }
@@ -325,7 +324,7 @@ void ui_render_sad_walker(void) {
     gCurSubstateZ = tmp;
     if (tmp > 0x08) {
       ui_reset_substate();
-      ui_set_view(0);
+      ui_set_view(VIEW_HOME);
     }
   }
 }
@@ -512,7 +511,7 @@ void ui_handle_main_menu(void) {
           watts -= cost;
         }
         save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (uint8_t *)&totalSteps, 0x18);
-        ui_set_view(3);
+        ui_set_view(VIEW_POKERADAR);
         game_pokeradar_init();
         return;
       case 1:
@@ -524,13 +523,13 @@ void ui_handle_main_menu(void) {
         }
         save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (uint8_t *)&totalSteps, 0x18);
         game_init_dowsing();
-        ui_set_view(2);
+        ui_set_view(VIEW_DOWSING);
         return;
       case 2:
         ui_start_connection_app();
         return;
       case 3:
-        ui_set_view(8);
+        ui_set_view(VIEW_TRAINER_CARD);
         ui_reset_trainer_card_state();
         return;
       case 4:
@@ -539,14 +538,14 @@ void ui_handle_main_menu(void) {
           gCurSubstateA = accelXPos;
           accelXPos = *(uint16_t *)((uintptr_t)&accelXPos + 2);
           ui_stats_reset_cursor();
-          ui_set_view(10);
+          ui_set_view(VIEW_POKE_ITEMS);
           return;
         }
         if (*(uint16_t *)((uintptr_t)&accelXPos + 2) != 0) {
           gCurSubstateA = accelXPos;
           accelXPos = *(uint16_t *)((uintptr_t)&accelXPos + 2);
           ui_set_stats_view_item();
-          ui_set_view(11);
+          ui_set_view(VIEW_GIFTS);
           return;
         }
         gCurSubstateY = 3;
@@ -555,7 +554,7 @@ void ui_handle_main_menu(void) {
         return;
       case 5:
         ui_show_status_screen();
-        ui_set_view(9);
+        ui_set_view(VIEW_SETTINGS);
         return;
       }
     }
@@ -571,7 +570,7 @@ void ui_handle_main_menu(void) {
   if (drv_button_is_triggered(8)) {
     if (menu_cursor == 5) {
       ui_reset_substate();
-      ui_set_view(0);
+      ui_set_view(VIEW_HOME);
       drv_sound_play(1);
     } else {
       menu_cursor = (uint8_t)((menu_cursor + 1) % 6);
@@ -580,11 +579,27 @@ void ui_handle_main_menu(void) {
   }
 }
 
-// ROM: 0x9930  1.5%
+// Reason: Two compounding blockers:
+//   (1) ROM uses `mov.l #H'400280, er4` to pack constants 0x40 (e4) and 0x280
+//       (r4) into a single 32-bit immediate, then computes per-call addresses
+//       via `add.w r4, ...` — ch38 cannot be coaxed into this ER-pair packing.
+//   (2) gfx_blit_to_buffer's C signature (x, y, w, h, src, dst, dst_w) does not
+//       match what ROM passes (two stack pushes per call vs one expected; r0h
+//       and r1h are loaded with values that don't fit the documented sig).
+//       The C body itself appears to compute the destination offset using
+//       different inputs than ROM does, so the wrapper isn't semantically
+//       correct either. Untangling this requires re-deriving the real
+//       signature of gfx_blit_to_buffer first.
+//   Fixed in this pass: drv_lcd_blit arg order at the two affected call sites
+//   (the C had them in the wrong order, mirroring the broken function-pointer
+//   pattern from the trainer_card.c sister functions).
+// Class: cannot-fix-without-compiler-change (ER-register constant packing)
+//   + needs gfx_blit_to_buffer signature investigation
+// ROM: 0x9930  67.9%
 #pragma option noregexpansion /* pragma:auto */
 void ui_render_main_menu(void) {
   uint8_t *sprite_buf, *e0_buf;
-  uint8_t i;
+  uint16_t i;
 
   sys_init_heap();
   sprite_buf = (uint8_t *)sbrk(0x140);
@@ -594,28 +609,30 @@ void ui_render_main_menu(void) {
   {
     uint16_t addr = (uint16_t)menu_cursor * 0x140 + 0x690;
     drv_eeprom_read_block(addr, sprite_buf, 0x140);
-    drv_lcd_blit(0x50, 0x10, sprite_buf, 8, 0);
+    drv_lcd_blit(8, 0, sprite_buf, 0x50, 0x10);
   }
 
   for (i = 0; i < 6; i++) {
-    uint8_t j;
+    uint16_t j;
     for (j = 0; j < 0x80; j++) {
       e0_buf[j] = 0;
     }
 
-    if (i == menu_cursor) {
+    if ((uint8_t)i == menu_cursor) {
       uint16_t cursor_addr = (uint16_t)((animTick & 1) + 3) * 0x10 + 0x278;
       drv_eeprom_read_block(cursor_addr, sprite_buf, 0x10);
-      gfx_blit_to_buffer(0x08, 0xF8, 0x08, 0x08, sprite_buf, e0_buf, 0x10);
+      gfx_blit_to_buffer(8, 8, 4, (uint8_t)(mainMenuYCoords[i] - 8),
+                         sprite_buf, e0_buf, 0x10);
     }
 
     {
       uint16_t item_addr = 0xE10 + (uint16_t)i * 0x40;
       drv_eeprom_read_block(item_addr, sprite_buf, 0x40);
-      gfx_blit_to_buffer(0x00, 0x00, 0x10, 0x20, sprite_buf, e0_buf, 0x10);
+      gfx_blit_to_buffer(0x10, 0x10, 0, mainMenuYCoords[i],
+                         sprite_buf, e0_buf, 0x10);
     }
 
-    drv_lcd_blit(0x10, 0x20, e0_buf, 0x10, mainMenuYCoords[i]);
+    drv_lcd_blit((uint8_t)(i * 0x10), 0x10, e0_buf, 0x10, 0x20);
   }
 
   if (gCurSubstateY == 0) {

@@ -1,5 +1,12 @@
 #include "all_headers.h"
 
+// Reason: ROM stores the sampled value on stack (`mov.w r0, @er7`) and reads
+//   the high byte then low byte via `mov.b @er7, r0h` and `mov.b @(1,er7),
+//   r0h` — exploiting big-endian stack layout. ch38 keeps the value in a
+//   register and uses `(val >> 8)` for the high byte, producing a different
+//   instruction stream (shift vs memory access).
+// Class: cannot-fix-without-compiler-change (codegen choice between stack
+//   spill + byte-aligned read vs register + shift)
 // ROM: 0xa8f8  22.2%
 uint8_t drv_adc_test(void) {
   uint16_t val = drv_adc_sample();

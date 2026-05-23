@@ -2,159 +2,140 @@
 
 // ROM: 0x009a  90.9%
 void ir_handle_remote_cmd(void) {
-  uint8_t action;
-  action = REQUESTED_POKEMON_ACTION_TYPE;
-  if (action == 0xF0)
-    goto case_f0;
-  if (action == 0xFE)
-    goto case_fe;
-  if (action == 0xE0)
-    goto case_e0;
-  if (action == 0x2A)
-    goto case_2a;
-  if (action == 0x2C)
-    goto case_2c;
-  if (action == 0x38)
-    goto case_38;
-  if (action == 0x4E)
-    goto case_4e;
-  if (action == 0x5A)
-    goto case_5a;
-  if (action == 0x66)
-    goto case_66;
-  if (action == 0x16)
-    goto case_16;
-  if (action == 0xC0)
-    goto case_c0;
-  if (action == 0xC2)
-    goto case_c2;
-  if (action == 0xC4)
-    goto case_c4;
-  if (action == 0xC6)
-    goto case_c6;
-  if (action == 0xB8)
-    goto case_b8;
-  if (action == 0xBA)
-    goto case_ba;
-  if (action == 0xBC)
-    goto case_bc;
-  if (action != 0xBE)
-    goto check_dat_f7ad;
-  goto case_be;
+  switch (REQUESTED_POKEMON_ACTION_TYPE) {
+  case 0xF0: goto enter_test_mode;
+  case 0xFE: goto enter_debug_mode;
+  case 0xE0: goto factory_reset_full;
+  case 0x2A: goto factory_reset_partial;
+  case 0x2C: goto factory_reset_minimal;
+  case 0x38: goto start_new_walk;
+  case 0x4E: goto end_walk_show_report;
+  case 0x5A: goto restart_walk_clear_history;
+  case 0x66: goto clear_walk_stats;
+  case 0x16: goto start_peer_play;
+  case 0xC0: goto show_menu_a3;
+  case 0xC2: goto show_menu_a0;
+  case 0xC4: goto show_menu_a2;
+  case 0xC6: goto show_menu_a1;
+  case 0xB8: goto show_menu_a4;
+  case 0xBA: goto show_menu_a5;
+  case 0xBC: goto show_menu_a6;
+  case 0xBE: goto show_menu_a7;
+  default:   goto default_handle_error;
+  }
 
-case_f0:
+enter_test_mode:
   drv_lcd_init();
-  currentlyActiveView = 0x16;
+  currentlyActiveView = VIEW_DEBUG;
   diag_init_test_mode();
-  goto epilogue;
-case_fe:
-  currentlyActiveView = 0x17;
+  goto finalize;
+enter_debug_mode:
+  currentlyActiveView = VIEW_ACCEL_DEBUG;
   sys_init_debug_mode();
-  goto epilogue;
-case_e0:
+  goto finalize;
+factory_reset_full:
   drv_lcd_init();
   idleSeconds = 0xE10;
   sys_factory_reset_eeprom(1, 1);
-  goto load_settings;
-case_2a:
+  goto apply_volume_and_contrast;
+factory_reset_partial:
   idleSeconds = 0xE10;
   sys_factory_reset_eeprom(0, 1);
-  goto load_settings;
-case_2c:
+  goto apply_volume_and_contrast;
+factory_reset_minimal:
   idleSeconds = 0xE10;
   sys_factory_reset_eeprom(0, 0);
-load_settings:
+apply_volume_and_contrast:
   drv_sound_set_volume((RamCache_settingsByte >> 1) & 0x3);
   drv_lcd_set_contrast((RamCache_settingsByte >> 3) & 0xF);
-  goto set_initial;
-case_38:
+  goto return_to_main_view;
+start_new_walk:
   RamCache_STEP_COUNT_maybe = 0;
   game_start_walk();
-  goto set_view_f;
-case_4e:
+  goto enter_walk_view;
+end_walk_show_report:
   game_end_walk();
-  ui_set_view(0x10);
+  ui_set_view(VIEW_WALK_DEPARTURE_ANIM);
   gCurSubstateY = 5;
-  goto clear_substate_z;
-case_5a:
+  goto reset_substate_z;
+restart_walk_clear_history:
   game_start_walk();
   drv_eeprom_fill(EEPROM_STEP_HIST_FLAGS, 0x06C8, 0);
-set_view_f:
-  ui_set_view(0xF);
+enter_walk_view:
+  ui_set_view(VIEW_WALK_ARRIVAL_ANIM);
   gCurSubstateY = 0;
-  goto clear_substate_z;
-case_66:
+  goto reset_substate_z;
+clear_walk_stats:
   game_clear_stats();
-  ui_set_view(0x10);
+  ui_set_view(VIEW_WALK_DEPARTURE_ANIM);
   gCurSubstateY = 6;
-  goto clear_substate_z;
-case_16:
-  ui_set_view(0xD);
+  goto reset_substate_z;
+start_peer_play:
+  ui_set_view(VIEW_PEER_PLAY);
   ui_start_peer_play_app();
-  goto epilogue;
-case_c0:
-  ui_set_view(0x11);
+  goto finalize;
+show_menu_a3:
+  ui_set_view(VIEW_EVENT_REWARD_ANIM);
   gCurSubstateY = 0;
   gCurSubstateZ = 0;
   gCurSubstateA = 3;
-  goto epilogue;
-case_c2:
-  ui_set_view(0x11);
+  goto finalize;
+show_menu_a0:
+  ui_set_view(VIEW_EVENT_REWARD_ANIM);
   gCurSubstateY = 0;
   gCurSubstateZ = 0;
   gCurSubstateA = 0;
-  goto epilogue;
-case_c4:
-  ui_set_view(0x11);
+  goto finalize;
+show_menu_a2:
+  ui_set_view(VIEW_EVENT_REWARD_ANIM);
   gCurSubstateY = 0;
   gCurSubstateZ = 0;
   gCurSubstateA = 2;
-  goto set_substate_a;
-case_c6:
-  ui_set_view(0x11);
+  goto finalize;
+show_menu_a1:
+  ui_set_view(VIEW_EVENT_REWARD_ANIM);
   gCurSubstateY = 0;
   gCurSubstateZ = 0;
   gCurSubstateA = 1;
-  goto set_substate_a;
-case_b8:
-  ui_set_view(0x11);
+  goto finalize;
+show_menu_a4:
+  ui_set_view(VIEW_EVENT_REWARD_ANIM);
   gCurSubstateY = 0;
   gCurSubstateZ = 0;
   gCurSubstateA = 4;
-  goto set_substate_a;
-case_ba:
-  ui_set_view(0x11);
+  goto finalize;
+show_menu_a5:
+  ui_set_view(VIEW_EVENT_REWARD_ANIM);
   gCurSubstateY = 0;
   gCurSubstateZ = 0;
   gCurSubstateA = 5;
-  goto set_substate_a;
-case_bc:
-  ui_set_view(0x11);
+  goto finalize;
+show_menu_a6:
+  ui_set_view(VIEW_EVENT_REWARD_ANIM);
   gCurSubstateY = 0;
   gCurSubstateZ = 0;
   gCurSubstateA = 6;
-  goto set_substate_a;
-case_be:
-  ui_set_view(0x11);
+  goto finalize;
+show_menu_a7:
+  ui_set_view(VIEW_EVENT_REWARD_ANIM);
   gCurSubstateY = 0;
   gCurSubstateZ = 0;
   gCurSubstateA = 7;
-set_substate_a:
-  goto epilogue;
+  goto finalize;
 
-check_dat_f7ad:
+default_handle_error:
   if (irResultCode == 0)
-    goto set_initial;
-  ui_set_view(0xE);
-clear_substate_z:
+    goto return_to_main_view;
+  ui_set_view(VIEW_STEP_HISTORY);
+reset_substate_z:
   gCurSubstateZ = 0;
-  goto epilogue;
+  goto finalize;
 
-set_initial:
+return_to_main_view:
   ui_reset_substate();
-  ui_set_view(0);
+  ui_set_view(VIEW_HOME);
 
-epilogue:
+finalize:
   accelSampleCount = 0;
   game_reset_pedometer_flags();
   sys_set_handler(sys_main_loop_low_power);

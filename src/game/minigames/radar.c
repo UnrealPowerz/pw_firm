@@ -1,5 +1,12 @@
 #include "all_headers.h"
 
+// Reason: ROM uses `mov.l #0x1000280, er5` (ER-packs 0x100 size + 0x280 base
+//   into one 32-bit immediate, then uses e5/r5 halves separately). ch38 emits
+//   `mov.w #256, e6` + inline 0x280 immediates at each use site. ROM also
+//   uses `mulxu.w` for `(animTick+9)*0x10`; ch38 uses 4 SHLL.W (×2×2×2×2).
+//   ROM has no prologue; ch38 emits `$sp_regsv$3`.
+// Class: cannot-fix-without-compiler-change (ER-packing + multiplication
+//   strength reduction differs + sp_regsv$3)
 // ROM: 0x9f44  50.6%
 #pragma option speed=shift  /* pragma:auto */
 void ui_render_pokeradar(void) {
@@ -88,7 +95,7 @@ void ui_handle_radar_grass_menu(void) {
   }
 
   drv_sound_play(0x0E);
-  ui_set_view(6);
+  ui_set_view(VIEW_RADAR_FAILURE);
 }
 
 // ROM: 0x9e72  63.1%
@@ -103,7 +110,7 @@ void ui_handle_pokeradar(void) {
   } else if (gCurSubstateZ == 1) {
     if (DAT_f7d5 > 4) {
       game_start_battle();
-      ui_set_view(4);
+      ui_set_view(VIEW_BATTLE);
     }
     return;
   } else if (gCurSubstateZ == 2) {
@@ -111,7 +118,7 @@ void ui_handle_pokeradar(void) {
       return;
     drv_sound_play(0);
     ui_reset_substate();
-    ui_set_view(0);
+    ui_set_view(VIEW_HOME);
     return;
   } else if (gCurSubstateZ != 3) {
     return;
@@ -144,7 +151,7 @@ void ui_handle_radar_failure(void) {
     gCurSubstateA = 0;
     drv_sound_play(4);
     ui_reset_substate();
-    ui_set_view(0);
+    ui_set_view(VIEW_HOME);
   }
 }
 

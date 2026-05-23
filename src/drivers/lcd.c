@@ -405,6 +405,15 @@ void drv_lcd_clear_pages(uint8_t height_pixels) {
   PDR1 |= 0x01;
 }
 
+// Reason: ROM uses `$sp_regsv$3` helper (saves er3-er6 via shared jsr); ch38
+//   inlines `push.l ER6/ER5/ER4/ER3/ER2 + subs #18`. Stack-arg byte offsets
+//   thus diverge throughout the body. ROM uses `exts.l er2; divxs.w e4, er2`
+//   (32-bit signed divide by 8); ch38 uses three `shar.w` shifts. Both
+//   correct for valid y; instruction encoding differs.
+//   ⚠️ Widely called (44+ callers). Do NOT change the C signature or
+//   semantics — would cascade-break.
+// Class: cannot-fix-without-compiler-change (sp_regsv$3 helper + signed
+//   divide idiom)
 // ROM: 0x80ac  24.3%  saves: er3,er4,er5,er6
 void drv_lcd_blit(uint8_t x, uint8_t y, void *buffer, uint8_t w,
                         uint8_t h) {

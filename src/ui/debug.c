@@ -362,7 +362,7 @@ void ui_handle_debug_input(void) {
     while (!SSSR_BIT.TEND)
       ;
     PDR1 |= 0x01;
-    currentlyActiveView = 0x17;
+    currentlyActiveView = VIEW_ACCEL_DEBUG;
     sys_init_debug_mode();
     drv_sound_set_data((uint8_t *)factoryTestSoundData);
     return;
@@ -541,6 +541,13 @@ void sys_init_debug_mode(void) {
 // ROM: 0xaef8  100.0%
 void sys_noop(void) {}
 
+// Reason: ROM uses `$sp_regsv$3` prologue + `subs #6, r7`; ch38 emits a 12-byte
+//   subs after the helper. Body structure (gfx_draw_string hoisted to r4,
+//   activityTimer/stepTimer resets, digit-to-ASCII conversions via add #0x30,
+//   buf writes via @r6) matches. ch38 stores str-buffer locals differently
+//   from ROM (different sp offsets) so every `@(N, sp)` access diverges.
+// Class: cannot-fix-without-compiler-change (sp_regsv$3 helper + stack
+//   local layout)
 // ROM: 0xaefa  42.3%
 #pragma option noregexpansion /* pragma:auto */
 void ui_render_accel_debug(void) {

@@ -21,67 +21,67 @@ void ui_reset_substate(void) {
 void ui_dispatch_event(void) {
   sys_get_rng();
   switch (currentlyActiveView) {
-  case 0:
+  case VIEW_HOME:
     ui_handle_home();
     break;
-  case 0x0C:
+  case VIEW_BORED_GIFT:
     ui_handle_bored_gift();
     break;
-  case 0x0D:
+  case VIEW_PEER_PLAY:
     ui_handle_peer_play();
     break;
-  case 1:
+  case VIEW_MAIN_MENU:
     ui_handle_main_menu();
     break;
-  case 2:
+  case VIEW_DOWSING:
     ui_handle_dowsing();
     break;
-  case 3:
+  case VIEW_POKERADAR:
     ui_handle_pokeradar();
     break;
-  case 4:
+  case VIEW_BATTLE:
     ui_handle_battle();
     break;
-  case 6:
+  case VIEW_RADAR_FAILURE:
     ui_handle_radar_failure();
     break;
-  case 7:
+  case VIEW_CAUGHT_STATS:
     ui_handle_caught_stats_navigation();
     break;
-  case 8:
+  case VIEW_TRAINER_CARD:
     ui_handle_trainer_stats();
     break;
-  case 0x0A:
+  case VIEW_POKE_ITEMS:
     ui_handle_poke_items();
     break;
-  case 9:
+  case VIEW_SETTINGS:
     ui_handle_settings();
     break;
-  case 0x0B:
+  case VIEW_GIFTS:
     ui_handle_gifts();
     break;
-  case 0x0E:
+  case VIEW_STEP_HISTORY:
     if (walker_status_flags_BIT.session_active) {
       if (drv_button_is_triggered(0x0E)) {
         ui_reset_substate();
-        ui_set_view(0);
+        ui_set_view(VIEW_HOME);
         drv_sound_play(0);
       }
     }
     break;
-  case 0x0F:
-    ui_handle_return_from_walk();
+  case VIEW_WALK_ARRIVAL_ANIM:
+    ui_handle_walk_arrival_anim();
     break;
-  case 0x10:
-    ui_handle_start_walk();
+  case VIEW_WALK_DEPARTURE_ANIM:
+    ui_handle_walk_departure_anim();
     break;
-  case 0x11:
-    ui_handle_event_reward();
+  case VIEW_EVENT_REWARD_ANIM:
+    ui_handle_event_reward_anim();
     break;
-  case 0x16:
+  case VIEW_DEBUG:
     ui_handle_debug_input();
     break;
-  case 0x17:
+  case VIEW_ACCEL_DEBUG:
     sys_noop();
     break;
   default:
@@ -96,7 +96,7 @@ void ui_dispatch_event(void) {
 // ROM: 0x7406  84.2%  saves: er2,er3,er4,er5,er6
 void ui_dispatch_draw(void) {
   switch (currentlyActiveView) {
-  case 0:
+  case VIEW_HOME:
     if (!(walker_status_flags_BIT.session_active)) {
       ui_render_empty_eeprom();
     } else {
@@ -104,65 +104,65 @@ void ui_dispatch_draw(void) {
       ui_render_home_bar();
     }
     break;
-  case 0x0C:
+  case VIEW_BORED_GIFT:
     ui_render_social_feelings();
     break;
-  case 0x0D:
+  case VIEW_PEER_PLAY:
     ui_render_peer_play();
     break;
-  case 1:
+  case VIEW_MAIN_MENU:
     ui_render_main_menu();
     break;
-  case 2:
+  case VIEW_DOWSING:
     ui_render_dowsing();
     break;
-  case 3:
+  case VIEW_POKERADAR:
     ui_render_pokeradar();
     break;
-  case 4:
+  case VIEW_BATTLE:
     ui_render_battle();
     break;
-  case 6:
+  case VIEW_RADAR_FAILURE:
     game_render_step_counter();
     break;
-  case 7:
+  case VIEW_CAUGHT_STATS:
     ui_render_inventory_stats_view();
     break;
-  case 8:
+  case VIEW_TRAINER_CARD:
     ui_render_trainer_card();
     break;
-  case 0x0A:
+  case VIEW_POKE_ITEMS:
     ui_render_pokemon_stats();
     break;
-  case 9:
+  case VIEW_SETTINGS:
     ui_render_settings();
     break;
-  case 0x0B:
+  case VIEW_GIFTS:
     ui_render_items_stats();
     break;
-  case 0x0E:
+  case VIEW_STEP_HISTORY:
     if (!(walker_status_flags_BIT.session_active)) {
       ui_render_sad_walker();
     } else {
       ui_render_step_history_graph();
     }
     break;
-  case 0x0F:
-    ui_render_joined_walk_anim();
+  case VIEW_WALK_ARRIVAL_ANIM:
+    ui_render_walk_arrival_anim();
     break;
-  case 0x10:
-    ui_render_start_walk_anim();
+  case VIEW_WALK_DEPARTURE_ANIM:
+    ui_render_walk_departure_anim();
     break;
-  case 0x11:
-    ui_render_return_from_walk_anim();
+  case VIEW_EVENT_REWARD_ANIM:
+    ui_render_event_reward_anim();
     break;
-  case 0x16:
+  case VIEW_DEBUG:
     ui_render_debug();
     break;
-  case 0x17:
+  case VIEW_ACCEL_DEBUG:
     ui_render_accel_debug();
     break;
-  case 0x18:
+  case VIEW_TEXT:
     gfx_draw_string_simple();
     break;
   default:

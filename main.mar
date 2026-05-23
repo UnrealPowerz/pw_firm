@@ -3785,7 +3785,7 @@ LAB_21f2:
 ; Function: gfx_draw_battery_low
 ; Address:  21fe
 ; Size:     78 bytes
-; Called by: game_render_step_counter, sys_init_io_ports, ui_render_step_history_graph, ui_render_joined_walk_anim, ui_render_return_from_walk_anim
+; Called by: game_render_step_counter, sys_init_io_ports, ui_render_step_history_graph, ui_render_walk_arrival_anim, ui_render_event_reward_anim
 ;            ... and 13 more
 ; Parameters: 2
 ; =============================================================================
@@ -6193,7 +6193,7 @@ drv_timerw_init:
 ; Function: drv_sound_play
 ; Address:  36f2
 ; Size:     212 bytes
-; Called by: game_start_battle, ui_dispatch_event, ui_handle_return_from_walk, ui_handle_battle, game_battle_process_turn
+; Called by: game_start_battle, ui_dispatch_event, ui_handle_walk_arrival_anim, ui_handle_battle, game_battle_process_turn
 ;            ... and 19 more
 ; Parameters: 1
 ; =============================================================================
@@ -6954,7 +6954,7 @@ LAB_3dba:
 ; Function: ui_draw_ball_drop_anim
 ; Address:  3dbc
 ; Size:     120 bytes
-; Called by: ui_render_joined_walk_anim, ui_render_return_from_walk_anim
+; Called by: ui_render_walk_arrival_anim, ui_render_event_reward_anim
 ; =============================================================================
 ui_draw_ball_drop_anim:
           push.w      r2
@@ -7003,7 +7003,7 @@ LAB_3de2:
 ; Function: ui_draw_ball_sparkles_anim
 ; Address:  3e34
 ; Size:     154 bytes
-; Called by: ui_render_return_from_walk_anim
+; Called by: ui_render_event_reward_anim
 ; =============================================================================
 ui_draw_ball_sparkles_anim:
           push.w      r2
@@ -7062,7 +7062,7 @@ LAB_3ec6:
 ; Function: ui_draw_arrival_cloud_anim
 ; Address:  3ece
 ; Size:     100 bytes
-; Called by: ui_render_joined_walk_anim, ui_render_return_from_walk_anim
+; Called by: ui_render_walk_arrival_anim, ui_render_event_reward_anim
 ; =============================================================================
 ui_draw_arrival_cloud_anim:
           push.w      r2
@@ -7103,7 +7103,7 @@ LAB_3f2e:
 ; Function: ui_draw_arrival_poke_anim
 ; Address:  3f32
 ; Size:     64 bytes
-; Called by: ui_render_joined_walk_anim
+; Called by: ui_render_walk_arrival_anim
 ; =============================================================================
 ui_draw_arrival_poke_anim:
           push.w      r2
@@ -7131,7 +7131,7 @@ ui_draw_arrival_poke_anim:
 ; Function: ui_render_arrival_success
 ; Address:  3f72
 ; Size:     84 bytes
-; Called by: ui_render_joined_walk_anim
+; Called by: ui_render_walk_arrival_anim
 ; =============================================================================
 ui_render_arrival_success:
           push.w      r2
@@ -7169,7 +7169,7 @@ LAB_3fbe:
 ; Function: ui_render_arrival_reward_info
 ; Address:  3fc6
 ; Size:     306 bytes
-; Called by: ui_render_return_from_walk_anim
+; Called by: ui_render_event_reward_anim
 ; =============================================================================
 ui_render_arrival_reward_info:
           push.w      r2
@@ -7284,12 +7284,12 @@ LAB_40ea:
           pop.w       r2
           rts
 ; =============================================================================
-; Function: ui_handle_return_from_walk
+; Function: ui_handle_walk_arrival_anim
 ; Address:  40f8
 ; Size:     80 bytes
 ; Called by: ui_dispatch_event
 ; =============================================================================
-ui_handle_return_from_walk:
+ui_handle_walk_arrival_anim:
           mov.b       @gCurSubstateZ, r1l
           mov.b       @gCurSubstateY, r0l
           beq         LAB_410c:8
@@ -7327,12 +7327,12 @@ LAB_4142:
 LAB_4146:
           rts
 ; =============================================================================
-; Function: ui_render_joined_walk_anim
+; Function: ui_render_walk_arrival_anim
 ; Address:  4148
 ; Size:     48 bytes
 ; Called by: ui_dispatch_draw
 ; =============================================================================
-ui_render_joined_walk_anim:
+ui_render_walk_arrival_anim:
           mov.b       @gCurSubstateY, r0l
           beq         LAB_415c:8
           cmp.b       #H'1, r0l
@@ -7357,12 +7357,12 @@ LAB_4172:
           sub.w       r0, r0
           jmp         @gfx_draw_battery_low:16
 ; =============================================================================
-; Function: ui_handle_event_reward
+; Function: ui_handle_event_reward_anim
 ; Address:  4178
 ; Size:     296 bytes
 ; Called by: ui_dispatch_event
 ; =============================================================================
-ui_handle_event_reward:
+ui_handle_event_reward_anim:
           subs        #2, er7
           mov.b       @gCurSubstateZ, r6l
           mov.b       @gCurSubstateY, r0l
@@ -7476,12 +7476,12 @@ LAB_429c:
           adds        #2, er7
           rts
 ; =============================================================================
-; Function: ui_render_return_from_walk_anim
+; Function: ui_render_event_reward_anim
 ; Address:  42a0
 ; Size:     48 bytes
 ; Called by: ui_dispatch_draw
 ; =============================================================================
-ui_render_return_from_walk_anim:
+ui_render_event_reward_anim:
           mov.b       @gCurSubstateY, r0l
           beq         LAB_42b4:8
           cmp.b       #H'4, r0l
@@ -7509,7 +7509,7 @@ LAB_42ca:
 ; Function: ui_draw_poke_departure_anim
 ; Address:  42d0
 ; Size:     64 bytes
-; Called by: ui_render_start_walk_anim
+; Called by: ui_render_walk_departure_anim
 ; =============================================================================
 ui_draw_poke_departure_anim:
           push.w      r2
@@ -7537,7 +7537,7 @@ ui_draw_poke_departure_anim:
 ; Function: ui_draw_cloud_departure_anim
 ; Address:  4310
 ; Size:     98 bytes
-; Called by: ui_render_start_walk_anim
+; Called by: ui_render_walk_departure_anim
 ; =============================================================================
 ui_draw_cloud_departure_anim:
           push.w      r2
@@ -7576,7 +7576,7 @@ ui_draw_cloud_departure_anim:
 ; Function: ui_draw_cloud_anim
 ; Address:  4372
 ; Size:     114 bytes
-; Called by: ui_render_start_walk_anim
+; Called by: ui_render_walk_departure_anim
 ; =============================================================================
 ui_draw_cloud_anim:
           push.w      r2
@@ -7623,7 +7623,7 @@ LAB_43b4:
 ; Function: ui_render_departure_success
 ; Address:  43e4
 ; Size:     80 bytes
-; Called by: ui_render_start_walk_anim
+; Called by: ui_render_walk_departure_anim
 ; =============================================================================
 ui_render_departure_success:
           push.w      r2
@@ -7658,7 +7658,7 @@ LAB_4430:
 ; Function: ui_render_operation_completed
 ; Address:  4434
 ; Size:     106 bytes
-; Called by: ui_render_start_walk_anim
+; Called by: ui_render_walk_departure_anim
 ; =============================================================================
 ui_render_operation_completed:
           push.w      r2
@@ -7698,12 +7698,12 @@ LAB_4480:
 LAB_449a:
           jmp         @sys_epilogue_r2_r5_r6:16
 ; =============================================================================
-; Function: ui_handle_start_walk
+; Function: ui_handle_walk_departure_anim
 ; Address:  449e
 ; Size:     86 bytes
 ; Called by: ui_dispatch_event
 ; =============================================================================
-ui_handle_start_walk:
+ui_handle_walk_departure_anim:
           mov.b       @gCurSubstateZ, r1l
           mov.b       @gCurSubstateY, r0l
           cmp.b       #H'5, r0l
@@ -7746,12 +7746,12 @@ LAB_44ee:
 LAB_44f2:
           rts
 ; =============================================================================
-; Function: ui_render_start_walk_anim
+; Function: ui_render_walk_departure_anim
 ; Address:  44f4
 ; Size:     64 bytes
 ; Called by: ui_dispatch_draw
 ; =============================================================================
-ui_render_start_walk_anim:
+ui_render_walk_departure_anim:
           mov.b       @gCurSubstateY, r0l
           cmp.b       #H'2, r0l
           beq         LAB_4512:8
@@ -12936,13 +12936,13 @@ switchD_7364__caseD_e:
           jsr         @drv_sound_play:16
           bra         switchD_7364__caseD_5:8
 switchD_7364__caseD_f:
-          jsr         @ui_handle_return_from_walk:16
+          jsr         @ui_handle_walk_arrival_anim:16
           bra         switchD_7364__caseD_5:8
 switchD_7364__caseD_10:
-          jsr         @ui_handle_start_walk:16
+          jsr         @ui_handle_walk_departure_anim:16
           bra         switchD_7364__caseD_5:8
 switchD_7364__caseD_11:
-          jsr         @ui_handle_event_reward:16
+          jsr         @ui_handle_event_reward_anim:16
           bra         switchD_7364__caseD_5:8
 switchD_7364__caseD_16:
           jsr         @ui_handle_debug_input:16
@@ -13026,13 +13026,13 @@ LAB_7490:
           jsr         @ui_render_step_history_graph:16
           bra         switchD_741e__caseD_5:8
 switchD_741e__caseD_f:
-          jsr         @ui_render_joined_walk_anim:16
+          jsr         @ui_render_walk_arrival_anim:16
           bra         switchD_741e__caseD_5:8
 switchD_741e__caseD_10:
-          jsr         @ui_render_start_walk_anim:16
+          jsr         @ui_render_walk_departure_anim:16
           bra         switchD_741e__caseD_5:8
 switchD_741e__caseD_11:
-          jsr         @ui_render_return_from_walk_anim:16
+          jsr         @ui_render_event_reward_anim:16
           bra         switchD_741e__caseD_5:8
 switchD_741e__caseD_16:
           jsr         @ui_render_debug:16

@@ -18,7 +18,35 @@ extern volatile uint8_t irResultCode;            /* 0xF7AD IR result (?) */
 extern volatile uint8_t accelSampleCount;    /* 0xF7AE */
 extern volatile uint8_t activityTimer;       /* 0xF7AF */
 extern volatile uint8_t stepTimer;           /* 0xF7B0 */
-extern volatile uint8_t currentlyActiveView; /* 0xF7B1 */
+extern volatile uint8_t currentlyActiveView; /* 0xF7B1 — see enum view_id */
+
+/* View IDs dispatched by ui_dispatch_event / ui_dispatch_draw.
+ * Walk-anim views are named from the walker's perspective: ARRIVAL when a
+ * pokemon comes from the DS to begin a walk, DEPARTURE when it returns to
+ * the DS at walk end (matches the ui_draw_{arrival,departure}_* helpers). */
+enum view_id {
+    VIEW_HOME                  = 0x00,
+    VIEW_MAIN_MENU             = 0x01,
+    VIEW_DOWSING               = 0x02,
+    VIEW_POKERADAR             = 0x03,
+    VIEW_BATTLE                = 0x04,
+    /* 0x05 unused */
+    VIEW_RADAR_FAILURE         = 0x06,
+    VIEW_CAUGHT_STATS          = 0x07,
+    VIEW_TRAINER_CARD          = 0x08,
+    VIEW_SETTINGS              = 0x09,
+    VIEW_POKE_ITEMS            = 0x0A,
+    VIEW_GIFTS                 = 0x0B,
+    VIEW_BORED_GIFT            = 0x0C,
+    VIEW_PEER_PLAY             = 0x0D,
+    VIEW_STEP_HISTORY          = 0x0E,
+    VIEW_WALK_ARRIVAL_ANIM     = 0x0F,
+    VIEW_WALK_DEPARTURE_ANIM   = 0x10,
+    VIEW_EVENT_REWARD_ANIM     = 0x11,
+    VIEW_DEBUG                 = 0x16,
+    VIEW_ACCEL_DEBUG           = 0x17,
+    VIEW_TEXT                  = 0x18
+};
 extern volatile uint8_t stepBatchSize;       /* 0xF7B2 */
 extern volatile uint8_t subStepCount;            /* 0xF7B3 sub_step_count (?) */
 extern volatile uint8_t batchAccumulator;            /* 0xF7B4 batch_accumulator (?) */

@@ -64,7 +64,7 @@ void ui_handle_trainer_stats(void) {
       if (gCurSubstateY == 0) {
         drv_sound_play(1);
         ui_clear_substate_y();
-        ui_set_view(1);
+        ui_set_view(VIEW_MAIN_MENU);
         return;
       }
       gCurSubstateY--;
@@ -108,146 +108,115 @@ void ui_handle_trainer_stats(void) {
 go_back:
   drv_sound_play(0);
   ui_reset_substate();
-  ui_set_view(0);
+  ui_set_view(VIEW_HOME);
 }
 
+// Reason: ROM hoists drv_eeprom_read_block, drv_lcd_blit, 0x280, 0x40, 0x140
+//   into r3/r5/r4/e5/e6 at entry and reuses them via `add.w r4,e4` etc.
+//   ch38 inlines the immediates at each call site, producing a fundamentally
+//   different instruction stream — fewer instructions per call but no alignment
+//   with ROM. Source-level changes (function pointers, register locals,
+//   speed=register pragma) do not coerce ch38 into the hoist+reuse pattern.
+// Class: cannot-fix-without-compiler-change (ER-register constant packing /
+//   function-entry constant hoisting; see score_focus.md Tier 3)
 // ROM: 0xb48c  0.0%  saves: er3,er4,er5,er6
 void ui_render_trainer_card_time(void) {
-  /* Register usage hints:
-   * R3: @drv_eeprom_read_block
-   * R4: Constant H'280
-   * R5: @drv_lcd_blit   E5: Constant H'40
-   * R6: buf                   E6: Constant H'140
-   */
-  void (*ep_read)(uint16_t, void *, uint16_t);
-  uint16_t base_addr;
-  void (*draw_img)(void *, uint16_t, uint16_t, uint8_t, uint8_t);
-  uint16_t sz_small;
-  uint16_t sz_large;
   uint8_t *buf;
-
-  ep_read = drv_eeprom_read_block;
-  sz_small = 0x40;
-  sz_large = 0x140;
-  base_addr = 0x280;
-  draw_img = (void (*)(void *, uint16_t, uint16_t, uint8_t,
-                       uint8_t))drv_lcd_blit;
-
-  sys_init_heap();
-  buf = (uint8_t *)sbrk(sz_large);
-
-  /* Page 1: Labels */
-  ep_read(0xA50 + base_addr, buf, sz_large);
-  draw_img(buf, 0x50, 0x10, 8, 0);
-
-  /* Page 2: Step count label */
-  ep_read(0xF90 + base_addr, buf, sz_small);
-  draw_img(buf, 0x10, 0x10, 0, 0x10);
-
-  /* Page 3: Step count value */
-  ep_read(0xFD0 + base_addr, buf, sz_large);
-  draw_img(buf, 0x50, 0x10, 0x10, 0x10);
-
-  /* Page 4: Watts label */
-  ep_read(0x1110 + base_addr, buf, sz_small);
-  draw_img(buf, 0x10, 0x10, 0, 0x20);
-
-  /* Gender */
-  if ((RamCache_settingsByte & 1)) {
-    ep_read(0xC8FC, buf, sz_large);
-  } else {
-    ep_read(0x907E, buf, sz_large);
-  }
-  draw_img(buf, 0x50, 0x10, 0x10, 0x20);
-
-  /* Arrows */
-  ep_read(0x338 + base_addr, buf, 0xC0);
-  draw_img(buf + sz_small, 8, 0x10, 0, 0);
-  draw_img(buf + 0x20, 8, 0x10, 0x58, 0);
-
-  /* Time label */
-  ep_read(0x11F0 + base_addr, buf, 0x80);
-  draw_img(buf, 0x20, 0x10, 0, 0x30);
-
-  /* Digits */
-  ep_read(base_addr, buf, sz_large);
-
-  /* Time values */
-  {
-    uint8_t hr = rtcHour;
-    draw_img(buf + ((((uint16_t)hr >> 4) & 7) * 0x20), 8, 0x10, 0x20, 0x30);
-    draw_img(buf + ((uint16_t)(hr & 0xF) * 0x20), 8, 0x10, 0x28, 0x30);
-
-    hr = rtcMin; /* mn */
-    draw_img(buf + ((((uint16_t)hr >> 4) & 7) * 0x20), 8, 0x10, 0x38, 0x30);
-    draw_img(buf + ((uint16_t)(hr & 0xF) * 0x20), 8, 0x10, 0x40, 0x30);
-
-    hr = rtcSec; /* sc */
-    draw_img(buf + ((((uint16_t)hr >> 4) & 7) * 0x20), 8, 0x10, 0x50, 0x30);
-    draw_img(buf + ((uint16_t)(hr & 0xF) * 0x20), 8, 0x10, 0x58, 0x30);
-  }
-
-  /* Colons */
-  ep_read(base_addr + sz_large, buf, 0x20);
-  draw_img(buf, 8, 0x10, 0x30, 0x30);
-  draw_img(buf, 8, 0x10, 0x48, 0x30);
-}
-
-// ROM: 0xb682  8.0%  saves: er2,r3,r4,er5,er6
-#pragma option speed=register  /* pragma:auto */
-void ui_render_daily_step_history(void) {
-  void (*ep_read)(uint16_t, void *, uint16_t);
-  void (*draw_img)(void *, uint8_t, uint8_t, uint8_t, uint8_t);
-  uint16_t base;
-  uint8_t *buf;
-  uint32_t step_data;
-  uint16_t addr;
-  uint16_t idx;
-
-  ep_read = drv_eeprom_read_block;
-  draw_img =
-      (void (*)(void *, uint8_t, uint8_t, uint8_t, uint8_t))drv_lcd_blit;
-  base = 0x280;
+  uint8_t hr;
 
   sys_init_heap();
   buf = (uint8_t *)sbrk(0x140);
 
-  addr = 0x338 + base;
-  ep_read(addr, buf, 0xC0);
-  draw_img(buf, 8, 0x10, 0, 0);
+  drv_eeprom_read_block(0xA50 + 0x280, buf, 0x140);
+  drv_lcd_blit(8, 0, buf, 0x50, 0x10);
+
+  drv_eeprom_read_block(0xF90 + 0x280, buf, 0x40);
+  drv_lcd_blit(0, 0x10, buf, 0x10, 0x10);
+
+  drv_eeprom_read_block(0xFD0 + 0x280, buf, 0x140);
+  drv_lcd_blit(0x10, 0x10, buf, 0x50, 0x10);
+
+  drv_eeprom_read_block(0x1110 + 0x280, buf, 0x40);
+  drv_lcd_blit(0, 0x20, buf, 0x10, 0x10);
+
+  if (RamCache_settingsByte & 1) {
+    drv_eeprom_read_block(0xC8FC, buf, 0x140);
+  } else {
+    drv_eeprom_read_block(0x907E, buf, 0x140);
+  }
+  drv_lcd_blit(0x10, 0x20, buf, 0x50, 0x10);
+
+  drv_eeprom_read_block(0x338 + 0x280, buf, 0xC0);
+  drv_lcd_blit(0, 0, buf + 0x40, 8, 0x10);
+  drv_lcd_blit(0x58, 0, buf + 0x20, 8, 0x10);
+
+  drv_eeprom_read_block(0x11F0 + 0x280, buf, 0x80);
+  drv_lcd_blit(0, 0x30, buf, 0x20, 0x10);
+
+  drv_eeprom_read_block(0x280, buf, 0x140);
+
+  hr = rtcHour;
+  drv_lcd_blit(0x20, 0x30, buf + ((((uint16_t)hr >> 4) & 7) * 0x20), 8, 0x10);
+  drv_lcd_blit(0x28, 0x30, buf + ((uint16_t)(hr & 0xF) * 0x20), 8, 0x10);
+
+  hr = rtcMin;
+  drv_lcd_blit(0x38, 0x30, buf + ((((uint16_t)hr >> 4) & 7) * 0x20), 8, 0x10);
+  drv_lcd_blit(0x40, 0x30, buf + ((uint16_t)(hr & 0xF) * 0x20), 8, 0x10);
+
+  hr = rtcSec;
+  drv_lcd_blit(0x50, 0x30, buf + ((((uint16_t)hr >> 4) & 7) * 0x20), 8, 0x10);
+  drv_lcd_blit(0x58, 0x30, buf + ((uint16_t)(hr & 0xF) * 0x20), 8, 0x10);
+
+  drv_eeprom_read_block(0x280 + 0x140, buf, 0x20);
+  drv_lcd_blit(0x30, 0x30, buf, 8, 0x10);
+  drv_lcd_blit(0x48, 0x30, buf, 8, 0x10);
+}
+
+// Reason: Same compiler-blocked pattern as ui_render_trainer_card_time —
+//   ROM hoists drv_eeprom_read_block/drv_lcd_blit/0x280 into r3/r4/r5 and
+//   computes per-call addresses via `mov.w #imm,e6; add.w r5,e6`. ch38 inlines
+//   each addr as a single mov.w immediate, producing a structurally different
+//   instruction stream. Previous C had a broken function-pointer cast that
+//   reordered drv_lcd_blit args (buf,w,h,x,y vs the real x,y,buf,w,h); this
+//   rewrite fixes the semantics but score remains capped by ER-packing.
+// Class: cannot-fix-without-compiler-change (see score_focus.md Tier 3)
+// ROM: 0xb682  47.8%  saves: er2,r3,r4,er5,er6
+void ui_render_daily_step_history(void) {
+  uint8_t *buf;
+  uint32_t step_data;
+  uint16_t day_addr;
+  uint16_t day_idx;
+
+  sys_init_heap();
+  buf = (uint8_t *)sbrk(0x140);
+
+  drv_eeprom_read_block(0x338 + 0x280, buf, 0xC0);
+  drv_lcd_blit(0, 0, buf, 8, 0x10);
 
   if (gCurSubstateY < 7) {
-    draw_img(buf + 0x20, 8, 0x10, 0x58, 0);
+    drv_lcd_blit(0x58, 0, buf + 0x20, 8, 0x10);
   }
 
-  addr = 0x1270 + base;
-  ep_read(addr, buf, 0xA0);
-  draw_img(buf, 0x28, 0x10, 0x28, 0);
+  drv_eeprom_read_block(0x1270 + 0x280, buf, 0xA0);
+  drv_lcd_blit(0x28, 0, buf, 0x28, 0x10);
 
-  addr = 0x1310 + base;
-  ep_read(addr, buf, 0x100);
-  draw_img(buf, 0x40, 0x10, 0, 0x20);
+  drv_eeprom_read_block(0x1310 + 0x280, buf, 0x100);
+  drv_lcd_blit(0, 0x20, buf, 0x40, 0x10);
 
-  addr = 0x1150 + base;
-  ep_read(addr, buf, 0xA0);
-  draw_img(buf, 0x28, 0x10, 0x38, 0x10);
-  draw_img(buf, 0x28, 0x10, 0x38, 0x30);
+  drv_eeprom_read_block(0x1150 + 0x280, buf, 0xA0);
+  drv_lcd_blit(0x38, 0x10, buf, 0x28, 0x10);
+  drv_lcd_blit(0x38, 0x30, buf, 0x28, 0x10);
 
-  addr = 0x160 + base;
-  ep_read(addr, buf, 0x20);
-  draw_img(buf, 8, 0x10, 0x18, 0);
+  drv_eeprom_read_block(0x160 + 0x280, buf, 0x20);
+  drv_lcd_blit(0x18, 0, buf, 8, 0x10);
 
-  ep_read(base, buf, 0x140);
+  drv_eeprom_read_block(0x280, buf, 0x140);
+  drv_lcd_blit(0x20, 0, buf + (uint16_t)gCurSubstateY * 0x20, 8, 0x10);
 
-  idx = (uint16_t)gCurSubstateY * 0x20;
-  draw_img(buf + idx, 8, 0x10, 0x20, 0);
-
-  {
-    uint16_t day_idx = (uint16_t)gCurSubstateY - 1;
-    uint16_t day_addr = 0xCEF0 + day_idx * 4;
-    ep_read(day_addr, &step_data, 4);
-    gfx_draw_numeric_value(0x30, 0x10, (uint32_t)step_data, 0);
-  }
+  day_idx = (uint16_t)gCurSubstateY - 1;
+  day_addr = 0xCEF0 + day_idx * 4;
+  drv_eeprom_read_block(day_addr, &step_data, 4);
+  gfx_draw_numeric_value(0x30, 0x10, (uint32_t)step_data, 0);
 
   gfx_draw_numeric_value(0x58, 0x20, (uint32_t)dayCounter, 0);
   gfx_draw_numeric_value(0x30, 0x30, totalSteps, 0);
