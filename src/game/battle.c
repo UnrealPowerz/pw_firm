@@ -23,7 +23,7 @@ void ui_render_battle(void) {
   /* Digit drawing loop A */
   readEeprom(0x280 + 0x1DB0, sprite_buf, 0x10);
   for (i = 0; i < gCurSubstateA; i++) {
-    drawToScreen((uint8_t)(0x38 + (i << 3)), 8, sprite_buf, 8, 8);
+    drawToScreen((uint8_t)(0x38 + (i << 3)), 0, sprite_buf, 8, 8);
   }
 
   /* Digit drawing loop D (conditional) */
@@ -75,10 +75,9 @@ void ui_render_battle(void) {
     switch (gCurSubstateZ) {
     case 0:
       if (accelXPos < 3) {
-        uint8_t w = 8 * (accelXPos);
-        uint8_t h = (64 - w) - accelXPos;
-        gfx_fill_rect(3, w, accelXPos, h, 0);
-        gfx_fill_rect(3, 0, accelXPos, 64 - w, 0);
+        uint8_t hh = (uint8_t)((3 - accelXPos) * 8);
+        gfx_fill_rect(0, 0, 0x60, hh, 3);
+        gfx_fill_rect(0, (uint8_t)(0x40 - hh), 0x60, hh, 3);
       }
       break;
     case 1:
@@ -97,7 +96,7 @@ void ui_render_battle(void) {
       break;
     case 2:
       readEeprom(0x1DD0 + (animTick & 1) * 0xC0, sprite_buf, 0x300);
-      drawToScreen(0x20, 0x60, sprite_buf, 0x60, 0x20);
+      drawToScreen(0x00, 0x20, sprite_buf, 0x60, 0x20);
       goto switch_default;
     case 3: {
       uint8_t move_type = (DAT_f7d8 >> 3) & 0x03;
@@ -105,7 +104,7 @@ void ui_render_battle(void) {
         if (accelXPos == 4) {
           drv_sound_play(0x0B);
           readEeprom(0x1BF0 + (animTick & 1) * 0xC0, sprite_buf, 0x1E0);
-          drawToScreen(0x28, 0x10, sprite_buf, 0x10, 0x20);
+          drawToScreen(0x28, 0x00, sprite_buf, 0x10, 0x20);
         } else if (accelXPos < 4) {
           gfx_draw_own_pokemon_name(0x00, 0x20, 5);
           goto switch_default;
@@ -127,7 +126,7 @@ void ui_render_battle(void) {
         if (accelXPos == 4) {
           drv_sound_play(0x0D);
           readEeprom(0x1C70 + (animTick & 1) * 0xC0, sprite_buf, 0x1E0);
-          drawToScreen(0x28, 0x10, sprite_buf, 0x10, 0x20);
+          drawToScreen(0x28, 0x00, sprite_buf, 0x10, 0x20);
         } else if (accelXPos < 4) {
           gfx_draw_text_box(0x20, 0x25, 0x0D, 0x00);
           gfx_draw_text_box(0x30, 0x26, 0x0E, 0x00);
@@ -142,7 +141,7 @@ void ui_render_battle(void) {
         if (accelXPos == 4) {
           drv_sound_play(0x0B);
           readEeprom(0x1BF0 + (animTick & 1) * 0xC0, sprite_buf, 0x1E0);
-          drawToScreen(0x28, 0x10, sprite_buf, 0x10, 0x20);
+          drawToScreen(0x28, 0x00, sprite_buf, 0x10, 0x20);
         } else if (accelXPos < 4) {
           if (gCurSubstateY < 4) {
             gfx_draw_special_poke_name(0, 0x20, 5);
@@ -200,13 +199,13 @@ void ui_render_battle(void) {
       goto switch_default;
     case 11:
       readEeprom((uint16_t)&gfx_draw_present_icon + 0x280, sprite_buf, 0xC0);
-      drawToScreen(0x08, 0x18, sprite_buf, 0x18, 0x08);
+      drawToScreen(0x08, 0x00, sprite_buf, 0x20, 0x18);
       break;
 
     case 12:
     case 14:
       readEeprom(0x460, sprite_buf, 0x10);
-      drawToScreen(20, 0x0C, sprite_buf, 0x0C, 20);
+      drawToScreen(20, 0x0C, sprite_buf, 8, 8);
       break;
 
     case 13: {
@@ -219,29 +218,23 @@ void ui_render_battle(void) {
       else
         dx = 0x14;
       readEeprom(0x460, sprite_buf, 0x10);
-      drawToScreen(dx, 0x0C, sprite_buf, 0x0C, 0x14);
+      drawToScreen(dx, 0x0C, sprite_buf, 8, 8);
       break;
     }
 
     case 15:
       readEeprom(0x460, sprite_buf, 0x10);
-      drawToScreen(20, 0x0C, sprite_buf, 0x0C, 20);
+      drawToScreen(20, 0x0C, sprite_buf, 8, 8);
       readEeprom(0x2040, sprite_buf, 0x10);
       drawToScreen((uint8_t)(12 - accelXPos),
-                   (uint8_t)(10 - 2 * accelXPos),
-                   sprite_buf,
-                   (uint8_t)(10 - 2 * accelXPos),
-                   (uint8_t)(12 - accelXPos));
+                   (uint8_t)(10 - 2 * accelXPos), sprite_buf, 8, 8);
       drawToScreen((uint8_t)(28 + accelXPos),
-                   (uint8_t)(12 - 2 * accelXPos),
-                   sprite_buf,
-                   (uint8_t)(12 - 2 * accelXPos),
-                   (uint8_t)(28 + accelXPos));
+                   (uint8_t)(12 - 2 * accelXPos), sprite_buf, 8, 8);
       break;
 
     case 16:
       readEeprom(0x460, sprite_buf, 0x10);
-      drawToScreen(20, 0x0C, sprite_buf, 0x0C, 20);
+      drawToScreen(20, 0x0C, sprite_buf, 8, 8);
       if (gCurSubstateY >= 4) {
         gfx_draw_route_pokemon_name(0x00, 0x20, (uint8_t)(gCurSubstateY - 1),
                                     0x05);
@@ -253,7 +246,7 @@ void ui_render_battle(void) {
 
     case 17:
       readEeprom((uint16_t)&gfx_draw_present_icon + 0x280, sprite_buf, 0xC0);
-      drawToScreen(8, 0x18, sprite_buf, 0x18, 0x08);
+      drawToScreen(0x08, 0x00, sprite_buf, 0x20, 0x18);
       break;
     }
   switch_default:
@@ -279,8 +272,7 @@ void game_start_battle(void) {
   drv_sound_play(10);
 }
 
-// ROM: 0x2972  63.8%
-#pragma option speed =expression /* pragma:auto */
+// ROM: 0x2972  62.5%
 void game_battle_process_turn(void) {
   uint32_t rnd;
   uint8_t r;
@@ -359,8 +351,7 @@ uint8_t game_battle_check_capture_success(void) {
   return 0;
 }
 
-// ROM: 0x2a96  74.0%  saves: er5,e6
-#pragma option speed =shift /* pragma:auto */
+// ROM: 0x2a96  73.4%  saves: er5,e6
 void game_battle_handle_finish(void) {
   uint8_t sub_y = (uint8_t)(gCurSubstateY - 1);
 
@@ -489,9 +480,10 @@ void ui_handle_battle(void) {
     DAT_f7d5 = 8;
     move_type = (uint8_t)((DAT_f7d8 >> 3) & 0x03);
     if (move_type == 0) {
-      if (DAT_f7d1 > 1) {
+      uint8_t d1_val = DAT_f7d1;
+      if (d1_val > 1) {
         uint8_t nm;
-        DAT_f7d1--;
+        DAT_f7d1 = d1_val - 1;
         nm = (uint8_t)((DAT_f7d8 >> 1) & 0x03);
         if (nm == 0) {
           gCurSubstateZ = 4;
@@ -525,9 +517,10 @@ void ui_handle_battle(void) {
     DAT_f7d5 = 8;
     m_type = (uint8_t)((DAT_f7d8 >> 1) & 0x03);
     if (m_type == 0) {
-      if (gCurSubstateA > 1) {
+      uint8_t a_val = gCurSubstateA;
+      if (a_val > 1) {
         uint8_t next_nm;
-        gCurSubstateA--;
+        gCurSubstateA = a_val - 1;
         next_nm = (uint8_t)((DAT_f7d8 >> 3) & 0x03);
         if (next_nm == 0) {
           DAT_f7d8 = (uint8_t)((DAT_f7d8 & 0xE7) | 0x20);

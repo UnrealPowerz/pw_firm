@@ -15,7 +15,12 @@ OD      = h8300-elf-objdump
 
 INCLUDES = -include=src,include,build/gen,/opt/H8/6_2_2/include
 # Optimization for size and speed to fit in ROM
-CFLAGS   = -cpu=300HN -stack=medium -lang=c -outcode=sjis -nolist -chgincpath -nologo -Code=Asmcode -optimize=1 -cmncode $(INCLUDES)
+CFLAGS_BASE = -cpu=300HN -stack=medium -lang=c -outcode=sjis -nolist -chgincpath -nologo -optimize=1 -cmncode $(INCLUDES)
+# For linker pipeline: direct .c → .o with goptimize (enables linker same_code)
+CFLAGS_OBJ  = $(CFLAGS_BASE) -goptimize
+# For compare_bin: .c → .s informational pass (asmcode incompatible with goptimize)
+CFLAGS_ASM  = $(CFLAGS_BASE) -Code=Asmcode
+CFLAGS = $(CFLAGS_ASM)
 
 ASFLAGS  = -cpu=300HN -nologo
 
@@ -42,23 +47,26 @@ all: headers $(OBJS) build/linked.mot build/linked.bin build/linked.dis
 headers:
 	python3 scripts/generate_headers.py
 
-# Step 1: C → flattened assembly
+# .c → .o directly with -goptimize (for linker same_code)
+define make-c-to-obj-rule
+$(call to_obj,$1): $1
+	@mkdir -p build
+	$(CC) $(CFLAGS_OBJ) $(CFLAGS_$(notdir $1)) -object="$$@" $$<
+endef
+
+$(foreach src,$(C_SOURCES),$(eval $(call make-c-to-obj-rule,$(src))))
+
+# .c → .s separately for compare_bin (informational only, not linked)
 define make-c-to-asm-rule
 $(call to_asm,$1): $1
 	@mkdir -p build
-	$(CC) $(CFLAGS) $(CFLAGS_$(notdir $1)) -object="$$@" $$<
+	$(CC) $(CFLAGS_ASM) $(CFLAGS_$(notdir $1)) -object="$$@" $$<
 endef
 
 $(foreach src,$(C_SOURCES),$(eval $(call make-c-to-asm-rule,$(src))))
 
-# Step 2: assembly → object
-define make-asm-to-obj-rule
-$(call to_obj,$1): $(call to_asm,$1)
-	@mkdir -p build
-	$(AS) $(ASFLAGS) -object="$$@" "$$<"
-endef
-
-$(foreach src,$(C_SOURCES),$(eval $(call make-asm-to-obj-rule,$(src))))
+ASM_FILES := $(foreach src,$(C_SOURCES),$(call to_asm,$(src)))
+all: $(ASM_FILES)
 
 # Assemble hand-written .s files
 build/obj_%.o: src/%.s
@@ -75,7 +83,9 @@ build/link.sub: $(OBJS)
 	done
 	@printf -- "-library=Z:\\\\work\\\\build\\\\lib3hn.lib\r\n" >> build/link.sub.tmp
 	@printf -- "-rom=D=R\r\n" >> build/link.sub.tmp
-	@printf -- "-optimize=symbol_delete,short_format\r\n" >> build/link.sub.tmp
+	@printf -- "-optimize=symbol_delete,short_format,same_code\r\n" >> build/link.sub.tmp
+	@printf -- "-samesize=8\r\n" >> build/link.sub.tmp
+	@printf -- "-entry=_PowerON_Reset\r\n" >> build/link.sub.tmp
 	@printf -- "-start=PIntPRG,P,PP,C,D\$$DSEC,D\$$BSEC,C\$$DSEC,C\$$BSEC,D/5E\r\n" >> build/link.sub.tmp
 	@printf -- "-start=CP/BB0E\r\n" >> build/link.sub.tmp
 
@@ -91,7 +101,7 @@ build/lib3hn.lib:
 	wine cmd /c Z:\\work\\run_lbg38.bat
 
 build/linked.mot: build/link.sub build/lib3hn.lib $(OBJS)
-	wine cmd /c "set PATH=Z:\\opt\\H8\\6_1_3\\bin;Z:\\opt\\H8\\6_2_2\\bin;%%PATH%% && optlnk.exe -subcommand=Z:\\work\\build\\link.sub"
+	wine cmd /c "set PATH=Z:\\opt\\H8\\7_0_0\\bin;Z:\\opt\\H8\\6_1_3\\bin;Z:\\opt\\H8\\6_2_2\\bin;%%PATH%% && optlnk.exe -subcommand=Z:\\work\\build\\link.sub"
 
 build/linked.bin: build/linked.mot
 	$(OC) -I srec -O binary build/linked.mot build/linked.bin

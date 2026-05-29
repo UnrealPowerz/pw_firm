@@ -38,7 +38,7 @@ void drv_button_read(void) {
 
   if (PDRB_BIT.B0) {
     buttonInputRaw_BIT.btn_r = 1;
-    if (wakeupFlagMaybe) {
+    if (wakeupFlagMaybe[0]) {
       buttonHoldDuration++;
     }
   } else {

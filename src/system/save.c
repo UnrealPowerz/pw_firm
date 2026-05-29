@@ -220,17 +220,18 @@ void save_read_reliable(uint16_t primary, uint16_t backup, uint8_t *buf,
   }
 }
 
-// ROM: 0x1d22  45.1%  saves: r6,r5
-#pragma option speed=register  /* pragma:auto */
+// ROM: 0x1d22  68.8%  saves: r6,r5
 void save_set_event_bit(void *ptr, uint8_t val) {
   uint8_t *p = (uint8_t *)ptr;
-  uint8_t bit = val & 0x7;
-  uint8_t offset = val >> 3;
+  uint8_t offset;
+  uint8_t bit;
 
   if (val == 0)
     return;
 
-  /* This matches the bit-setting logic in assembly */
+  offset = val >> 3;
+  bit = val & 0x7;
+
   save_read_reliable(EEPROM_TRAINER_REC, EEPROM_TRAINER_REC_BACKUP, p, 0x68);
   p[0x38 + offset] |= (1 << bit);
   save_write_reliable(EEPROM_TRAINER_REC, EEPROM_TRAINER_REC_BACKUP, p, 0x68);
@@ -256,7 +257,7 @@ uint8_t save_find_empty_slot_32bit(void *ptr) {
   uint8_t i;
 
   for (i = 0; i < 3; i++) {
-    uint32_t val = *(uint32_t *)(p + (i * 4));
+    uint16_t val = *(uint16_t *)(p + (i * 4));
     if (val == 0) {
       return i;
     }

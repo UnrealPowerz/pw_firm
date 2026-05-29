@@ -8,7 +8,8 @@ extern volatile uint8_t statusFlags;
 #define statusFlags_BIT (((volatile status_flags_t *)&statusFlags)->BIT)
 extern uint8_t wakeupFlagMaybe[3];
 extern volatile uint8_t status_flags_f7f1;   /* DAT_f7f1 */
-extern volatile uint16_t walker_status_flags; /* 0xF7B6 (.s 2 bytes) */
+extern volatile uint8_t walker_status_flags;  /* 0xF7B6 */
+extern volatile uint8_t _pad_f7b7;             /* 0xF7B7 (preserve layout) */
 #define walker_status_flags_BIT (((volatile walker_status_t *)&walker_status_flags)->BIT)
 
 /* --- LCD & UI / Timers --- */
@@ -153,7 +154,8 @@ union pw_scratch2 {
         volatile uint32_t next_session_key;     /* +0x50 */
         volatile uint32_t session_key;          /* +0x54 */
         volatile uint8_t  ir_handshake_step;    /* +0x58 */
-        volatile uint8_t  ir_timeout_retry[2];  /* +0x59 (uint16 at odd offset; access via cast) */
+        volatile uint8_t  ir_timeout_retry;     /* +0x59 (ROM uses byte access only) */
+        volatile uint8_t  _pad_at_5a;           /* +0x5A */
         volatile uint8_t  at_f8c1;              /* +0x5B */
         volatile uint8_t  ir_crc_retry_count;   /* +0x5C */
         volatile uint8_t  ir_packet_received_flag; /* +0x5D */
@@ -187,7 +189,7 @@ extern union pw_scratch2 g_scratch2;
 #define nextSessionKey                 (g_scratch2.as_struct.next_session_key)
 #define sessionKey                     (g_scratch2.as_struct.session_key)
 #define irHandshakeStep                (g_scratch2.as_struct.ir_handshake_step)
-#define irTimeoutRetryCount            (*(volatile uint16_t *)g_scratch2.as_struct.ir_timeout_retry)
+#define irTimeoutRetryCount            (g_scratch2.as_struct.ir_timeout_retry)
 #define DAT_f8c1                       (g_scratch2.as_struct.at_f8c1)
 #define irCrcRetryCount                (g_scratch2.as_struct.ir_crc_retry_count)
 #define irPacketReceivedFlag           (g_scratch2.as_struct.ir_packet_received_flag)
@@ -301,7 +303,8 @@ extern volatile uint32_t nextRandom;
 extern volatile uint16_t heapPointer;
 
 /* --- LCD & EEPROM --- */
-extern volatile uint16_t lcdPageOffset; /* lcd_page_offset (?) -- 0xF7E4 (.s 2 bytes) */
+extern volatile uint8_t lcdPageOffset; /* lcd_page_offset -- 0xF7E4 */
+extern volatile uint8_t _pad_f7e5;     /* 0xF7E5 (preserves layout — original code allocated 2 bytes) */
 #define RamCache_settingsByte       (g_save.settingsByte)
 #define RamCache_settingsByte_BIT (((volatile settings_byte_t *)&RamCache_settingsByte)->BIT)
 
@@ -366,8 +369,10 @@ extern const char factoryStr_NG6[4];
 
 /* --- Sound Engine Globals (Fixed addresses) --- */
 extern uint8_t *soundData;
-extern uint16_t soundHeader;          /* 0xF7CC (.s 2 bytes) */
-extern uint16_t volume;               /* 0xF7C6 (.s 2 bytes) */
+extern uint8_t soundHeader;           /* 0xF7CC */
+extern uint8_t _pad_f7cd;             /* 0xF7CD (preserve layout) */
+extern uint8_t volume;                /* 0xF7C6 */
+extern uint8_t _pad_f7c7;             /* 0xF7C7 (preserve layout) */
 extern uint16_t noteDuration;
 extern uint16_t isSeparateNote;
 

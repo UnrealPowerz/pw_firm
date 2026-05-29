@@ -35,8 +35,7 @@ void game_reset_pedometer_flags(void) {
 //   matches.
 // Class: cannot-fix-without-compiler-change (mixed push.w/push.l + paired
 //   16-bit load fusion)
-// ROM: 0x9342  32.4%  saves: r2,e4,er6
-#pragma option speed =register /* pragma:auto */
+// ROM: 0x9342  32.6%  saves: r2,e4,er6
 uint32_t game_pedometer_interpolate_batch(uint8_t flags, uint16_t arg2) {
   uint32_t n;
   uint16_t d;
@@ -73,7 +72,7 @@ uint32_t game_pedometer_interpolate_batch(uint8_t flags, uint16_t arg2) {
   return n / (uint32_t)d;
 }
 
-// ROM: 0xa12c  47.5%
+// ROM: 0xa12c  63.2%
 void game_render_step_counter(void) {
   uint16_t r6;
   uint8_t *ram_ptr;
@@ -219,14 +218,17 @@ void game_pedometer_increment_step(void) {
   }
 }
 
-// ROM: 0xa45e  54.2%
+// ROM: 0xa45e  59.1%
 void game_rotate_step_history(void) {
   void *buf;
   uint8_t i;
   uint8_t j;
 
-  if (dayCounter < 9999) {
-    dayCounter++;
+  {
+    uint16_t d = dayCounter;
+    if (d < 9999) {
+      dayCounter = d + 1;
+    }
   }
 
   save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (uint8_t *)&totalSteps, 0x18);
@@ -250,7 +252,7 @@ void game_rotate_step_history(void) {
   }
 }
 
-// ROM: 0x9698  68.5%  saves: er6
+// ROM: 0x9698  73.1%  saves: er6
 uint32_t game_detect_steps_fft(volatile int16_t *fft_res) {
   uint16_t peakVal;
   uint16_t maxVal;
@@ -315,7 +317,7 @@ success:
 //   inc.w #2, r6`); ch38 emits one write + one increment per iteration.
 //   Body's accel-FFT pipeline, threshold checks, and step counting match.
 // Class: cannot-fix-without-compiler-change (callee-save set + loop unroll)
-// ROM: 0x945a  60.4%  saves: er2,er3,er4,er5,er6
+// ROM: 0x945a  59.4%  saves: er2,er3,er4,er5,er6
 void game_process_accel_data(void) {
   uint32_t steps;
   uint16_t i;
@@ -425,8 +427,19 @@ void game_process_accel_data(void) {
   }
 }
 
-// ROM: 0x4f50  13.6%
-uint8_t game_check_step_unlock(uint16_t a, uint16_t b) { return 1; }
+// Reads a little-endian uint16 "step threshold" from buf[a + b] and reports
+// whether the player has NOT yet reached it (sessionSteps < threshold), i.e.
+// the slot is still locked. ROM took the buffer pointer implicitly in r5 (a
+// caller-saved register the callers leave set) and returned the comparison via
+// the carry flag; both callers do `bcs <skip>`. Passing `buf` explicitly is
+// the faithful, readable equivalent — it won't byte-match ROM (extra arg in a
+// register) but is semantically exact.
+// ROM: 0x4f50
+uint8_t game_check_step_unlock(uint16_t a, uint16_t b, const uint8_t *buf) {
+  const uint8_t *p = buf + a + b;
+  uint16_t threshold = (uint16_t)(p[0] | ((uint16_t)p[1] << 8));
+  return (uint8_t)(sessionSteps < (uint32_t)threshold);
+}
 
 // ROM: 0x24ac  89.7%
 void game_pedometer_tick_counters(void) {

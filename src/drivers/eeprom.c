@@ -19,15 +19,13 @@ void drv_eeprom_spi_reset(void) {
 
 // ROM: 0x4fa0  66.7%
 uint8_t drv_eeprom_spi_transfer(void) {
-  uint8_t status;
   while (1) {
-    status = SSSR;
-    if (status & 0x40) {
-      SSSR &= ~0x40;
+    if (SSSR_BIT.ORER) {
+      SSSR_BIT.ORER = 0;
       statusFlags_BIT.eeprom_busy = 1;
       break;
     }
-    if (status & 0x02) {
+    if (SSSR_BIT.RDRF) {
       break;
     }
   }

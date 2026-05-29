@@ -1,6 +1,6 @@
 #include "all_headers.h"
 
-// ROM: 0xa830  77.5%
+// ROM: 0xa830  73.8%
 uint8_t drv_accel_factory_test(void) {
   uint8_t buf[6];
   uint8_t *p;
@@ -260,8 +260,7 @@ uint8_t drv_accel_init(void) {
  * Reaching ~80% would require iterating local-variable order and types
  * to nudge ch38's allocator toward the same choices, possibly inline asm.
  * Class: high-effort, partial-fix */
-// ROM: 0x60da  32.4%
-#pragma option speed=loop=2  /* pragma:auto */
+// ROM: 0x60da  35.8%
 void drv_accel_fft(void *samples) {
   int16_t *real_buf;
   int16_t *imag_buf;

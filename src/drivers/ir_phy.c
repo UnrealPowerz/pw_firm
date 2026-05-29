@@ -58,7 +58,7 @@ void drv_ir_init_hw(void) {
 
 // ROM: 0x075c  47.5%
 uint8_t *drv_ir_get_rx_ptr(void) {
-  return (uint8_t *)(uintptr_t)&irPacketPayload;
+  return (uint8_t *)&irPacketPayload;
 }
 
 // ROM: 0x0762  98.6%
@@ -71,8 +71,7 @@ void drv_ir_init_pins(void) {
 // ROM: 0x082e  40.0%
 void drv_ir_init_output_pins(void) { drv_ir_init_pins(); }
 
-// ROM: 0x0772  69.5%  saves: er3,er4,er5,er6
-#pragma option speed=loop=1  /* pragma:auto */
+// ROM: 0x0772  68.0%  saves: er3,er4,er5,er6
 void drv_ir_send_packet(uint8_t cmdType, uint8_t pktLen, uint8_t subtype) {
   uint8_t *pkt = (uint8_t *)&commandType;
   uint16_t crc;

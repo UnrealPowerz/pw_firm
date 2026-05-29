@@ -15,7 +15,6 @@ static uint8_t *brk = (uint8_t *)&heap_area;
 void sys_init_heap(void) { brk = (uint8_t *)&heap_area; }
 
 // ROM: 0x2488  71.6%  saves: e5
-#pragma option speed =register /* pragma:auto */
 uint8_t *sbrk(size_t size) {
   uint8_t *next_brk;
 

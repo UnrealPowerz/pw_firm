@@ -1,7 +1,6 @@
 #include "all_headers.h"
 
-// ROM: 0xa72a  56.2%
-#pragma option speed =loop=1 /* pragma:auto */
+// ROM: 0xa72a  29.3%
 uint8_t diag_eeprom_factory_test(uint32_t addr) {
   uint8_t *buf;
   uint16_t i, j;
@@ -36,8 +35,7 @@ uint8_t diag_eeprom_factory_test(uint32_t addr) {
   return 1;
 }
 
-// ROM: 0x5990  89.9%  saves: er2,er3,er4,er5,er6
-#pragma option speed =loop=1 /* pragma:auto */
+// ROM: 0x5990  89.5%  saves: er2,er3,er4,er5,er6
 void sys_factory_test(void) {
   uint8_t res, i;
   set_ccr(0x80);

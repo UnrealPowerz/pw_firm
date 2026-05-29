@@ -25,7 +25,6 @@ void game_sync_walk_status(void) {
  * "register-pressure-induced 32-bit pushes" in C/pragma form.
  * Class: cannot-fix-without-compiler-change */
 // ROM: 0x048c  0.0%  saves: er2,er4,er5,er6
-#pragma option speed=register  /* pragma:auto */
 void game_start_walk(void) {
   struct {
     uint16_t pad;

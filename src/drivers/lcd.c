@@ -177,8 +177,7 @@ void drv_lcd_delay(void) {
   } while (--i != 0);
 }
 
-// ROM: 0x7b72  72.8%  saves: r2,er6
-#pragma option speed=register  /* pragma:auto */
+// ROM: 0x7b72  70.1%  saves: r2,er6
 void drv_lcd_init(void) {
   uint8_t *buf;
   uint8_t *ptr;
@@ -236,20 +235,23 @@ void drv_lcd_set_contrast(uint8_t shade) {
   PDR1 |= 0x01;
 }
 
-// ROM: 0x7c56  45.6%
+// ROM: 0x7c56  88.8%
 void drv_lcd_set_page_addr(uint8_t x, uint8_t p) {
-  SSER = 0x80;
-  PDR1 &= ~0x01;
   PDR1 &= ~0x02;
-  drv_lcd_send_u8(0x10 | ((x >> 4) & 0x07));
-  drv_lcd_send_u8(x & 0x0F);
+  while (!SSSR_BIT.TDRE)
+    ;
+  SSTDR = 0x10 | ((x >> 4) & 0x07);
+  while (!SSSR_BIT.TDRE)
+    ;
+  SSTDR = x & 0x0F;
   if (p > 7) {
     sleep();
   }
-  drv_lcd_send_u8(0xB0 | (p + (lcdPageOffset << 3)));
+  while (!SSSR_BIT.TDRE)
+    ;
+  SSTDR = 0xB0 | (uint8_t)(p + (lcdPageOffset * 8));
   while (!SSSR_BIT.TEND)
     ;
-  PDR1 |= 0x01;
 }
 
 // ROM: 0x7cac  94.1%
@@ -292,19 +294,9 @@ void drv_lcd_set_start(uint8_t page) {
   }
 }
 
-// ROM: 0x7d4a  34.6%
+// ROM: 0x7d4a  83.2%
 void drv_lcd_clear(uint8_t color) {
   uint8_t p, col;
-  uint8_t v0 = 0, v1 = 0;
-
-  if (color == 1) {
-    v1 = 0xFF;
-  } else if (color == 2) {
-    v0 = 0xFF;
-  } else if (color == 3) {
-    v0 = 0xFF;
-    v1 = 0xFF;
-  }
 
   SSER = 0x80;
   PDR1 &= ~0x01;
@@ -321,18 +313,41 @@ void drv_lcd_clear(uint8_t color) {
     }
     while (!SSSR_BIT.TDRE)
       ;
-    SSTDR = 0xB0 | (p + (lcdPageOffset << 3));
+    SSTDR = 0xB0 | (p + (uint8_t)(lcdPageOffset * 8));
     while (!SSSR_BIT.TEND)
       ;
     PDR1 |= 0x02;
 
     for (col = 0x60; col != 0; col--) {
-      while (!SSSR_BIT.TDRE)
-        ;
-      SSTDR = v0;
-      while (!SSSR_BIT.TDRE)
-        ;
-      SSTDR = v1;
+      if (color == 0) {
+        while (!SSSR_BIT.TDRE)
+          ;
+        SSTDR = 0;
+        while (!SSSR_BIT.TDRE)
+          ;
+        SSTDR = 0;
+      } else if (color == 1) {
+        while (!SSSR_BIT.TDRE)
+          ;
+        SSTDR = 0;
+        while (!SSSR_BIT.TDRE)
+          ;
+        SSTDR = 0xFF;
+      } else if (color == 2) {
+        while (!SSSR_BIT.TDRE)
+          ;
+        SSTDR = 0xFF;
+        while (!SSSR_BIT.TDRE)
+          ;
+        SSTDR = 0;
+      } else if (color == 3) {
+        while (!SSSR_BIT.TDRE)
+          ;
+        SSTDR = 0xFF;
+        while (!SSSR_BIT.TDRE)
+          ;
+        SSTDR = 0xFF;
+      }
     }
     while (!SSSR_BIT.TEND)
       ;
@@ -364,11 +379,11 @@ void drv_lcd_power_save(void) {
   PDR1 |= 0x01;
 }
 
-// ROM: 0x7ffc  67.1%  saves: r6
+// ROM: 0x7ffc  77.1%  saves: r6
 void drv_lcd_clear_pages(uint8_t height_pixels) {
   uint8_t p;
   uint8_t col;
-  uint8_t pages = height_pixels >> 3;
+  int16_t pages = (int16_t)((uint16_t)height_pixels) >> 3;
 
   SSER = 0x80;
   PDR1 &= ~0x01;
@@ -399,6 +414,8 @@ void drv_lcd_clear_pages(uint8_t height_pixels) {
       SSTDR = 0;
       col--;
     } while (col != 0);
+    while (!SSSR_BIT.TEND)
+      ;
   }
   while (!SSSR_BIT.TEND)
     ;
@@ -414,13 +431,13 @@ void drv_lcd_clear_pages(uint8_t height_pixels) {
 //   semantics — would cascade-break.
 // Class: cannot-fix-without-compiler-change (sp_regsv$3 helper + signed
 //   divide idiom)
-// ROM: 0x80ac  24.3%  saves: er3,er4,er5,er6
+// ROM: 0x80ac  28.7%  saves: er3,er4,er5,er6
 void drv_lcd_blit(uint8_t x, uint8_t y, void *buffer, uint8_t w,
                         uint8_t h) {
   uint16_t p, col;
   uint8_t y_off = y & 7;
-  uint16_t p_start = y / 8;
-  uint16_t p_end = (y + h + 7) / 8;
+  uint16_t p_start = (uint16_t)((int16_t)(int8_t)y / 8);
+  uint16_t p_end = ((int16_t)(int8_t)y + h + 7) / 8;
   uint16_t stride = (uint16_t)w << 1;
   uint8_t shift_r = 8 - y_off;
   uint8_t *ptr = (uint8_t *)buffer;

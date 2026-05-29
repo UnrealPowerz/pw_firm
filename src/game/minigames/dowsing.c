@@ -43,7 +43,7 @@ void game_generate_encounter_dowsing(void) {
   drv_eeprom_read_block(EEPROM_TRAINER_PROFILE, be_ptr, 0xBE);
 
   for (r6l = 0; r6l < 3; r6l++) {
-    if (game_check_step_unlock((uint16_t)(r6l * 2), 0x82)) {
+    if (!game_check_step_unlock((uint16_t)(r6l * 2), 0x82, be_ptr)) {
       if (be_ptr[0x88 + (r6l * 2)] >= rem) {
         gCurSubstateY = r6l + 1;
         accelXPos = (r6l * -1) + ((sys_get_rng() >> 3) & 1) +
@@ -342,7 +342,7 @@ void ui_handle_dowsing_selection(void) {
     uint16_t rnd_pct;
     uint16_t slot_rate;
 
-    if (game_check_step_unlock((uint16_t)i * 2, 0xA0)) {
+    if (game_check_step_unlock((uint16_t)i * 2, 0xA0, trainer_buf)) {
       continue;
     }
 
@@ -370,7 +370,7 @@ void ui_handle_dowsing_selection(void) {
 // ROM: 0x4b9c  67.7%  saves: r5
 void ui_render_dowsing_grass(void) {
   uint8_t *buf;
-  uint16_t base;
+  volatile uint16_t base;
   uint16_t j;
 
   base = 0x280;
@@ -379,11 +379,11 @@ void ui_render_dowsing_grass(void) {
 
   /* Player sprite */
   drv_eeprom_read_block(base + (uint16_t)accelXPos * 0x20, buf, 0x20);
-  drv_lcd_blit(0x40, 8, buf, 0x10, 8);
+  drv_lcd_blit(0x40, 0, buf, 0x08, 0x10);
 
   /* Background top */
   drv_eeprom_read_block(0x1950 + base, buf, 0x80);
-  drv_lcd_blit(0x20, 0x10, buf, 0x20, 0x10);
+  drv_lcd_blit(0x20, 0, buf, 0x20, 0x10);
 
   drv_eeprom_read_block(0x19D0 + base, buf, 0x60);
   drv_lcd_blit(0x48, 0, buf, 0x18, 0x10);
@@ -400,8 +400,11 @@ void ui_render_dowsing_grass(void) {
   }
   drv_lcd_blit(0, 0, buf, 0x20, 0x18);
 
-  if (gCurSubstateA != 0) {
-    gCurSubstateA--;
+  {
+    uint8_t a = gCurSubstateA;
+    if (a != 0) {
+      gCurSubstateA = a - 1;
+    }
   }
 
   /* Draw 6 selection circles */
@@ -410,9 +413,9 @@ void ui_render_dowsing_grass(void) {
     uint8_t x_pos;
     x_pos = (uint8_t)(j * 0x10);
     if ((uint8_t)j == accelYPos) {
-      drv_lcd_blit(x_pos, 0x18, buf + 0x40, 0x10, 8);
+      drv_lcd_blit(x_pos, 0x18, buf + 0x40, 0x10, 0x10);
     } else if ((uint8_t)j != DAT_f7d1) {
-      drv_lcd_blit(x_pos, 0x18, buf, 0x10, 8);
+      drv_lcd_blit(x_pos, 0x18, buf, 0x10, 0x10);
     }
   }
 
@@ -428,10 +431,10 @@ void ui_render_dowsing_grass(void) {
   {
     uint8_t cursor_x;
     cursor_x = (uint8_t)(DAT_f7d1 * 0x10);
-    drv_lcd_blit(cursor_x, 0x18, buf, 0x10, 8);
+    drv_lcd_blit(cursor_x, 0x18, buf, 0x10, 0x10);
   }
 
-  gfx_draw_text_box(0x30, 0x11, 0x22, 0x00);
+  gfx_draw_text_box(0x30, 0x17, 0x0F, 0x00);
 }
 
 // Reason: ROM hoists `mov.w #0x280, r5` at entry as the EEPROM base constant
@@ -442,8 +445,7 @@ void ui_render_dowsing_grass(void) {
 //   allocator. Body structure (substate dispatch, sprite blit, item icon
 //   draws) matches.
 // Class: cannot-fix-without-compiler-change (constant hoisting + sp_regsv$3)
-// ROM: 0x4cd6  62.8%
-#pragma option speed =loop=1 /* pragma:auto */
+// ROM: 0x4cd6  66.3%
 void ui_render_dowsing(void) {
   uint8_t *buf;
   uint8_t *spr;
@@ -464,11 +466,11 @@ void ui_render_dowsing(void) {
   /* Load full sprite sheet, then pick frame by accelXPos */
   drv_eeprom_read_block(base, spr, 0x140);
   spr += (uint16_t)accelXPos * 0x20;
-  drv_lcd_blit(0x40, 8, spr, 0x20, 0x10);
+  drv_lcd_blit(0x40, 0, spr, 0x08, 0x10);
 
   /* Background pieces */
   drv_eeprom_read_block(0x1950 + base, buf, 0x80);
-  drv_lcd_blit(0x20, 0x10, buf, 0x20, 0x10);
+  drv_lcd_blit(0x20, 0, buf, 0x20, 0x10);
 
   drv_eeprom_read_block(0x19D0 + base, buf, 0x60);
   drv_lcd_blit(0x48, 0, buf, 0x18, 0x10);
@@ -485,8 +487,11 @@ void ui_render_dowsing(void) {
   }
   drv_lcd_blit(0, 0, buf, 0x20, 0x18);
 
-  if (gCurSubstateA != 0) {
-    gCurSubstateA--;
+  {
+    uint8_t a = gCurSubstateA;
+    if (a != 0) {
+      gCurSubstateA = a - 1;
+    }
   }
 
   /* Draw 6 probe circles */
@@ -499,9 +504,9 @@ void ui_render_dowsing(void) {
       continue;
     }
     if ((uint8_t)j == accelYPos) {
-      drv_lcd_blit(x_pos, 0x18, buf + 0x40, 0x10, 8);
+      drv_lcd_blit(x_pos, 0x18, buf + 0x40, 0x10, 0x10);
     } else {
-      drv_lcd_blit(x_pos, 0x18, buf, 0x10, 8);
+      drv_lcd_blit(x_pos, 0x18, buf, 0x10, 0x10);
     }
   }
 
@@ -516,7 +521,7 @@ void ui_render_dowsing(void) {
       rod_x = (uint8_t)(DAT_f7d1 * 0x10 + 0x04);
       drv_lcd_blit(rod_x, 0x28, buf, 8, 8);
     }
-    gfx_draw_text_box(0x17, 0x0F, 0x30, 0x01);
+    gfx_draw_text_box(0x30, 0x17, 0x0F, 0x00);
 
   } else if (gCurSubstateZ == 2) {
     /* Found item */
@@ -529,7 +534,7 @@ void ui_render_dowsing(void) {
 
     if (DAT_f7d5 != 0) {
       gfx_draw_value_with_icon(0x02, 0x20, 0x0D, (uint16_t)DAT_f7d5);
-      gfx_draw_text_box(0x0F, 0x0E, 0x30, 0x02);
+      gfx_draw_text_box(0x30, 0x0F, 0x0E, 0x01);
     } else {
       uint8_t subY;
       subY = gCurSubstateY;
@@ -538,12 +543,11 @@ void ui_render_dowsing(void) {
       } else {
         gfx_draw_item_name(0x00, 0x20, subY, 0x0D);
       }
-      gfx_draw_text_box(0x18, 0x0E, 0x30, 0x01);
+      gfx_draw_text_box(0x30, 0x18, 0x0E, 0x01);
     }
 
   } else if (gCurSubstateZ == 3) {
-    /* Wrong spot */
-    gfx_draw_text_box(0x19, 0x0F, 0x30, 0x01);
+    gfx_draw_text_box(0x30, 0x19, 0x0F, 0x01);
 
     if (accelXPos != 0) {
       uint16_t k;

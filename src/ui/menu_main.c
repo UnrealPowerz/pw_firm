@@ -126,8 +126,8 @@ void ui_handle_volume_menu(void) {
 
   if (drv_button_is_triggered(4)) {
     vol = (RamCache_settingsByte >> 1) & 0x03;
-    val = (uint16_t)vol + 2;
-    val = val % 3;
+    val = (uint16_t)((int16_t)(int8_t)vol + 2);
+    val = (uint16_t)((int16_t)val % 3);
     RamCache_settingsByte = (uint8_t)((RamCache_settingsByte & ~(0x03 << 1)) |
                                       (((uint8_t)val & 0x03) << 1));
     vol = (RamCache_settingsByte >> 1) & 0x03;
@@ -136,8 +136,8 @@ void ui_handle_volume_menu(void) {
   }
   if (drv_button_is_triggered(8)) {
     vol = (RamCache_settingsByte >> 1) & 0x03;
-    val = (uint16_t)vol + 1;
-    val = val % 3;
+    val = (uint16_t)((int16_t)(int8_t)vol + 1);
+    val = (uint16_t)((int16_t)val % 3);
     RamCache_settingsByte = (uint8_t)((RamCache_settingsByte & ~(0x03 << 1)) |
                                       (((uint8_t)val & 0x03) << 1));
     vol = (RamCache_settingsByte >> 1) & 0x03;
@@ -378,7 +378,7 @@ void ui_draw_ir_icon(uint8_t show_ir) {
 void ui_render_home_bar(void) {
   uint8_t *buf;
   uint8_t flags;
-  uint16_t base;
+  volatile uint16_t base;
   int i;
   uint8_t *itemArea;
 
@@ -600,6 +600,7 @@ void ui_handle_main_menu(void) {
 void ui_render_main_menu(void) {
   uint8_t *sprite_buf, *e0_buf;
   uint16_t i;
+  volatile uint16_t base = 0x280;
 
   sys_init_heap();
   sprite_buf = (uint8_t *)sbrk(0x140);
@@ -607,7 +608,7 @@ void ui_render_main_menu(void) {
 
   /* Current selection item rendering */
   {
-    uint16_t addr = (uint16_t)menu_cursor * 0x140 + 0x690;
+    uint16_t addr = (uint16_t)menu_cursor * 0x140 + 0x410 + base;
     drv_eeprom_read_block(addr, sprite_buf, 0x140);
     drv_lcd_blit(8, 0, sprite_buf, 0x50, 0x10);
   }
@@ -619,7 +620,7 @@ void ui_render_main_menu(void) {
     }
 
     if ((uint8_t)i == menu_cursor) {
-      uint16_t cursor_addr = (uint16_t)((animTick & 1) + 3) * 0x10 + 0x278;
+      uint16_t cursor_addr = (uint16_t)((animTick & 1) + 3) * 0x10 + base - 8;
       drv_eeprom_read_block(cursor_addr, sprite_buf, 0x10);
       gfx_blit_to_buffer(8, 8, 4, (uint8_t)(mainMenuYCoords[i] - 8),
                          sprite_buf, e0_buf, 0x10);
@@ -652,7 +653,7 @@ void ui_render_main_menu(void) {
       drv_lcd_blit(0x28, 0x30, sprite_buf, 8, 0x10);
     }
   } else if (gCurSubstateY == 1) {
-    gfx_draw_text_box(0x30, 0x11, 0x01, 0x00);
+    gfx_draw_text_box(0x30, 0x14, 0x0F, 0x01);
   } else if (gCurSubstateY == 2) {
     gfx_draw_text_box(0x30, 0x15, 0x0F, 0x01);
   } else if (gCurSubstateY == 3) {

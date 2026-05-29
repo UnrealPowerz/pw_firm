@@ -44,17 +44,20 @@ volatile uint8_t  stepBatchSize;              /* 0xF7B2 */
 volatile uint8_t  subStepCount;                   /* 0xF7B3 */
 volatile uint8_t  batchAccumulator;                   /* 0xF7B4 */
 volatile uint8_t  statusFlags;                /* 0xF7B5 */
-volatile uint16_t walker_status_flags;        /* 0xF7B6 (.s allocates 2 bytes) */
+volatile uint8_t walker_status_flags;         /* 0xF7B6 */
+volatile uint8_t _pad_f7b7;                   /* 0xF7B7 (preserve layout) */
 volatile uint16_t lastCommandTime;            /* 0xF7B8 */
 volatile uint8_t  commandPos;                 /* 0xF7BA */
 uint8_t           wakeupFlagMaybe[3];         /* 0xF7BB..F7BD (volatile via macro) */
 volatile uint16_t heapPointer;                /* 0xF7BE */
 volatile uint32_t nextRandom;                 /* 0xF7C0 */
 uint8_t          *soundData;                  /* 0xF7C4 (2 bytes -- pointer in -cpu=300HN) */
-uint16_t          volume;                     /* 0xF7C6 (.s 2 bytes; header types as uint8_t) */
+uint8_t           volume;                     /* 0xF7C6 */
+uint8_t           _pad_f7c7;                  /* 0xF7C7 (preserve layout) */
 uint16_t          noteDuration;               /* 0xF7C8 */
 uint16_t          isSeparateNote;             /* 0xF7CA */
-uint16_t          soundHeader;                /* 0xF7CC (.s 2 bytes; header types as uint8_t) */
+uint8_t           soundHeader;                /* 0xF7CC */
+uint8_t           _pad_f7cd;                  /* 0xF7CD (preserve layout) */
 volatile uint8_t  gCurSubstateY;              /* 0xF7CE */
 volatile uint8_t  gCurSubstateZ;              /* 0xF7CF */
 volatile uint8_t  gCurSubstateA;              /* 0xF7D0 */
@@ -103,7 +106,8 @@ volatile uint16_t axisStepThresholdHi;                   /* 0xF7DC */
 volatile uint16_t axisIdleThreshold;                   /* 0xF7DE */
 event_loop_func_t currentEventLoopFunc;       /* 0xF7E0 */
 event_loop_func_t savedEventLoopFunc;         /* 0xF7E2 -- snapshot before swap */
-volatile uint16_t lcdPageOffset;                   /* 0xF7E4 (.s 2 bytes) */
+volatile uint8_t lcdPageOffset;                    /* 0xF7E4 */
+volatile uint8_t _pad_f7e5;                        /* 0xF7E5 (preserve layout) */
 
 /* 0xF7E6..0xF865: 128-byte multi-purpose scratch region.
  * Union definition + per-view macros are in include/globals.h. Replaces

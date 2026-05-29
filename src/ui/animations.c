@@ -67,8 +67,11 @@ void ui_draw_arrival_cloud_anim(void) {
   gfx_fill_rect(0, 0, 0x60, 8, 3);
   gfx_fill_rect(0, 0x38, 0x60, 8, 3);
 
-  if (gCurSubstateZ != 0) {
-    gCurSubstateZ++;
+  {
+    uint8_t z = gCurSubstateZ;
+    if (z != 0) {
+      gCurSubstateZ = z + 1;
+    }
   }
 }
 
@@ -90,8 +93,11 @@ void ui_render_arrival_success(void) {
   gfx_draw_own_pokemon_name(0x20, 5, 0);
   gfx_draw_text_box(0x30, 0x0E, 0x0D, 0x00);
 
-  if (gCurSubstateZ < 0x10) {
-    gCurSubstateZ++;
+  {
+    uint8_t z = gCurSubstateZ;
+    if (z < 0x10) {
+      gCurSubstateZ = z + 1;
+    }
   }
 
   if (drv_sound_is_playing() == 0) {
@@ -155,8 +161,11 @@ void ui_render_arrival_reward_info(void) {
     }
   } else {
     gfx_draw_text_box(0x30, 0x0E, 0x0F, 0x00);
-    if (gCurSubstateZ < 0x10) {
-      gCurSubstateZ++;
+    {
+      uint8_t z = gCurSubstateZ;
+      if (z < 0x10) {
+        gCurSubstateZ = z + 1;
+      }
     }
   }
 }
@@ -218,7 +227,8 @@ done: gfx_draw_battery_low(0, 0);
 // ROM: 0x4178  60.9%
 void ui_handle_event_reward_anim(void) {
   uint16_t stackVar;
-  if (gCurSubstateY == 0) {
+  uint8_t y = gCurSubstateY;
+  if (y == 0) {
     if (gCurSubstateZ > 4) {
       gCurSubstateY = 4;
       gCurSubstateZ = 0;
@@ -226,7 +236,7 @@ void ui_handle_event_reward_anim(void) {
     }
     return;
   }
-  if (gCurSubstateY == 1) {
+  if (y == 1) {
     if (gCurSubstateZ != 0) {
       gCurSubstateY = 3;
       gCurSubstateZ = 0;
@@ -234,7 +244,7 @@ void ui_handle_event_reward_anim(void) {
     }
     return;
   }
-  if (gCurSubstateY != 3)
+  if (y != 3)
     return;
   if (drv_sound_is_playing())
     return;
@@ -355,8 +365,11 @@ void ui_render_departure_success(void) {
   gfx_draw_own_pokemon_name(0x20, 5, 0);
   gfx_draw_text_box(0x30, 0x0E, 0x0E, 0x00);
 
-  if (gCurSubstateZ < 0x10) {
-    gCurSubstateZ++;
+  {
+    uint8_t z = gCurSubstateZ;
+    if (z < 0x10) {
+      gCurSubstateZ = z + 1;
+    }
   }
 
   if (drv_sound_is_playing() == 0) {
@@ -379,8 +392,11 @@ void ui_render_operation_completed(void) {
   drv_lcd_blit(0x20, 0x10, ptr, 0x20, 0x20);
   gfx_draw_text_box(0x30, 0x0F, 0x10, 0x00);
 
-  if (gCurSubstateZ < 0x10) {
-    gCurSubstateZ++;
+  {
+    uint8_t z = gCurSubstateZ;
+    if (z < 0x10) {
+      gCurSubstateZ = z + 1;
+    }
   }
 
   if (drv_sound_is_playing() == 0) {

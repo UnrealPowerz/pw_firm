@@ -7,33 +7,33 @@
 //   ROM has no prologue; ch38 emits `$sp_regsv$3`.
 // Class: cannot-fix-without-compiler-change (ER-packing + multiplication
 //   strength reduction differs + sp_regsv$3)
-// ROM: 0x9f44  50.6%
-#pragma option speed=shift  /* pragma:auto */
+// ROM: 0x9f44  50.8%
 void ui_render_pokeradar(void) {
   void *buf;
   uint8_t a;
   uint8_t i;
+  volatile uint16_t base = 0x280;
 
   sys_init_heap();
   buf = sbrk(0x100);
 
-  drv_eeprom_read_block(0x278 + 0x280 + (((animTick & 1) + 9) * 0x10), buf,
+  drv_eeprom_read_block(0x278 + base + (((animTick & 1) + 9) * 0x10), buf,
                         0x10);
 
   a = gCurSubstateA;
-  drv_lcd_blit(8, 8, buf, (a & 1) * 0x18 + 8, radarYCoordTable[a] - 8);
+  drv_lcd_blit(radarYCoordTable[a] - 8, (a & 1) * 0x18 + 8, buf, 8, 8);
 
-  drv_eeprom_read_block(0x1A30 + 0x280, buf, 0xC0);
+  drv_eeprom_read_block(0x1A30 + base, buf, 0xC0);
 
   for (i = 0; i < 4; i++) {
-    drv_lcd_blit(0x20, 0x18, buf, (i & 1) * 0x18, radarYCoordTable[i]);
+    drv_lcd_blit(radarYCoordTable[i], (i & 1) * 0x18, buf, 0x20, 0x18);
   }
 
   if (accelZPos != 0) {
-    drv_eeprom_read_block(0x1AF0 + 0x280, buf, 0x100);
-    drv_lcd_blit(0x10, 0x10, (uint8_t *)buf + 0xC0,
-                       (dowsing_item_pos & 1) * 0x18,
-                       radarYCoordTable[dowsing_item_pos] + 0x10);
+    drv_eeprom_read_block(0x1AF0 + base, buf, 0x100);
+    drv_lcd_blit(radarYCoordTable[dowsing_item_pos] + 0x10,
+                       (dowsing_item_pos & 1) * 0x18, (uint8_t *)buf + 0xC0,
+                       0x10, 0x10);
 
     if (gCurSubstateZ == 3) {
       gfx_draw_text_box(0x30, 0x1D, 0x0F, 0x00);
@@ -48,10 +48,11 @@ void ui_render_pokeradar(void) {
   } else {
     gfx_draw_text_box(0x30, 0x1C, 0x0F, 0x00);
     if (accelYPos == 0) {
-      drv_eeprom_read_block(0x1AF0 + 0x280, buf, 0x100);
-      drv_lcd_blit(0x10, 0x10, (uint8_t *)buf + radarFrameMultiplier[DAT_f7d1] * 0x40,
+      drv_eeprom_read_block(0x1AF0 + base, buf, 0x100);
+      drv_lcd_blit(radarYCoordTable[dowsing_item_pos] + 0x10,
                          (dowsing_item_pos & 1) * 0x18,
-                         radarYCoordTable[dowsing_item_pos] + 0x10);
+                         (uint8_t *)buf + radarFrameMultiplier[DAT_f7d1] * 0x40,
+                         0x10, 0x10);
     }
   }
 
@@ -82,12 +83,18 @@ void ui_handle_radar_grass_menu(void) {
       }
     }
   } else {
-    if (accelYPos != 0) {
-      accelYPos--;
-      return;
+    {
+      uint8_t y = accelYPos;
+      if (y != 0) {
+        accelYPos = y - 1;
+        return;
+      }
     }
-    if (DAT_f7d5 != 0) {
-      DAT_f7d5--;
+    {
+      uint8_t d5 = DAT_f7d5;
+      if (d5 != 0) {
+        DAT_f7d5 = d5 - 1;
+      }
     }
     if (DAT_f7d5 != 0) {
       return;
@@ -101,26 +108,28 @@ void ui_handle_radar_grass_menu(void) {
 // ROM: 0x9e72  63.1%
 void ui_handle_pokeradar(void) {
   uint32_t r;
+  uint8_t z;
   if (drv_sound_is_playing())
     return;
 
-  if (gCurSubstateZ == 0) {
+  z = gCurSubstateZ;
+  if (z == 0) {
     ui_handle_radar_grass_menu();
     return;
-  } else if (gCurSubstateZ == 1) {
+  } else if (z == 1) {
     if (DAT_f7d5 > 4) {
       game_start_battle();
       ui_set_view(VIEW_BATTLE);
     }
     return;
-  } else if (gCurSubstateZ == 2) {
+  } else if (z == 2) {
     if (drv_button_is_triggered(0x0E) == 0)
       return;
     drv_sound_play(0);
     ui_reset_substate();
     ui_set_view(VIEW_HOME);
     return;
-  } else if (gCurSubstateZ != 3) {
+  } else if (z != 3) {
     return;
   }
 

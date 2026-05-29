@@ -54,17 +54,18 @@ void gfx_add_font_border(uint16_t *ptr) {
 //   scheduling differences; see score_focus.md Tier 3)
 // ROM: 0x858a  18.5%  saves: er3,er4,er5,er6
 void gfx_draw_string(uint8_t x, uint8_t y_raw, const char *str) {
-  uint8_t y_page = y_raw >> 3;
+  uint8_t y_page;
   uint8_t c, idx, i;
   const uint8_t *bmp;
 
   SSER = 0x80;
   PDR1 &= ~0x01;
+  y_page = y_raw >> 3;
   PDR1 &= ~0x02;
 
   while (!SSSR_BIT.TDRE)
     ;
-  SSTDR = 0x10 | (x >> 4);
+  SSTDR = 0x10 | ((x >> 4) & 0x07);
   while (!SSSR_BIT.TDRE)
     ;
   SSTDR = x & 0x0F;
@@ -75,7 +76,7 @@ void gfx_draw_string(uint8_t x, uint8_t y_raw, const char *str) {
 
   while (!SSSR_BIT.TDRE)
     ;
-  SSTDR = 0xB0 | (lcdPageOffset * 8 + y_page);
+  SSTDR = 0xB0 | (uint8_t)(lcdPageOffset * 8 + y_page);
   while (!SSSR_BIT.TEND)
     ;
   PDR1 |= 0x02;
@@ -118,8 +119,7 @@ void gfx_draw_string(uint8_t x, uint8_t y_raw, const char *str) {
   PDR1 |= 0x01;
 }
 
-// ROM: 0x18b6  64.2%  saves: r6,r5
-#pragma option speed =register /* pragma:auto */
+// ROM: 0x18b6  66.9%  saves: r6,r5
 void gfx_add_borders_to_text(void *buf, uint8_t w, uint8_t h, uint8_t flags) {
   uint16_t width = w;
   uint16_t *data = (uint16_t *)buf;
@@ -152,7 +152,7 @@ void gfx_add_borders_to_text(void *buf, uint8_t w, uint8_t h, uint8_t flags) {
   }
 }
 
-// ROM: 0x1936  76.6%
+// ROM: 0x1936  88.0%
 void gfx_draw_own_pokemon_small(uint8_t x, uint8_t y) {
   uint8_t *buf;
   uint16_t addr;
@@ -164,7 +164,7 @@ void gfx_draw_own_pokemon_small(uint8_t x, uint8_t y) {
   drv_lcd_blit(x, y, buf, 0x20, 0x18);
 }
 
-// ROM: 0x1972  79.7%
+// ROM: 0x1972  89.7%
 void gfx_draw_own_pokemon_small_flipped(uint8_t x, uint8_t y) {
   uint8_t *buf;
   uint16_t addr;
@@ -179,15 +179,14 @@ void gfx_draw_own_pokemon_small_flipped(uint8_t x, uint8_t y) {
   drv_lcd_blit(x, y, buf, 0x20, 0x18);
 }
 
-// ROM: 0x1a58  78.0%  saves: r4,r5,r6
-#pragma option speed =register /* pragma:auto */
+// ROM: 0x1a58  70.1%  saves: r4,r5,r6
 void gfx_draw_own_pokemon_name(uint8_t x, uint8_t y, uint8_t flags) {
   uint8_t *buf;
 
   sys_init_heap();
   buf = (uint8_t *)sbrk(0x140);
 
-  if (flags == 0x30) {
+  if (y == 0x30) {
     diag_lcd_ssu_test_2();
   } else {
     diag_lcd_ssu_test_1();
@@ -198,7 +197,7 @@ void gfx_draw_own_pokemon_name(uint8_t x, uint8_t y, uint8_t flags) {
   drv_lcd_blit(x, y, buf, 0x50, 0x10);
 }
 
-// ROM: 0x1ab2  63.4%
+// ROM: 0x1ab2  83.4%
 void gfx_draw_peer_pokemon_name(uint8_t x, uint8_t y, uint8_t flags) {
   uint8_t *buf;
 
@@ -211,7 +210,7 @@ void gfx_draw_peer_pokemon_name(uint8_t x, uint8_t y, uint8_t flags) {
   drv_lcd_blit(x, y, buf, 0x50, 0x10);
 }
 
-// ROM: 0x1af4  64.4%
+// ROM: 0x1af4  81.3%
 void gfx_draw_event_pokemon_info(uint8_t x, uint8_t y, uint8_t flags) {
   uint8_t *buf;
 
@@ -229,8 +228,7 @@ void gfx_draw_event_pokemon_info(uint8_t x, uint8_t y, uint8_t flags) {
   drv_lcd_blit(x, y, buf, 0x50, 0x10);
 }
 
-// ROM: 0x1b40  75.3%  saves: r5,r6
-#pragma option speed =register /* pragma:auto */
+// ROM: 0x1b40  76.0%  saves: r5,r6
 void gfx_draw_special_poke_name(uint8_t x, uint8_t y, uint8_t flags) {
   uint8_t *buf;
 
@@ -259,8 +257,7 @@ void gfx_draw_item_symbol(uint8_t x, uint8_t y) {
   drv_lcd_blit(x, y, buf, 8, 8);
 }
 
-// ROM: 0x1bc6  80.4%  saves: r5,r6
-#pragma option speed =register /* pragma:auto */
+// ROM: 0x1bc6  81.0%  saves: r5,r6
 void gfx_draw_route_pokemon_name(uint8_t x, uint8_t y, uint8_t index,
                                  uint8_t flags) {
   uint8_t *buf;
@@ -268,7 +265,7 @@ void gfx_draw_route_pokemon_name(uint8_t x, uint8_t y, uint8_t index,
   sys_init_heap();
   buf = (uint8_t *)sbrk(0x180);
 
-  if ((uint8_t)flags == 0x30) {
+  if (y == 0x30) {
     diag_lcd_ssu_test_2();
   } else {
     diag_lcd_ssu_test_1();
@@ -279,8 +276,7 @@ void gfx_draw_route_pokemon_name(uint8_t x, uint8_t y, uint8_t index,
   drv_lcd_blit(x, y, buf, 0x50, 0x10);
 }
 
-// ROM: 0x1c26  71.3%  saves: r4,r5,er6
-#pragma option speed =register /* pragma:auto */
+// ROM: 0x1c26  63.7%  saves: r4,r5,er6
 void gfx_draw_item_name(uint8_t x, uint8_t y, uint8_t index, uint8_t flags) {
   uint8_t *buf;
 
@@ -303,8 +299,7 @@ void gfx_draw_item_name(uint8_t x, uint8_t y, uint8_t index, uint8_t flags) {
 //   into adjacent row) appears correct.
 // Class: cannot-fix-without-compiler-change (calling-convention helper
 //   mismatch + missing $DSRUC$3 / $DSLC$3 helper emission)
-// ROM: 0x1dca  16.5%  saves: r4,r6
-#pragma option speed =loop=1 /* pragma:auto */
+// ROM: 0x1dca  23.7%  saves: r4,r6
 void gfx_draw_animated_grass(uint8_t w, uint8_t h, int8_t shift, void *buf) {
   uint16_t width = w;
   uint16_t height = h;
@@ -339,7 +334,7 @@ void gfx_draw_animated_grass(uint8_t w, uint8_t h, int8_t shift, void *buf) {
   }
 }
 
-// ROM: 0x1c80  59.9%
+// ROM: 0x1c80  80.9%
 void gfx_draw_event_item_name(uint8_t x, uint8_t y, uint8_t index,
                               uint8_t flags) {
   uint8_t *buf;
@@ -374,15 +369,18 @@ void gfx_draw_present_icon(uint8_t x, uint8_t y) {
   drv_lcd_blit(x, y, buf, 0x18, 0x08);
 }
 
-// ROM: 0x1d7a  63.3%  saves: r6,r5
-#pragma option speed =register /* pragma:auto */
+// ROM: 0x1d7a  79.4%  saves: r6,r5
 uint8_t gfx_xor_rect_ram(void *ptr, uint8_t val) {
   struct trainer_record *rec = (struct trainer_record *)ptr;
-  uint8_t bit = val & 0x7;
-  uint8_t offset = val >> 3;
+  uint8_t offset;
+  uint8_t bit;
 
   if (val == 0)
     return 0;
+
+  offset = val >> 3;
+  bit = val & 0x7;
+
   save_read_reliable(EEPROM_TRAINER_REC, EEPROM_TRAINER_REC_BACKUP, (uint8_t *)rec, sizeof(*rec));
   if (rec->flags_38[offset] & (1 << bit)) {
     return 1;
@@ -390,8 +388,7 @@ uint8_t gfx_xor_rect_ram(void *ptr, uint8_t val) {
   return 0;
 }
 
-// ROM: 0x1fee  80.9%  saves: r3,r4,r5,r6
-#pragma option speed =register /* pragma:auto */
+// ROM: 0x1fee  79.1%  saves: r3,r4,r5,r6
 void gfx_draw_numeric_value(uint8_t x, uint8_t y, uint32_t number,
                             uint8_t flags) {
   {
@@ -452,7 +449,7 @@ uint16_t gfx_get_sprite_addr(uint8_t index) {
   return result;
 }
 
-// ROM: 0x19b8  41.8%  saves: r6
+// ROM: 0x19b8  57.9%  saves: r6
 void gfx_draw_route_pokemon(uint8_t x, uint8_t y, uint8_t index) {
   uint8_t *buf;
   uint16_t addr;
@@ -473,8 +470,7 @@ void gfx_draw_route_pokemon(uint8_t x, uint8_t y, uint8_t index) {
 //   functions, so risky to alter signature.
 // Class: cannot-fix-without-compiler-change (callee-save register set +
 //   constant hoisting)
-// ROM: 0x2096  34.7%  saves: r3,r4,r5,er6
-#pragma option speed =register /* pragma:auto */
+// ROM: 0x2096  67.7%  saves: r3,r4,r5,er6
 void gfx_draw_text_box(uint8_t y, uint8_t index, uint8_t borders,
                        uint8_t flags) {
   uint8_t *buf, *e16_buf;
@@ -503,7 +499,7 @@ void gfx_draw_text_box(uint8_t y, uint8_t index, uint8_t borders,
   drv_lcd_blit(0, y, buf, 0x60, 0x10);
 }
 
-// ROM: 0x1f6c  60.5%  saves: r4,er5,er6 -> er5,er6
+// ROM: 0x1f6c  80.6%  saves: r4,er5,er6 -> er5,er6
 void gfx_draw_value_with_icon(uint8_t x, uint8_t y, uint8_t subtype,
                               uint16_t val) {
   uint8_t *buf;
@@ -546,7 +542,7 @@ void gfx_draw_battery_low(uint8_t x, uint8_t y) {
   drv_lcd_blit(x, y, buf, 8, 8);
 }
 
-// ROM: 0x1a0a  63.6%
+// ROM: 0x1a0a  79.9%
 void gfx_draw_peer_pokemon(uint8_t x, uint8_t y, uint8_t flip) {
   uint8_t *buf;
   uint16_t addr;
@@ -573,7 +569,7 @@ void gfx_draw_peer_pokemon(uint8_t x, uint8_t y, uint8_t flip) {
 //   (mask AND, data OR, page-shift carry into adjacent row) appears correct.
 // Class: cannot-fix-without-compiler-change (push.l vs push.l+push.w mix +
 //   constant hoisting)
-// ROM: 0x224c  15.7%  saves: er2,er3,r4,er5,er6 -> sys_epilogue_5
+// ROM: 0x224c  8.5%  saves: er2,er3,r4,er5,er6 -> sys_epilogue_5
 void gfx_alpha_blend(void *buf1, uint8_t w, uint8_t h, void *buf2, void *buf3,
                      uint8_t x, uint8_t y, uint8_t flags) {
   uint8_t *dst = (uint8_t *)buf1;
@@ -604,7 +600,7 @@ void gfx_alpha_blend(void *buf1, uint8_t w, uint8_t h, void *buf2, void *buf3,
   }
 }
 
-// ROM: 0x2178  40.5%  saves: r3,r4,er5,r6 -> er5,er6
+// ROM: 0x2178  45.6%  saves: r3,r4,er5,r6 -> er5,er6
 void gfx_flip_horiz(uint8_t w, uint8_t h, void *buf) {
   uint16_t width = w;
   uint16_t rows = h / 8;
@@ -637,12 +633,11 @@ void gfx_flip_horiz(uint8_t w, uint8_t h, void *buf) {
 //   The SPI inner-loop polling (`bld #2, @SSSR; bcc ...`) matches correctly.
 // Class: cannot-fix-without-compiler-change (push.l vs push.w prologue
 //   encoding + integer-division idiom mismatch)
-// ROM: 0x7e58  24.5%  saves: r4,er5,er6 -> er5,er6
-#pragma option speed =loop=1 /* pragma:auto */
+// ROM: 0x7e58  58.1%  saves: r4,er5,er6 -> er5,er6
 void gfx_fill_rect(uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint8_t color) {
   uint16_t p, col;
-  uint16_t p_start = (uint16_t)y / 8;
-  uint16_t p_end = (uint16_t)(y + h + 7) / 8;
+  uint8_t p_start = y >> 3;
+  uint8_t p_end = (uint8_t)(y + h + 7) >> 3;
 
   SSER = 0x80;
   PDR1 &= ~0x01;
@@ -663,27 +658,35 @@ void gfx_fill_rect(uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint8_t color) {
     PDR1 |= 0x02;
 
     for (col = 0; col < (uint16_t)w; col++) {
-      uint8_t v0 = 0, v1 = 0;
       if (color == 0) {
-        v0 = 0;
-        v1 = 0;
+        while (!SSSR_BIT.TDRE)
+          ;
+        SSTDR = 0;
+        while (!SSSR_BIT.TDRE)
+          ;
+        SSTDR = 0;
       } else if (color == 1) {
-        v0 = 0;
-        v1 = 0xFF;
+        while (!SSSR_BIT.TDRE)
+          ;
+        SSTDR = 0;
+        while (!SSSR_BIT.TDRE)
+          ;
+        SSTDR = 0xFF;
       } else if (color == 2) {
-        v0 = 0xFF;
-        v1 = 0;
+        while (!SSSR_BIT.TDRE)
+          ;
+        SSTDR = 0xFF;
+        while (!SSSR_BIT.TDRE)
+          ;
+        SSTDR = 0;
       } else if (color == 3) {
-        v0 = 0xFF;
-        v1 = 0xFF;
+        while (!SSSR_BIT.TDRE)
+          ;
+        SSTDR = 0xFF;
+        while (!SSSR_BIT.TDRE)
+          ;
+        SSTDR = 0xFF;
       }
-
-      while (!SSSR_BIT.TDRE)
-        ;
-      SSTDR = v0;
-      while (!SSSR_BIT.TDRE)
-        ;
-      SSTDR = v1;
     }
   }
   while (!SSSR_BIT.TEND)
@@ -700,7 +703,7 @@ void gfx_fill_rect(uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint8_t color) {
 //   inner loop). Same cluster as gfx_fill_rect / drv_lcd_blit.
 // Class: cannot-fix-without-compiler-change (push.w/push.l prologue mix +
 //   register allocation for pointer locals)
-// ROM: 0x82ea  32.9%  saves: r3,r4,er5,er6 -> er5,er6
+// ROM: 0x82ea  35.5%  saves: r3,r4,er5,er6 -> er5,er6
 #pragma option noregexpansion /* pragma:auto */
 void gfx_draw_sprite_simple(uint8_t x, uint8_t y, uint16_t w, uint16_t h,
                             void *buffer) {
@@ -711,7 +714,7 @@ void gfx_draw_sprite_simple(uint8_t x, uint8_t y, uint16_t w, uint16_t h,
   uint16_t stride = (uint16_t)w << 1;
   uint8_t y_off = y & 7;
   uint8_t shift_r = 8 - y_off;
-  uint8_t *base_ptr = (uint8_t *)(uintptr_t)buffer;
+  uint8_t *base_ptr = (uint8_t *)buffer;
 
   SSER = 0x80;
   PDR1 &= ~0x01; // CS low
@@ -801,8 +804,7 @@ void gfx_draw_sprite_simple(uint8_t x, uint8_t y, uint16_t w, uint16_t h,
  * Net of dedicated rewrite session 2026-05-23: 27.2% → 31.8% (+4.6pp);
  * ui_render_main_menu 64.9% → 67.9% (+3pp). Body is now semantically correct
  * (was a half-implementation before — 1 byte/col instead of 2). */
-// ROM: 0x7a40  31.8%  saves: er4,r5,er6
-#pragma option speed =register /* pragma:auto */
+// ROM: 0x7a40  62.5%  saves: er4,r5,er6
 void gfx_blit_to_buffer(uint8_t w, uint8_t h, uint8_t x, uint8_t y,
                         void *src, void *dst, uint8_t dst_w) {
   register uint8_t *s_p = (uint8_t *)src;

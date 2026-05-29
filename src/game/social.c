@@ -17,8 +17,7 @@
 //   reward zero loop, byte copies, bit-field updates, d_high dispatch)
 //   appears correct.
 // Class: cannot-fix-without-compiler-change (sp_regsv$3 helper)
-// ROM: 0x4546  56.9%  saves: r3,r4,er5,er6 -> er5,er6
-#pragma option speed =loop=1 /* pragma:auto */
+// ROM: 0x4546  60.4%  saves: r3,r4,er5,er6 -> er5,er6
 void game_log_interaction(uint8_t *a, uint8_t *b, uint8_t d_low, uint8_t d_high,
                           uint16_t val_high) {
   uint16_t i;
@@ -198,8 +197,7 @@ void game_log_item_interaction(void) {
                        *(uint16_t *)(tmp + (gCurSubstateY * 2) + 0x8C));
 }
 
-// ROM: 0x5c0a  70.2%  saves: er6
-#pragma option speed =register /* pragma:auto */
+// ROM: 0x5c0a  82.1%  saves: er6
 void game_init_peer_identity(void) {
   register struct trainer_record *rec;
   register uint8_t *temp_buf;
@@ -253,7 +251,7 @@ void game_init_peer_identity(void) {
   }
 }
 
-// ROM: 0x5d52  73.7%
+// ROM: 0x5d52  74.6%
 void game_process_interaction_reward(uint8_t type) {
   void *buf;
   void *settings;
@@ -385,10 +383,9 @@ void ui_render_social_feelings(void) {
   gfx_draw_battery_low(0, 0);
 }
 
-// ROM: 0x5fc2  51.3%  saves: r2,r5,r6 -> sys_epilogue_r2_r5_r6
-#pragma option speed =register /* pragma:auto */
+// ROM: 0x5fc2  52.8%  saves: r2,r5,r6 -> sys_epilogue_r2_r5_r6
 void game_check_periodic_events(void) {
-  uint16_t dailyStepCap;
+  volatile uint16_t dailyStepCap;
   uint8_t prob;
   uint8_t *pEeprom;
 
@@ -403,16 +400,15 @@ void game_check_periodic_events(void) {
   gCurSubstateY = 0;
   gCurSubstateZ = 0;
 
+  dailyStepCap = recentSessionSteps;
+  (void)dailyStepCap;
+
   prob = (uint8_t)(sys_get_rng() % 100);
   if (prob >= 40)
     return;
 
-  if ((sys_get_rng() % 100) >= 40)
-    return;
-
   if (!(walker_status_flags_BIT.walking)) {
-    dailyStepCap = recentSessionSteps;
-    if (dailyStepCap < 300)
+    if (recentSessionSteps < 300)
       return;
     gCurSubstateY = 0x07;
   } else {
@@ -450,7 +446,7 @@ void game_check_periodic_events(void) {
 // ROM: 0x6380  100.0%
 void ui_handle_peer_play(void) { (void)0; }
 
-// ROM: 0x6382  70.4%
+// ROM: 0x6382  75.0%
 void game_calculate_interaction_reward(void) {
   uint32_t steps_val;
   uint8_t *items_info;
@@ -543,17 +539,18 @@ calc_end: {
 }
 }
 
-// ROM: 0x67de  47.8%
-#pragma option speed =loop=1 /* pragma:auto */
+// ROM: 0x67de  66.6%
 void game_rotate_interaction_log(void) {
   uint16_t r6 = 0x224;
   void *r5;
-  uint16_t e5 = 0xEF44;
-  uint16_t e6 = 0xF168;
+  uint16_t e5;
+  uint16_t e6;
   uint8_t r4l;
 
   sys_init_heap();
   r5 = sbrk(r6);
+  e5 = 0xEF44;
+  e6 = 0xF168;
   for (r4l = 10; r4l > 0; r4l--) {
     drv_eeprom_read_block(e5, r5, r6);
     drv_eeprom_write_block(e6, r5, r6);
@@ -562,8 +559,7 @@ void game_rotate_interaction_log(void) {
   }
 }
 
-// ROM: 0x6816  51.4%
-#pragma option speed =loop=1 /* pragma:auto */
+// ROM: 0x6816  12.1%
 void game_rotate_interaction_log_record(void) {
   uint8_t *r3_settings;
   uint8_t *r5_contact;
@@ -633,7 +629,7 @@ void ui_start_peer_play_app(void) {
   game_rotate_interaction_log_record();
 }
 
-// ROM: 0x6528  57.8%  saves: r6
+// ROM: 0x6528  73.6%  saves: r6
 void ui_draw_music_note(uint8_t x, uint8_t y, uint8_t shift) {
   uint8_t *buf;
   uint8_t i;
@@ -662,7 +658,6 @@ void ui_draw_music_note(uint8_t x, uint8_t y, uint8_t shift) {
 // Class: cannot-fix-without-compiler-change (no-prologue convention; same
 //   ABI blocker as ui_load_inventory_mask / gfx_draw_animated_grass)
 // ROM: 0x6574  22.4%
-#pragma option speed =loop=1 /* pragma:auto */
 void ui_render_peer_play(void) {
   uint8_t z = gCurSubstateZ;
   uint8_t r6l = 0;
@@ -681,20 +676,20 @@ void ui_render_peer_play(void) {
       if (r6l != 0) {
         gfx_draw_peer_pokemon(r1l, 8, 0x00);
       } else {
-        gfx_draw_peer_pokemon(r1l, 1, 0x08);
+        gfx_draw_peer_pokemon(r1l, 8, 0x01);
       }
     } else {
       if (r6l != 0) {
         gfx_draw_peer_pokemon(0x08, 0x08, 0x00);
       } else {
-        gfx_draw_peer_pokemon(0x08, 0x01, 0x08);
+        gfx_draw_peer_pokemon(0x08, 0x08, 0x01);
       }
     }
   }
 
   if (z == 1) {
     gfx_draw_peer_pokemon_name(0x02, 0x20, 1);
-    gfx_draw_text_box(0x30, 0x0E, 0x30, 0x2B);
+    gfx_draw_text_box(0x30, 0x2B, 0x0E, 0x00);
   } else if (z == 2) {
     uint8_t count = gCurSubstateA + 1;
     uint8_t limit = (gCurSubstateA >> 1) + 1;
@@ -725,18 +720,18 @@ void ui_render_peer_play(void) {
       ui_draw_music_note((uint8_t)(i * 8 + 0x1C), note_y, 0);
     }
   music_done:
-    gfx_draw_text_box(0x30, 0x0E, 0x30, (uint8_t)DAT_f7d1);
+    gfx_draw_text_box(0x30, (uint8_t)DAT_f7d1, 0x0F, 0x00);
   } else if (z == 3) {
     gfx_draw_present_icon(0x20, 0x04);
-    gfx_draw_text_box(0x30, 0x0F, 0x30, 0x31);
+    gfx_draw_text_box(0x30, 0x31, 0x0F, 0x00);
   } else if (z == 4) {
     gfx_draw_present_icon(0x20, 0x04);
     if (dowsing_item_pos != 0) {
       gfx_draw_value_with_icon(0x02, 0x20, 0x0D, (uint16_t)dowsing_item_pos);
     } else {
-      gfx_draw_item_name(0x00, 0x20, 0x0D, (uint8_t)accelXPos);
+      gfx_draw_item_name(0x00, 0x20, (uint8_t)accelXPos, 0x0D);
     }
-    gfx_draw_text_box(0x30, 0x0E, 0x30, 0x0F);
+    gfx_draw_text_box(0x30, 0x0F, 0x0E, 0x00);
   }
 
   gCurSubstateA++;
@@ -757,7 +752,7 @@ void ui_render_peer_play(void) {
   gfx_draw_battery_low(0, 0);
 }
 
-// ROM: 0x6784  67.2%  saves: er3,er4,er5,er6
+// ROM: 0x6784  89.1%  saves: er3,er4,er5,er6
 uint8_t game_find_seen_peer(void *trainer_ptr) {
   uint8_t r4l;
   uint8_t r6h;

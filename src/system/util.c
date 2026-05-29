@@ -20,8 +20,9 @@ void sys_seed_rng(uint32_t seed) { nextRandom = seed; }
 
 // ROM: 0x25d0  47.2%  saves: er3,er4,er5,er6
 uint32_t sys_get_rng(void) {
-  nextRandom = nextRandom * 1664525 + 1013904223;
-  return nextRandom;
+  uint32_t x = nextRandom * 1664525 + 1013904223;
+  nextRandom = x;
+  return x;
 }
 
 // ROM: 0x25f6  49.8%  saves: er3,er4,er5,er6

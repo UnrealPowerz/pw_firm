@@ -9,7 +9,7 @@ void ui_render_step_history_graph(void) {
   buf = sbrk(0x180);
 
   drv_eeprom_read_block(0x2350, buf, 0x100);
-  drv_lcd_blit(0x20, 0x20, buf, 0x20, 0x10);
+  drv_lcd_blit(0x20, 0x10, buf, 0x20, 0x20);
 
   day = irResultCode - 1;
   if (day > 7) {
@@ -61,18 +61,20 @@ void ui_handle_trainer_stats(void) {
 
   if (gCurSubstateZ == 0) {
     if (drv_button_is_triggered(0x04) != 0) {
-      if (gCurSubstateY == 0) {
+      uint8_t y = gCurSubstateY;
+      if (y == 0) {
         drv_sound_play(1);
         ui_clear_substate_y();
         ui_set_view(VIEW_MAIN_MENU);
         return;
       }
-      gCurSubstateY--;
+      gCurSubstateY = y - 1;
       drv_sound_play(2);
     }
     if (drv_button_is_triggered(0x08) != 0) {
-      if (gCurSubstateY < 7) {
-        gCurSubstateY++;
+      uint8_t y = gCurSubstateY;
+      if (y < 7) {
+        gCurSubstateY = y + 1;
         drv_sound_play(2);
       }
     }
@@ -111,32 +113,29 @@ go_back:
   ui_set_view(VIEW_HOME);
 }
 
-// Reason: ROM hoists drv_eeprom_read_block, drv_lcd_blit, 0x280, 0x40, 0x140
-//   into r3/r5/r4/e5/e6 at entry and reuses them via `add.w r4,e4` etc.
-//   ch38 inlines the immediates at each call site, producing a fundamentally
-//   different instruction stream — fewer instructions per call but no alignment
-//   with ROM. Source-level changes (function pointers, register locals,
-//   speed=register pragma) do not coerce ch38 into the hoist+reuse pattern.
-// Class: cannot-fix-without-compiler-change (ER-register constant packing /
-//   function-entry constant hoisting; see score_focus.md Tier 3)
-// ROM: 0xb48c  0.0%  saves: er3,er4,er5,er6
+// The 0x280 EEPROM base is held in a `volatile uint16_t base` so ch38 keeps it
+// in a register and computes each address via add (like ROM's `add.w r4`),
+// instead of inlining the full immediate at every call site. This recovered
+// the function from 0.0% — the prior "cannot-fix" verdict was wrong.
+// ROM: 0xb48c  54.3%  saves: er3,er4,er5,er6
 void ui_render_trainer_card_time(void) {
   uint8_t *buf;
   uint8_t hr;
+  volatile uint16_t base = 0x280;
 
   sys_init_heap();
   buf = (uint8_t *)sbrk(0x140);
 
-  drv_eeprom_read_block(0xA50 + 0x280, buf, 0x140);
+  drv_eeprom_read_block(0xA50 + base, buf, 0x140);
   drv_lcd_blit(8, 0, buf, 0x50, 0x10);
 
-  drv_eeprom_read_block(0xF90 + 0x280, buf, 0x40);
+  drv_eeprom_read_block(0xF90 + base, buf, 0x40);
   drv_lcd_blit(0, 0x10, buf, 0x10, 0x10);
 
-  drv_eeprom_read_block(0xFD0 + 0x280, buf, 0x140);
+  drv_eeprom_read_block(0xFD0 + base, buf, 0x140);
   drv_lcd_blit(0x10, 0x10, buf, 0x50, 0x10);
 
-  drv_eeprom_read_block(0x1110 + 0x280, buf, 0x40);
+  drv_eeprom_read_block(0x1110 + base, buf, 0x40);
   drv_lcd_blit(0, 0x20, buf, 0x10, 0x10);
 
   if (RamCache_settingsByte & 1) {
@@ -146,14 +145,14 @@ void ui_render_trainer_card_time(void) {
   }
   drv_lcd_blit(0x10, 0x20, buf, 0x50, 0x10);
 
-  drv_eeprom_read_block(0x338 + 0x280, buf, 0xC0);
+  drv_eeprom_read_block(0x338 + base, buf, 0xC0);
   drv_lcd_blit(0, 0, buf + 0x40, 8, 0x10);
   drv_lcd_blit(0x58, 0, buf + 0x20, 8, 0x10);
 
-  drv_eeprom_read_block(0x11F0 + 0x280, buf, 0x80);
+  drv_eeprom_read_block(0x11F0 + base, buf, 0x80);
   drv_lcd_blit(0, 0x30, buf, 0x20, 0x10);
 
-  drv_eeprom_read_block(0x280, buf, 0x140);
+  drv_eeprom_read_block(base, buf, 0x140);
 
   hr = rtcHour;
   drv_lcd_blit(0x20, 0x30, buf + ((((uint16_t)hr >> 4) & 7) * 0x20), 8, 0x10);
@@ -172,45 +171,40 @@ void ui_render_trainer_card_time(void) {
   drv_lcd_blit(0x48, 0x30, buf, 8, 0x10);
 }
 
-// Reason: Same compiler-blocked pattern as ui_render_trainer_card_time —
-//   ROM hoists drv_eeprom_read_block/drv_lcd_blit/0x280 into r3/r4/r5 and
-//   computes per-call addresses via `mov.w #imm,e6; add.w r5,e6`. ch38 inlines
-//   each addr as a single mov.w immediate, producing a structurally different
-//   instruction stream. Previous C had a broken function-pointer cast that
-//   reordered drv_lcd_blit args (buf,w,h,x,y vs the real x,y,buf,w,h); this
-//   rewrite fixes the semantics but score remains capped by ER-packing.
-// Class: cannot-fix-without-compiler-change (see score_focus.md Tier 3)
-// ROM: 0xb682  47.8%  saves: er2,r3,r4,er5,er6
+// 0x280 EEPROM base held in `volatile uint16_t base` to force register reuse
+// (see ui_render_trainer_card_time). Lifted 47.8% → 75.2%.
+// ROM: 0xb682  75.2%  saves: er2,r3,r4,er5,er6
 void ui_render_daily_step_history(void) {
   uint8_t *buf;
   uint32_t step_data;
   uint16_t day_addr;
   uint16_t day_idx;
+  volatile uint16_t base = 0x280;
 
   sys_init_heap();
   buf = (uint8_t *)sbrk(0x140);
 
-  drv_eeprom_read_block(0x338 + 0x280, buf, 0xC0);
+  drv_eeprom_read_block(0x338 + base, buf, 0xC0);
   drv_lcd_blit(0, 0, buf, 8, 0x10);
 
   if (gCurSubstateY < 7) {
     drv_lcd_blit(0x58, 0, buf + 0x20, 8, 0x10);
   }
 
-  drv_eeprom_read_block(0x1270 + 0x280, buf, 0xA0);
+  drv_eeprom_read_block(0x1270 + base, buf, 0xA0);
   drv_lcd_blit(0x28, 0, buf, 0x28, 0x10);
 
-  drv_eeprom_read_block(0x1310 + 0x280, buf, 0x100);
+  drv_eeprom_read_block(0x1310 + base, buf, 0x100);
   drv_lcd_blit(0, 0x20, buf, 0x40, 0x10);
 
-  drv_eeprom_read_block(0x1150 + 0x280, buf, 0xA0);
+  drv_eeprom_read_block(0x1150 + base, buf, 0xA0);
   drv_lcd_blit(0x38, 0x10, buf, 0x28, 0x10);
   drv_lcd_blit(0x38, 0x30, buf, 0x28, 0x10);
 
-  drv_eeprom_read_block(0x160 + 0x280, buf, 0x20);
+  drv_eeprom_read_block(0x160 + base, buf, 0x20);
   drv_lcd_blit(0x18, 0, buf, 8, 0x10);
 
-  drv_eeprom_read_block(0x280, buf, 0x140);
+  drv_eeprom_read_block(base, buf, 0x140);
   drv_lcd_blit(0x20, 0, buf + (uint16_t)gCurSubstateY * 0x20, 8, 0x10);
 
   day_idx = (uint16_t)gCurSubstateY - 1;
@@ -222,12 +216,11 @@ void ui_render_daily_step_history(void) {
   gfx_draw_numeric_value(0x30, 0x30, totalSteps, 0);
 }
 
-// ROM: 0xb7ee  68.7%  saves: er2,r3,r4,er5,r6
-#pragma option speed=register  /* pragma:auto */
+// ROM: 0xb7ee  64.4%  saves: er2,r3,r4,er5,r6
 void ui_render_step_goal_reached(void) {
   uint8_t *buf;
   uint8_t i;
-  uint16_t base;
+  volatile uint16_t base;
 
   base = 0x280;
 
@@ -237,14 +230,14 @@ void ui_render_step_goal_reached(void) {
 
   for (i = 0; i < 7; i++) {
     uint16_t x = (uint16_t)i * 8;
-    drv_lcd_blit(8, 8, buf + 0x120, (uint8_t)x, 8);
+    drv_lcd_blit((uint8_t)x, 8, buf + 0x120, 8, 0x10);
   }
 
   drv_eeprom_read_block(0x1150 + base, buf, 0xA0);
-  drv_lcd_blit(0x28, 0x10, buf, 0x38, 8);
+  drv_lcd_blit(0x38, 0x08, buf, 0x28, 0x10);
 
   drv_eeprom_read_block(0x2210 + base, buf, 0xA0);
-  drv_lcd_blit(0x28, 0x10, buf, 0x38, 0x28);
+  drv_lcd_blit(0x38, 0x28, buf, 0x28, 0x10);
 
   gfx_draw_numeric_value(0x30, 0x28, RamCache_STEP_COUNT_maybe, 0);
   gfx_draw_text_box(0x18, 0x43, 0x0F, 0x01);
@@ -257,7 +250,7 @@ void ui_render_step_goal_reward(void) {
   sys_init_heap();
   buf = (uint8_t *)sbrk(0xC0);
   drv_eeprom_read_block(0x1910, buf, 0xC0);
-  drv_lcd_blit(0x20, 0x18, buf, 0x10, 4);
+  drv_lcd_blit(0x20, 0x04, buf, 0x20, 0x18);
   gfx_draw_text_box(0x20, 0x42, 0x0D, 0x00);
   gfx_draw_text_box(0x30, 0x0F, 0x0E, 0x01);
 }

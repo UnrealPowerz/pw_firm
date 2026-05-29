@@ -36,10 +36,11 @@ uint8_t drv_adc_test(void) {
 // ROM: 0x27c2  67.9%
 uint16_t drv_adc_add_calib_checksum(uint16_t val) {
   uint8_t sum;
+  val &= 0x0FFF;
   sum = (uint8_t)((val >> 4) & 0x0F);
   sum += (uint8_t)((val >> 8) & 0x0F);
   sum += (uint8_t)(val & 0x0F);
-  return (val & 0x0FFF) | ((uint16_t)sum << 12);
+  return val | ((uint16_t)sum << 12);
 }
 
 // ROM: 0x27ec  63.7%
