@@ -21,7 +21,7 @@ uint8_t *sbrk(size_t size) {
   next_brk = brk + size;
   brk = next_brk;
 
-  if (next_brk - &heap_area.heap[0] > HEAPSIZE) {
+  if (next_brk - &heap_area.heap[0] > 0x400) {
     sleep();
   }
 

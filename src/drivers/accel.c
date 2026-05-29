@@ -17,7 +17,7 @@ uint8_t drv_accel_factory_test(void) {
   buf[0] &= 0xE0;
   buf[0] |= 0x08;
   drv_accel_write_reg(0x14, buf[0]);
-  drv_accel_write_reg(0x00, 0x0A);
+  drv_accel_write_reg(0x0A, 0x00);
 
   /* Wait 0x1F4 iterations */
   i = 0x1F4;

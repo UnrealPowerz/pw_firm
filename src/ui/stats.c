@@ -365,18 +365,17 @@ void ui_render_dowsed_item_stats(void) {
 // ROM: 0x3cd8  78.5%
 void ui_render_inventory_stats_view(void) {
   void *ptr;
-  uint16_t off;
+  volatile uint16_t off = 0x280;
   void (*drawFunc)(uint8_t, uint8_t, void *, uint8_t, uint8_t) =
       (void (*)(uint8_t, uint8_t, void *, uint8_t, uint8_t))drv_lcd_blit;
 
   sys_init_heap();
   ptr = sbrk(0x180);
-  off = 0x280;
 
   drv_eeprom_read_block(off + 0x378, ptr, 0x20);
   drawFunc(0, 0, ptr, 8, 0x10);
 
-  drv_eeprom_read_block(0x8b30, ptr, 0x140);
+  drv_eeprom_read_block(off + 0x88b0, ptr, 0x140);
   drawFunc(8, 0, ptr, 0x50, 0x10);
 
   drv_eeprom_read_block(off + 0x2a8, ptr, 0x20);

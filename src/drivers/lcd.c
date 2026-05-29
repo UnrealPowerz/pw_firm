@@ -90,7 +90,7 @@ void drv_lcd_test_spi(void) {
 
   SSER = 0x80;
   PDR1 &= ~0x01;
-  drv_lcd_set_page_addr(0, 1);
+  drv_lcd_set_page_addr(1, 0);
   PDR1 |= 0x02;
 
   /* Send 0xBC bytes of value 0x01 */
@@ -109,7 +109,7 @@ void drv_lcd_test_spi(void) {
   /* For each of 8 rows: send row cmd then 2 bytes 0xFF */
   row = 0;
   do {
-    drv_lcd_set_page_addr(row, 0);
+    drv_lcd_set_page_addr(0, row);
     PDR1 |= 0x02;
     while (!SSSR_BIT.TDRE)
       ;
@@ -125,7 +125,7 @@ void drv_lcd_test_spi(void) {
   /* For each of 8 rows: send row+0x5F cmd then 2 bytes 0xFF */
   row = 0;
   do {
-    drv_lcd_set_page_addr(row, 0x5F);
+    drv_lcd_set_page_addr(0x5F, row);
     PDR1 |= 0x02;
     while (!SSSR_BIT.TDRE)
       ;
@@ -139,7 +139,7 @@ void drv_lcd_test_spi(void) {
   } while (row < 8);
 
   /* Send command 0x701 then 0xBC bytes of 0x80 */
-  drv_lcd_set_page_addr(7, 1);
+  drv_lcd_set_page_addr(1, 7);
   PDR1 |= 0x02;
   i = 0xBC;
   do {
@@ -214,7 +214,7 @@ void drv_lcd_init(void) {
   }
 
   drv_lcd_send_u8(0xA6);
-  drv_lcd_set_contrast((RamCache_settingsByte >> 5) & 7);
+  drv_lcd_set_contrast((RamCache_settingsByte >> 3) & 0xF);
   lcdPageOffset = 1;
   drv_lcd_clear_pages(0x40);
   lcdPageOffset = 0;

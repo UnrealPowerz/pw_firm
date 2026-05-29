@@ -90,8 +90,8 @@ void ui_draw_arrival_poke_anim(void) {
 void ui_render_arrival_success(void) {
   uint16_t uninitializedE0;
   gfx_draw_own_pokemon_small(0x20, 4);
-  gfx_draw_own_pokemon_name(0x20, 5, 0);
-  gfx_draw_text_box(0x30, 0x0E, 0x0D, 0x00);
+  gfx_draw_own_pokemon_name(0, 0x20, 5);
+  gfx_draw_text_box(0x30, 0x0D, 0x0E, 0x00);
 
   {
     uint8_t z = gCurSubstateZ;
@@ -362,7 +362,7 @@ void ui_render_departure_success(void) {
   sys_init_heap();
   sbrk(0x180);
 
-  gfx_draw_own_pokemon_name(0x20, 5, 0);
+  gfx_draw_own_pokemon_name(0, 0x20, 5);
   gfx_draw_text_box(0x30, 0x0E, 0x0E, 0x00);
 
   {
@@ -390,7 +390,7 @@ void ui_render_operation_completed(void) {
 
   drv_eeprom_read_block(0x2350, ptr, 0x100);
   drv_lcd_blit(0x20, 0x10, ptr, 0x20, 0x20);
-  gfx_draw_text_box(0x30, 0x0F, 0x10, 0x00);
+  gfx_draw_text_box(0x30, 0x10, 0x0F, 0x00);
 
   {
     uint8_t z = gCurSubstateZ;

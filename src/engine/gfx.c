@@ -355,7 +355,7 @@ void gfx_draw_treasure_chest_icon(uint8_t x, uint8_t y) {
   buf = (uint8_t *)sbrk(0xC0);
 
   drv_eeprom_read_block(0x1910, buf, 0xC0);
-  drv_lcd_blit(x, y, buf, 0x18, 0x08);
+  drv_lcd_blit(x, y, buf, 0x20, 0x18);
 }
 
 // ROM: 0x1cf0  74.9%
@@ -366,7 +366,7 @@ void gfx_draw_present_icon(uint8_t x, uint8_t y) {
   buf = (uint8_t *)sbrk(0xC0);
 
   drv_eeprom_read_block(0x1A90, buf, 0xC0);
-  drv_lcd_blit(x, y, buf, 0x18, 0x08);
+  drv_lcd_blit(x, y, buf, 0x20, 0x18);
 }
 
 // ROM: 0x1d7a  79.4%  saves: r6,r5
@@ -413,11 +413,11 @@ void gfx_draw_numeric_value(uint8_t x, uint8_t y, uint32_t number,
     }
 
     if (number == 0) {
-      drv_lcd_blit(x, y, digit_buf, 0x10, 8);
+      drv_lcd_blit(x, y, digit_buf, 8, 0x10);
     } else {
       do {
         uint8_t digit = (uint8_t)(number % 10);
-        drv_lcd_blit(x, y, digit_buf + (digit * 32), 0x10, 8);
+        drv_lcd_blit(x, y, digit_buf + (digit * 32), 8, 0x10);
         number /= 10;
         x -= 8;
       } while (number != 0);
@@ -510,7 +510,7 @@ void gfx_draw_value_with_icon(uint8_t x, uint8_t y, uint8_t subtype,
   buf = (uint8_t *)sbrk(0x140);
   diag_lcd_ssu_test_1();
 
-  gfx_fill_rect(8, 0x5E, 0x28, 1, 0);
+  gfx_fill_rect(1, 0x28, 0x5E, 8, 0);
 
   gfx_draw_numeric_value((uint8_t)(x + 8), y, (uint32_t)val, 0);
 

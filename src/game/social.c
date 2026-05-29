@@ -239,7 +239,7 @@ void game_init_peer_identity(void) {
     temp_buf[0x0D] &= ~0x80;
     temp_buf[0x26] = 0x46;
 
-    for (i = 0; i < 6; i++) {
+    for (i = 0; i < 0x16; i++) {
       temp_buf[0x10 + i] = 0;
     }
 
@@ -344,7 +344,7 @@ void ui_render_social_feelings(void) {
 
   ptr = (uint8_t *) *(volatile uint16_t *) &accelXPos;
   if (*ptr & 0x02) {
-    gfx_draw_own_pokemon_small(0x20, 0x18);
+    gfx_draw_own_pokemon_small(0x20, 0x04);
   }
 
   ptr = (uint8_t *) *(volatile uint16_t *) &accelXPos;
@@ -490,53 +490,31 @@ void game_calculate_interaction_reward(void) {
 
   if (steps_val >= 20000) {
     DAT_f7d1 = 0x2C;
-    if (dowsing_item_pos == 0) {
-      if (sessionSteps > *(uint32_t *)items_info) {
-        accelXPos = 0;
-      } else {
-        accelXPos = 1;
-      }
-      goto calc_end;
-    }
+    if (dowsing_item_pos != 0) return;
+    accelXPos = (sessionSteps > *(uint32_t *)items_info) ? 0 : 1;
   } else if (steps_val >= 10000) {
     DAT_f7d1 = 0x2D;
-    if (dowsing_item_pos == 0) {
-      if (sessionSteps > *(uint32_t *)items_info) {
-        accelXPos = 2;
-      } else {
-        accelXPos = 3;
-      }
-      goto calc_end;
-    }
+    if (dowsing_item_pos != 0) return;
+    accelXPos = (sessionSteps > *(uint32_t *)items_info) ? 2 : 3;
   } else if (steps_val >= 5000) {
     DAT_f7d1 = 0x2E;
-    if (dowsing_item_pos == 0) {
-      if (sessionSteps > *(uint32_t *)items_info) {
-        accelXPos = 4;
-      } else {
-        accelXPos = 5;
-      }
-      goto calc_end;
-    }
+    if (dowsing_item_pos != 0) return;
+    accelXPos = (sessionSteps > *(uint32_t *)items_info) ? 4 : 5;
   } else if (steps_val >= 2500) {
     DAT_f7d1 = 0x2F;
+    if (dowsing_item_pos != 0) return;
+    accelXPos = (sessionSteps > *(uint32_t *)items_info) ? 6 : 7;
   } else {
     DAT_f7d1 = 0x30;
+    if (dowsing_item_pos != 0) return;
+    accelXPos = (sessionSteps > *(uint32_t *)items_info) ? 8 : 9;
   }
 
-  if (dowsing_item_pos != 0) {
-    if (sessionSteps > *(uint32_t *)items_info) {
-      accelXPos = 10;
-    } else {
-      accelXPos = 11;
-    }
+  {
+    uint16_t sprite_addr = gfx_get_sprite_addr(accelXPos);
+    item_table[r5l * 2] = sprite_addr;
+    drv_eeprom_write_block(0xCEC8, item_table, 0x28);
   }
-
-calc_end: {
-  uint16_t sprite_addr = gfx_get_sprite_addr(accelXPos);
-  item_table[r5l * 2] = sprite_addr;
-  drv_eeprom_write_block(0xCEC8, item_table, 0x28);
-}
 }
 
 // ROM: 0x67de  66.6%

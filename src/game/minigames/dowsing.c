@@ -160,7 +160,7 @@ state2:
   }
   {
     uint8_t slot;
-    slot = accelZPos;
+    slot = dowsingSlot;
     if (slot == 3) {
       gCurSubstateA = 1;
       game_start_peer_session();
@@ -328,7 +328,7 @@ void ui_handle_dowsing_selection(void) {
   item_table = (uint8_t *)sbrk(0x0C);
   drv_eeprom_read_block(EEPROM_LOG_ITEMS, item_table, 0x0C);
 
-  accelZPos = save_find_empty_slot_32bit(item_table);
+  dowsingSlot = save_find_empty_slot_32bit(item_table);
 
   if ((RamCache_settingsByte & 1)) {
     game_check_wild_encounter();
