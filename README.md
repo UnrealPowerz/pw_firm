@@ -4,7 +4,7 @@ Byte-accurate C decompilation of the Pokewalker (Pokémon HeartGold/SoulSilver) 
 
 The goal is to reconstruct the original C source code as closely as possible — not just something that recompiles to equivalent behavior, but code that, when compiled with the original toolchain, produces output that matches the ROM byte-for-byte.
 
-**Current status:** all function implemented to some extent, 68.7% average match score.
+**Current status:** all function implemented to some extent, 76% average match score.
 Global variables are not all there yet. The project compiles but is not at all ready to run on an emulator -- though I hope we get there some day.
 
 ---

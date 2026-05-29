@@ -4,22 +4,22 @@
 #include "types.h"
 
 /* --- System Status Flags --- */
-extern volatile uint8_t statusFlags;
+#define statusFlags (*(volatile uint8_t *)0xF7B5u)
 #define statusFlags_BIT (((volatile status_flags_t *)&statusFlags)->BIT)
-extern uint8_t wakeupFlagMaybe[3];
+#define wakeupFlagMaybe ((uint8_t *)0xF7BBu)
 extern volatile uint8_t status_flags_f7f1;   /* DAT_f7f1 */
-extern volatile uint8_t walker_status_flags;  /* 0xF7B6 */
-extern volatile uint8_t _pad_f7b7;             /* 0xF7B7 (preserve layout) */
+#define walker_status_flags (*(volatile uint8_t *)0xF7B6u)
+#define _pad_f7b7 (*(volatile uint8_t *)0xF7B7u)
 #define walker_status_flags_BIT (((volatile walker_status_t *)&walker_status_flags)->BIT)
 
 /* --- LCD & UI / Timers --- */
-extern volatile uint8_t DAT_f7ab;            /* 0xF7AB */
-extern volatile uint8_t animTick;            /* 0xF7AC */
-extern volatile uint8_t irResultCode;            /* 0xF7AD IR result (?) */
-extern volatile uint8_t accelSampleCount;    /* 0xF7AE */
-extern volatile uint8_t activityTimer;       /* 0xF7AF */
-extern volatile uint8_t stepTimer;           /* 0xF7B0 */
-extern volatile uint8_t currentlyActiveView; /* 0xF7B1 — see enum view_id */
+#define DAT_f7ab (*(volatile uint8_t *)0xF7ABu)
+#define animTick (*(volatile uint8_t *)0xF7ACu)
+#define irResultCode (*(volatile uint8_t *)0xF7ADu)
+#define accelSampleCount (*(volatile uint8_t *)0xF7AEu)
+#define activityTimer (*(volatile uint8_t *)0xF7AFu)
+#define stepTimer (*(volatile uint8_t *)0xF7B0u)
+#define currentlyActiveView (*(volatile uint8_t *)0xF7B1u)
 
 /* View IDs dispatched by ui_dispatch_event / ui_dispatch_draw.
  * Walk-anim views are named from the walker's perspective: ARRIVAL when a
@@ -48,16 +48,16 @@ enum view_id {
     VIEW_ACCEL_DEBUG           = 0x17,
     VIEW_TEXT                  = 0x18
 };
-extern volatile uint8_t stepBatchSize;       /* 0xF7B2 */
-extern volatile uint8_t subStepCount;            /* 0xF7B3 sub_step_count (?) */
-extern volatile uint8_t batchAccumulator;            /* 0xF7B4 batch_accumulator (?) */
+#define stepBatchSize (*(volatile uint8_t *)0xF7B2u)
+#define subStepCount (*(volatile uint8_t *)0xF7B3u)
+#define batchAccumulator (*(volatile uint8_t *)0xF7B4u)
 
 /* --- Button Input --- */
-extern volatile uint8_t buttonInputRaw;
+#define buttonInputRaw (*(volatile uint8_t *)0xF798u)
 #define buttonInputRaw_BIT (((volatile button_input_t *)&buttonInputRaw)->BIT)
-extern volatile uint8_t prevButtonInputRaw;
-extern volatile uint8_t buttonTrigger;
-extern volatile uint8_t buttonHoldDuration;
+#define prevButtonInputRaw (*(volatile uint8_t *)0xF799u)
+#define buttonTrigger (*(volatile uint8_t *)0xF79Au)
+#define buttonHoldDuration (*(volatile uint8_t *)0xF79Bu)
 
 /* --- Pedometer & Activity --- */
 /* Persisted save block at 0xF780..F797 (see struct session_save in globals.c).
@@ -77,7 +77,7 @@ struct session_save {
     volatile uint8_t  _peer_slot_tail[3];  /* original alloc was uint32; high bytes always 0 */
     volatile uint8_t  settingsByte;
 };
-extern struct session_save g_save;
+#define g_save (*(struct session_save *)0xF780u)
 #define totalSteps                  (g_save.totalSteps)
 #define RamCache_STEP_COUNT_maybe   (g_save.RamCache_STEP_COUNT_maybe)
 #define rtcTime                     (g_save.rtcTime)
@@ -87,22 +87,22 @@ extern struct session_save g_save;
 #define stepWattCounter             (g_save.stepWattCounter)
 #define peerSlotIndex               (g_save.peerSlotIndex)
 
-extern volatile uint32_t sessionSteps;
-extern volatile uint16_t recentSessionSteps; /* daily_step_cap (?) */
-extern volatile uint16_t idleSeconds;
-extern volatile uint8_t rtcSec;
-extern volatile uint8_t rtcMin;
-extern volatile uint8_t rtcHour;
-extern volatile uint8_t pedTaskFlags;
+#define sessionSteps (*(volatile uint32_t *)0xF79Cu)
+#define recentSessionSteps (*(volatile uint16_t *)0xF7A0u)
+#define idleSeconds (*(volatile uint16_t *)0xF7A2u)
+#define rtcSec (*(volatile uint8_t *)0xF7A4u)
+#define rtcMin (*(volatile uint8_t *)0xF7A5u)
+#define rtcHour (*(volatile uint8_t *)0xF7A6u)
+#define pedTaskFlags (*(volatile uint8_t *)0xF7A7u)
 #define pedTaskFlags_BIT (((volatile ped_task_flags_t *)&pedTaskFlags)->BIT)
-extern volatile uint8_t scheduledNotifyHour;
-extern volatile uint8_t lcdShadeBase;
-extern volatile uint8_t menu_cursor;
+#define scheduledNotifyHour (*(volatile uint8_t *)0xF7A8u)
+#define lcdShadeBase (*(volatile uint8_t *)0xF7A9u)
+#define menu_cursor (*(volatile uint8_t *)0xF7AAu)
 
 /* --- Substate Management & Sensor Data --- */
-extern volatile uint8_t gCurSubstateY; /* 0xF7CD */
-extern volatile uint8_t gCurSubstateZ; /* 0xF7CE */
-extern volatile uint8_t gCurSubstateA; /* 0xF7CF (?) */
+#define gCurSubstateY (*(volatile uint8_t *)0xF7CEu)
+#define gCurSubstateZ (*(volatile uint8_t *)0xF7CFu)
+#define gCurSubstateA (*(volatile uint8_t *)0xF7D0u)
 /* gCurSubstateY -- bits 0/1 used as flags via bset/bclr/bst in ROM. */
 #define gCurSubstateY_BIT (((volatile byte_bits_t *)&gCurSubstateY)->BIT)
 
@@ -112,22 +112,21 @@ extern volatile uint8_t gCurSubstateA; /* 0xF7CF (?) */
 /* irPacketReceivedFlag -- bit 0 used; ROM emits bset/bclr. */
 #define irPacketReceivedFlag_BIT (((volatile byte_bits_t *)&irPacketReceivedFlag)->BIT)
 
-extern volatile uint8_t DAT_f7d1;      /* 0xF7D1 -- multi-purpose: standby
-   state bits 0/1/2 (sys_enter_standby/sys_update_standby_state) AND a
-   small counter / position byte in battle/dowsing/radar/social/pedometer.
-   ROM uses `bset/bclr/bnot @rN` for the bit operations -- access via
-   DAT_f7d1_BIT.bN to match. */
+#define DAT_f7d1 (*(volatile uint8_t *)0xF7D1u)
 #define DAT_f7d1_BIT (((volatile byte_bits_t *)&DAT_f7d1)->BIT)
-extern volatile uint8_t accelXPos; /* 0xF7D2 */
-extern volatile uint8_t dowsing_item_pos; /* 0xF7D3 (?) */
-extern volatile uint8_t accelYPos;       /* 0xF7D4 */
-extern volatile uint8_t DAT_f7d5;         /* 0xF7D5 */
-extern volatile uint16_t accelZPos;       /* 0xF7D6 */
-extern volatile uint8_t DAT_f7d8;         /* 0xF7D8 */
-extern volatile uint8_t DAT_f7d8_1;       /* 0xF7D9 */
-extern volatile uint16_t axisStepThresholdLo;        /* 0xF7DA */
-extern volatile uint16_t axisStepThresholdHi;        /* 0xF7DC */
-extern volatile uint16_t axisIdleThreshold;        /* 0xF7DE */
+#define accelXPos (*(volatile uint8_t *)0xF7D2u)
+#define dowsing_item_pos (*(volatile uint8_t *)0xF7D3u)
+#define accelYPos (*(volatile uint8_t *)0xF7D4u)
+#define DAT_f7d5 (*(volatile uint8_t *)0xF7D5u)
+#define accelZPos (*(volatile uint16_t *)0xF7D6u)
+/* 0xF7D6 is reused as a byte slot index in the dowsing state (ROM accesses it
+ * with mov.b @0xf7d6), overlapping accelZPos's high byte. */
+#define dowsingSlot (*(volatile uint8_t *)0xF7D6u)
+#define DAT_f7d8 (*(volatile uint8_t *)0xF7D8u)
+#define DAT_f7d8_1 (*(volatile uint8_t *)0xF7D9u)
+#define axisStepThresholdLo (*(volatile uint16_t *)0xF7DAu)
+#define axisStepThresholdHi (*(volatile uint16_t *)0xF7DCu)
+#define axisIdleThreshold (*(volatile uint16_t *)0xF7DEu)
 
 /* 0xF866..0xF955: 240-byte multi-purpose scratch region (sibling of g_scratch).
  * Memory is reused across mutually-exclusive subsystems:
@@ -174,7 +173,7 @@ union pw_scratch2 {
         volatile uint8_t  payload[0x80];        /* +0x70 IR payload (also overlaps step state when idle) */
     } as_struct;
 };
-extern union pw_scratch2 g_scratch2;
+#define g_scratch2 (*(union pw_scratch2 *)0xF866u)
 
 /* Backward-compatible names */
 #define ACCEL_SAMPLES_Y                (g_scratch2.as_struct.accel_y)
@@ -251,7 +250,7 @@ union pw_scratch {
         uint8_t  at_72[14];   /* +72..7F  trainerRecBuf_loc tail */
     } as_struct;
 };
-extern union pw_scratch g_scratch;
+#define g_scratch (*(union pw_scratch *)0xF7E6u)
 
 /* IR transfer buffer view (used during IR sync). */
 #define DAT_f7e6        (g_scratch.bytes)              /* uint8_t[128] -- decays to (uint8_t *) */
@@ -295,29 +294,29 @@ extern union pw_scratch g_scratch;
 
 /* --- Control Flow --- */
 /* Per-tick handler invoked from the main loop; type defined in types.h. */
-extern event_loop_func_t currentEventLoopFunc;  /* 0xF7E0 */
-extern event_loop_func_t savedEventLoopFunc;    /* 0xF7E2 -- snapshot before swap */
+#define currentEventLoopFunc (*(event_loop_func_t *)0xF7E0u)
+#define savedEventLoopFunc (*(event_loop_func_t *)0xF7E2u)
 
 /* --- RNG & Memory --- */
-extern volatile uint32_t nextRandom;
-extern volatile uint16_t heapPointer;
+#define nextRandom (*(volatile uint32_t *)0xF7C0u)
+#define heapPointer (*(volatile uint16_t *)0xF7BEu)
 
 /* --- LCD & EEPROM --- */
-extern volatile uint8_t lcdPageOffset; /* lcd_page_offset -- 0xF7E4 */
-extern volatile uint8_t _pad_f7e5;     /* 0xF7E5 (preserves layout — original code allocated 2 bytes) */
+#define lcdPageOffset (*(volatile uint8_t *)0xF7E4u)
+#define _pad_f7e5 (*(volatile uint8_t *)0xF7E5u)
 #define RamCache_settingsByte       (g_save.settingsByte)
 #define RamCache_settingsByte_BIT (((volatile settings_byte_t *)&RamCache_settingsByte)->BIT)
 
 /* --- Step Processing & IR Comm: see g_scratch2 union above for the full
  * 240-byte scratch region; these symbols are macros. Only globals NOT
  * inside the union are still declared here. */
-extern volatile uint8_t commandPos;
-extern volatile uint16_t lastCommandTime;
+#define commandPos (*(volatile uint8_t *)0xF7BAu)
+#define lastCommandTime (*(volatile uint16_t *)0xF7B8u)
 /* Absolute hardware-address aliases (no allocation -- compiler generates
  * direct pointer literals). */
 #define DAT_f088 (*(volatile uint8_t *)0xF088)
 #define DAT_f580 ((uint8_t *)0xF580)
-extern uint8_t eepromPageScratch[14];
+#define eepromPageScratch ((uint8_t *)0xF956u)
 extern volatile uint8_t ir_status;
 extern const uint8_t musicNoteYTableA[];
 extern const uint8_t musicNoteYTableB[];
@@ -368,12 +367,12 @@ extern const char factoryStr_OK[3];
 extern const char factoryStr_NG6[4];
 
 /* --- Sound Engine Globals (Fixed addresses) --- */
-extern uint8_t *soundData;
-extern uint8_t soundHeader;           /* 0xF7CC */
-extern uint8_t _pad_f7cd;             /* 0xF7CD (preserve layout) */
-extern uint8_t volume;                /* 0xF7C6 */
-extern uint8_t _pad_f7c7;             /* 0xF7C7 (preserve layout) */
-extern uint16_t noteDuration;
-extern uint16_t isSeparateNote;
+#define soundData (*(uint8_t * *)0xF7C4u)
+#define soundHeader (*(uint8_t *)0xF7CCu)
+#define _pad_f7cd (*(uint8_t *)0xF7CDu)
+#define volume (*(uint8_t *)0xF7C6u)
+#define _pad_f7c7 (*(uint8_t *)0xF7C7u)
+#define noteDuration (*(uint16_t *)0xF7C8u)
+#define isSeparateNote (*(uint16_t *)0xF7CAu)
 
 #endif /* GLOBALS_H */
