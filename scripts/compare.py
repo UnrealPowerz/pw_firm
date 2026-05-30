@@ -320,6 +320,23 @@ def _score_arg_pair(o_arg: str, g_arg: str, o_is_imm: bool, g_is_imm: bool) -> i
     return PENALTY_ARG_DIFF
 
 
+def arg_diffs(orig: Instr, gen: Instr) -> list[tuple[int, str, str, bool]]:
+    """For an aligned pair with matching mnemonic+arg-count, return the
+    per-argument mismatches as (index, orig_arg, gen_arg, is_immediate).
+
+    Returns [] when the mnemonic or arg count differ (those are structural
+    mismatches, not operand-value mismatches), or when the args fully match.
+    """
+    if orig.mnemonic != gen.mnemonic or len(orig.args) != len(gen.args):
+        return []
+    out = []
+    for idx, (o_a, g_a, o_i, g_i) in enumerate(
+            zip(orig.args, gen.args, orig.is_imm, gen.is_imm)):
+        if o_a != g_a:
+            out.append((idx, o_a, g_a, o_i and g_i))
+    return out
+
+
 def score_instruction_pair(orig: Instr, gen: Instr) -> tuple[int, str]:
     """Compare two instructions with matching opcodes. Returns (penalty, note)."""
     if orig.raw == gen.raw:

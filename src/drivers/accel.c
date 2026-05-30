@@ -112,29 +112,29 @@ void drv_accel_sample(void) {
   if ((uint8_t)currentlyActiveView == VIEW_ACCEL_DEBUG) {
     prev_count = (accelSampleCount + 0x3F) & 0x3F;
     if (accelSampleCount == 0) {
-      accelXPos = 0;
-      accelYPos = 0;
+      accelPos_X = 0;
+      accelPos_Y = 0;
       accelZPos = 0;
     }
 
     if ((int16_t)accelXSamples[accelSampleCount] -
             (int16_t)accelXSamples[prev_count] <
         0) {
-      accelXPos += (uint16_t)(-accelXSamples[accelSampleCount] +
-                              accelXSamples[prev_count]);
+      accelPos_X += (uint16_t)(-accelXSamples[accelSampleCount] +
+                               accelXSamples[prev_count]);
     } else {
-      accelXPos += (uint16_t)(accelXSamples[accelSampleCount] -
-                              accelXSamples[prev_count]);
+      accelPos_X += (uint16_t)(accelXSamples[accelSampleCount] -
+                               accelXSamples[prev_count]);
     }
 
     if ((int16_t)accelYSamples[accelSampleCount] -
             (int16_t)accelYSamples[prev_count] <
         0) {
-      accelYPos += (uint16_t)(-accelYSamples[accelSampleCount] +
-                              accelYSamples[prev_count]);
+      accelPos_Y += (uint16_t)(-accelYSamples[accelSampleCount] +
+                               accelYSamples[prev_count]);
     } else {
-      accelYPos += (uint16_t)(accelYSamples[accelSampleCount] -
-                              accelYSamples[prev_count]);
+      accelPos_Y += (uint16_t)(accelYSamples[accelSampleCount] -
+                               accelYSamples[prev_count]);
     }
 
     if ((int16_t)accelZSamples[accelSampleCount] -

@@ -72,7 +72,7 @@ void drv_ir_init_pins(void) {
 void drv_ir_init_output_pins(void) { drv_ir_init_pins(); }
 
 // ROM: 0x0772  68.0%  saves: er3,er4,er5,er6
-void drv_ir_send_packet(uint8_t cmdType, uint8_t pktLen, uint8_t subtype) {
+void drv_ir_send_packet(uint8_t pktLen, uint8_t cmdType, uint8_t subtype) {
   uint8_t *pkt = (uint8_t *)&commandType;
   uint16_t crc;
   uint16_t i;

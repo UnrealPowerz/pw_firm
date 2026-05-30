@@ -18,8 +18,14 @@
 //   appears correct.
 // Class: cannot-fix-without-compiler-change (sp_regsv$3 helper)
 // ROM: 0x4546  60.4%  saves: r3,r4,er5,er6 -> er5,er6
+/* The 4th arg (d_high) selects between trainer-data copy (a[0x27..0x51]) and
+ * the wild-pokemon EEPROM block (HOUR_MARKER + 0xBF50). The 6th arg
+ * (event_subtype) is a separate dispatch: 1..3 = picks a move slot from
+ * a[0x52 + (event_subtype-1)*0x10]; 4 = special case using EEPROM 0xBA44/0xBF08
+ * + EEPROM_SPECIAL_BYTE. Decompiler originally conflated them into a single
+ * d_high arg — fixed here so call sites pass the values to the right slot. */
 void game_log_interaction(uint8_t *a, uint8_t *b, uint8_t d_low, uint8_t d_high,
-                          uint16_t val_high) {
+                          uint16_t val_high, uint8_t event_subtype) {
   uint16_t i;
   uint16_t slot_off;
   uint8_t eeprom_val;
@@ -46,7 +52,7 @@ void game_log_interaction(uint8_t *a, uint8_t *b, uint8_t d_low, uint8_t d_high,
 
   b[0x84] = d_low;
   *((uint16_t *)(b + 0x0E)) = val_high;
-  *((uint32_t *)b) = *((uint32_t *)a);
+  *((uint32_t *)b) = rtcTime;
   *((uint16_t *)(b + 0x78)) = recentSessionSteps;
   *((uint32_t *)(b + 0x7C)) = sessionSteps;
   *((uint16_t *)(b + 0x0A)) = *((uint16_t *)a);
@@ -61,17 +67,14 @@ void game_log_interaction(uint8_t *a, uint8_t *b, uint8_t d_low, uint8_t d_high,
   /* Gender/ability bits from src[0x0D] */
   {
     uint8_t src_byte;
-    uint8_t dst_byte;
+    uint8_t rot_val;
     src_byte = a[0x0D];
-    dst_byte = b[0x85];
-    dst_byte &= 0xE0;
-    dst_byte |= (src_byte & 0x1F);
-    b[0x85] = dst_byte;
+    b[0x85] = (uint8_t)((b[0x85] & 0xE0) | (src_byte & 0x1F));
 
-    src_byte = (uint8_t)((a[0x0D] << 3) | (a[0x0D] >> 5)); /* Dummy rotate? */
-    b[0x85] =
-        (uint8_t)((b[0x85] & ~(0x03 << 1)) |
-                  (((uint8_t)((src_byte >> 6) | (src_byte << 2)) & 3) << 1));
+    /* ROM: rotl.b #3 then & 3 — extracts bits 5,6 to positions 0,1.
+     * The (x<<3)|(x>>5) form coaxes ch38 to emit rotl.b #3 rather than DIVXU. */
+    rot_val = (uint8_t)(((a[0x0D] << 3) | (a[0x0D] >> 5)) & 0x03);
+    b[0x85] = (uint8_t)((b[0x85] & ~(0x03 << 1)) | (rot_val << 1));
   }
   /* ROM: bld #1, a[0xE]; bst #7, @r6+0x85  (unconditional bit copy) */
   ((byte_bits_t *)&b[0x85])->BIT.b7 =
@@ -87,14 +90,14 @@ void game_log_interaction(uint8_t *a, uint8_t *b, uint8_t d_low, uint8_t d_high,
     drv_eeprom_read_block(0xBF50, b + 0x4C, 0x2A);
   }
 
-  if (d_high >= 1 && d_high <= 3) {
+  if (event_subtype >= 1 && event_subtype <= 3) {
     uint8_t *move_src;
     uint16_t off;
     uint8_t lo_bits;
     uint8_t hi_bits;
     uint8_t rot_val;
 
-    off = (uint16_t)(d_high - 1) * 0x10;
+    off = (uint16_t)(event_subtype - 1) * 0x10;
     move_src = a + 0x52 + off;
 
     *((uint16_t *)(b + 0x0C)) = *((uint16_t *)move_src);
@@ -107,7 +110,7 @@ void game_log_interaction(uint8_t *a, uint8_t *b, uint8_t d_low, uint8_t d_high,
     *(b + 0x86) =
         (uint8_t)((*(b + 0x86) & ~(0x03 << 5)) | ((rot_val & 0x03) << 5));
 
-  } else if (d_high == 4) {
+  } else if (event_subtype == 4) {
     uint16_t src_addr;
     uint8_t sp_byte;
     uint8_t lo_bits;
@@ -169,7 +172,9 @@ void game_log_poke_interaction(void) {
 
   sy = gCurSubstateY;
   buf = sbrk(0x88);
-  game_log_interaction(ctx, buf, 0x0D, 0x00, (uint16_t)sy);
+  /* ROM r0=tmp (trainer_buf), e0=buf (poke_buf). sy is the event_subtype
+   * (6th arg, pushed); val_high (e1) is 0. */
+  game_log_interaction(tmp, buf, 0x0D, 0x00, 0, (uint8_t)sy);
 }
 
 // ROM: 0x3b02  79.0%
@@ -194,7 +199,7 @@ void game_log_item_interaction(void) {
   val = ((uint32_t)(*(uint16_t *)(tmp + (gCurSubstateY * 2) + 0x8C)) << 16) |
         0x0B;
   game_log_interaction(tmp, buf, 0x0B, 0x00,
-                       *(uint16_t *)(tmp + (gCurSubstateY * 2) + 0x8C));
+                       *(uint16_t *)(tmp + (gCurSubstateY * 2) + 0x8C), 0);
 }
 
 // ROM: 0x5c0a  82.1%  saves: er6
@@ -256,9 +261,10 @@ void game_process_interaction_reward(uint8_t type) {
   void *buf;
   void *settings;
   uint8_t index;
+  uint16_t sprite_addr = 0;  /* used as val_high in the log call; only set in case 1 */
 
   gCurSubstateY = type;
-  accelXPos = ((const uint16_t *)interactionRewardPtrTable)[type];
+  accelPos_X = ((const uint16_t *)interactionRewardPtrTable)[type];
   ui_set_view(VIEW_BORED_GIFT);
   idleSeconds = 0;
 
@@ -269,7 +275,7 @@ void game_process_interaction_reward(uint8_t type) {
     } else {
       gCurSubstateZ = 0;
     }
-    gfx_get_sprite_addr((uint8_t)gCurSubstateZ);
+    sprite_addr = gfx_get_sprite_addr((uint8_t)gCurSubstateZ);
     sys_init_heap();
     buf = sbrk(0x0C);
     drv_eeprom_read_block(EEPROM_LOG_ITEMS, buf, 0x0C);
@@ -303,9 +309,11 @@ void game_process_interaction_reward(uint8_t type) {
   drv_eeprom_read_block(EEPROM_TRAINER_PROFILE, settings, 0xBE);
 
   {
-    uint8_t param = ((RamCache_settingsByte & 1));
+    uint8_t settings_bit = ((RamCache_settingsByte & 1));
     buf = sbrk(0x88);
-    game_log_interaction(settings, buf, type + 16, 0, (uint16_t)param);
+    /* ROM: r1h=settings_bit (d_high), e1=sprite_addr (val_high), push=0. */
+    game_log_interaction(settings, buf, type + 16, settings_bit,
+                         sprite_addr, 0);
   }
 
   if (type >= 2 && type <= 5) {
@@ -319,13 +327,13 @@ void game_process_interaction_reward(uint8_t type) {
 void ui_handle_bored_gift(void) {
   uint8_t *dest;
   if (drv_button_is_triggered(0x02)) {
-    dest = (uint8_t *)(uintptr_t)accelXPos;
+    dest = (uint8_t *)(uintptr_t)accelPos_X;
     if (*dest & 0x01) {
       ui_reset_substate();
       ui_set_view(VIEW_HOME);
     } else {
       dest += 4;
-      accelXPos = (uint16_t)(uintptr_t)dest;
+      accelPos_X = (uint16_t)(uintptr_t)dest;
       if (dest[1] == 0x10)
         return;
       drv_sound_play(dest[1]);
@@ -342,24 +350,24 @@ void ui_render_social_feelings(void) {
   sys_init_heap();
   sbrk(0xC0);
 
-  ptr = (uint8_t *) *(volatile uint16_t *) &accelXPos;
+  ptr = (uint8_t *)(uintptr_t)accelPos_X;
   if (*ptr & 0x02) {
     gfx_draw_own_pokemon_small(0x20, 0x04);
   }
 
-  ptr = (uint8_t *) *(volatile uint16_t *) &accelXPos;
+  ptr = (uint8_t *)(uintptr_t)accelPos_X;
   v = *ptr;
   if ((v & 0xE0) != 0xE0) {
     gfx_draw_small_route_icon((uint8_t)(((v << 3) | (v >> 5)) & 0x07));
   }
 
-  ptr = (uint8_t *) *(volatile uint16_t *) &accelXPos;
+  ptr = (uint8_t *)(uintptr_t)accelPos_X;
   if (*ptr & 0x04) {
     gfx_draw_item_symbol(0x14, 0x14);
   }
 
   r6l = gCurSubstateZ;
-  ptr = (uint8_t *) *(volatile uint16_t *) &accelXPos;
+  ptr = (uint8_t *)(uintptr_t)accelPos_X;
   v = ptr[2];
   if (v == 0xFC) {
     gfx_draw_own_pokemon_name(0x00, 0x20, 5);
@@ -371,7 +379,7 @@ void ui_render_social_feelings(void) {
     gfx_draw_text_box(0x20, v, 0x0D, 0);
   }
 
-  ptr = (uint8_t *) *(volatile uint16_t *) &accelXPos;
+  ptr = (uint8_t *)(uintptr_t)accelPos_X;
   v = *ptr;
   if ((v & 0x18) > 8) {
     gfx_draw_text_box(0x30, (uint8_t)(ptr[3] + gCurSubstateA), 0x0E, 0x01);
@@ -583,8 +591,12 @@ void game_rotate_interaction_log_record(void) {
   if (dowsing_item_pos == 0) {
     uint8_t accel_val = accelXPos;
     if (accel_val < 10) {
-      game_log_interaction(r3_settings, r6_gift, accel_val + 1, 0,
-                           (uint16_t)((RamCache_settingsByte & 1)));
+      /* ROM: r1h=settings_bit (d_high), e1=trainer[0x8C+accelXPos*2] uint16
+       * (val_high), push=0 (event_subtype). */
+      game_log_interaction(
+          r3_settings, r6_gift, accel_val + 1,
+          (uint8_t)((RamCache_settingsByte & 1)),
+          *(uint16_t *)(r3_settings + 0x8C + (uint16_t)accel_val * 2), 0);
     }
   }
 }
@@ -618,7 +630,7 @@ void ui_draw_music_note(uint8_t x, uint8_t y, uint8_t shift) {
   drv_eeprom_read_block(eeprom_addr, buf, 0x10);
 
   for (i = 0; i < 0x10; i++) {
-    *(buf + i) >>= (int8_t)shift;
+    *(buf + i) >>= shift;
   }
   drv_lcd_blit(x, y, buf, 8, 8);
 }

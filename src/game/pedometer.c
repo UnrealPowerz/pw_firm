@@ -82,8 +82,8 @@ void game_render_step_counter(void) {
   drv_eeprom_read_block(0x1CB0, ram_ptr, 0xC0);
 
   for (r6 = 0; r6 < 4; r6++) {
-    uint8_t *src_ptr = (uint8_t *)0;
-    drv_lcd_blit(0x20, 0x18, ram_ptr, (r6 & 1) * 0x18, src_ptr[0xBF25 + r6]);
+    drv_lcd_blit(radarYCoordTable[r6], (uint8_t)((r6 & 1) * 0x18),
+                 ram_ptr, 0x20, 0x18);
   }
 
   gfx_draw_text_box(0x30, 0x1E, 0x0F, 0x01);
@@ -209,7 +209,7 @@ void game_pedometer_increment_step(void) {
     }
 
     extra_buf = sbrk(0x88);
-    game_log_interaction(buf, extra_buf, 0x1B, (uint8_t)val, 0);
+    game_log_interaction(buf, extra_buf, 0x1B, (uint8_t)val, 0, 0);
   }
 
   recentSessionSteps = 0;
@@ -347,20 +347,20 @@ void game_process_accel_data(void) {
       if (steps != 0) {
         gCurSubstateA = sub + 1;
         threshold = axisStepThresholdLo;
-        tx = accelXPos;
+        tx = accelPos_X;
         if (tx < threshold)
           currentlyActiveView = VIEW_TEXT;
-        ty = accelYPos;
+        ty = accelPos_Y;
         if (ty < threshold)
           currentlyActiveView = VIEW_TEXT;
         tz = accelZPos;
         if (tz < threshold)
           currentlyActiveView = VIEW_TEXT;
         threshold = axisStepThresholdHi;
-        tx = accelXPos;
+        tx = accelPos_X;
         if (tx > threshold)
           currentlyActiveView = VIEW_TEXT;
-        ty = accelYPos;
+        ty = accelPos_Y;
         if (ty > threshold)
           currentlyActiveView = VIEW_TEXT;
         tz = accelZPos;
@@ -369,7 +369,7 @@ void game_process_accel_data(void) {
       }
     } else if (DAT_f7d1 < DAT_f7d8_1) {
       threshold = axisIdleThreshold;
-      if (accelXPos < threshold && accelYPos < threshold &&
+      if (accelPos_X < threshold && accelPos_Y < threshold &&
           accelZPos < threshold) {
         DAT_f7d1++;
       }

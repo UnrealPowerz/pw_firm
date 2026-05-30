@@ -283,7 +283,7 @@ void game_battle_process_turn(void) {
     return;
 
   rnd = sys_get_rng();
-  r = (uint8_t)((rnd >> 3) / 100);
+  r = (uint8_t)((rnd >> 3) % 100);
   move_type = (uint8_t)((DAT_f7d8 >> 5) & 0x07);
   index = (uint8_t)(move_type * 3);
 
@@ -299,7 +299,7 @@ void game_battle_process_turn(void) {
     uint8_t m;
     DAT_f7d8 &= 0xF9;
     m = (uint8_t)((DAT_f7d8 >> 3) & 3);
-    if (m == 0 || m == 2) {
+    if (m != 3) {
       gCurSubstateZ = 3;
       accelXPos = 0;
       dowsing_item_pos = 8;
@@ -342,7 +342,7 @@ void game_battle_process_turn(void) {
 // ROM: 0x2c32  79.0%
 uint8_t game_battle_check_capture_success(void) {
   uint32_t r = sys_get_rng();
-  uint8_t mod = (uint8_t)((r >> 3) / 100);
+  uint8_t mod = (uint8_t)((r >> 3) % 100);
 
   if (DAT_f7d1 == 0)
     return 0;
@@ -358,10 +358,11 @@ void game_battle_handle_finish(void) {
   if (sub_y > 3)
     return;
 
-  if (sub_y < 2) {
+  if (sub_y < 3) {
     uint8_t sub_result;
     void *buffer_30;
     void *battle_context;
+    void *poke_buf;
 
     sys_init_heap();
     buffer_30 = sbrk(0x30);
@@ -375,14 +376,15 @@ void game_battle_handle_finish(void) {
       return;
     }
 
-    drv_eeprom_read_block(EEPROM_POKEMON_SLOTS + (uint16_t)sub_result * 16,
+    drv_eeprom_read_block(EEPROM_POKEMON_SLOTS + (uint16_t)sub_y * 16,
                           (uint8_t *)buffer_30 + (uint16_t)sub_result * 16, 16);
     drv_eeprom_write_block(EEPROM_LOG_CONTEXT, buffer_30, 0x30);
 
     battle_context = sbrk(0xBE);
     drv_eeprom_read_block(EEPROM_TRAINER_PROFILE, battle_context, 0xBE);
 
-    sbrk(0x88);
+    poke_buf = sbrk(0x88);
+    game_log_interaction(battle_context, poke_buf, 0x0D, 0, 0, (uint8_t)gCurSubstateY);
   } else {
     void *buffer_68;
     void *m_context;
@@ -421,8 +423,7 @@ void game_battle_handle_finish(void) {
     drv_eeprom_read_block(EEPROM_TRAINER_PROFILE, m_context, 0xBE);
 
     poke_buf = (void *)sbrk(0x88);
-    game_log_interaction(m_context, poke_buf, 0x0E, 0x01,
-                         (uint16_t)gCurSubstateY);
+    game_log_interaction(m_context, poke_buf, 0x0E, 0x01, 0, (uint8_t)gCurSubstateY);
   }
 }
 
@@ -489,7 +490,7 @@ void ui_handle_battle(void) {
           gCurSubstateZ = 4;
         } else if (nm == 1) {
           gCurSubstateZ = 2;
-          DAT_f7d8 = (uint8_t)((DAT_f7d8 & 0xE7) | 0x20);
+          DAT_f7d8 = (uint8_t)((DAT_f7d8 & 0x1F) | 0x20);
           return;
         }
       } else {
@@ -523,11 +524,11 @@ void ui_handle_battle(void) {
         gCurSubstateA = a_val - 1;
         next_nm = (uint8_t)((DAT_f7d8 >> 3) & 0x03);
         if (next_nm == 0) {
-          DAT_f7d8 = (uint8_t)((DAT_f7d8 & 0xE7) | 0x20);
+          DAT_f7d8 = (uint8_t)((DAT_f7d8 & 0x1F) | 0x20);
         } else if (next_nm == 1) {
-          DAT_f7d8 = (uint8_t)((DAT_f7d8 & 0xE7) | 0x60);
+          DAT_f7d8 = (uint8_t)((DAT_f7d8 & 0x1F) | 0x60);
         } else if (next_nm == 2) {
-          DAT_f7d8 = (uint8_t)((DAT_f7d8 & 0xE7) | 0x40);
+          DAT_f7d8 = (uint8_t)((DAT_f7d8 & 0x1F) | 0x40);
         }
       } else {
         gCurSubstateZ = 5;
@@ -550,10 +551,10 @@ void ui_handle_battle(void) {
       drv_eeprom_read_block(EEPROM_TRAINER_PROFILE, buf, 0xBE);
       if (gCurSubstateY < 4) {
         ctx = sbrk(0x10);
-        game_log_interaction(ctx, buf, 0x10, 0x00, (uint16_t)gCurSubstateY);
+        game_log_interaction(ctx, buf, 0x10, 0x00, 0, (uint8_t)gCurSubstateY);
       } else {
         ctx = sbrk(0x110);
-        game_log_interaction(ctx, buf, 0x10, 0x01, (uint16_t)gCurSubstateY);
+        game_log_interaction(ctx, buf, 0x10, 0x01, 0, (uint8_t)gCurSubstateY);
       }
       if (watts >= 10) {
         accelZPos = 10;
@@ -588,10 +589,10 @@ void ui_handle_battle(void) {
       drv_eeprom_read_block(EEPROM_TRAINER_PROFILE, buf, 0xBE);
       if (gCurSubstateY < 4) {
         ctx = sbrk(0x10);
-        game_log_interaction(ctx, buf, 0x0F, 0x00, (uint16_t)gCurSubstateY);
+        game_log_interaction(ctx, buf, 0x0F, 0x00, 0, (uint8_t)gCurSubstateY);
       } else {
         ctx = sbrk(0x110);
-        game_log_interaction(ctx, buf, 0x0F, 0x01, (uint16_t)gCurSubstateY);
+        game_log_interaction(ctx, buf, 0x0F, 0x01, 0, (uint8_t)gCurSubstateY);
       }
       drv_sound_play(4);
       ui_reset_substate();
@@ -619,7 +620,6 @@ void ui_handle_battle(void) {
     if (x < item_pos)
       return;
     DAT_f7d8 &= ~0x01;
-    game_battle_handle_finish();
     gCurSubstateZ = 11;
     accelXPos = 0;
     dowsing_item_pos = 2;
@@ -634,12 +634,26 @@ void ui_handle_battle(void) {
     break;
 
   case 12:
-  case 14:
     if (x < item_pos)
       return;
     gCurSubstateZ = 13;
     accelXPos = 0;
     dowsing_item_pos = 4;
+    break;
+
+  case 14:
+    if (x < item_pos)
+      return;
+    if (DAT_f7d8_1 >= 3) {
+      gCurSubstateZ = 15;
+      accelXPos = 0;
+      dowsing_item_pos = 6;
+      drv_sound_play(7);
+    } else {
+      gCurSubstateZ = 13;
+      accelXPos = 0;
+      dowsing_item_pos = 4;
+    }
     break;
 
   case 13:
@@ -660,17 +674,22 @@ void ui_handle_battle(void) {
   case 15:
     if (x < item_pos)
       return;
-    drv_sound_play(0x07);
-    gCurSubstateZ = 2;
+    gCurSubstateZ = 16;
+    accelXPos = 0;
+    dowsing_item_pos = 6;
+    drv_sound_play(7);
     break;
 
   case 16:
     if (x < item_pos)
       return;
-    drv_sound_play(0x07);
-    gCurSubstateZ = 16;
-    accelXPos = 0;
-    dowsing_item_pos = 6;
+    if (!drv_button_is_triggered(0x0E))
+      return;
+    game_battle_handle_finish();
+    if (currentlyActiveView != VIEW_BATTLE)
+      return;
+    ui_reset_substate();
+    ui_set_view(VIEW_HOME);
     break;
 
   case 17:

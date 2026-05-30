@@ -94,7 +94,7 @@ void game_start_walk(void) {
 
   settings_bit = ((RamCache_settingsByte & 1)) ? 1 : 0;
   extra_buf = (uint8_t *)sbrk(0x88);
-  game_log_interaction(trainer_buf, extra_buf, 0x19, settings_bit, 0);
+  game_log_interaction(trainer_buf, extra_buf, 0x19, settings_bit, 0, 0);
 
   save_clear_data();
 }

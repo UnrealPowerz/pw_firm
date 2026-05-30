@@ -139,6 +139,297 @@ def print_summary(funcs: list[FuncInfo], threshold: float = 0.0):
     if grand_count > 0:
         print(f"{'TOTAL':<35}  {grand_pct/grand_count:>8.1f}%  {grand_count:>5}")
 
+# Control-flow mnemonics whose operands are branch/call targets. After
+# linking these resolve identically; the textual diff (numeric ROM address vs
+# our symbol/label) is noise, not a bug — so we never report their operands.
+_CTRL_FLOW = {
+    'jmp', 'jsr', 'bsr', 'rts', 'rte', 'bra', 'bt', 'bf',
+    'bra/s', 'bsr/s', 'beq', 'bne', 'bhi', 'bls', 'bcc', 'bhs',
+    'bcs', 'blo', 'bvc', 'bvs', 'bpl', 'bmi', 'bge', 'blt',
+    'bgt', 'ble',
+}
+
+# A token we can meaningfully compare across the two disassemblies: a pure
+# decimal number, optionally prefixed with '@' (data memory reference). This
+# excludes symbolic call/branch targets (e.g. '@_gfx_draw_text_box', a label)
+# whose numeric ROM form will never textually equal our symbol.
+_NUMERIC_TOK = re.compile(r'(@?)(-?\d+)$')
+
+# Stack-frame allocation: `add.w/sub.w #N, er7` (er7/r7/sp = stack pointer). The
+# immediate N is the local-frame size, which differs purely by ch38's register
+# allocation / spill decisions vs ROM — never a semantic constant. Exclude it.
+_STACK_ADJ = re.compile(r'^(add|sub)\b.*,\s*(e?r7|sp)$', re.IGNORECASE)
+
+# Function-call mnemonics whose targets we want to compare BY NAME (not by
+# numeric address). Conditional branches are excluded — their targets are
+# auto-generated labels that won't align across the two assemblers.
+_CALL_MNEMONICS = {'jsr', 'jmp', 'bsr'}
+
+# Compiler-runtime helpers ch38 may emit asymmetrically (callee-save trampolines,
+# divmod) — codegen artifacts, not call-target bugs. Skip them.
+_RUNTIME_PREFIXES = ('$', 'divmod', 'sp_regsv', 'sp_regrs')
+
+# Heuristics for "this isn't a real function name, it's an intra-function label."
+# Comparing those across the two assemblers is pure noise because the label names
+# don't share a convention (ROM has `lab_XXXX` / `switchd_XXXX_caseD_Y`; ch38
+# emits `l<digits>` and `$<name>$<id>` fragments for jumps within a function).
+_LABEL_PATTERNS = [
+    re.compile(r'^lab_[0-9a-f]+$'),
+    re.compile(r'^switchd_[0-9a-f]+'),
+    re.compile(r'^cased_'),
+    re.compile(r'^l\d+$'),
+    re.compile(r'^\$.+\$\d+$'),
+    re.compile(r'.+__[a-z_]+$'),   # ROM's `func__internal_label` form
+]
+
+
+def _is_label_like(name: str) -> bool:
+    return any(p.match(name) for p in _LABEL_PATTERNS)
+
+
+def _canon_call(tok: str) -> Optional[str]:
+    """Canonicalise an @<symbol> call target for name comparison across the
+    two disassemblies. Returns None when the target isn't a symbolic call
+    (numeric address, register-indirect, or a junk literal)."""
+    if not tok.startswith('@'):
+        return None
+    inner = tok[1:]
+    if not inner or inner.startswith('-') or inner[0].isdigit() or inner[0] == 'e' and len(inner) <= 3:
+        return None
+    if re.fullmatch(r'-?\d+', inner):  # @123 numeric
+        return None
+    if re.fullmatch(r'e?r[0-7][lh]?', inner):  # @er3 register-indirect
+        return None
+    # ch38 prefixes our C symbols with '_'; local labels get '__$name$id'.
+    # Strip ALL leading underscores so both `_drv_foo` and `__$label$N` lose
+    # the prefix uniformly.
+    inner = inner.lstrip('_')
+    return inner.lower()
+
+
+def _size_bits(raw: str) -> Optional[int]:
+    m = re.search(r'\.(b|w|l)\b', raw.lower())
+    return {'b': 8, 'w': 16, 'l': 32}.get(m.group(1)) if m else None
+
+
+def _io_norm(v: int) -> int:
+    """Normalise an 8-bit short-absolute I/O address to its full form.
+    asm38 renders @0xfb:8 as 0xfffb; objdump renders it as 0xfb. Same register."""
+    return (0xFF00 | v) if 0x80 <= v < 0x100 else v
+
+
+def _operand_bug(o_raw: str, g_raw: str, o_tok: str, g_tok: str) -> bool:
+    """True if two numeric operand tokens differ in a way that is a REAL bug
+    (not signed/unsigned display, not an immediate-vs-memory mis-pairing, not
+    an 8-bit-absolute I/O address rendered two ways).
+
+    - The '@' (memory-reference) prefix must match on both sides, otherwise the
+      aligner paired an immediate load with a memory access — meaningless.
+    - The .b/.w/.l size must match; differing size means the aligner paired
+      instructions of different width (e.g. a word load vs a byte load).
+    - Immediate values are compared modulo the operand width so 0xF780 == -2176
+      and 0x87 == -121 (signed display) are NOT flagged.
+    - '@' addresses are I/O-normalised so @0xfb == @0xfffb is NOT flagged.
+    """
+    om = _NUMERIC_TOK.match(o_tok)
+    gm = _NUMERIC_TOK.match(g_tok)
+    if not om or not gm:
+        return False
+    if om.group(1) != gm.group(1):   # '@' prefix mismatch -> different forms
+        return False
+    if _size_bits(o_raw) != _size_bits(g_raw):  # width mispairing
+        return False
+    o_val = int(om.group(2))
+    g_val = int(gm.group(2))
+    if om.group(1) == '@':           # memory reference: I/O-normalise
+        return _io_norm(o_val & 0xFFFF) != _io_norm(g_val & 0xFFFF)
+    bits = _size_bits(o_raw) or 32
+    mask = (1 << bits) - 1
+    return (o_val & mask) != (g_val & mask)
+
+
+def _func_operand_values(instrs: list[compare.Instr]) -> set[int]:
+    """Collect every numeric operand value in a function, at byte/word/long
+    masks, so we can ask 'does this ROM constant appear ANYWHERE on our side?'"""
+    vals: set[int] = set()
+    for ins in instrs:
+        for a in ins.args:
+            m = _NUMERIC_TOK.match(a)
+            if not m:
+                continue
+            v = int(m.group(2))
+            vals.add(v & 0xFFFFFFFF)
+            vals.add(v & 0xFFFF)
+            vals.add(v & 0xFF)
+    return vals
+
+
+def print_imm_report(funcs: list[FuncInfo], threshold: float = 0.0):
+    """Surface per-instruction operand-value mismatches (wrong addresses,
+    wrong constants, scrambled literal args) that the match% buries.
+
+    For each function we align instructions, then for every aligned pair whose
+    mnemonic + arg-count match but whose operands differ, print orig vs gen with
+    the differing argument(s) called out. These are the semantic bugs invisible
+    to the score: a scrambled `mov.w #imm` still counts as a near-match.
+
+    Only operands that are pure numerics on BOTH sides are reported — literal
+    immediates and resolved data addresses — so control-flow targets and
+    symbol-vs-address noise are excluded.
+
+    Each mismatch is tagged [MISSING] when the ROM operand value appears NOWHERE
+    in our version of the function (a genuinely wrong/absent constant — high
+    confidence) versus a value merely repositioned by the compiler's different
+    instruction ordering (likely benign reorder). Functions with [MISSING]
+    values are listed first.
+    """
+    total_mismatch = 0
+    total_missing = 0
+    funcs_with = 0
+    collected = []  # (fi, diffs, n_missing)
+    for fi in funcs:
+        rows, _ = compare.diff_functions(fi.ref_instrs, fi.our_instrs)
+        our_vals = _func_operand_values(fi.our_instrs)
+        diffs = []  # (orig_raw, gen_raw, [(idx,o,g,is_imm,missing)...])
+        n_missing = 0
+        for row in rows:
+            if row.orig is None or row.gen is None:
+                continue
+            if row.orig.mnemonic in _CTRL_FLOW:
+                continue
+            if _STACK_ADJ.match(row.orig.raw) or _STACK_ADJ.match(row.gen.raw):
+                continue
+            ad = []
+            for d in compare.arg_diffs(row.orig, row.gen):
+                if not _operand_bug(row.orig.raw, row.gen.raw, d[1], d[2]):
+                    continue
+                om = _NUMERIC_TOK.match(d[1])
+                rom_val = int(om.group(2)) & 0xFFFFFFFF
+                missing = rom_val not in our_vals
+                if missing:
+                    n_missing += 1
+                ad.append((*d, missing))
+            if ad:
+                diffs.append((row.orig.raw, row.gen.raw, ad))
+        if not diffs:
+            continue
+        if threshold and fi.match_pct >= threshold:
+            continue
+        collected.append((fi, diffs, n_missing))
+
+    # Functions with high-confidence [MISSING] constants first, then by address.
+    collected.sort(key=lambda c: (c[2] == 0, c[0].abs_addr))
+    for fi, diffs, n_missing in collected:
+        funcs_with += 1
+        total_mismatch += len(diffs)
+        total_missing += n_missing
+        tag = f", {n_missing} MISSING" if n_missing else ""
+        print(f"\n=== {fi.name} ===  {fi.abs_addr:04X}  {fi.match_pct:.1f}%  "
+              f"({len(diffs)} operand mismatch{'es' if len(diffs) != 1 else ''}{tag})")
+        for o_raw, g_raw, ad in diffs:
+            kinds = ','.join('imm' if is_imm else 'arg' for _, _, _, is_imm, _ in ad)
+            print(f"  ROM : {o_raw}")
+            print(f"  ours: {g_raw}   [{kinds}]")
+            for idx, o_a, g_a, _, missing in ad:
+                flag = '  <-- [MISSING]' if missing else ''
+                print(f"        arg{idx}: ROM {o_a}  !=  ours {g_a}{flag}")
+    print(f"\n{'─'*60}")
+    print(f"{funcs_with} function(s) with operand mismatches, "
+          f"{total_mismatch} mismatched instruction(s), "
+          f"{total_missing} high-confidence [MISSING] constant(s).")
+
+
+def _call_seq(instrs: list[compare.Instr]) -> list[str]:
+    """Ordered list of canonicalised call-target names in a function."""
+    out = []
+    for ins in instrs:
+        if ins.mnemonic not in _CALL_MNEMONICS:
+            continue
+        if not ins.args:
+            continue
+        name = _canon_call(ins.args[0])
+        if name is None:
+            continue
+        if any(name.startswith(p) for p in _RUNTIME_PREFIXES):
+            continue
+        if _is_label_like(name):
+            continue
+        out.append(name)
+    return out
+
+
+def print_calls_report(funcs: list[FuncInfo],
+                       mar_funcs: dict,
+                       threshold: float = 0.0):
+    """Compare the SEQUENCE of function-call targets per function, ROM (from
+    main.mar's symbolic disassembly) vs ours (from build/obj_*.s). Aligns the
+    two call sequences and reports substitutions ("ROM called X here, ours
+    calls Y"), plus calls present on one side only.
+
+    This catches wrong-function-call bugs that the immediate-value diff misses
+    because control-flow targets are filtered as ROM-numeric-vs-ours-symbolic
+    noise. Conditional branches aren't compared (their auto-generated label
+    names won't align across the two assemblers).
+    """
+    import difflib
+    total_diffs = 0
+    funcs_with = 0
+    collected = []
+    for fi in funcs:
+        rom_ins = mar_funcs.get(fi.name)
+        if rom_ins is None:
+            continue
+        rom_seq = _call_seq(rom_ins)
+        our_seq = _call_seq(fi.our_instrs)
+        if not rom_seq and not our_seq:
+            continue
+        sm = difflib.SequenceMatcher(None, rom_seq, our_seq, autojunk=False)
+        diffs = []
+        for tag, i1, i2, j1, j2 in sm.get_opcodes():
+            if tag == 'equal':
+                continue
+            if tag == 'replace':
+                pairs = min(i2 - i1, j2 - j1)
+                for k in range(pairs):
+                    diffs.append(('replace', rom_seq[i1 + k], our_seq[j1 + k]))
+                for k in range(pairs, i2 - i1):
+                    diffs.append(('rom_only', rom_seq[i1 + k], None))
+                for k in range(pairs, j2 - j1):
+                    diffs.append(('our_only', None, our_seq[j1 + k]))
+            elif tag == 'delete':
+                for k in range(i1, i2):
+                    diffs.append(('rom_only', rom_seq[k], None))
+            elif tag == 'insert':
+                for k in range(j1, j2):
+                    diffs.append(('our_only', None, our_seq[k]))
+        if not diffs:
+            continue
+        if threshold and fi.match_pct >= threshold:
+            continue
+        collected.append((fi, diffs, rom_seq, our_seq))
+
+    # Functions with `replace` diffs first (most actionable), then by address.
+    collected.sort(key=lambda c: (not any(d[0] == 'replace' for d in c[1]),
+                                  c[0].abs_addr))
+    for fi, diffs, rom_seq, our_seq in collected:
+        funcs_with += 1
+        total_diffs += len(diffs)
+        n_replace = sum(1 for d in diffs if d[0] == 'replace')
+        tag = f"  ({n_replace} substitution{'s' if n_replace != 1 else ''})" if n_replace else "  (insert/delete only)"
+        print(f"\n=== {fi.name} ===  {fi.abs_addr:04X}  {fi.match_pct:.1f}%"
+              f"  ROM:{len(rom_seq)} calls  ours:{len(our_seq)} calls{tag}")
+        for kind, r, o in diffs:
+            if kind == 'replace':
+                print(f"  SUBST : ROM calls {r}   ours calls {o}")
+            elif kind == 'rom_only':
+                print(f"  ROM-only : {r}")
+            else:
+                print(f"  ours-only: {o}")
+    print(f"\n{'─'*60}")
+    print(f"{funcs_with} function(s) with call-sequence diffs, "
+          f"{total_diffs} discrepancies total.")
+
+
 def print_detailed_list(funcs: list[FuncInfo], threshold: float = 0.0):
     print(f"\n{'Addr':<6} {'Size':>5} {'Match':>8}  {'Function':<40} {'Unit'}")
     print('─' * 100)
@@ -159,6 +450,8 @@ def main():
     ap.add_argument('--unit', help='Show detail for a unit')
     ap.add_argument('--func', help='Show detail for a function')
     ap.add_argument('--list', '-l', action='store_true', help='Show detailed list of all functions')
+    ap.add_argument('--imm', action='store_true', help='Report operand-value mismatches (wrong addr/const/scrambled args) hidden by the match%%')
+    ap.add_argument('--calls', action='store_true', help='Compare call-target name sequences vs main.mar (finds wrong-function-call bugs)')
     ap.add_argument('--threshold', type=float, default=0.0, help='Filter summary')
     args = ap.parse_args()
 
@@ -198,7 +491,22 @@ def main():
         _, pct = compare.diff_functions(ref_ins, gen_ins)
         funcs_info.append(FuncInfo(name, mfunc.addr, mfunc.size, func_to_unit.get(name, "unknown"), gen_ins, ref_ins, pct))
 
-    if args.func:
+    if args.imm:
+        subset = funcs_info
+        if args.func:
+            subset = [f for f in funcs_info if f.name == args.func or f.name == args.func.lstrip('_')]
+        elif args.unit:
+            subset = [f for f in funcs_info if f.unit == args.unit]
+        print_imm_report(subset, args.threshold)
+    elif args.calls:
+        subset = funcs_info
+        if args.func:
+            subset = [f for f in funcs_info if f.name == args.func or f.name == args.func.lstrip('_')]
+        elif args.unit:
+            subset = [f for f in funcs_info if f.unit == args.unit]
+        mar_funcs = compare.parse_mar(mar_path)
+        print_calls_report(subset, mar_funcs, args.threshold)
+    elif args.func:
         matches = [f for f in funcs_info if f.name == args.func or f.name == args.func.lstrip('_')]
         if not matches:
             print(f"Function '{args.func}' not found in generated objects.")

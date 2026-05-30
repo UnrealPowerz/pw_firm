@@ -115,13 +115,20 @@ struct session_save {
 #define DAT_f7d1 (*(volatile uint8_t *)0xF7D1u)
 #define DAT_f7d1_BIT (((volatile byte_bits_t *)&DAT_f7d1)->BIT)
 #define accelXPos (*(volatile uint8_t *)0xF7D2u)
+/* 16-bit "accel physics" view: the accel driver and game_process_accel_data
+ * read these positions as uint16 (mov.w) while game/UI code uses the byte form
+ * above for slot indices. */
+#define accelPos_X (*(volatile uint16_t *)0xF7D2u)
+#define accelPos_Y (*(volatile uint16_t *)0xF7D4u)
 #define dowsing_item_pos (*(volatile uint8_t *)0xF7D3u)
 #define accelYPos (*(volatile uint8_t *)0xF7D4u)
 #define DAT_f7d5 (*(volatile uint8_t *)0xF7D5u)
 #define accelZPos (*(volatile uint16_t *)0xF7D6u)
-/* 0xF7D6 is reused as a byte slot index in the dowsing state (ROM accesses it
- * with mov.b @0xf7d6), overlapping accelZPos's high byte. */
-#define dowsingSlot (*(volatile uint8_t *)0xF7D6u)
+/* 0xF7D6 is accessed as a BYTE (mov.b) in most game-logic contexts (dowsing
+ * slot index, radar countdown, etc.); only the accel-physics accumulator in
+ * drv_accel_sample treats it as the high byte of a uint16. This alias is the
+ * byte view. */
+#define accelZPos_b (*(volatile uint8_t *)0xF7D6u)
 #define DAT_f7d8 (*(volatile uint8_t *)0xF7D8u)
 #define DAT_f7d8_1 (*(volatile uint8_t *)0xF7D9u)
 #define axisStepThresholdLo (*(volatile uint16_t *)0xF7DAu)

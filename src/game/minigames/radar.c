@@ -29,7 +29,7 @@ void ui_render_pokeradar(void) {
     drv_lcd_blit(radarYCoordTable[i], (i & 1) * 0x18, buf, 0x20, 0x18);
   }
 
-  if (accelZPos != 0) {
+  if (accelZPos_b != 0) {
     drv_eeprom_read_block(0x1AF0 + base, buf, 0x100);
     drv_lcd_blit(radarYCoordTable[dowsing_item_pos] + 0x10,
                        (dowsing_item_pos & 1) * 0x18, (uint8_t *)buf + 0xC0,
@@ -74,7 +74,7 @@ void ui_handle_radar_grass_menu(void) {
       if (gCurSubstateA == dowsing_item_pos) {
         drv_sound_play(3);
         gCurSubstateZ = 3;
-        accelZPos = 0x10;
+        accelZPos_b = 0x10;
         return;
       }
       if (DAT_f7d1 == 0) {
@@ -133,15 +133,15 @@ void ui_handle_pokeradar(void) {
     return;
   }
 
-  if (accelZPos == 0)
+  if (accelZPos_b == 0)
     return;
-  accelZPos--;
-  if (accelZPos != 0)
+  accelZPos_b--;
+  if (accelZPos_b != 0)
     return;
 
   if ((int16_t)DAT_f7d1 < (int16_t)((uint16_t)accelXPos - 1)) {
     gCurSubstateZ = 1;
-    accelZPos = 1;
+    accelZPos_b = 1;
     DAT_f7d5 = 0;
     return;
   }
@@ -176,5 +176,5 @@ void game_pokeradar_init(void) {
   DAT_f7d5 = ram_ptr[0xBF1A];
   dowsing_item_pos = ((sys_get_rng() << 3) >> 8) &
                      3; /* Matches `shll.w r0` x 3 and taking high byte */
-  accelZPos = 0;
+  accelZPos_b = 0;
 }

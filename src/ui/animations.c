@@ -112,60 +112,54 @@ void ui_render_arrival_success(void) {
 #pragma option case=ifthen  /* pragma:auto */
 void ui_render_arrival_reward_info(void) {
   void *ptr;
-  uint16_t off;
-  uint16_t uninitializedE0;
+  uint16_t off = 0x280;
 
   sys_init_heap();
   ptr = sbrk(0x180);
-  off = 0x280;
 
   if (gCurSubstateA <= 7) {
     switch (gCurSubstateA) {
     case 0:
-      drv_eeprom_read_block(0xba80 + ((animTick & 1) * 0xc0), ptr, 0x180);
-      drv_lcd_blit(0x20, 8, ptr, 0x20, 0x18);
+      drv_eeprom_read_block(0xBA80 + ((animTick & 1) * 0xC0), ptr, 0x180);
+      drv_lcd_blit(0x20, 0x08, ptr, 0x20, 0x18);
+      gfx_draw_event_pokemon_info(0, 0x20, 5);
       break;
     case 1:
+      drv_eeprom_read_block(off + 0x1750, ptr, 0xC0);
+      drv_lcd_blit(0x20, 0x04, ptr, 0x20, 0x18);
+      gfx_draw_text_box(0x20, 0x13, 0x0D, 0x00);
+      break;
     case 2:
-      if (gCurSubstateA == 1) {
-        off += 0x1270;
-      } else {
-        off += 0x14f0;
-      }
-      drv_eeprom_read_block(off, ptr, 0x280);
-      drv_lcd_blit((uint8_t)((animTick & 1) * 0x80), 8, ptr, 0x20, 0x28);
-      gfx_draw_event_item_name(0x20, 0x13, 0x0D, 0);
+      gfx_draw_treasure_chest_icon(0x20, 0x04);
+      gfx_draw_event_item_name(0, 0x20, 0, 0x0D);
       break;
     case 3:
-      drv_eeprom_read_block(off + 0x1750, ptr, 0xc0);
-      drv_lcd_blit(0x20, 4, ptr, 0x20, 0x18);
-      gfx_draw_event_pokemon_info(0x20, 0x11, 0);
-      gfx_draw_treasure_chest_icon(0x20, 0x20);
+      drv_eeprom_read_block(off + 0x1750, ptr, 0xC0);
+      drv_lcd_blit(0x20, 0x04, ptr, 0x20, 0x18);
+      gfx_draw_text_box(0x20, 0x11, 0x0D, 0x00);
       break;
     case 4:
     case 5:
     case 6:
-    case 7:
-      if (gCurSubstateA == 4)
-        off += 0x238;
-      else if (gCurSubstateA == 5)
-        off += 0x238 + 0x10;
-      else if (gCurSubstateA == 6)
-        off += 0x258;
-      else if (gCurSubstateA == 7)
-        off += 0x268;
-      drv_eeprom_read_block(off, ptr, 0x10);
-      drv_lcd_blit(0x2c, 0x10, ptr, 8, 8);
-      gfx_draw_text_box(0x20, 0x0D, 0x12, 0x00);
+    case 7: {
+      uint16_t case_off;
+      if (gCurSubstateA == 4)      case_off = 0x238;
+      else if (gCurSubstateA == 5) case_off = 0x238 + 0x10;
+      else if (gCurSubstateA == 6) case_off = 0x258;
+      else                         case_off = 0x268;
+      drv_eeprom_read_block(off + case_off, ptr, 0x10);
+      drv_lcd_blit(0x2C, 0x10, ptr, 0x08, 0x08);
+      gfx_draw_text_box(0x20, 0x12, 0x0D, 0x00);
       break;
     }
-  } else {
-    gfx_draw_text_box(0x30, 0x0E, 0x0F, 0x00);
-    {
-      uint8_t z = gCurSubstateZ;
-      if (z < 0x10) {
-        gCurSubstateZ = z + 1;
-      }
+    }
+  }
+
+  gfx_draw_text_box(0x30, 0x0F, 0x0E, 0x00);
+  {
+    uint8_t z = gCurSubstateZ;
+    if (z < 0x10) {
+      gCurSubstateZ = z + 1;
     }
   }
 }
@@ -262,8 +256,8 @@ void ui_handle_event_reward_anim(void) {
                           0x10); /* reusing ptr1 to save register */
     stackVar = ((RamCache_settingsByte & 1)) << 8;
     ptr3 = sbrk(0x88);
-    game_log_interaction(ptr3, ptr1, 0x1D,
-                          (uint8_t)((RamCache_settingsByte & 1)), 4);
+    game_log_interaction(ptr1, ptr3, 0x1D,
+                          (uint8_t)((RamCache_settingsByte & 1)), 0, 4);
   } else if (gCurSubstateA == 2) {
     void *ptr1;
     uint16_t *ptr2;
@@ -275,8 +269,8 @@ void ui_handle_event_reward_anim(void) {
     drv_eeprom_read_block(EEPROM_WILD_POKE, ptr2, 0x188);
     stackVar = ((RamCache_settingsByte & 1)) << 8;
     ptr3 = sbrk(0x88);
-    game_log_interaction(ptr3, ptr1, 0x1C,
-                          (uint8_t)((RamCache_settingsByte & 1)), ptr2[3]);
+    game_log_interaction(ptr1, ptr3, 0x1C,
+                          (uint8_t)((RamCache_settingsByte & 1)), ptr2[3], 0);
   } else {
     ui_reset_substate();
     ui_set_view(VIEW_HOME);

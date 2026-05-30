@@ -14,15 +14,15 @@ void game_generate_encounter_dowsing(void) {
     uint8_t byte_bf7a = drv_eeprom_read_u8(EEPROM_EEP_STR);
     sys_init_heap();
     ram_ptr = sbrk(0x68);
-    if (gfx_xor_rect_ram(ram_ptr, byte_bf7a) != 0) {
-      if ((drv_eeprom_read_u8(EEPROM_STEP_HIST_FLAGS) & 0x20) != 0) {
+    if (gfx_xor_rect_ram(ram_ptr, byte_bf7a) == 0) {
+      if ((drv_eeprom_read_u8(EEPROM_STEP_HIST_FLAGS) & 0x20) == 0) {
         sys_init_heap();
         ram_ptr = sbrk(4);
         drv_eeprom_read_block(0xBF44, ram_ptr, 4);
         val = ((uint32_t)ram_ptr[1] << 16) | ((uint32_t)ram_ptr[2] << 8) |
               ram_ptr[3];
-        if (val < sessionSteps) {
-          if (((sys_get_rng() % 100) + val) >= ram_ptr[2]) {
+        if (val <= sessionSteps) {
+          if ((sys_get_rng() % 100) < ram_ptr[2]) {
             gCurSubstateY = 4;
             accelXPos = ((sys_get_rng() >> 3) & 1) + 3;
             return;
@@ -44,7 +44,7 @@ void game_generate_encounter_dowsing(void) {
 
   for (r6l = 0; r6l < 3; r6l++) {
     if (!game_check_step_unlock((uint16_t)(r6l * 2), 0x82, be_ptr)) {
-      if (be_ptr[0x88 + (r6l * 2)] >= rem) {
+      if (be_ptr[0x88 + r6l] > rem) {
         gCurSubstateY = r6l + 1;
         accelXPos = (r6l * -1) + ((sys_get_rng() >> 3) & 1) +
                     3; /* Wait, it's sys_get_rng()>>3 & 1 + (-r6l + r0l) ->
@@ -160,7 +160,7 @@ state2:
   }
   {
     uint8_t slot;
-    slot = dowsingSlot;
+    slot = accelZPos_b;
     if (slot == 3) {
       gCurSubstateA = 1;
       game_start_peer_session();
@@ -176,7 +176,7 @@ state2:
     trainer_buf = (uint8_t *)sbrk(0xBE);
     drv_eeprom_read_block(EEPROM_TRAINER_PROFILE, trainer_buf, 0xBE);
     gift_buf = (uint8_t *)sbrk(0x88);
-    game_log_interaction(trainer_buf, gift_buf, 0x0B, 0x00, (uint16_t)DAT_f7d8);
+    game_log_interaction(trainer_buf, gift_buf, 0x0B, 0x00, (uint16_t)DAT_f7d8, 0);
   }
 
 exit_to_main:
@@ -271,7 +271,7 @@ void game_check_wild_encounter(void) {
     goto no_encounter;
   }
 
-  if (gfx_xor_rect_ram(battle_buf, route_data[0x7B]) != 0) {
+  if (gfx_xor_rect_ram(battle_buf, route_data[0x7B]) == 0) {
     goto encounter;
   }
 
@@ -308,7 +308,7 @@ encounter:
       uint8_t *gift_buf;
       gift_buf = (uint8_t *)sbrk(0x88);
       game_log_interaction(trainer_buf, gift_buf, 0x0C, 0x01,
-                           (uint16_t)DAT_f7d8);
+                           (uint16_t)DAT_f7d8, 0);
     }
   }
 }
@@ -328,7 +328,7 @@ void ui_handle_dowsing_selection(void) {
   item_table = (uint8_t *)sbrk(0x0C);
   drv_eeprom_read_block(EEPROM_LOG_ITEMS, item_table, 0x0C);
 
-  dowsingSlot = save_find_empty_slot_32bit(item_table);
+  accelZPos_b = save_find_empty_slot_32bit(item_table);
 
   if ((RamCache_settingsByte & 1)) {
     game_check_wild_encounter();
