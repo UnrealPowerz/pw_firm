@@ -135,15 +135,12 @@ void drv_eeprom_write_u8(uint16_t addr, uint8_t val) {
     while (!SSSR_BIT.TDRE)
       ;
     SSTDR = 0x02; // WRITE
-    drv_eeprom_spi_transfer();
     while (!SSSR_BIT.TDRE)
       ;
     SSTDR = (uint8_t)(addr >> 8);
-    drv_eeprom_spi_transfer();
     while (!SSSR_BIT.TDRE)
       ;
     SSTDR = (uint8_t)addr;
-    drv_eeprom_spi_transfer();
     while (!SSSR_BIT.TDRE)
       ;
     SSTDR = val;
@@ -265,15 +262,12 @@ void drv_eeprom_write_block(uint16_t addr, const void *buf, uint16_t size) {
       while (!SSSR_BIT.TDRE)
         ;
       SSTDR = 0x02; // WRITE
-      drv_eeprom_spi_transfer();
       while (!SSSR_BIT.TDRE)
         ;
       SSTDR = (uint8_t)(cur_addr >> 8);
-      drv_eeprom_spi_transfer();
       while (!SSSR_BIT.TDRE)
         ;
       SSTDR = (uint8_t)cur_addr;
-      drv_eeprom_spi_transfer();
       while (s > 0) {
         while (!SSSR_BIT.TDRE)
           ;
@@ -341,15 +335,12 @@ void drv_eeprom_fill(uint16_t addr, uint16_t size, uint8_t val) {
       while (!SSSR_BIT.TDRE)
         ;
       SSTDR = 0x02; // WRITE
-      drv_eeprom_spi_transfer();
       while (!SSSR_BIT.TDRE)
         ;
       SSTDR = (uint8_t)(cur_addr >> 8);
-      drv_eeprom_spi_transfer();
       while (!SSSR_BIT.TDRE)
         ;
       SSTDR = (uint8_t)cur_addr;
-      drv_eeprom_spi_transfer();
       while (s > 0) {
         while (!SSSR_BIT.TDRE)
           ;
@@ -417,15 +408,12 @@ void drv_eeprom_write_page(uint16_t addr, const void *buf) {
     while (!SSSR_BIT.TDRE)
       ;
     SSTDR = 0x02; // WRITE
-    drv_eeprom_spi_transfer();
     while (!SSSR_BIT.TDRE)
       ;
     SSTDR = (uint8_t)(addr >> 8);
-    drv_eeprom_spi_transfer();
     while (!SSSR_BIT.TDRE)
       ;
     SSTDR = (uint8_t)addr;
-    drv_eeprom_spi_transfer();
     for (i = 0; i < 0x80; i++) {
       while (!SSSR_BIT.TDRE)
         ;
@@ -482,15 +470,12 @@ void drv_eeprom_write_u8_reliable(uint16_t addr, uint8_t val) {
     while (!SSSR_BIT.TDRE)
       ;
     SSTDR = 0x02; // WRITE
-    drv_eeprom_spi_transfer();
     while (!SSSR_BIT.TDRE)
       ;
     SSTDR = (uint8_t)(addr >> 8);
-    drv_eeprom_spi_transfer();
     while (!SSSR_BIT.TDRE)
       ;
     SSTDR = (uint8_t)addr;
-    drv_eeprom_spi_transfer();
     while (!SSSR_BIT.TDRE)
       ;
     SSTDR = val;

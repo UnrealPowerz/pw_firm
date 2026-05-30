@@ -116,9 +116,9 @@ uint8_t drv_adc_check_low_battery(uint16_t threshold) {
   target = (uint16_t)(((uint32_t)calib * threshold) / 20);
 
   if (drv_adc_sample() > target) {
-    return 0; /* Battery OK */
+    return 1;
   }
-  return 1; /* Battery Low */
+  return 0;
 }
 
 // ROM: 0x290a  96.3%

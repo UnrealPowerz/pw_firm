@@ -89,9 +89,11 @@ build/link.sub: $(OBJS)
 	@printf -- "-start=PIntPRG,P,PP,C,D\$$DSEC,D\$$BSEC,C\$$DSEC,C\$$BSEC,D/5E\r\n" >> build/link.sub.tmp
 	@printf -- "-start=CP/BB0E\r\n" >> build/link.sub.tmp
 
-	@printf -- "-start=B,R,S/F780\r\n"           >> build/link.sub.tmp
+	@printf -- "-start=B,R/F780\r\n"             >> build/link.sub.tmp
+	@printf -- "-start=S/FF80\r\n"               >> build/link.sub.tmp
 	@printf -- "-form=stype\r\n"             >> build/link.sub.tmp
 	@printf -- "-list=build\\linked.map\r\n" >> build/link.sub.tmp
+	@printf -- "-show=symbol\r\n" >> build/link.sub.tmp
 	@printf -- "-output=build\\linked.mot\r\n" >> build/link.sub.tmp
 	@printf -- "-exit\r\n"                   >> build/link.sub.tmp
 	@mv build/link.sub.tmp build/link.sub

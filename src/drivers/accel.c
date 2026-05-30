@@ -212,7 +212,7 @@ void drv_accel_write_reg(uint8_t addr, uint8_t val) {
 
 // ROM: 0x273c  68.7%  saves: r4,r6
 uint8_t drv_accel_init(void) {
-  uint8_t flags;
+  uint8_t flags[2];
   uint8_t tmp;
   uint8_t ssr;
 
@@ -222,9 +222,9 @@ uint8_t drv_accel_init(void) {
 
   drv_accel_write_reg(0x15, 0x80);
 
-  drv_accel_read_reg(0x02, 2, &flags);
+  drv_accel_read_reg(0x02, 2, flags);
 
-  if ((flags & 0x07) == 0x02) {
+  if ((flags[0] & 0x07) == 0x02) {
     drv_accel_read_reg(0x14, 1, &tmp);
     tmp = (tmp & 0xE0) | 0x06;
     drv_accel_write_reg(0x14, tmp);

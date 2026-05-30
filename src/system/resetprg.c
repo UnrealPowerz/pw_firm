@@ -69,8 +69,8 @@ __entry(vect = 0) void PowerON_Reset(void) {
   currentlyActiveView = VIEW_HOME;
   drv_rtc_init_timer_b();
 
-  set_ccr(0x00);
-  currentEventLoopFunc();
-
-  sleep();
+  while (1) {
+    set_ccr(0x00);
+    currentEventLoopFunc();
+  }
 }

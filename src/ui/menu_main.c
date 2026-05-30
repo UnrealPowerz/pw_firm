@@ -289,7 +289,7 @@ void ui_render_empty_eeprom(void) {
       for (i = 0; i < 0x10; i++) {
         buf[i] = walkerEmptyExtraGlyph[i] / 0x10;
       }
-      drv_lcd_blit(8, 8, buf, 8, 8);
+      drv_lcd_blit(0x2C, 0x30, buf, 8, 8);
     } else {
       drv_lcd_blit(0x20, 0x10, buf, 0x20, 0x20);
     }
