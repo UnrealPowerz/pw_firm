@@ -83,13 +83,13 @@ build/link.sub: $(OBJS)
 	done
 	@printf -- "-library=Z:\\\\work\\\\build\\\\lib3hn.lib\r\n" >> build/link.sub.tmp
 	@printf -- "-rom=D=R\r\n" >> build/link.sub.tmp
-	@printf -- "-optimize=symbol_delete,short_format,same_code\r\n" >> build/link.sub.tmp
+	@printf -- "-optimize=short_format,same_code\r\n" >> build/link.sub.tmp
 	@printf -- "-samesize=8\r\n" >> build/link.sub.tmp
 	@printf -- "-entry=_PowerON_Reset\r\n" >> build/link.sub.tmp
 	@printf -- "-start=PIntPRG,P,PP,C,D\$$DSEC,D\$$BSEC,C\$$DSEC,C\$$BSEC,D/5E\r\n" >> build/link.sub.tmp
 	@printf -- "-start=CP/BB0E\r\n" >> build/link.sub.tmp
 
-	@printf -- "-start=B,R/F780\r\n"             >> build/link.sub.tmp
+	@printf -- "-start=B,R/FE00\r\n"             >> build/link.sub.tmp
 	@printf -- "-start=S/FF80\r\n"               >> build/link.sub.tmp
 	@printf -- "-form=stype\r\n"             >> build/link.sub.tmp
 	@printf -- "-list=build\\linked.map\r\n" >> build/link.sub.tmp

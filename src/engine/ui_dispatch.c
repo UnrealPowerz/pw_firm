@@ -1,15 +1,15 @@
 #include "all_headers.h"
 
-// ROM: 0x693a  51.7%  saves: r6
+// ROM: 0x693a  61.7%  saves: r6
 void sys_set_handler(event_loop_func_t func) {
   savedEventLoopFunc = currentEventLoopFunc;
   currentEventLoopFunc = func;
 }
 
-// ROM: 0x69b8  97.5%
+// ROM: 0x69b8  100.0%
 void ui_set_view(uint8_t viewId) { currentlyActiveView = viewId; }
 
-// ROM: 0x6a1c  75.5%
+// ROM: 0x6a1c  77.0%
 void ui_reset_substate(void) {
   gCurSubstateY = 0;
   gCurSubstateZ = 0;
@@ -17,7 +17,7 @@ void ui_reset_substate(void) {
   DAT_f7d1 &= ~0x07;
 }
 
-// ROM: 0x7348  85.7%  saves: er2,er3,er4,er5,er6
+// ROM: 0x7348  86.1%  saves: er2,er3,er4,er5,er6
 void ui_dispatch_event(void) {
   sys_get_rng();
   switch (currentlyActiveView) {
@@ -93,7 +93,7 @@ void ui_dispatch_event(void) {
   PDR1 |= 0x01;
 }
 
-// ROM: 0x7406  84.2%  saves: er2,er3,er4,er5,er6
+// ROM: 0x7406  84.4%  saves: er2,er3,er4,er5,er6
 void ui_dispatch_draw(void) {
   switch (currentlyActiveView) {
   case VIEW_HOME:
@@ -173,5 +173,5 @@ void ui_dispatch_draw(void) {
   PDR1 |= 0x01;
 }
 
-// ROM: 0x974e  98.3%
+// ROM: 0x974e  100.0%
 void ui_clear_substate_y(void) { gCurSubstateY = 0; }

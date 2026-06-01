@@ -1,6 +1,6 @@
 #include "all_headers.h"
 
-// ROM: 0xb124  96.9%
+// ROM: 0xb124  99.4%
 void game_reset_step_data(uint8_t a) {
   if (a != 0) {
     totalSteps = 0;
@@ -16,7 +16,7 @@ void game_reset_step_data(uint8_t a) {
   save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (uint8_t *)&totalSteps, 0x18);
 }
 
-// ROM: 0x9328  75.6%
+// ROM: 0x9328  77.8%
 void game_reset_pedometer_flags(void) {
   DAT_f8ee = 0;
   pendingStepDetect = 0;
@@ -72,7 +72,7 @@ uint32_t game_pedometer_interpolate_batch(uint8_t flags, uint16_t arg2) {
   return n / (uint32_t)d;
 }
 
-// ROM: 0xa12c  63.2%
+// ROM: 0xa12c  75.2%
 void game_render_step_counter(void) {
   uint16_t r6;
   uint8_t *ram_ptr;
@@ -90,7 +90,7 @@ void game_render_step_counter(void) {
   gfx_draw_battery_low(0, 0);
 }
 
-// ROM: 0xa1a8  54.4%  saves: r6,r5
+// ROM: 0xa1a8  50.2%  saves: r6,r5
 uint8_t game_detect_activity(void) {
   uint16_t total;
   uint16_t prev;
@@ -136,14 +136,14 @@ uint8_t game_detect_activity(void) {
   return 0;
 }
 
-// ROM: 0xa2f6  82.5%
+// ROM: 0xa2f6  83.8%
 void game_check_pedometer_activity(void) {
   if (stepTimer == 0) {
     sys_wake_from_low_power();
   }
 }
 
-// ROM: 0xa32e  88.3%
+// ROM: 0xa32e  90.0%
 void game_pedometer_set_total(uint32_t val) {
   totalSteps;
   if (val >= 9999999) {
@@ -161,7 +161,7 @@ void game_pedometer_set_total(uint32_t val) {
  * matches.  Lesson: always check `bld` vs `btst` count for the global in
  * main.mar before sweeping it to bit-field form.
  * Class: do-not-bit-field */
-// ROM: 0xa34a  67.9%  saves: er2,r3,r5,er6
+// ROM: 0xa34a  69.0%  saves: er2,r3,r5,er6
 void game_dispatch_pedometer_task(void) {
   if (!statusFlags_BIT.pedometer_paused) {
     if ((pedTaskFlags & 0x01)) {
@@ -177,14 +177,14 @@ void game_dispatch_pedometer_task(void) {
   }
 }
 
-// ROM: 0xa396  97.1%
+// ROM: 0xa396  99.3%
 void game_pedometer_init_counters(void) {
   if (sessionTicksElapsed + 1 != 0) {
     sessionTicksElapsed++;
   }
 }
 
-// ROM: 0xa3aa  78.6%
+// ROM: 0xa3aa  78.0%
 void game_pedometer_increment_step(void) {
   statusFlags_BIT.battery_check_request = 1;
 
@@ -218,7 +218,7 @@ void game_pedometer_increment_step(void) {
   }
 }
 
-// ROM: 0xa45e  59.1%
+// ROM: 0xa45e  62.9%
 void game_rotate_step_history(void) {
   void *buf;
   uint8_t i;
@@ -252,7 +252,7 @@ void game_rotate_step_history(void) {
   }
 }
 
-// ROM: 0x9698  73.1%  saves: er6
+// ROM: 0x9698  72.7%  saves: er6
 uint32_t game_detect_steps_fft(volatile int16_t *fft_res) {
   uint16_t peakVal;
   uint16_t maxVal;
@@ -317,7 +317,7 @@ success:
 //   inc.w #2, r6`); ch38 emits one write + one increment per iteration.
 //   Body's accel-FFT pipeline, threshold checks, and step counting match.
 // Class: cannot-fix-without-compiler-change (callee-save set + loop unroll)
-// ROM: 0x945a  59.4%  saves: er2,er3,er4,er5,er6
+// ROM: 0x945a  78.2%  saves: er2,er3,er4,er5,er6
 void game_process_accel_data(void) {
   uint32_t steps;
   uint16_t i;
@@ -434,14 +434,14 @@ void game_process_accel_data(void) {
 // the carry flag; both callers do `bcs <skip>`. Passing `buf` explicitly is
 // the faithful, readable equivalent — it won't byte-match ROM (extra arg in a
 // register) but is semantically exact.
-// ROM: 0x4f50
+// ROM: 0x4f50  19.3%
 uint8_t game_check_step_unlock(uint16_t a, uint16_t b, const uint8_t *buf) {
   const uint8_t *p = buf + a + b;
   uint16_t threshold = (uint16_t)(p[0] | ((uint16_t)p[1] << 8));
   return (uint8_t)(sessionSteps < (uint32_t)threshold);
 }
 
-// ROM: 0x24ac  89.7%
+// ROM: 0x24ac  91.6%
 void game_pedometer_tick_counters(void) {
   if (subStepCount == stepBatchSize) {
     return;
@@ -483,7 +483,7 @@ void game_pedometer_tick_counters(void) {
   batchAccumulator -= 0x40;
 }
 
-// ROM: 0x1f3e  89.6%
+// ROM: 0x1f3e  91.1%
 void game_add_watts(uint16_t amount) {
   watts += amount;
   if (watts > 9999) {

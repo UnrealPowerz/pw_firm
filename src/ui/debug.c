@@ -200,7 +200,7 @@ cleanup:
   set_ccr(0x00);
 }
 
-// ROM: 0xaa42  96.5%
+// ROM: 0xaa42  98.4%
 void diag_init_test_mode(void) {
   gCurSubstateY = 0;
   gCurSubstateA = 0;
@@ -210,7 +210,7 @@ void diag_init_test_mode(void) {
   drv_lcd_set_contrast(4);
 }
 
-// ROM: 0xaa6c  70.3%
+// ROM: 0xaa6c  67.2%
 void ui_handle_debug_input(void) {
   uint8_t subY;
   uint8_t subA;
@@ -378,7 +378,7 @@ set_substate_y_and_clear_a:
   gCurSubstateA = 0;
 }
 
-// ROM: 0xad06  55.7%
+// ROM: 0xad06  50.3%
 void ui_render_debug(void) {
   uint8_t buf[6];
   void (*fn858a)(uint8_t, uint8_t, const char *);
@@ -523,7 +523,7 @@ case_d:
   }
 }
 
-// ROM: 0xaebc  71.2%
+// ROM: 0xaebc  66.1%
 void sys_init_debug_mode(void) {
   accelSampleCount = 0;
   gCurSubstateY = 0x10;
@@ -546,7 +546,7 @@ void sys_noop(void) {}
 //   from ROM (different sp offsets) so every `@(N, sp)` access diverges.
 // Class: cannot-fix-without-compiler-change (sp_regsv$3 helper + stack
 //   local layout)
-// ROM: 0xaefa  42.3%
+// ROM: 0xaefa  42.6%
 #pragma option noregexpansion /* pragma:auto */
 void ui_render_accel_debug(void) {
   uint8_t buf[6];
@@ -738,7 +738,7 @@ void diag_lcd_ssu_test_1(void) {
   PDR1 |= 0x01;
 }
 
-// ROM: 0x88e2  95.3%
+// ROM: 0x88e2  95.4%
 void diag_lcd_ssu_test_2(void) {
   uint8_t i;
   SSER = 0x80;
@@ -820,7 +820,7 @@ void diag_lcd_ssu_test_2(void) {
   PDR1 |= 0x01;
 }
 
-// ROM: 0x8a36  93.9%
+// ROM: 0x8a36  94.0%
 void diag_lcd_ssu_test_3(void) {
   uint8_t i;
   SSER = 0x80;

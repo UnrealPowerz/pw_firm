@@ -131,6 +131,10 @@ struct session_save {
 #define accelZPos_b (*(volatile uint8_t *)0xF7D6u)
 #define DAT_f7d8 (*(volatile uint8_t *)0xF7D8u)
 #define DAT_f7d8_1 (*(volatile uint8_t *)0xF7D9u)
+/* 0xF7D8 is also accessed as a 16-bit word in dowsing (item ID) — disassembly
+ * shows mov.w @DAT_f7d8 + drv_eeprom_write_block size 2. The byte alias above
+ * is used by battle.c and pedometer.c for flag/limit bytes. */
+#define DAT_f7d8_w (*(volatile uint16_t *)0xF7D8u)
 #define axisStepThresholdLo (*(volatile uint16_t *)0xF7DAu)
 #define axisStepThresholdHi (*(volatile uint16_t *)0xF7DCu)
 #define axisIdleThreshold (*(volatile uint16_t *)0xF7DEu)

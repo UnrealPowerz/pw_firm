@@ -1,6 +1,6 @@
 #include "all_headers.h"
 
-// ROM: 0x3dbc  82.8%  saves: r2,r5,r6 -> sys_epilogue_r2_r5_r6
+// ROM: 0x3dbc  83.3%  saves: r2,r5,r6 -> sys_epilogue_r2_r5_r6
 void ui_draw_ball_drop_anim(void) {
   void *ptr;
   uint16_t offset;
@@ -26,7 +26,7 @@ void ui_draw_ball_drop_anim(void) {
   gCurSubstateZ++;
 }
 
-// ROM: 0x3e34  74.6%  saves: r2,r5,r6 -> sys_epilogue_r2_r5_r6
+// ROM: 0x3e34  75.0%  saves: r2,r5,r6 -> sys_epilogue_r2_r5_r6
 void ui_draw_ball_sparkles_anim(void) {
   void *ptr;
   uint16_t dummy;
@@ -53,7 +53,7 @@ void ui_draw_ball_sparkles_anim(void) {
   }
 }
 
-// ROM: 0x3ece  73.5%  saves: r2,r5,r6 -> sys_epilogue_r2_r5_r6
+// ROM: 0x3ece  74.7%  saves: r2,r5,r6 -> sys_epilogue_r2_r5_r6
 void ui_draw_arrival_cloud_anim(void) {
   void *ptr;
   uint16_t dummy;
@@ -75,7 +75,7 @@ void ui_draw_arrival_cloud_anim(void) {
   }
 }
 
-// ROM: 0x3f32  75.5%  saves: r2,er3,r5 -> sys_epilogue_6
+// ROM: 0x3f32  76.0%  saves: r2,er3,r5 -> sys_epilogue_6
 void ui_draw_arrival_poke_anim(void) {
   uint16_t dummy;
   gfx_draw_home_pokemon(0x10, 8);
@@ -86,7 +86,7 @@ void ui_draw_arrival_poke_anim(void) {
   gCurSubstateZ++;
 }
 
-// ROM: 0x3f72  69.7%  saves: r2,r3,r4
+// ROM: 0x3f72  73.8%  saves: r2,r3,r4
 void ui_render_arrival_success(void) {
   uint16_t uninitializedE0;
   gfx_draw_own_pokemon_small(0x20, 4);
@@ -108,7 +108,7 @@ void ui_render_arrival_success(void) {
   }
 }
 
-// ROM: 0x3fc6  40.8%  saves: r2,r3,r4,r5,er6
+// ROM: 0x3fc6  50.6%  saves: r2,r3,r4,r5,er6
 #pragma option case=ifthen  /* pragma:auto */
 void ui_render_arrival_reward_info(void) {
   void *ptr;
@@ -164,7 +164,7 @@ void ui_render_arrival_reward_info(void) {
   }
 }
 
-// ROM: 0x40f8  94.5%
+// ROM: 0x40f8  95.8%
 void ui_handle_walk_arrival_anim(void) {
   uint8_t z;
   uint8_t y;
@@ -194,7 +194,7 @@ play:
 done:;
 }
 
-// ROM: 0x4148  96.1%
+// ROM: 0x4148  96.4%
 void ui_render_walk_arrival_anim(void) {
   uint8_t y = gCurSubstateY;
   if (y == 0) goto case0;
@@ -218,7 +218,7 @@ done: gfx_draw_battery_low(0, 0);
  * about the multi-bit fields of settings_byte_t -- those are tabled and
  * may require shift-based access to match.
  * Class: do-not-bit-field */
-// ROM: 0x4178  60.9%
+// ROM: 0x4178  66.1%
 void ui_handle_event_reward_anim(void) {
   uint16_t stackVar;
   uint8_t y = gCurSubstateY;
@@ -280,7 +280,7 @@ void ui_handle_event_reward_anim(void) {
   ui_set_view(VIEW_HOME);
 }
 
-// ROM: 0x42a0  96.1%
+// ROM: 0x42a0  96.4%
 void ui_render_event_reward_anim(void) {
   uint8_t y = gCurSubstateY;
   if (y == 0) goto case0;
@@ -299,7 +299,7 @@ done: gfx_draw_battery_low(0, 0);
  * + -cmncode (the ROM uses helper-call style for short functions like
  * this one, and ch38's $sp_regsv$3 + sys_epilogue tail-jump aligns well
  * with what compare_bin sees).  No further action recommended. */
-// ROM: 0x42d0  75.5%  saves: r2,er3,r5 -> sys_epilogue_6
+// ROM: 0x42d0  76.0%  saves: r2,er3,r5 -> sys_epilogue_6
 void ui_draw_poke_departure_anim(void) {
   uint16_t dummy;
   gfx_draw_home_pokemon(0x10, 8);
@@ -310,7 +310,7 @@ void ui_draw_poke_departure_anim(void) {
   gCurSubstateZ++;
 }
 
-// ROM: 0x4310  77.6%  saves: r2,r5,r6 -> sys_epilogue_r2_r5_r6
+// ROM: 0x4310  77.9%  saves: r2,r5,r6 -> sys_epilogue_r2_r5_r6
 void ui_draw_cloud_departure_anim(void) {
   void *ptr;
   uint16_t dummy;
@@ -328,7 +328,7 @@ void ui_draw_cloud_departure_anim(void) {
   gCurSubstateZ = 0;
 }
 
-// ROM: 0x4372  80.8%  saves: r2,r5,r6 -> sys_epilogue_r2_r5_r6
+// ROM: 0x4372  81.3%  saves: r2,r5,r6 -> sys_epilogue_r2_r5_r6
 void ui_draw_cloud_anim(void) {
   void *ptr;
   uint16_t uninitializedE0;
@@ -349,7 +349,7 @@ void ui_draw_cloud_anim(void) {
   gCurSubstateZ++;
 }
 
-// ROM: 0x43e4  81.5%  saves: r2
+// ROM: 0x43e4  86.0%  saves: r2
 void ui_render_departure_success(void) {
   uint16_t uninitializedE0;
 
@@ -374,7 +374,7 @@ void ui_render_departure_success(void) {
   }
 }
 
-// ROM: 0x4434  77.3%  saves: r2,r5,r6 -> sys_epilogue_r2_r5_r6
+// ROM: 0x4434  78.5%  saves: r2,r5,r6 -> sys_epilogue_r2_r5_r6
 void ui_render_operation_completed(void) {
   void *ptr;
   uint16_t uninitializedE0;
@@ -401,7 +401,7 @@ void ui_render_operation_completed(void) {
   }
 }
 
-// ROM: 0x449e  91.5%
+// ROM: 0x449e  92.6%
 void ui_handle_walk_departure_anim(void) {
   uint8_t z;
   uint8_t y;
@@ -436,7 +436,7 @@ done:
   ;
 }
 
-// ROM: 0x44f4  94.0%
+// ROM: 0x44f4  94.2%
 void ui_render_walk_departure_anim(void) {
   uint8_t y = gCurSubstateY;
   if (y == 2) goto case2;

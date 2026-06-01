@@ -1,6 +1,6 @@
 #include "all_headers.h"
 
-// ROM: 0x4f70  93.6%
+// ROM: 0x4f70  94.0%
 void drv_eeprom_spi_init(void) {
   CKSTPR2 |= 0x10;
   SSER = 0;
@@ -17,7 +17,7 @@ void drv_eeprom_spi_reset(void) {
   SSMR = 0x86;
 }
 
-// ROM: 0x4fa0  66.7%
+// ROM: 0x4fa0  90.6%
 uint8_t drv_eeprom_spi_transfer(void) {
   while (1) {
     if (SSSR_BIT.ORER) {
@@ -32,7 +32,7 @@ uint8_t drv_eeprom_spi_transfer(void) {
   return SSRDR;
 }
 
-// ROM: 0x552e  83.5%  saves: er3,er4,er5,er6
+// ROM: 0x552e  83.6%  saves: er3,er4,er5,er6
 uint8_t drv_eeprom_read_u8(uint16_t addr) {
   uint8_t status, val;
   uint8_t retries = 3;
@@ -92,7 +92,7 @@ uint8_t drv_eeprom_read_u8(uint16_t addr) {
   return 0xFF;
 }
 
-// ROM: 0x4fca  79.3%  saves: er3,er4,er5,er6
+// ROM: 0x4fca  89.6%  saves: er3,er4,er5,er6
 void drv_eeprom_write_u8(uint16_t addr, uint8_t val) {
   uint8_t status;
   uint8_t retries = 3;
@@ -153,7 +153,7 @@ void drv_eeprom_write_u8(uint16_t addr, uint8_t val) {
   }
 }
 
-// ROM: 0x5384  50.3%  saves: er3,er4,er5,er6
+// ROM: 0x5384  50.4%  saves: er3,er4,er5,er6
 void drv_eeprom_read_block(uint16_t addr, void *buf, uint16_t size) {
   uint8_t *p = (uint8_t *)buf;
   uint16_t s;
@@ -213,7 +213,7 @@ void drv_eeprom_read_block(uint16_t addr, void *buf, uint16_t size) {
   }
 }
 
-// ROM: 0x524e  78.5%  saves: er3,er4,er5,er6
+// ROM: 0x524e  78.7%  saves: er3,er4,er5,er6
 void drv_eeprom_write_block(uint16_t addr, const void *buf, uint16_t size) {
   const uint8_t *p = (const uint8_t *)buf;
   uint16_t s;
@@ -290,7 +290,7 @@ void drv_eeprom_write_block(uint16_t addr, const void *buf, uint16_t size) {
   }
 }
 
-// ROM: 0x5742  79.9%  saves: er3,er4,er5,er6
+// ROM: 0x5742  80.1%  saves: er3,er4,er5,er6
 void drv_eeprom_fill(uint16_t addr, uint16_t size, uint8_t val) {
   uint8_t retries = 3;
   statusFlags_BIT.eeprom_busy = 0;
@@ -363,7 +363,7 @@ void drv_eeprom_fill(uint16_t addr, uint16_t size, uint8_t val) {
   }
 }
 
-// ROM: 0x5874  65.9%  saves: er3,er4,er5,er6
+// ROM: 0x5874  80.4%  saves: er3,er4,er5,er6
 void drv_eeprom_write_page(uint16_t addr, const void *buf) {
   const uint8_t *p = (const uint8_t *)buf;
   uint8_t status;
@@ -428,7 +428,7 @@ void drv_eeprom_write_page(uint16_t addr, const void *buf) {
   }
 }
 
-// ROM: 0x5634  75.8%
+// ROM: 0x5634  86.0%
 void drv_eeprom_write_u8_reliable(uint16_t addr, uint8_t val) {
   uint8_t status;
   uint8_t retries = 3;

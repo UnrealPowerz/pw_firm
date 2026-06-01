@@ -1,6 +1,6 @@
 #include "all_headers.h"
 
-// ROM: 0x30a6  47.9%
+// ROM: 0x30a6  70.1%
 #pragma option noregexpansion /* pragma:auto */
 void ui_render_battle(void) {
   uint8_t *sprite_buf, *e2_buf, *e3_buf;
@@ -56,18 +56,19 @@ void ui_render_battle(void) {
 
     if (gCurSubstateZ == 10) {
       uint8_t x_offset = 0x2C - (accelXPos << 2);
-      uint16_t val = fftTwiddleTable[x_offset];
-      uint8_t y_screen = 0x14 - (uint8_t)(val >> 8);
+      const int16_t *twiddle = (const int16_t *)fftTwiddleTable;
+      int16_t val = twiddle[(uint16_t)accelXPos << 2];
+      uint8_t y_screen = (uint8_t)(0x14 - (uint8_t)((uint16_t)(val << 1) >> 8));
 
       readEeprom(0x280 + 0x1E0, e3_buf, 0x10);
       readEeprom(0x280 + 0x200, e2_buf, 0x08);
 
       drawToScreen((uint8_t)x_offset, y_screen, e3_buf, 8, 8);
-      gfx_alpha_blend(sprite_buf, 0x20, 0x18, e2_buf, e3_buf,
+      gfx_alpha_blend(sprite_buf, 0x20, 0x18, e3_buf, e2_buf,
                       x_offset - DAT_f7d5, y_screen, 0x08);
       drawToScreen((uint8_t)DAT_f7d5, 0, sprite_buf, 0x20, 0x18);
     } else {
-      gfx_draw_sprite_simple((uint8_t)DAT_f7d5, 0, 0x20, 0x18, sprite_buf);
+      gfx_draw_sprite_simple((uint8_t)DAT_f7d5, 0, 0x18, 0x20, sprite_buf);
     }
   }
 
@@ -84,10 +85,10 @@ void ui_render_battle(void) {
       if (accelXPos >= dowsing_item_pos) {
         if (!drv_sound_is_playing()) {
           if (gCurSubstateY < 4) {
-            gfx_draw_special_poke_name(0, 0x20, 5);
-          } else {
             gfx_draw_route_pokemon_name(0x00, 0x20,
-                                        (gCurSubstateY + 0xFF) & 0xFF, 0x05);
+                                        (uint8_t)(gCurSubstateY - 1), 0x05);
+          } else {
+            gfx_draw_special_poke_name(0, 0x20, 5);
           }
           gfx_draw_text_box(0x30, 0x1F, 0x0E, 0x01);
           goto switch_default;
@@ -95,7 +96,7 @@ void ui_render_battle(void) {
       }
       break;
     case 2:
-      readEeprom(0x1DD0 + (animTick & 1) * 0xC0, sprite_buf, 0x300);
+      readEeprom(0x280 + 0x1DD0, sprite_buf, 0x300);
       drawToScreen(0x00, 0x20, sprite_buf, 0x60, 0x20);
       goto switch_default;
     case 3: {
@@ -103,21 +104,23 @@ void ui_render_battle(void) {
       if (move_type == 0) {
         if (accelXPos == 4) {
           drv_sound_play(0x0B);
-          readEeprom(0x1BF0 + (animTick & 1) * 0xC0, sprite_buf, 0x1E0);
+          readEeprom(0x280 + 0x1BF0, sprite_buf, 0x80);
           drawToScreen(0x28, 0x00, sprite_buf, 0x10, 0x20);
-        } else if (accelXPos < 4) {
+        }
+        if (accelXPos >= 4) {
           gfx_draw_own_pokemon_name(0x00, 0x20, 5);
+          gfx_draw_text_box(0x30, 0x23, 0x0E, 0x00);
           goto switch_default;
         }
       } else if (move_type == 1) {
         if (accelXPos == 4)
           drv_sound_play(0x0C);
-        if (accelXPos < 4) {
+        if (accelXPos >= 4) {
           if (gCurSubstateY < 4) {
-            gfx_draw_special_poke_name(0, 0x20, 5);
-          } else {
             gfx_draw_route_pokemon_name(0x00, 0x20,
-                                        (gCurSubstateY + 0xFF) & 0xFF, 0x05);
+                                        (uint8_t)(gCurSubstateY - 1), 0x05);
+          } else {
+            gfx_draw_special_poke_name(0, 0x20, 5);
           }
           gfx_draw_text_box(0x30, 0x24, 0x0E, 0x00);
           goto switch_default;
@@ -125,9 +128,10 @@ void ui_render_battle(void) {
       } else if (move_type == 2) {
         if (accelXPos == 4) {
           drv_sound_play(0x0D);
-          readEeprom(0x1C70 + (animTick & 1) * 0xC0, sprite_buf, 0x1E0);
+          readEeprom(0x280 + 0x1C70, sprite_buf, 0x80);
           drawToScreen(0x28, 0x00, sprite_buf, 0x10, 0x20);
-        } else if (accelXPos < 4) {
+        }
+        if (accelXPos >= 4) {
           gfx_draw_text_box(0x20, 0x25, 0x0D, 0x00);
           gfx_draw_text_box(0x30, 0x26, 0x0E, 0x00);
           goto switch_default;
@@ -140,14 +144,15 @@ void ui_render_battle(void) {
       if (m_type == 0) {
         if (accelXPos == 4) {
           drv_sound_play(0x0B);
-          readEeprom(0x1BF0 + (animTick & 1) * 0xC0, sprite_buf, 0x1E0);
+          readEeprom(0x280 + 0x1BF0, sprite_buf, 0x80);
           drawToScreen(0x28, 0x00, sprite_buf, 0x10, 0x20);
-        } else if (accelXPos < 4) {
+        }
+        if (accelXPos >= 4) {
           if (gCurSubstateY < 4) {
-            gfx_draw_special_poke_name(0, 0x20, 5);
-          } else {
             gfx_draw_route_pokemon_name(0x00, 0x20,
-                                        (gCurSubstateY + 0xFF) & 0xFF, 0x05);
+                                        (uint8_t)(gCurSubstateY - 1), 0x05);
+          } else {
+            gfx_draw_special_poke_name(0, 0x20, 5);
           }
           gfx_draw_text_box(0x30, 0x23, 0x0E, 0x00);
           goto switch_default;
@@ -155,7 +160,7 @@ void ui_render_battle(void) {
       } else if (m_type == 1) {
         if (accelXPos == 4)
           drv_sound_play(0x0C);
-        if (accelXPos < 4) {
+        if (accelXPos >= 4) {
           gfx_draw_own_pokemon_name(0, 0x20, 5);
           gfx_draw_text_box(0x30, 0x24, 0x0E, 0x00);
           goto switch_default;
@@ -165,10 +170,10 @@ void ui_render_battle(void) {
     }
     case 5:
       if (gCurSubstateY < 4) {
-        gfx_draw_special_poke_name(0, 0x20, 5);
+        gfx_draw_route_pokemon_name(0x00, 0x20,
+                                    (uint8_t)(gCurSubstateY - 1), 0x05);
       } else {
-        gfx_draw_route_pokemon_name(0x00, 0x20, (gCurSubstateY + 0xFF) & 0xFF,
-                                    0x05);
+        gfx_draw_special_poke_name(0, 0x20, 5);
       }
       gfx_draw_text_box(0x30, 0x22, 0x0E, 0x00);
       goto switch_default;
@@ -179,10 +184,10 @@ void ui_render_battle(void) {
     case 7:
       if (accelXPos > 3) {
         if (gCurSubstateY < 4) {
-          gfx_draw_special_poke_name(0, 0x20, 5);
+          gfx_draw_route_pokemon_name(0x00, 0x20,
+                                      (uint8_t)(gCurSubstateY - 1), 0x05);
         } else {
-          gfx_draw_route_pokemon_name(0x00, 0x20, (gCurSubstateY + 0xFF) & 0xFF,
-                                      0x05);
+          gfx_draw_special_poke_name(0, 0x20, 5);
         }
         gfx_draw_text_box(0x30, 0x21, 0x0E, 0x01);
         goto switch_default;
@@ -198,7 +203,7 @@ void ui_render_battle(void) {
       gfx_draw_text_box(0x30, 0x27, 0x0F, 0x00);
       goto switch_default;
     case 11:
-      readEeprom((uint16_t)&gfx_draw_present_icon + 0x280, sprite_buf, 0xC0);
+      readEeprom(0x280 + 0x1CF0, sprite_buf, 0xC0);
       drawToScreen(0x08, 0x00, sprite_buf, 0x20, 0x18);
       break;
 
@@ -235,7 +240,7 @@ void ui_render_battle(void) {
     case 16:
       readEeprom(0x460, sprite_buf, 0x10);
       drawToScreen(20, 0x0C, sprite_buf, 8, 8);
-      if (gCurSubstateY >= 4) {
+      if (gCurSubstateY < 4) {
         gfx_draw_route_pokemon_name(0x00, 0x20, (uint8_t)(gCurSubstateY - 1),
                                     0x05);
       } else {
@@ -245,7 +250,7 @@ void ui_render_battle(void) {
       break;
 
     case 17:
-      readEeprom((uint16_t)&gfx_draw_present_icon + 0x280, sprite_buf, 0xC0);
+      readEeprom(0x280 + 0x1CF0, sprite_buf, 0xC0);
       drawToScreen(0x08, 0x00, sprite_buf, 0x20, 0x18);
       break;
     }
@@ -258,7 +263,7 @@ void ui_render_battle(void) {
   }
 }
 
-// ROM: 0x2938  96.9%
+// ROM: 0x2938  99.7%
 void game_start_battle(void) {
   gCurSubstateZ = 0;
   gCurSubstateA = 4;
@@ -272,7 +277,7 @@ void game_start_battle(void) {
   drv_sound_play(10);
 }
 
-// ROM: 0x2972  62.5%
+// ROM: 0x2972  59.2%
 void game_battle_process_turn(void) {
   uint32_t rnd;
   uint8_t r;
@@ -339,7 +344,7 @@ void game_battle_process_turn(void) {
   }
 }
 
-// ROM: 0x2c32  79.0%
+// ROM: 0x2c32  84.5%
 uint8_t game_battle_check_capture_success(void) {
   uint32_t r = sys_get_rng();
   uint8_t mod = (uint8_t)((r >> 3) % 100);
@@ -351,7 +356,7 @@ uint8_t game_battle_check_capture_success(void) {
   return 0;
 }
 
-// ROM: 0x2a96  73.4%  saves: er5,e6
+// ROM: 0x2a96  84.9%  saves: er5,e6
 void game_battle_handle_finish(void) {
   uint8_t sub_y = (uint8_t)(gCurSubstateY - 1);
 
@@ -434,7 +439,7 @@ void game_battle_handle_finish(void) {
 //   Body switch-jump-table structure matches.
 // Class: cannot-fix-without-compiler-change (ER-packing + no-prologue + constant
 //   hoisting). Same Tier-3 cluster as ui_render_battle / gfx_blit_to_buffer.
-// ROM: 0x2c62  50.2%
+// ROM: 0x2c62  54.1%
 void ui_handle_battle(void) {
   uint8_t sub_z = (uint8_t)gCurSubstateZ;
   uint8_t x = accelXPos;
@@ -454,7 +459,7 @@ void ui_handle_battle(void) {
       return;
     gCurSubstateZ = 1;
     accelXPos = 0;
-    dowsing_item_pos = 8;
+    dowsing_item_pos = 3;
     break;
 
   case 1:
@@ -471,36 +476,47 @@ void ui_handle_battle(void) {
 
   case 3: {
     uint8_t move_type;
-    accelYPos = battleAnimP3YFrames[x];
-    DAT_f7d5 = battleAnimP3XFrames[x];
+    uint8_t d1_val;
+    accelYPos = battleAnimP3YFrames[(uint16_t)x * 2];
+    DAT_f7d5 = battleAnimP3XFrames[(uint16_t)x * 2];
     if (drv_sound_is_playing())
       return;
     if (x < item_pos)
       return;
     accelYPos = 0x38;
     DAT_f7d5 = 8;
+    d1_val = DAT_f7d1;
     move_type = (uint8_t)((DAT_f7d8 >> 3) & 0x03);
     if (move_type == 0) {
-      uint8_t d1_val = DAT_f7d1;
-      if (d1_val > 1) {
-        uint8_t nm;
-        DAT_f7d1 = d1_val - 1;
-        nm = (uint8_t)((DAT_f7d8 >> 1) & 0x03);
-        if (nm == 0) {
-          gCurSubstateZ = 4;
-        } else if (nm == 1) {
-          gCurSubstateZ = 2;
-          DAT_f7d8 = (uint8_t)((DAT_f7d8 & 0x1F) | 0x20);
-          return;
-        }
-      } else {
-        DAT_f7d1 = 0;
-        drv_sound_play(14);
-        gCurSubstateZ = 7;
-        accelXPos = 0;
-        dowsing_item_pos = 0x0A;
-      }
+      uint8_t nm;
+      if (d1_val <= 1)
+        goto p1_empty;
+      DAT_f7d1 = d1_val - 1;
+      nm = (uint8_t)((DAT_f7d8 >> 1) & 0x03);
+      if (nm == 0)
+        goto adv_to_4;
+      if (nm != 1)
+        return;
+      gCurSubstateZ = 2;
+      DAT_f7d8 = (uint8_t)((DAT_f7d8 & 0x1F) | 0x20);
+      return;
+    } else if (move_type == 1) {
+      goto adv_to_4;
+    } else if (move_type == 2) {
+      if (d1_val <= 2)
+        goto p1_empty;
+      DAT_f7d1 = d1_val - 2;
+      goto adv_to_4;
     }
+    return;
+  p1_empty:
+    DAT_f7d1 = 0;
+    drv_sound_play(0x0E);
+    gCurSubstateZ = 7;
+    accelXPos = 0;
+    dowsing_item_pos = 0x0A;
+    break;
+  adv_to_4:
     gCurSubstateZ = 4;
     accelXPos = 0;
     dowsing_item_pos = 8;
@@ -508,8 +524,8 @@ void ui_handle_battle(void) {
 
   case 4: {
     uint8_t m_type;
-    accelYPos = battleAnimP4YFrames[x];
-    DAT_f7d5 = battleAnimP4XFrames[x];
+    accelYPos = battleAnimP4YFrames[(uint16_t)x * 2];
+    DAT_f7d5 = battleAnimP4XFrames[(uint16_t)x * 2];
     if (drv_sound_is_playing())
       return;
     if (x < item_pos)
@@ -518,26 +534,33 @@ void ui_handle_battle(void) {
     DAT_f7d5 = 8;
     m_type = (uint8_t)((DAT_f7d8 >> 1) & 0x03);
     if (m_type == 0) {
-      uint8_t a_val = gCurSubstateA;
-      if (a_val > 1) {
-        uint8_t next_nm;
-        gCurSubstateA = a_val - 1;
-        next_nm = (uint8_t)((DAT_f7d8 >> 3) & 0x03);
-        if (next_nm == 0) {
-          DAT_f7d8 = (uint8_t)((DAT_f7d8 & 0x1F) | 0x20);
-        } else if (next_nm == 1) {
-          DAT_f7d8 = (uint8_t)((DAT_f7d8 & 0x1F) | 0x60);
-        } else if (next_nm == 2) {
-          DAT_f7d8 = (uint8_t)((DAT_f7d8 & 0x1F) | 0x40);
-        }
-      } else {
+      uint8_t next_nm;
+      uint8_t a_new = (uint8_t)(gCurSubstateA - 1);
+      gCurSubstateA = a_new;
+      if (a_new == 0) {
         gCurSubstateZ = 5;
         accelXPos = 0;
         dowsing_item_pos = 6;
         return;
       }
+      next_nm = (uint8_t)((DAT_f7d8 >> 3) & 0x03);
+      if (next_nm == 0) {
+        DAT_f7d8 = (uint8_t)((DAT_f7d8 & 0x1F) | 0x20);
+      } else if (next_nm == 1) {
+        DAT_f7d8 = (uint8_t)((DAT_f7d8 & 0x1F) | 0x60);
+      } else if (next_nm == 2) {
+        DAT_f7d8 = (uint8_t)((DAT_f7d8 & 0x1F) | 0x40);
+      }
+      gCurSubstateZ = 2;
+      return;
     }
-    gCurSubstateZ = 2;
+    if (m_type == 1) {
+      gCurSubstateZ = 3;
+      accelXPos = 0;
+      dowsing_item_pos = 8;
+      return;
+    }
+    return;
   } break;
 
   case 5:

@@ -5,7 +5,7 @@ void ui_start_connection_app(void) {
   sys_init_io_ports(currentEventLoopFunc, sys_main_loop_low_power);
 }
 
-// ROM: 0x6a3e  92.5%
+// ROM: 0x6a3e  93.4%
 void ui_handle_home(void) {
   if (!(walker_status_flags_BIT.session_active)) {
     if (drv_button_is_triggered(2) || (statusFlags_BIT.pedometer_paused)) {
@@ -40,7 +40,7 @@ void ui_handle_home(void) {
   }
 }
 
-// ROM: 0x6b10  80.7%
+// ROM: 0x6b10  80.9%
 void ui_render_route_image(void) {
   uint8_t *ptr;
   uint16_t addr;
@@ -56,7 +56,7 @@ void ui_render_route_image(void) {
   drv_lcd_blit(0, 0x18, ptr, 0x20, 0x18);
 }
 
-// ROM: 0x6bf8  76.1%
+// ROM: 0x6bf8  75.7%
 void ui_render_home_route(void) {
   uint8_t *buf;
   uint8_t subA;
@@ -92,13 +92,13 @@ void ui_render_home_route(void) {
   }
 }
 
-// ROM: 0x6c88  97.5%
+// ROM: 0x6c88  100.0%
 void ui_show_status_screen(void) {
   gCurSubstateY = 0;
   gCurSubstateZ = 0;
 }
 
-// ROM: 0x6c94  91.8%
+// ROM: 0x6c94  92.5%
 void ui_handle_settings_menu(void) {
   if (drv_button_is_triggered(4)) {
     if (gCurSubstateZ == 0) {
@@ -119,7 +119,7 @@ void ui_handle_settings_menu(void) {
   }
 }
 
-// ROM: 0x6ce2  58.8%
+// ROM: 0x6ce2  65.3%
 void ui_handle_volume_menu(void) {
   uint8_t vol;
   uint16_t val;
@@ -146,7 +146,7 @@ void ui_handle_volume_menu(void) {
   }
 }
 
-// ROM: 0x6d6c  70.1%
+// ROM: 0x6d6c  70.6%
 void ui_handle_shade_menu(void) {
   uint8_t shade;
 
@@ -172,7 +172,7 @@ void ui_handle_shade_menu(void) {
   }
 }
 
-// ROM: 0x6dfc  78.1%
+// ROM: 0x6dfc  78.8%
 void ui_handle_settings(void) {
   if (gCurSubstateY == 0) {
     ui_handle_settings_menu();
@@ -194,7 +194,7 @@ void ui_handle_settings(void) {
   }
 }
 
-// ROM: 0x6e62  74.2%
+// ROM: 0x6e62  74.3%
 #pragma option noregexpansion /* pragma:auto */
 void ui_render_settings(void) {
   uint8_t *buf;
@@ -256,7 +256,7 @@ void ui_render_settings(void) {
   gfx_draw_battery_low(0x58, 0);
 }
 
-// ROM: 0x703c  66.0%
+// ROM: 0x703c  70.4%
 void ui_render_empty_eeprom(void) {
   uint8_t *buf;
   uint16_t i;
@@ -296,7 +296,7 @@ void ui_render_empty_eeprom(void) {
   }
 }
 
-// ROM: 0x711a  68.0%
+// ROM: 0x711a  24.0%
 void ui_render_sad_walker(void) {
   uint8_t *buf;
   uint8_t *dst;
@@ -329,7 +329,7 @@ void ui_render_sad_walker(void) {
   }
 }
 
-// ROM: 0x71a4  66.5%
+// ROM: 0x71a4  72.2%
 void ui_render_happy_walker(uint8_t show_ir) {
   uint8_t *buf;
   uint8_t *dst;
@@ -374,7 +374,7 @@ void ui_draw_ir_icon(uint8_t show_ir) {
   gfx_draw_text_box(0x30, 0, 0x0F, 0x00);
 }
 
-// ROM: 0x74bc  85.8%
+// ROM: 0x74bc  86.9%
 void ui_render_home_bar(void) {
   uint8_t *buf;
   uint8_t flags;
@@ -472,7 +472,7 @@ void ui_render_home_bar(void) {
   gfx_draw_battery_low(0, 0);
 }
 
-// ROM: 0x9756  67.6%
+// ROM: 0x9756  74.7%
 void ui_handle_main_menu(void) {
   uint16_t cost;
   const uint8_t *costTable = menuItemCostTable;
@@ -489,7 +489,6 @@ void ui_handle_main_menu(void) {
     cost = costTable[menu_cursor];
     if (watts < cost) {
       gCurSubstateY = 1;
-      gCurSubstateY = 4;
       drv_sound_play(2);
       return;
     }
@@ -500,7 +499,6 @@ void ui_handle_main_menu(void) {
       case 0:
         if (!(walker_status_flags_BIT.walking)) {
           gCurSubstateY = 2;
-          gCurSubstateY = 4;
           drv_sound_play(2);
           return;
         }
@@ -532,26 +530,27 @@ void ui_handle_main_menu(void) {
         ui_set_view(VIEW_TRAINER_CARD);
         ui_reset_trainer_card_state();
         return;
-      case 4:
-        ui_load_inventory_mask((uint16_t *)&accelXPos);
-        if (accelXPos != 0) {
-          gCurSubstateA = accelXPos;
-          accelXPos = *(uint16_t *)((uintptr_t)&accelXPos + 2);
+      case 4: {
+        uint16_t mask[2];
+        ui_load_inventory_mask(mask);
+        if (mask[0] != 0) {
+          *(volatile uint16_t *)&gCurSubstateA = mask[0];
+          accelPos_X = mask[1];
           ui_stats_reset_cursor();
           ui_set_view(VIEW_POKE_ITEMS);
           return;
         }
-        if (*(uint16_t *)((uintptr_t)&accelXPos + 2) != 0) {
-          gCurSubstateA = accelXPos;
-          accelXPos = *(uint16_t *)((uintptr_t)&accelXPos + 2);
+        if (mask[1] != 0) {
+          *(volatile uint16_t *)&gCurSubstateA = mask[0];
+          accelPos_X = mask[1];
           ui_set_stats_view_item();
           ui_set_view(VIEW_GIFTS);
           return;
         }
         gCurSubstateY = 3;
-        gCurSubstateY = 4;
         drv_sound_play(2);
         return;
+      }
       case 5:
         ui_show_status_screen();
         ui_set_view(VIEW_SETTINGS);
@@ -561,10 +560,14 @@ void ui_handle_main_menu(void) {
   }
 
   if (drv_button_is_triggered(4)) {
-    if (menu_cursor != 0) {
-      menu_cursor = (uint8_t)((menu_cursor + 5) % 6);
-      drv_sound_play(2);
+    if (menu_cursor == 0) {
+      ui_reset_substate();
+      ui_set_view(VIEW_HOME);
+      drv_sound_play(1);
+      return;
     }
+    menu_cursor = (uint8_t)((menu_cursor + 5) % 6);
+    drv_sound_play(2);
   }
 
   if (drv_button_is_triggered(8)) {
@@ -595,7 +598,7 @@ void ui_handle_main_menu(void) {
 //   pattern from the trainer_card.c sister functions).
 // Class: cannot-fix-without-compiler-change (ER-register constant packing)
 //   + needs gfx_blit_to_buffer signature investigation
-// ROM: 0x9930  67.9%
+// ROM: 0x9930  69.1%
 #pragma option noregexpansion /* pragma:auto */
 void ui_render_main_menu(void) {
   uint8_t *sprite_buf, *e0_buf;
@@ -608,7 +611,7 @@ void ui_render_main_menu(void) {
 
   /* Current selection item rendering */
   {
-    uint16_t addr = (uint16_t)menu_cursor * 0x140 + 0x410 + base;
+    uint16_t addr = (uint16_t)menu_cursor * 0x140 + 0x690 + base;
     drv_eeprom_read_block(addr, sprite_buf, 0x140);
     drv_lcd_blit(8, 0, sprite_buf, 0x50, 0x10);
   }
@@ -620,14 +623,14 @@ void ui_render_main_menu(void) {
     }
 
     if ((uint8_t)i == menu_cursor) {
-      uint16_t cursor_addr = (uint16_t)((animTick & 1) + 3) * 0x10 + base - 8;
+      uint16_t cursor_addr = (uint16_t)((animTick & 1) + 3) * 0x10 + 0x278 + base;
       drv_eeprom_read_block(cursor_addr, sprite_buf, 0x10);
       gfx_blit_to_buffer(8, 8, 4, (uint8_t)(mainMenuYCoords[i] - 8),
                          sprite_buf, e0_buf, 0x10);
     }
 
     {
-      uint16_t item_addr = 0xE10 + (uint16_t)i * 0x40;
+      uint16_t item_addr = 0xE10 + base + (uint16_t)i * 0x40;
       drv_eeprom_read_block(item_addr, sprite_buf, 0x40);
       gfx_blit_to_buffer(0x10, 0x10, 0, mainMenuYCoords[i],
                          sprite_buf, e0_buf, 0x10);
@@ -645,11 +648,11 @@ void ui_render_main_menu(void) {
     }
 
     if (menu_cursor < 2) {
-      drv_eeprom_read_block(0x1A0, sprite_buf, 0x40);
+      drv_eeprom_read_block(base + 0x1A0, sprite_buf, 0x40);
       drv_lcd_blit(0x50, 0x30, sprite_buf, 0x10, 0x10);
       drv_lcd_blit(0x18, 0x30, sprite_buf, 0x10, 0x10);
 
-      drv_eeprom_read_block(0x180, sprite_buf, 0x20);
+      drv_eeprom_read_block(base + 0x180, sprite_buf, 0x20);
       drv_lcd_blit(0x28, 0x30, sprite_buf, 8, 0x10);
     }
   } else if (gCurSubstateY == 1) {
@@ -660,7 +663,7 @@ void ui_render_main_menu(void) {
     gfx_draw_text_box(0x30, 0x16, 0x0F, 0x01);
   }
 
-  drv_eeprom_read_block(0x338, sprite_buf, 0x40);
+  drv_eeprom_read_block(base + 0x338, sprite_buf, 0x40);
   drv_lcd_blit(0, 0, sprite_buf, 8, 0x10);
 
   drv_lcd_blit(0x58, 0, sprite_buf + 0x20, 8, 0x10);

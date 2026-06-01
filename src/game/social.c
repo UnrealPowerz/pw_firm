@@ -24,6 +24,7 @@
  * a[0x52 + (event_subtype-1)*0x10]; 4 = special case using EEPROM 0xBA44/0xBF08
  * + EEPROM_SPECIAL_BYTE. Decompiler originally conflated them into a single
  * d_high arg — fixed here so call sites pass the values to the right slot. */
+// ROM: 0x4546  62.9%  saves: r3,r4,er5,er6 -> er5,er6
 void game_log_interaction(uint8_t *a, uint8_t *b, uint8_t d_low, uint8_t d_high,
                           uint16_t val_high, uint8_t event_subtype) {
   uint16_t i;
@@ -143,13 +144,13 @@ void game_log_interaction(uint8_t *a, uint8_t *b, uint8_t d_low, uint8_t d_high,
   save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (void *)&totalSteps, 0x18);
 }
 
-// ROM: 0x3a68  98.3%
+// ROM: 0x3a68  100.0%
 void game_start_peer_session(void) {
   gCurSubstateZ = 1;
   (void)0;
 }
 
-// ROM: 0x3a70  71.8%
+// ROM: 0x3a70  82.4%
 void game_log_poke_interaction(void) {
   uint8_t *ctx;
   uint8_t *tmp;
@@ -177,7 +178,7 @@ void game_log_poke_interaction(void) {
   game_log_interaction(tmp, buf, 0x0D, 0x00, 0, (uint8_t)sy);
 }
 
-// ROM: 0x3b02  79.0%
+// ROM: 0x3b02  74.7%
 void game_log_item_interaction(void) {
   uint8_t *ctx;
   uint8_t *tmp;
@@ -202,7 +203,7 @@ void game_log_item_interaction(void) {
                        *(uint16_t *)(tmp + (gCurSubstateY * 2) + 0x8C), 0);
 }
 
-// ROM: 0x5c0a  82.1%  saves: er6
+// ROM: 0x5c0a  82.3%  saves: er6
 void game_init_peer_identity(void) {
   register struct trainer_record *rec;
   register uint8_t *temp_buf;
@@ -256,7 +257,7 @@ void game_init_peer_identity(void) {
   }
 }
 
-// ROM: 0x5d52  74.6%
+// ROM: 0x5d52  78.9%
 void game_process_interaction_reward(uint8_t type) {
   void *buf;
   void *settings;
@@ -323,7 +324,7 @@ void game_process_interaction_reward(uint8_t type) {
   }
 }
 
-// ROM: 0x5e9e  65.8%
+// ROM: 0x5e9e  71.2%
 void ui_handle_bored_gift(void) {
   uint8_t *dest;
   if (drv_button_is_triggered(0x02)) {
@@ -341,7 +342,7 @@ void ui_handle_bored_gift(void) {
   }
 }
 
-// ROM: 0x5edc  56.6%
+// ROM: 0x5edc  57.0%
 void ui_render_social_feelings(void) {
   uint8_t *ptr;
   uint8_t v;
@@ -391,7 +392,7 @@ void ui_render_social_feelings(void) {
   gfx_draw_battery_low(0, 0);
 }
 
-// ROM: 0x5fc2  52.8%  saves: r2,r5,r6 -> sys_epilogue_r2_r5_r6
+// ROM: 0x5fc2  76.8%  saves: r2,r5,r6 -> sys_epilogue_r2_r5_r6
 void game_check_periodic_events(void) {
   volatile uint16_t dailyStepCap;
   uint8_t prob;
@@ -454,7 +455,7 @@ void game_check_periodic_events(void) {
 // ROM: 0x6380  100.0%
 void ui_handle_peer_play(void) { (void)0; }
 
-// ROM: 0x6382  75.0%
+// ROM: 0x6382  60.8%
 void game_calculate_interaction_reward(void) {
   uint32_t steps_val;
   uint8_t *items_info;
@@ -525,7 +526,7 @@ void game_calculate_interaction_reward(void) {
   }
 }
 
-// ROM: 0x67de  66.6%
+// ROM: 0x67de  85.9%
 void game_rotate_interaction_log(void) {
   uint16_t r6 = 0x224;
   void *r5;
@@ -545,7 +546,7 @@ void game_rotate_interaction_log(void) {
   }
 }
 
-// ROM: 0x6816  12.1%
+// ROM: 0x6816  9.1%
 void game_rotate_interaction_log_record(void) {
   uint8_t *r3_settings;
   uint8_t *r5_contact;
@@ -601,7 +602,7 @@ void game_rotate_interaction_log_record(void) {
   }
 }
 
-// ROM: 0x632c  63.7%  saves: er2,er3,r4,er5,er6 -> sys_epilogue_5
+// ROM: 0x632c  64.3%  saves: er2,er3,r4,er5,er6 -> sys_epilogue_5
 void ui_start_peer_play_app(void) {
   uint8_t *buf;
   sys_init_heap();
@@ -619,7 +620,7 @@ void ui_start_peer_play_app(void) {
   game_rotate_interaction_log_record();
 }
 
-// ROM: 0x6528  73.6%  saves: r6
+// ROM: 0x6528  84.1%  saves: r6
 void ui_draw_music_note(uint8_t x, uint8_t y, uint8_t shift) {
   uint8_t *buf;
   uint8_t i;
@@ -647,7 +648,7 @@ void ui_draw_music_note(uint8_t x, uint8_t y, uint8_t shift) {
 //   correct.
 // Class: cannot-fix-without-compiler-change (no-prologue convention; same
 //   ABI blocker as ui_load_inventory_mask / gfx_draw_animated_grass)
-// ROM: 0x6574  22.4%
+// ROM: 0x6574  23.1%
 void ui_render_peer_play(void) {
   uint8_t z = gCurSubstateZ;
   uint8_t r6l = 0;
@@ -742,7 +743,7 @@ void ui_render_peer_play(void) {
   gfx_draw_battery_low(0, 0);
 }
 
-// ROM: 0x6784  89.1%  saves: er3,er4,er5,er6
+// ROM: 0x6784  89.0%  saves: er3,er4,er5,er6
 uint8_t game_find_seen_peer(void *trainer_ptr) {
   uint8_t r4l;
   uint8_t r6h;

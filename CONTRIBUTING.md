@@ -1,10 +1,136 @@
 # Contributing
 
-This document describes a suggested workflow for improving the decompilation — fixing functions, raising match scores, and filling in unimplemented code.
+This document describes a suggested workflow for improving the decompilation. Since the compiled binary now runs end-to-end on the emulator, contributions fall into four broad categories — in rough order of leverage:
+
+1. **[Hunting the compiler](#hunting-the-compiler)** — identifying the exact ch38 release + flags the original was built with. If this ever lands, the score gap closes wholesale.
+2. **[Finding semantic bugs](#finding-semantic-bugs)** — using the emulator to catch functional regressions that `compare_bin.py` is blind to.
+3. **[Globals and data references](#globals-and-data-references)** — cleaning up `DAT_f7xx` names and inconsistent global types. Pays off independently of the compiler hunt.
+4. **[Raising match scores](#raising-match-scores)** — the original workflow. Still useful on functions stuck in the 50–70% range where the issue is C-level, not codegen.
+
+Pick whichever motivates you. The score workflow is the most mechanical and is documented in the most detail below, but it's not the most valuable place to start anymore.
 
 ---
 
-## The Workflow
+## Hunting the compiler
+
+The single biggest unresolved problem. Average match score has plateaued at ~76% and the dominant cause is that we don't know the exact ch38 release the original was built with.
+
+### What we know
+
+- It's some release of Renesas ch38 (symbol mangling, calling-convention helpers `$sp_regsv$3` / `$spregld2$3`, register-save prologue patterns all match).
+- ch38 v6.02.02 (current default in the Docker image) is the closest among ~half a dozen versions we've tried. None reproduce the ROM fully.
+- Even with the right version, the build appears to have used **mixed `-regparam` per file**: `-regparam=3` helps several large functions but regresses many small ones; `-regparam=2` (default) is the inverse. Neither matches the ROM on net better than ~0.2pp from the other.
+
+### Patterns that pinpoint codegen divergence
+
+These are the most reliable "smoke" markers — if you find a compiler release that emits these the same way the ROM does, you've found it.
+
+| ROM emits | All our ch38 versions emit | Where to see it |
+|-----------|----------------------------|-----------------|
+| `bset Rn, Rd` for `dst \|= 1 << bit` (variable bit) | `1 << var` via a shift loop ending in `or.b r1l, r0l` | Anywhere `_BIT.b<N> = 1` is used with a runtime bit index — there are a handful in `src/game/battle.c` and `src/ui/`. |
+| `divxs.w` + dead-code-eliminated sign-extension | `extu.w` + `mulxu.w` then a full divide | Pedometer step accumulation; some Y-axis position math |
+| Tighter prologue scheduling around `$sp_regsv$3` | Helper jsr issued before the spill that would have made it unnecessary | Most "Class: cannot-fix-without-compiler-change" annotations in source |
+
+`scripts/compare_bin.py --func <name>` shows the instruction-level diff for any function — that's where to spot a new pattern.
+
+### What to try
+
+- **Other Renesas releases.** Renesas has shipped ch38 / cc38h under several SKUs (the "H8SX/H8S/H8 family" CC compiler package, the standalone H8/300H package, various SKU revisions). The version history goes back well over a decade. Anything pre-v6 we haven't tested.
+- **Vendor-patched builds.** Pokémon HG/SS shipped in 2009. A toolchain that old likely had Nintendo or Game Freak patches applied. These won't be on public download pages.
+- **Build-flag combinations we haven't tested.** The `optlnk` linker has more options than we currently use; the same goes for ch38 itself. Particularly anything around inlining policy, code reordering, and constant pooling.
+- **Per-file `-regparam` discovery.** If we could identify *which* files used `=3` vs `=2` in the original, we could match per-file even without per-file pragmas — the Makefile can pass different flags per `src/foo.c`.
+
+### What to ignore
+
+- Versions of ch38 that produce wildly different code in trivial functions are obviously the wrong toolchain — don't bother running the full match score on those.
+- Anything that isn't ch38 (gcc-h8, sdcc, the old AS38 standalone assembler). Symbol mangling and the runtime helpers rule them out fast.
+
+---
+
+## Finding semantic bugs
+
+`compare_bin.py` is byte-level: two instructions look identical if their encoded bytes match. That makes it **blind** to:
+
+- Calling the wrong function — a `jsr @0x1234` and `jsr @0x5678` have different operands but the same opcode, and a function with the wrong address baked in still encodes the same way as one with the right address.
+- Swapped arguments to a function — both encode identically when the args are in registers, even though the runtime behavior is different.
+- Inverted conditionals — `bcs` vs `bcc` is one bit and looks like a normal codegen difference.
+- Off-by-one in table indexing.
+- Calling-convention assumptions in the C source that don't match what the original asm relied on (a function with a "secret" side-effect-on-a-register that the original C exploited and we can't express in C).
+
+These are the bugs the emulator finds. They typically score 100% on `compare_bin` and produce visible misbehavior the moment you exercise the affected code path.
+
+### Workflow
+
+```bash
+# Build, then run side-by-side
+make
+scripts/run_emu.sh           # our compiled ROM
+scripts/run_emu.sh --orig    # the reference ROM, same eeprom seed
+
+# Capture an instruction trace while reproducing a bug
+scripts/run_emu.sh 2>/tmp/pw_trace.log
+```
+
+Exercise the same feature in both. When they diverge visually, the divergence is a semantic bug in the C. Find the function responsible (use the trace if needed), then look at `main.mar` for the same function and compare *semantics* — not just the instruction encoding.
+
+### Representative examples
+
+These are real bugs we found this way that all scored well on `compare_bin`:
+
+- **`gfx_draw_sprite_simple` — swapped `w` and `h` parameters.** Our C signature had `(x, y, w, h, buf)`. The asm puts the third arg in `r1` and the fourth in `e0`. The function body uses `r1` for the vertical-height calculation and `e0` for stride. So `(x, y, w, h, buf)` ended up using `w` as height and `h` as stride — sprites rendered with 4 pages instead of 3 and the wrong stride. Fix: swap the C signature to `(x, y, h, w, buf)`. Score didn't move; pokemon sprites stopped being garbled.
+- **Battle name-selection inverted `subY` check.** Five different cases in `ui_render_battle` had `if (gCurSubstateY < 4) gfx_draw_special_poke_name(...) else gfx_draw_route_pokemon_name(...)`. The asm `bcc` after `cmp.b #H'4, r0l` branches when `subY >= 4`, not `< 4`. Our build called `gfx_draw_special_poke_name` (which reads `EEPROM 0xC6FC`, factory-empty) for the wild-encounter case where `subY = 1..3`. Result: wild-pokemon name renders as a solid black box. `compare_refs.py` would have flagged it (different EEPROM addresses), but `compare_bin` says 100% because the call instruction encodes the same way.
+- **`gfx_add_font_border` calling-convention abuse.** The original is a "leaf-like" function that modifies the caller's `r6` (passed pointer) by 6 bytes as a side effect — the caller relies on this to walk through 10 digits in the font table. C has no way to express "modify the caller's pointer register", so calling it twice from C OR's the same 3 words repeatedly instead of advancing. The decomp had to inline the OR sequence in the caller. Found by noticing the home-screen status bar's last segment rendering at the wrong y.
+
+When you find one of these: it's worth a sentence in the function's comment block explaining what the asm relied on, since `compare_bin` won't surface it again.
+
+---
+
+## Globals and data references
+
+A large chunk of the decomp's globals are still `DAT_f7xx`-named with types inferred per-call-site and sometimes inconsistently. This is mechanically improvable work — it doesn't require a deep understanding of the function semantics, just patience and care with the rename tooling.
+
+### Symptoms
+
+- Globals named `DAT_<addr>` (e.g. `DAT_f7d8`) in `include/globals.h`. The address is the only useful thing about the name.
+- A single byte at one address being accessed as `uint8_t` in some functions and `*((uint16_t*)&DAT_xxx)` in others. The disassembly tells you which is right.
+- `compare_refs.py --file <foo>.c` reports `data:` differences — the C is reading from a different address than the asm.
+- Two adjacent bytes that the original code treated as a single `uint16_t` but the decomp split into two `uint8_t` globals (or vice versa).
+
+### Workflow
+
+```bash
+# Comprehensive map of every symbol and who touches it
+python3 scripts/data_usage.py
+$EDITOR build/data_usage.md
+
+# Find data-ref divergence for one file
+python3 scripts/compare_refs.py --file game/battle.c
+
+# Rename a global across src/, include/, AND main.mar in one shot
+python3 scripts/rename_data.py DAT_f7d8 active_item_id
+```
+
+The flow is:
+
+1. Pick a `DAT_f7xx` global. Open `build/data_usage.md` and look at every reader/writer.
+2. Read those call sites in `main.mar` to figure out the *actual* type and what the value represents.
+3. If the type needs to change (e.g. `uint8_t` → `uint16_t`), update `include/globals.h` and verify every caller still does the right thing — particularly look for sites that cast through pointers; those usually become wrong once the underlying type changes.
+4. Rename it. Use `rename_data.py` so `src/`, `include/`, *and* `main.mar` all stay in sync — the symbol map between C and the disassembly matters for `compare_bin.py` to work.
+5. Rebuild and re-run `compare_refs.py` on affected files to confirm the data refs now agree.
+
+### Cautions
+
+- **`src/globals.s` is a hand-written assembly file mapping symbol names to RAM addresses.** Don't rename a symbol without also updating it there. `rename_data.py` handles this but check the diff before committing.
+- **`src/globals.s.bak` is intentionally preserved as the pre-rename layout reference.** `rename_data.py` skips it by design — don't "fix" it.
+- **Don't rename anything used by `iodefine.h`** — those names are tied to the hardware register layout.
+
+---
+
+## Raising match scores
+
+This is the original workflow and is still useful for functions stuck at 50–70% where the issue is C-level. The text below is the long-form version of the workflow; some of it (steps 1–7) hasn't changed since before the emulator came online.
+
+Before diving in: if you're not sure whether a function's problem is "C-level" or "compiler-version", run it in the emulator first. If it visibly misbehaves, the problem is semantic and you want [Finding semantic bugs](#finding-semantic-bugs). If it behaves correctly but scores below 80%, it's a candidate for score work.
 
 ### 1. Pick a function to work on
 
@@ -124,22 +250,15 @@ An ASM-only call means the C code is missing a function call that should be ther
 
 ---
 
-## What Cannot Be Fixed in C
+## Known ceilings
 
-Some divergence is not fixable at the C level:
+Some divergence won't close until either (a) the [compiler hunt](#hunting-the-compiler) succeeds, or (b) the project explicitly drops byte-matching as a goal. Today these are ceilings, not bugs:
 
-**Compiler version differences.** The compiler version used for the original firmware is unknown. One instruction pattern appears in the ROM that this project's compiler (ch38 v6.02.02) does not reproduce:
-- `bset Rn, Rd` vs a shift loop for `1 << variable`
+**Codegen patterns no ch38 release we have reproduces.** See [Hunting the compiler → Patterns that pinpoint codegen divergence](#patterns-that-pinpoint-codegen-divergence). Functions affected by these plateau below 100%; the comparison tool shows it as mismatched instructions in otherwise-correct code.
 
-(The calling-convention helpers `$sp_regsv$3` / `$spregld2$3` look like a systemic blocker but actually aren't. We tested both directions: `-regparam=3` eliminates them and helps several large functions, but ch38 default (`-regparam=2`) keeps them and helps more small functions on net. Either way the project total lands within 0.2pp of the same number. The likely explanation is that the original firmware used **mixed `-regparam` settings per file**, which we cannot reproduce because `#pragma option regparam` is not valid in source code. Current Makefile uses `-stack=medium -cmncode` without `-regparam=3` for the slightly higher net total of 72.3%.)
+**RAM bit-field representation.** A subset of RAM bytes (status flags, settings flags) are accessed in the ROM via `bld/bst/bnot`. The decomp models them as plain `uint8_t` with `& 0xMASK` operations, so the compiler emits `mov+and+cmp` instead of bit instructions. Closing this gap is mechanically possible — define bit-field unions for those globals — but hasn't been done yet. This *is* fixable; it's just unbuilt work, parked under [Globals and data references](#globals-and-data-references).
 
-Functions that use this pattern will plateau below 100% — the comparison tool will show it as mismatched instructions in otherwise-correct code.
-
-(The `bld/bcc` vs `btst/beq` divergence used to be listed here too, but it *is* fixable: it just requires the C source to use `REG_BIT.FIELD` from `iodefine.h` instead of `(REG & 0xMASK)` for single-bit tests on IO registers. See "Wrong IO register access style" in the Iterate section.)
-
-A second class of unfixable divergence is RAM bytes that the original code declared as bit-field unions (e.g. status/setting flag bytes accessed with `bld/bst/bnot`). The decompilation has these as plain `uint8_t` and accesses them with `& 0xMASK`, so the compiler emits `mov+and+cmp` instead of the ROM's bit instructions. Closing this gap would require defining bit-field unions for those RAM globals — possible in principle but not yet done.
-
-**Hand-written assembly in the original.** A small number of routines in the ROM are custom assembly, not compiler output. These are implemented in `src/globals.s` and `src/romdata.s`, or as library functions that were linked in unchanged. They are not expected to be decompiled to C.
+**Hand-written assembly in the original.** A small number of routines in the ROM are custom asm, not compiler output. These are implemented in `src/globals.s` and `src/romdata.s` (or as library functions linked in unchanged). They are not expected to be decompiled to C and will never byte-match through a C path.
 
 When a function is genuinely stuck at a ceiling due to these issues, annotate it with the best-achievable score and move on.
 

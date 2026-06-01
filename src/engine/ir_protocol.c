@@ -1,6 +1,6 @@
 #include "all_headers.h"
 
-// ROM: 0x009a  90.9%
+// ROM: 0x009a  91.2%
 void ir_handle_remote_cmd(void) {
   switch (REQUESTED_POKEMON_ACTION_TYPE) {
   case 0xF0: goto enter_test_mode;
@@ -144,7 +144,7 @@ finalize:
                    (uint8_t *)&rtcHour);
 }
 
-// ROM: 0x03b4  55.4%  saves: er2,r3,er4,er5,er6 -> sys_epilogue_0700
+// ROM: 0x03b4  55.8%  saves: er2,r3,er4,er5,er6 -> sys_epilogue_0700
 void ir_parse_rx_packet(void) {
   uint32_t poke_ptr;
   uint8_t raw;
@@ -204,7 +204,7 @@ uint16_t ir_calc_packet_checksum(uint8_t length, uint8_t *data) {
   return (uint16_t)sum;
 }
 
-// ROM: 0x08d6  64.4%  saves: er3,er4,er5,er6
+// ROM: 0x08d6  65.5%  saves: er3,er4,er5,er6
 void ir_comm_loop(void) {
   uint16_t timerDelta;
   uint16_t tcntSnap;

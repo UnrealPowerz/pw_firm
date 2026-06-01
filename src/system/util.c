@@ -1,6 +1,6 @@
 #include "all_headers.h"
 
-// ROM: 0x25ac  98.8%
+// ROM: 0x25ac  99.2%
 void sys_delay_short(void) {
   uint16_t i;
   if (statusFlags_BIT.lcd_dirty) {
@@ -15,10 +15,10 @@ void sys_delay_short(void) {
   }
 }
 
-// ROM: 0x25c8  65.0%
+// ROM: 0x25c8  66.7%
 void sys_seed_rng(uint32_t seed) { nextRandom = seed; }
 
-// ROM: 0x25d0  47.2%  saves: er3,er4,er5,er6
+// ROM: 0x25d0  58.3%  saves: er3,er4,er5,er6
 uint32_t sys_get_rng(void) {
   uint32_t x = nextRandom * 1664525 + 1013904223;
   nextRandom = x;

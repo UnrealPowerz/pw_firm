@@ -32,7 +32,7 @@ void drv_ir_tx_u8(uint8_t val) {
   TDR3 = saved ^ 0xAA;
 }
 
-// ROM: 0x0832  90.2%  saves: r6
+// ROM: 0x0832  90.3%  saves: r6
 void drv_ir_init_hw(void) {
   uint8_t tmp;
   drv_ir_config_sci();
@@ -56,7 +56,7 @@ void drv_ir_init_hw(void) {
   }
 }
 
-// ROM: 0x075c  47.5%
+// ROM: 0x075c  99.5%
 uint8_t *drv_ir_get_rx_ptr(void) {
   return (uint8_t *)&irPacketPayload;
 }
@@ -71,7 +71,7 @@ void drv_ir_init_pins(void) {
 // ROM: 0x082e  40.0%
 void drv_ir_init_output_pins(void) { drv_ir_init_pins(); }
 
-// ROM: 0x0772  68.0%  saves: er3,er4,er5,er6
+// ROM: 0x0772  66.8%  saves: er3,er4,er5,er6
 void drv_ir_send_packet(uint8_t pktLen, uint8_t cmdType, uint8_t subtype) {
   uint8_t *pkt = (uint8_t *)&commandType;
   uint16_t crc;
@@ -106,7 +106,7 @@ void drv_ir_send_packet(uint8_t pktLen, uint8_t cmdType, uint8_t subtype) {
   }
 }
 
-// ROM: 0x0880  52.0%
+// ROM: 0x0880  81.8%
 void drv_ir_send_discovery(void) {
   drv_ir_init_hw();
   irResultCode = 0x00;

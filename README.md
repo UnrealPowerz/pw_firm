@@ -1,11 +1,23 @@
 # Pokewalker Firmware Decompilation
 
-Byte-accurate C decompilation of the Pokewalker (Pokémon HeartGold/SoulSilver) firmware.
+An AI-driven C decompilation of the Pokewalker (Pokémon HeartGold/SoulSilver) firmware. Every function the ROM contains is implemented; the compiled binary runs end-to-end on the [pocketwalker emulator](https://github.com/h4lfheart/pocketwalker) — home screen, minigames, battles, item/pokemon stats, all of it.
 
-The goal is to reconstruct the original C source code as closely as possible — not just something that recompiles to equivalent behavior, but code that, when compiled with the original toolchain, produces output that matches the ROM byte-for-byte.
+The original aim was byte-for-byte match with the reference ROM. The average match score sits at ~76% and has plateaued there: the exact compiler version and flags used for the original firmware are unknown, and every ch38 release we've tried diverges on the same handful of codegen patterns. Closing the last ~24% likely requires finding that specific compiler — which may or may not still exist. If it does, the path to 100% is mostly mechanical from here. If it doesn't, the decomp is still a useful artifact: a complete, readable, runnable reconstruction.
 
-**Current status:** all function implemented to some extent, 76% average match score.
-Global variables are not all there yet. The project compiles but is not at all ready to run on an emulator -- though I hope we get there some day.
+See **[Direction](#direction)** for where contributions are most valuable now.
+
+---
+
+## Direction
+
+Now that the binary boots and runs, day-to-day work has shifted away from raw score-chasing. In rough order of leverage:
+
+1. **Hunting the compiler.** If we ever identify the exact compiler version + flags the original was built with, the remaining match gap likely closes wholesale. The patterns we've seen suggest a ch38 release we haven't tried (possibly with vendor patches or mixed per-file `-regparam` settings). Leads and known-divergent patterns are in [CONTRIBUTING.md → Hunting the compiler](CONTRIBUTING.md#hunting-the-compiler).
+2. **Functional verification via emulator.** `compare_bin.py` is byte-comparison only — it can't see when a `jsr` calls the wrong function, when arguments to a function are swapped (same encoding either way), or when a conditional is inverted (same opcode, different meaning). The emulator is the ground truth for *behavior*. Running our build side-by-side with the original ROM has already surfaced bugs that scored 100%. See [CONTRIBUTING.md → Finding semantic bugs](CONTRIBUTING.md#finding-semantic-bugs).
+3. **Code quality — globals and data references.** A lot of globals are still `DAT_f7xx`-style with inconsistent or unspecified types across call sites. Data-reference divergences (`compare_refs.py` output) remain numerous. This work pays off independently of compiler-hunting: it makes the decomp readable as documentation even if it never byte-matches, and it tends to surface semantic bugs along the way. See [CONTRIBUTING.md → Globals and data references](CONTRIBUTING.md#globals-and-data-references).
+4. **Score work.** Still useful, especially on functions stuck in the 50-70% range where the issue is C-level (wrong type, wrong loop form) rather than compiler-version. Expect a ceiling on most files until #1 lands.
+
+If the compiler hunt is ever ruled out for good, the project pivots gracefully to a non-byte-matching decomp — and #2 and #3 are still exactly the right work.
 
 ---
 
@@ -31,9 +43,7 @@ Global variables are not all there yet. The project compiles but is not at all r
 │   ├── engine/         # Mid-level subsystems (graphics, IR protocol, UI dispatch)
 │   ├── game/           # Game logic (battle, pedometer, session, social, minigames)
 │   ├── system/         # Startup, interrupts, power, save, utilities
-│   ├── ui/             # UI screens and menus
-│   ├── globals.s       # Hand-written assembly: global variable layout
-│   └── romdata.s       # Hand-written assembly: ROM data tables
+│   └── ui/             # UI screens and menus
 ├── include/
 │   ├── all_headers.h   # Convenience include (included by every .c file)
 │   ├── globals.h       # Global variable declarations
@@ -121,6 +131,21 @@ make asm SRC=src/drivers/adc.c
 python3 scripts/compare.py build/asm/drivers/adc.s --func drv_adc_check_battery
 ```
 
+### Running the build in an emulator
+
+```bash
+# Run our compiled ROM with a fresh copy of eeprom.bin as the save
+scripts/run_emu.sh
+
+# Or run the reference ROM the same way (for side-by-side behavior comparison)
+scripts/run_emu.sh --orig
+
+# Capture an instruction trace (stderr) while playing
+scripts/run_emu.sh 2>/tmp/pw_trace.log
+```
+
+The script expects the [pocketwalker emulator](https://github.com/h4lfheart/pocketwalker) cloned into `./pocketwalker/` and built (see that repo's README for build instructions), plus an `eeprom.bin` save image in the project root. Use this in combination with `compare_bin.py` to validate behavior — see [CONTRIBUTING.md → Finding semantic bugs](CONTRIBUTING.md#finding-semantic-bugs).
+
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the full decompilation workflow.
 
 ---
@@ -147,6 +172,9 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the full decompilation workflow.
 | `scripts/verify_coverage.py` | Lists functions from `main.mar` not yet implemented in C |
 | `scripts/annotate_src.py` | Inserts `// ROM: 0xABCD  nn.n%` comments above each C function |
 | `scripts/generate_headers.py` | Auto-generates `build/gen/` prototype headers from source (run by `make headers`) |
+| `scripts/run_emu.sh` | Launch our compiled ROM (or the reference ROM with `--orig`) in the emulator, seeded from `eeprom.bin` |
+| `scripts/data_usage.py` | Writes `build/data_usage.md` — every RAM/ROM/IO symbol, who reads it, who writes it. Use this when retyping or renaming a global |
+| `scripts/rename_data.py` | Apply word-boundary symbol renames across `src/`, `include/`, and `main.mar` in one shot |
 
 ### Build Targets
 
@@ -190,9 +218,18 @@ Include with angle brackets: `#include <machine.h>`
 | `or_ccr(v)` | OR into CCR (e.g., set I flag to disable interrupts) |
 | `nop()` | No-operation |
 
-### Compiler Notes
+### Compiler (the open question)
 
-The compiler version used for the original firmware is unknown. The Docker image provides ch38 **v6.02.02** (but also others!), which produces nearly identical output but does not reproduce some instruction patterns found in the ROM. Register allocation also sometimes differs. I am not sure at this point what causes these differences, because the project was clearly compiled with some version of ch38. All the other versions of ch38 I have tried produce very similar results though.
+**The exact compiler version and flags used to build the original firmware are unknown.** This is the single biggest unresolved problem in the decomp, and the reason the average match score has plateaued.
+
+What we know:
+
+- It's some release of the Renesas ch38 toolchain (most other things rule out trivially — symbol mangling, calling-convention helpers, register-save prologue patterns, all consistent with ch38).
+- ch38 **v6.02.02** is closest among the versions we've tried and is what the Docker image runs by default. Multiple other versions are also installed in the image and produce very similar but not identical output.
+- The ROM exhibits a few patterns that **no** ch38 version we've tried emits — most notably `bset Rn, Rd` in places where every version we have emits a shift loop for `1 << variable`.
+- The current Makefile uses `-stack=medium -cmncode` without `-regparam=3` because that wins by ~0.2pp on net (more files benefit than regress), but neither setting reproduces the full ROM.
+
+If you want to push this further, see [CONTRIBUTING.md → Hunting the compiler](CONTRIBUTING.md#hunting-the-compiler) for the full list of leads.
 
 ### Useful Links
 
@@ -202,4 +239,4 @@ The compiler version used for the original firmware is unknown. The Docker image
 - [Renesas H8/38602R Group Hardware Manual](https://www.renesas.com/en/document/mah/h838602r-group-hardware-manual)
 - [PokéWalker hacking by Dmitry.GR](https://dmitry.gr/?r=05.Projects&proj=28.%20pokewalker)
 - [picowalker](https://github.com/mamba2410/picowalker-core)
-- [PoketWalker emulator](https://github.com/h4lfheart/PocketWalker)
+- [PocketWalker emulator](https://github.com/h4lfheart/PocketWalker)

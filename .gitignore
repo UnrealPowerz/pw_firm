@@ -5,3 +5,8 @@ h38c*/
 COMPLETE_DUMP.bin
 compiler-v7-manual.*
 docs/renesas_manuals/
+COMPLETE_DUMP.sav
+eeprom.bin
+settings.json
+pocketwalker/
+emu_run/

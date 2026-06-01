@@ -1,6 +1,6 @@
 #include "all_headers.h"
 
-// ROM: 0x369c  88.3%
+// ROM: 0x369c  89.2%
 uint8_t drv_sound_is_playing(void) {
   if (soundData == NULL) {
     return 0;
@@ -8,7 +8,7 @@ uint8_t drv_sound_is_playing(void) {
   return 1;
 }
 
-// ROM: 0x36aa  90.2%
+// ROM: 0x36aa  95.4%
 void drv_timerw_init(void) {
   soundHeader = 0x78;
   volume = 0;
@@ -26,7 +26,7 @@ void drv_timerw_init(void) {
   soundData = NULL;
 }
 
-// ROM: 0x37d6  91.4%
+// ROM: 0x37d6  80.3%
 void drv_timerw_enable(void) {
   CKSTPR2 |= 0x40;
   TIERW &= ~0x01;
@@ -37,6 +37,7 @@ void drv_timerw_enable(void) {
   IEGR |= 0x01;
   TCNT = 0;
   TMRW = 0x80;
+  TIERW |= 0x01;
 }
 
 // ROM: 0x3810  96.7%
@@ -48,13 +49,13 @@ void drv_timerw_disable(void) {
   CKSTPR2 &= ~0x40;
 }
 
-// ROM: 0x3832  45.0%
+// ROM: 0x3832  100.0%
 void drv_sound_set_volume(uint8_t v) {
   volume = v;
   (void)0;
 }
 
-// ROM: 0x3838  62.7%
+// ROM: 0x3838  72.6%
 void drv_sound_set_freq_pwm(uint8_t freq) {
   uint16_t f = freq;
   switch (volume) {
@@ -78,14 +79,14 @@ void drv_sound_set_freq_pwm(uint8_t freq) {
   TCNT = 0;
 }
 
-// ROM: 0x37c6  97.0%
+// ROM: 0x37c6  100.0%
 void drv_sound_set_data(uint8_t *data) {
   soundData = data;
   noteDuration = 0;
   isSeparateNote = 0;
 }
 
-// ROM: 0x36f2  76.7%  saves: er3,er4,er5,er6
+// ROM: 0x36f2  71.0%  saves: er3,er4,er5,er6
 void drv_sound_play(uint8_t sound_idx) {
   uint16_t offset;
   uint8_t *src_ptr;
@@ -136,7 +137,7 @@ end:
   TIERW |= 0x01;
 }
 
-// ROM: 0x388c  77.5%  saves: r6,r5
+// ROM: 0x388c  62.8%  saves: r6,r5
 #pragma option noregexpansion  /* pragma:auto */
 void drv_sound_update(void) {
   if (soundData == NULL)

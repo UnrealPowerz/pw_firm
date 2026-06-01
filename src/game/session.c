@@ -1,6 +1,6 @@
 #include "all_headers.h"
 
-// ROM: 0xb176  80.0%
+// ROM: 0xb176  80.2%
 void game_sync_walk_status(void) {
   struct trainer_record *rec;
 
@@ -99,7 +99,7 @@ void game_start_walk(void) {
   save_clear_data();
 }
 
-// ROM: 0x0636  81.9%  saves: r3,r6
+// ROM: 0x0636  82.3%  saves: r3,r6
 void game_end_walk(void) {
   struct trainer_record *rec = (struct trainer_record *)DAT_f7e6;
 
@@ -127,7 +127,7 @@ void game_end_walk(void) {
   drv_eeprom_fill(EEPROM_TRAINER_PROFILE, 0x0010, 0);
 }
 
-// ROM: 0x06de  97.1%
+// ROM: 0x06de  98.4%
 void game_clear_stats(void) {
   watts = 0;
   save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (void *)&totalSteps, 0x18);

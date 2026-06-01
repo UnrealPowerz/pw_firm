@@ -1,16 +1,16 @@
 #include "all_headers.h"
 
-// ROM: 0x9108  70.0%
+// ROM: 0x9108  98.8%
 void ui_set_stats_view_item(void) {
   gCurSubstateY = 9;
-  ui_stats_find_index(accelXPos);
+  ui_stats_find_index(accelPos_X);
 }
 
-// ROM: 0x8d02  72.9%
+// ROM: 0x8d02  77.9%
 void ui_handle_poke_items(void) {
   uint8_t sid;
   if (drv_button_is_triggered(0x04) != 0) {
-    if (ui_stats_prev_index(gCurSubstateA) != 0) {
+    if (ui_stats_prev_index(*(volatile uint16_t *)&gCurSubstateA) != 0) {
       ui_clear_substate_y();
       ui_set_view(VIEW_MAIN_MENU);
       sid = 1;
@@ -21,8 +21,8 @@ void ui_handle_poke_items(void) {
   }
 
   if (drv_button_is_triggered(0x08) != 0) {
-    if (ui_stats_next_index(gCurSubstateA) != 0) {
-      if (accelXPos != 0) {
+    if (ui_stats_next_index(*(volatile uint16_t *)&gCurSubstateA) != 0) {
+      if (accelPos_X != 0) {
         ui_set_stats_view_item();
         ui_set_view(VIEW_GIFTS);
         sid = 2;
@@ -36,7 +36,7 @@ void ui_handle_poke_items(void) {
   }
 
   if (drv_button_is_triggered(0x02) != 0) {
-    if (accelXPos != 0) {
+    if (accelPos_X != 0) {
       ui_set_stats_view_item();
       ui_set_view(VIEW_GIFTS);
     } else {
@@ -52,14 +52,14 @@ do_play_sound:
   drv_sound_play(sid);
 }
 
-// ROM: 0x9116  73.5%
+// ROM: 0x9116  81.5%
 void ui_handle_gifts(void) {
   uint8_t sid;
   if (drv_button_is_triggered(0x04) != 0) {
-    if (ui_stats_prev_index(accelXPos) != 0) {
+    if (ui_stats_prev_index(accelPos_X) != 0) {
       if (gCurSubstateA != 0) {
         gCurSubstateY = 0;
-        ui_stats_cycle_index(gCurSubstateA);
+        ui_stats_cycle_index(*(volatile uint16_t *)&gCurSubstateA);
         ui_set_view(VIEW_POKE_ITEMS);
         sid = 2;
         goto do_play_sound;
@@ -72,7 +72,7 @@ void ui_handle_gifts(void) {
   }
 
   if (drv_button_is_triggered(0x08) != 0) {
-    if (ui_stats_next_index(accelXPos) != 0) {
+    if (ui_stats_next_index(accelPos_X) != 0) {
       sid = 1;
       goto do_play_sound;
     }
@@ -92,7 +92,7 @@ do_play_sound:
   drv_sound_play(sid);
 }
 
-// ROM: 0x8d88  68.0%
+// ROM: 0x8d88  78.1%
 void ui_render_pokemon_stats(void) {
   uint32_t romBase = 0x100280;
   void *buf180;
@@ -119,8 +119,9 @@ void ui_render_pokemon_stats(void) {
     drv_eeprom_read_block((uint16_t)addr, (uint8_t *)buf180 + 0x30, 0x10);
 
     for (i = 0; i < 3; i++) {
-      uint16_t currentId = ((uint16_t *)buf180)[0x30 / 2 + i * 8];
-      if (*(uint16_t *)((uint8_t *)buf180 + 0x30) == currentId) {
+      uint16_t slot_id = ((uint16_t *)buf180)[i * 8];
+      uint16_t caught_id = *(uint16_t *)((uint8_t *)buf180 + 0x30);
+      if (slot_id == caught_id) {
         gfx_draw_route_pokemon(0x3C, 0x18, (uint8_t)i);
         gfx_draw_route_pokemon_name(0x00, 0x30, i, 0x07);
         break;
@@ -178,47 +179,52 @@ void ui_render_pokemon_stats(void) {
   drv_eeprom_read_block((uint16_t)(romBase + 0x358), buf180, 0x40);
   drv_lcd_blit(0, 0, (uint8_t *)buf180 + 0x20, 8, 0x10);
 
-  if (accelXPos != 0) {
+  {
+  uint16_t maskA = *(volatile uint16_t *)&gCurSubstateA;
+  uint16_t maskX = accelPos_X;
+
+  if (maskX != 0) {
     drv_lcd_blit(0x58, 0x00, buf180, 8, 16);
   }
 
   drv_eeprom_read_block((uint16_t)(romBase + 0x1E0), buf180, 0x10);
-  if (gCurSubstateA & 1) {
-    drv_lcd_blit(0x18, 0x18, buf180, 8, 8);
+  if (maskA & 1) {
+    drv_lcd_blit(0x08, 0x18, buf180, 8, 8);
   }
 
   for (i = 0; i < 3; i++) {
-    if (gCurSubstateA & (2 << i)) {
-      drv_lcd_blit(0x18, (uint8_t)(i * 8 + 0x18), buf180, 8, 8);
+    if (maskA & (2 << i)) {
+      drv_lcd_blit((uint8_t)(i * 8 + 0x18), 0x18, buf180, 8, 8);
     }
   }
 
   drv_eeprom_read_block((uint16_t)(romBase + 0x208), buf180, 0x10);
   for (i = 0; i < 3; i++) {
-    if (gCurSubstateA & (0x40 << i)) {
-      drv_lcd_blit(0x28, (uint8_t)(i * 8 + 0x18), buf180, 8, 8);
+    if (maskA & (0x40 << i)) {
+      drv_lcd_blit((uint8_t)(i * 8 + 0x18), 0x28, buf180, 8, 8);
     }
   }
 
-  if (gCurSubstateA & 0x10) {
+  if (maskA & 0x10) {
     drv_eeprom_read_block((uint16_t)(romBase + 0x1F0), buf180, 0x10);
-    drv_lcd_blit(0x18, 0x30, buf180, 8, 8);
+    drv_lcd_blit(0x30, 0x18, buf180, 8, 8);
   }
 
-  if (gCurSubstateA & 0x200) {
+  if (maskA & 0x200) {
     drv_eeprom_read_block((uint16_t)(romBase + 0x218), buf180, 0x10);
-    drv_lcd_blit(0x28, 0x30, buf180, 8, 8);
+    drv_lcd_blit(0x30, 0x28, buf180, 8, 8);
   }
 
-  if (gCurSubstateA & 0x20) {
+  if (maskA & 0x20) {
     drv_eeprom_read_block((uint16_t)(romBase + 0x228), buf180, 0x10);
-    drv_lcd_blit(0x28, 0x10, buf180, 8, 8);
+    drv_lcd_blit(0x10, 0x28, buf180, 8, 8);
+  }
   }
 
   gfx_draw_battery_low(0x58, 0);
 }
 
-// ROM: 0x918c  84.4%
+// ROM: 0x918c  81.9%
 void ui_render_items_stats(void) {
   void (*blit)(uint8_t, uint8_t, void *, uint8_t, uint8_t);
   void (*eread)(uint16_t, void *, uint16_t);
@@ -282,7 +288,7 @@ void ui_render_items_stats(void) {
   gfx_draw_battery_low(0x58, 0);
 }
 
-// ROM: 0x3b94  92.1%
+// ROM: 0x3b94  94.6%
 void ui_handle_caught_stats_navigation(void) {
   if (drv_button_is_triggered(4)) {
     {
@@ -322,7 +328,7 @@ void ui_handle_caught_stats_navigation(void) {
   }
 }
 
-// ROM: 0x3c0a  79.3%
+// ROM: 0x3c0a  81.0%
 void ui_render_caught_poke_stats(void) {
   uint16_t *ptr;
   uint8_t i;
@@ -343,7 +349,7 @@ void ui_render_caught_poke_stats(void) {
   }
 }
 
-// ROM: 0x3c76  79.4%
+// ROM: 0x3c76  79.6%
 void ui_render_dowsed_item_stats(void) {
   uint32_t val;
   uint16_t *ptr;
@@ -362,7 +368,7 @@ void ui_render_dowsed_item_stats(void) {
   }
 }
 
-// ROM: 0x3cd8  78.5%
+// ROM: 0x3cd8  80.8%
 void ui_render_inventory_stats_view(void) {
   void *ptr;
   volatile uint16_t off = 0x280;
@@ -402,7 +408,7 @@ void ui_render_inventory_stats_view(void) {
   }
 }
 
-// ROM: 0x8bd2  67.8%
+// ROM: 0x8bd2  79.1%
 uint8_t ui_stats_next_index(uint16_t mask) {
   uint8_t y = gCurSubstateY;
   uint8_t count;
@@ -423,7 +429,7 @@ uint8_t ui_stats_next_index(uint16_t mask) {
   return 1;
 }
 
-// ROM: 0x8c0e  74.1%  saves: e6,r5
+// ROM: 0x8c0e  74.8%  saves: e6,r5
 uint8_t ui_stats_find_index(uint16_t mask) {
   uint8_t count;
   uint8_t y = (uint8_t)((gCurSubstateY + 1) % 10);
@@ -439,7 +445,7 @@ uint8_t ui_stats_find_index(uint16_t mask) {
   return 0;
 }
 
-// ROM: 0x8c62  89.6%
+// ROM: 0x8c62  90.6%
 uint8_t ui_stats_prev_index(uint16_t mask) {
   uint8_t counter;
   if (gCurSubstateY == 0)
@@ -456,7 +462,7 @@ uint8_t ui_stats_prev_index(uint16_t mask) {
   return 0;
 }
 
-// ROM: 0x8ca4  50.9%
+// ROM: 0x8ca4  80.2%
 void ui_stats_cycle_index(uint16_t mask) {
   uint8_t count;
   gCurSubstateY = (uint8_t)((gCurSubstateY + 9) % 10);
@@ -467,7 +473,7 @@ void ui_stats_cycle_index(uint16_t mask) {
   }
 }
 
-// ROM: 0x8cf4  96.2%
+// ROM: 0x8cf4  98.8%
 void ui_stats_reset_cursor(void) {
   gCurSubstateY = 9;
   ui_stats_find_index(*(uint16_t *)&gCurSubstateA);
@@ -483,7 +489,7 @@ void ui_stats_reset_cursor(void) {
 //   sequences DO match ROM; structural body is correct. Stuck until we find a
 //   way to suppress the prologue or force the unusual register allocation.
 // Class: cannot-fix-without-compiler-change (calling-convention helper mismatch)
-// ROM: 0x8aca  89.1%
+// ROM: 0x8aca  89.2%
 void ui_load_inventory_mask(uint16_t *status_mask_ptr) {
   uint16_t *buf_8c8c;
   uint16_t *buf_8cbc;

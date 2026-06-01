@@ -1,6 +1,6 @@
 #include "all_headers.h"
 
-// ROM: 0x9b34  97.0%
+// ROM: 0x9b34  97.9%
 void drv_buttons_init_irqs(void) {
   uint8_t tmp;
 
@@ -32,7 +32,7 @@ void drv_buttons_init_irqs(void) {
   set_ccr(0x00);
 }
 
-// ROM: 0x9b84  94.4%
+// ROM: 0x9b84  96.9%
 void drv_button_read(void) {
   buttonInputRaw = 0;
 
@@ -77,7 +77,7 @@ void drv_button_read(void) {
   }
 }
 
-// ROM: 0x9c40  98.3%
+// ROM: 0x9c40  100.0%
 uint8_t drv_button_is_triggered(uint8_t mask) {
   return buttonTrigger & mask;
 }

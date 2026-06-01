@@ -33,7 +33,7 @@ uint8_t drv_adc_test(void) {
   return 1;
 }
 
-// ROM: 0x27c2  67.9%
+// ROM: 0x27c2  70.8%
 uint16_t drv_adc_add_calib_checksum(uint16_t val) {
   uint8_t sum;
   val &= 0x0FFF;
@@ -55,7 +55,7 @@ uint8_t drv_adc_validate_calib_checksum(uint16_t val) {
   return 0;
 }
 
-// ROM: 0x281e  85.3%
+// ROM: 0x281e  85.4%
 int16_t drv_adc_sample(void) {
   int32_t sum = 0;
   uint16_t count = 8;
@@ -96,7 +96,7 @@ int16_t drv_adc_sample(void) {
   return (int16_t)(sum / 8);
 }
 
-// ROM: 0x289a  62.0%  saves: er3,r5,er6
+// ROM: 0x289a  71.9%  saves: er3,r5,er6
 uint8_t drv_adc_check_low_battery(uint16_t threshold) {
   uint16_t calib;
   uint16_t target;
@@ -121,7 +121,7 @@ uint8_t drv_adc_check_low_battery(uint16_t threshold) {
   return 0;
 }
 
-// ROM: 0x290a  96.3%
+// ROM: 0x290a  97.5%
 void drv_adc_check_battery(void) {
   if (statusFlags_BIT.battery_check_request) {
     if (drv_adc_check_low_battery(20)) {

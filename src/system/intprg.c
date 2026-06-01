@@ -16,7 +16,7 @@ __interrupt(vect=11) void INT_TRAP3(void) {}
 // ROM: 0x0068  100.0%
 __interrupt(vect=13) void INT_SLEEP(void) {}
 
-// ROM: 0xa300  83.9%  saves: r0
+// ROM: 0xa300  84.9%  saves: r0
 __interrupt(vect=16) void irq0(void) {
     statusFlags_BIT.button_event = 1;
     wakeupFlagMaybe[0] = 1;
@@ -35,7 +35,7 @@ __interrupt(vect=21) void INT_COMP0(void) {}
 // ROM: 0x006c  100.0%
 __interrupt(vect=22) void INT_COMP1(void) {}
 
-// ROM: 0xa65e  80.6%  saves: r0
+// ROM: 0xa65e  81.1%  saves: r0
 __interrupt(vect=23) void drv_rtc_handle_quarter_sec(void) {
     statusFlags_BIT.tick = 1;
     RTCFLG &= ~0x01;
@@ -44,7 +44,7 @@ __interrupt(vect=23) void drv_rtc_handle_quarter_sec(void) {
 // ROM: 0xa674  74.8%  saves: r0
 __interrupt(vect=24) void drv_rtc_handle_half_sec(void) { RTCFLG &= ~0x02; }
 
-// ROM: 0xa682  78.0%  saves: er0
+// ROM: 0xa682  80.0%  saves: er0
 __interrupt(vect=25) void drv_rtc_handle_sec(void) {
     uint8_t sec = RSECDR;
     if (!(sec & 0x80)) {
@@ -65,7 +65,7 @@ __interrupt(vect=25) void drv_rtc_handle_sec(void) {
     RTCFLG &= ~0x04;
 }
 
-// ROM: 0xa6e2  86.7%  saves: r0
+// ROM: 0xa6e2  87.5%  saves: r0
 __interrupt(vect=26) void drv_rtc_handle_min(void) {
     uint8_t min = RMINDR;
     if (!(min & 0x80)) {
@@ -75,7 +75,7 @@ __interrupt(vect=26) void drv_rtc_handle_min(void) {
     RTCFLG &= ~0x08;
 }
 
-// ROM: 0xa704  87.8%  saves: r0
+// ROM: 0xa704  88.6%  saves: r0
 __interrupt(vect=27) void drv_rtc_handle_hour(void) {
     uint8_t hr = RHRDR;
     if (!(hr & 0x80)) {

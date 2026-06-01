@@ -1,10 +1,17 @@
 #include "all_headers.h"
 
-// ROM: 0x6954  88.9%
+// ROM: 0x6954  83.2%
 void sys_init_io_ports(event_loop_func_t a, event_loop_func_t b) {
   if (a != b) {
     return;
   }
+  /* Connect setup disables interrupts, so the sound-timer ISR can't run
+   * during ir_comm_loop. If a beep was still playing when we got here, its
+   * buffer (ACCEL_SAMPLES_X) will be overwritten by IR payload data, and
+   * when we exit connect and interrupts come back, drv_sound_update will
+   * try to play that garbage as notes — producing a continuous screech.
+   * Stop any in-progress sound up front. */
+  soundData = NULL;
   if (!(walker_status_flags_BIT.session_active)) {
     drv_lcd_clear_pages(0x40);
     ui_render_happy_walker(0);
@@ -26,7 +33,7 @@ void sys_init_io_ports(event_loop_func_t a, event_loop_func_t b) {
   sys_set_handler(ir_comm_loop);
 }
 
-// ROM: 0x7882  91.0%
+// ROM: 0x7882  95.8%
 void sys_main_loop_low_power(void) {
   IENR2 |= 0x04;
   sys_enter_sleep(1);
@@ -44,12 +51,10 @@ void sys_main_loop_low_power(void) {
       sys_power_save_low_power();
     }
   } else if ((walker_status_flags & 0x18) == 0x10) {
-    if (currentlyActiveView == VIEW_HOME) {
-      game_check_periodic_events();
-      ui_dispatch_event();
-      if (currentEventLoopFunc == ir_comm_loop) {
-        goto end;
-      }
+    game_check_periodic_events();
+    ui_dispatch_event();
+    if (currentEventLoopFunc == ir_comm_loop) {
+      goto end;
     }
   }
 
@@ -95,7 +100,7 @@ end:
   accelSampleCount = (accelSampleCount + 1) & 0x3F;
 }
 
-// ROM: 0x7998  96.2%
+// ROM: 0x7998  97.5%
 void sys_main_loop_active(void) {
   SYSCR1 = 0x27;
   SYSCR2 = 0xE0;

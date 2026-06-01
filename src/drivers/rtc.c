@@ -27,7 +27,7 @@ uint8_t drv_rtc_wait_sec(void) {
   return 0;
 }
 
-// ROM: 0xb390  46.2%  saves: er2,r3,er4,er5,er6 -> sys_epilogue_0700
+// ROM: 0xb390  46.5%  saves: er2,r3,er4,er5,er6 -> sys_epilogue_0700
 void drv_rtc_load(void) {
   uint16_t i;
 
@@ -50,7 +50,7 @@ void drv_rtc_init_timer_b(void) {
   TMB1 |= 0x40;
 }
 
-// ROM: 0xa4fe  89.6%
+// ROM: 0xa4fe  89.8%
 void drv_rtc_set_time(uint32_t time_sec) {
   int16_t rem;   /* signed -- ROM uses divxs (signed div) for the BCD step */
   uint8_t sec_bcd, min_bcd, hr_bcd;

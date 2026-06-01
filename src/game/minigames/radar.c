@@ -7,7 +7,7 @@
 //   ROM has no prologue; ch38 emits `$sp_regsv$3`.
 // Class: cannot-fix-without-compiler-change (ER-packing + multiplication
 //   strength reduction differs + sp_regsv$3)
-// ROM: 0x9f44  50.8%
+// ROM: 0x9f44  45.5%
 void ui_render_pokeradar(void) {
   void *buf;
   uint8_t a;
@@ -38,8 +38,9 @@ void ui_render_pokeradar(void) {
     if (gCurSubstateZ == 3) {
       gfx_draw_text_box(0x30, 0x1D, 0x0F, 0x00);
     } else if (gCurSubstateZ == 1) {
-      gfx_fill_rect(0, (uint8_t)(DAT_f7d5 * 8), 0x60, 8, 3);
-      gfx_fill_rect(0, (uint8_t)(0x40 - DAT_f7d5 * 8), 0x60, 8, 3);
+      gfx_fill_rect(0, 0, 0x60, (uint8_t)(DAT_f7d5 * 8), 3);
+      gfx_fill_rect(0, (uint8_t)(0x40 - DAT_f7d5 * 8), 0x60,
+                    (uint8_t)(DAT_f7d5 * 8), 3);
       DAT_f7d5++;
     } else if (gCurSubstateZ == 2) {
       gfx_draw_value_with_icon(2, 0x20, 0x0D, gCurSubstateY);
@@ -59,7 +60,7 @@ void ui_render_pokeradar(void) {
   gfx_draw_battery_low(0, 0);
 }
 
-// ROM: 0x9dce  88.8%
+// ROM: 0x9dce  91.6%
 void ui_handle_radar_grass_menu(void) {
   if (drv_button_is_triggered(0x04) != 0) {
     gCurSubstateA = (gCurSubstateA + 3) & 3;
@@ -105,7 +106,7 @@ void ui_handle_radar_grass_menu(void) {
   ui_set_view(VIEW_RADAR_FAILURE);
 }
 
-// ROM: 0x9e72  63.1%
+// ROM: 0x9e72  66.6%
 void ui_handle_pokeradar(void) {
   uint32_t r;
   uint8_t z;
@@ -139,7 +140,7 @@ void ui_handle_pokeradar(void) {
   if (accelZPos_b != 0)
     return;
 
-  if ((int16_t)DAT_f7d1 < (int16_t)((uint16_t)accelXPos - 1)) {
+  if ((int16_t)DAT_f7d1 >= (int16_t)((uint16_t)accelXPos - 1)) {
     gCurSubstateZ = 1;
     accelZPos_b = 1;
     DAT_f7d5 = 0;
@@ -148,13 +149,13 @@ void ui_handle_pokeradar(void) {
 
   gCurSubstateZ = 0;
   r = sys_get_rng() >> 2;
-  accelYPos = (uint8_t)((uint16_t)r / radarStateYDivisor[DAT_f7d1] + 0x10);
+  accelYPos = (uint8_t)((uint16_t)r % radarStateYDivisor[DAT_f7d1] + 0x10);
   DAT_f7d1++;
   DAT_f7d5 = radarStateXTable[DAT_f7d1];
   dowsing_item_pos = (uint8_t)((sys_get_rng() << 3) & 3);
 }
 
-// ROM: 0xa10a  97.5%
+// ROM: 0xa10a  97.9%
 void ui_handle_radar_failure(void) {
   if (drv_button_is_triggered(0x0E) != 0) {
     gCurSubstateA = 0;
@@ -164,7 +165,7 @@ void ui_handle_radar_failure(void) {
   }
 }
 
-// ROM: 0x9d92  85.5%
+// ROM: 0x9d92  88.0%
 void game_pokeradar_init(void) {
   uint8_t *ram_ptr;
   game_generate_encounter_dowsing();

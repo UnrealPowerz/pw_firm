@@ -83,7 +83,7 @@ void drv_lcd_test_pixels(void) {
   PDR1 |= 0x01;
 }
 
-// ROM: 0xac1e  85.3%
+// ROM: 0xac1e  87.9%
 void drv_lcd_test_spi(void) {
   uint16_t i;
   uint8_t row;
@@ -177,7 +177,7 @@ void drv_lcd_delay(void) {
   } while (--i != 0);
 }
 
-// ROM: 0x7b72  70.1%  saves: r2,er6
+// ROM: 0x7b72  73.2%  saves: r2,er6
 void drv_lcd_init(void) {
   uint8_t *buf;
   uint8_t *ptr;
@@ -223,7 +223,7 @@ void drv_lcd_init(void) {
   drv_lcd_send_u8(0xAF);
 }
 
-// ROM: 0x7c24  90.8%  saves: r6
+// ROM: 0x7c24  91.1%  saves: r6
 void drv_lcd_set_contrast(uint8_t shade) {
   SSER = 0x80;
   PDR1 &= ~0x01;
@@ -235,7 +235,7 @@ void drv_lcd_set_contrast(uint8_t shade) {
   PDR1 |= 0x01;
 }
 
-// ROM: 0x7c56  88.8%
+// ROM: 0x7c56  89.0%
 void drv_lcd_set_page_addr(uint8_t x, uint8_t p) {
   PDR1 &= ~0x02;
   while (!SSSR_BIT.TDRE)
@@ -254,7 +254,7 @@ void drv_lcd_set_page_addr(uint8_t x, uint8_t p) {
     ;
 }
 
-// ROM: 0x7cac  94.1%
+// ROM: 0x7cac  94.6%
 void drv_lcd_flip(void) {
   SSER = 0x80;
   PDR1 &= ~0x01;
@@ -273,7 +273,7 @@ void drv_lcd_flip(void) {
   lcdPageOffset ^= 1;
 }
 
-// ROM: 0x7cfa  94.4%
+// ROM: 0x7cfa  98.2%
 void drv_lcd_set_start(uint8_t page) {
   if (page <= 1) {
     SSER = 0x80;
@@ -379,7 +379,7 @@ void drv_lcd_power_save(void) {
   PDR1 |= 0x01;
 }
 
-// ROM: 0x7ffc  77.1%  saves: r6
+// ROM: 0x7ffc  77.2%  saves: r6
 void drv_lcd_clear_pages(uint8_t height_pixels) {
   uint8_t p;
   uint8_t col;
@@ -431,7 +431,7 @@ void drv_lcd_clear_pages(uint8_t height_pixels) {
 //   semantics — would cascade-break.
 // Class: cannot-fix-without-compiler-change (sp_regsv$3 helper + signed
 //   divide idiom)
-// ROM: 0x80ac  28.7%  saves: er3,er4,er5,er6
+// ROM: 0x80ac  34.3%  saves: er3,er4,er5,er6
 void drv_lcd_blit(uint8_t x, uint8_t y, void *buffer, uint8_t w,
                         uint8_t h) {
   uint16_t p, col;

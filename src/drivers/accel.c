@@ -1,6 +1,6 @@
 #include "all_headers.h"
 
-// ROM: 0xa830  73.8%
+// ROM: 0xa830  77.6%
 uint8_t drv_accel_factory_test(void) {
   uint8_t buf[6];
   uint8_t *p;
@@ -62,7 +62,7 @@ uint8_t drv_accel_factory_test(void) {
   return 1;
 }
 
-// ROM: 0x76aa  61.9%  saves: r4,r5,r6
+// ROM: 0x76aa  63.6%  saves: r4,r5,r6
 void drv_accel_sample(void) {
   uint8_t buf[6];
   register uint8_t *pBuf;
@@ -210,7 +210,7 @@ void drv_accel_write_reg(uint8_t addr, uint8_t val) {
   PDR9 |= 0x01;
 }
 
-// ROM: 0x273c  68.7%  saves: r4,r6
+// ROM: 0x273c  66.7%  saves: r4,r6
 uint8_t drv_accel_init(void) {
   uint8_t flags[2];
   uint8_t tmp;

@@ -48,13 +48,13 @@ void ui_render_step_history_graph(void) {
   gfx_draw_battery_low(0x58, 0);
 }
 
-// ROM: 0xb3c0  97.5%
+// ROM: 0xb3c0  100.0%
 void ui_reset_trainer_card_state(void) {
   gCurSubstateZ = 0;
   gCurSubstateY = 0;
 }
 
-// ROM: 0xb3cc  73.8%
+// ROM: 0xb3cc  75.2%
 void ui_handle_trainer_stats(void) {
   uint16_t addr;
   uint8_t flag;
@@ -117,7 +117,7 @@ go_back:
 // in a register and computes each address via add (like ROM's `add.w r4`),
 // instead of inlining the full immediate at every call site. This recovered
 // the function from 0.0% — the prior "cannot-fix" verdict was wrong.
-// ROM: 0xb48c  54.3%  saves: er3,er4,er5,er6
+// ROM: 0xb48c  54.4%  saves: er3,er4,er5,er6
 void ui_render_trainer_card_time(void) {
   uint8_t *buf;
   uint8_t hr;
@@ -173,7 +173,7 @@ void ui_render_trainer_card_time(void) {
 
 // 0x280 EEPROM base held in `volatile uint16_t base` to force register reuse
 // (see ui_render_trainer_card_time). Lifted 47.8% → 75.2%.
-// ROM: 0xb682  75.2%  saves: er2,r3,r4,er5,er6
+// ROM: 0xb682  75.3%  saves: er2,r3,r4,er5,er6
 void ui_render_daily_step_history(void) {
   uint8_t *buf;
   uint32_t step_data;
@@ -216,7 +216,7 @@ void ui_render_daily_step_history(void) {
   gfx_draw_numeric_value(0x30, 0x30, totalSteps, 0);
 }
 
-// ROM: 0xb7ee  64.4%  saves: er2,r3,r4,er5,r6
+// ROM: 0xb7ee  72.8%  saves: er2,r3,r4,er5,r6
 void ui_render_step_goal_reached(void) {
   uint8_t *buf;
   uint8_t i;
@@ -243,7 +243,7 @@ void ui_render_step_goal_reached(void) {
   gfx_draw_text_box(0x18, 0x43, 0x0F, 0x01);
 }
 
-// ROM: 0xb8a6  84.2%  saves: r2,r6
+// ROM: 0xb8a6  84.3%  saves: r2,r6
 void ui_render_step_goal_reward(void) {
   uint8_t *buf;
 
@@ -255,7 +255,7 @@ void ui_render_step_goal_reward(void) {
   gfx_draw_text_box(0x30, 0x0F, 0x0E, 0x01);
 }
 
-// ROM: 0xb8f2  95.8%
+// ROM: 0xb8f2  96.4%
 void ui_render_trainer_card(void) {
   uint8_t z;
 

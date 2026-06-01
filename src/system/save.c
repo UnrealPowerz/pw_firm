@@ -1,6 +1,6 @@
 #include "all_headers.h"
 
-// ROM: 0xb0ae  75.5%
+// ROM: 0xb0ae  60.5%
 void save_write_magic(void) {
   uint8_t i;
   i = 0;
@@ -10,7 +10,7 @@ void save_write_magic(void) {
   } while (i < 8);
 }
 
-// ROM: 0xb0c8  69.5%
+// ROM: 0xb0c8  75.8%
 uint8_t save_verify_magic(void) {
   uint8_t i;
   uint8_t eep_val;
@@ -90,7 +90,7 @@ void sys_factory_reset_eeprom(uint8_t b, uint8_t a) {
   drv_eeprom_fill(EEPROM_STEP_HIST, 0x1568, 0);
 }
 
-// ROM: 0xb2e2  81.8%  saves: er4,er5,er6
+// ROM: 0xb2e2  82.4%  saves: er4,er5,er6
 void sys_sync_eeprom_on_startup(void) {
   uint8_t magic;
 
@@ -251,7 +251,7 @@ uint8_t save_find_empty_reward_slot(void *ptr) {
   return 3;
 }
 
-// ROM: 0x1f1c  69.1%
+// ROM: 0x1f1c  69.4%
 uint8_t save_find_empty_slot_32bit(void *ptr) {
   uint8_t *p = (uint8_t *)ptr;
   uint8_t i;

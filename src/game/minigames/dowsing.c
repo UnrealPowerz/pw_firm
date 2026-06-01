@@ -1,6 +1,6 @@
 #include "all_headers.h"
 
-// ROM: 0x9c48  75.1%
+// ROM: 0x9c48  79.2%
 void game_generate_encounter_dowsing(void) {
   uint32_t val;
   uint8_t *ram_ptr;
@@ -63,7 +63,7 @@ void game_generate_encounter_dowsing(void) {
  * Address: 0x4792  Size: 60 bytes
  * ===========================================================================
  */
-// ROM: 0x4792  81.4%
+// ROM: 0x4792  82.8%
 void game_init_dowsing(void) {
   uint16_t rnd;
   uint16_t item_slot;
@@ -86,7 +86,7 @@ void game_init_dowsing(void) {
  * Address: 0x47CE  Size: 462 bytes
  * ===========================================================================
  */
-// ROM: 0x47ce  80.3%
+// ROM: 0x47ce  82.0%
 void ui_handle_dowsing(void) {
   uint8_t subZ;
 
@@ -167,7 +167,7 @@ state2:
       ui_set_view(VIEW_CAUGHT_STATS);
       return;
     }
-    drv_eeprom_write_block((uint16_t)slot * 4 + EEPROM_LOG_ITEMS, (void *)&DAT_f7d8, 0x2);
+    drv_eeprom_write_block((uint16_t)slot * 4 + EEPROM_LOG_ITEMS, (void *)&DAT_f7d8_w, 0x2);
   }
   if (walker_status_flags_BIT.walking) {
     uint8_t *trainer_buf;
@@ -176,7 +176,7 @@ state2:
     trainer_buf = (uint8_t *)sbrk(0xBE);
     drv_eeprom_read_block(EEPROM_TRAINER_PROFILE, trainer_buf, 0xBE);
     gift_buf = (uint8_t *)sbrk(0x88);
-    game_log_interaction(trainer_buf, gift_buf, 0x0B, 0x00, (uint16_t)DAT_f7d8, 0);
+    game_log_interaction(trainer_buf, gift_buf, 0x0B, 0x00, DAT_f7d8_w, 0);
   }
 
 exit_to_main:
@@ -232,7 +232,7 @@ void game_write_wild_poke(void *ram_src) {
   (void)0;
 }
 
-// ROM: 0x49c0  81.8%
+// ROM: 0x49c0  83.5%
 #pragma option noregexpansion /* pragma:auto */
 void game_check_wild_encounter(void) {
   uint8_t *battle_buf;
@@ -308,7 +308,7 @@ encounter:
       uint8_t *gift_buf;
       gift_buf = (uint8_t *)sbrk(0x88);
       game_log_interaction(trainer_buf, gift_buf, 0x0C, 0x01,
-                           (uint16_t)DAT_f7d8, 0);
+                           DAT_f7d8_w, 0);
     }
   }
 }
@@ -318,7 +318,7 @@ encounter:
  * Address: 0x4AF2  Size: 170 bytes
  * ===========================================================================
  */
-// ROM: 0x4af2  80.9%
+// ROM: 0x4af2  81.3%
 void ui_handle_dowsing_selection(void) {
   uint8_t *item_table;
   uint8_t *trainer_buf;
@@ -359,7 +359,7 @@ void ui_handle_dowsing_selection(void) {
   }
 
   gCurSubstateY = i;
-  DAT_f7d8 = *((uint16_t *)(trainer_buf + 0x8C + (uint16_t)i * 2));
+  DAT_f7d8_w = *((uint16_t *)(trainer_buf + 0x8C + (uint16_t)i * 2));
 }
 
 /* =============================================================================
@@ -367,7 +367,7 @@ void ui_handle_dowsing_selection(void) {
  * Address: 0x4B9C  Size: 314 bytes
  * ===========================================================================
  */
-// ROM: 0x4b9c  67.7%  saves: r5
+// ROM: 0x4b9c  87.2%  saves: r5
 void ui_render_dowsing_grass(void) {
   uint8_t *buf;
   volatile uint16_t base;
@@ -445,7 +445,7 @@ void ui_render_dowsing_grass(void) {
 //   allocator. Body structure (substate dispatch, sprite blit, item icon
 //   draws) matches.
 // Class: cannot-fix-without-compiler-change (constant hoisting + sp_regsv$3)
-// ROM: 0x4cd6  66.3%
+// ROM: 0x4cd6  67.3%
 void ui_render_dowsing(void) {
   uint8_t *buf;
   uint8_t *spr;
@@ -549,7 +549,8 @@ void ui_render_dowsing(void) {
   } else if (gCurSubstateZ == 3) {
     gfx_draw_text_box(0x30, 0x19, 0x0F, 0x01);
 
-    if (accelXPos != 0) {
+    /* Only reveal the item position after the player has used all attempts. */
+    if (accelXPos == 0) {
       uint16_t k;
       drv_eeprom_read_block(0x208 + base, buf, 0x10);
       for (k = 3; k > 0; k--) {
