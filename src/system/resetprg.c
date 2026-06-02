@@ -28,7 +28,7 @@ __entry(vect = 0) void PowerON_Reset(void) {
 
   scheduledNotifyHour = 0;
   statusFlags_BIT.lcd_dirty = 1;
-  walker_status_flags = (walker_status_flags & 0xE7) | 0x10;
+  walker_status_flags = (walker_status_flags & 0xE7) | WALKER_MODE_DEEP_SLEEP;
 
   activityTimer = 0x3C;
   stepTimer = 0x5A;
@@ -52,7 +52,7 @@ __entry(vect = 0) void PowerON_Reset(void) {
   }
 
   drv_lcd_init();
-  drv_rtc_load();
+  drv_rtc_apply_cached_time();
 
   {
     uint32_t stack_val;
@@ -67,7 +67,7 @@ __entry(vect = 0) void PowerON_Reset(void) {
   sys_set_handler(sys_main_loop_low_power);
   ui_reset_substate();
   currentlyActiveView = VIEW_HOME;
-  drv_rtc_init_timer_b();
+  drv_timer_b_init();
 
   while (1) {
     set_ccr(0x00);

@@ -233,7 +233,7 @@ void game_check_periodic_events(void) {
   uint8_t prob;
   uint8_t *buf;
 
-  if ((walker_status_flags & 0x18) != 0x10)
+  if ((walker_status_flags & WALKER_MODE_MASK) != WALKER_MODE_DEEP_SLEEP)
     return;
   if (currentlyActiveView != VIEW_HOME)
     return;

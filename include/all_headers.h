@@ -20,6 +20,7 @@
 #include "drivers/lcd.h"
 #include "drivers/rtc.h"
 #include "drivers/sound.h"
+#include "drivers/timer_b.h"
 #include "engine/gfx.h"
 #include "engine/ir_protocol.h"
 #include "engine/ui_dispatch.h"

@@ -64,13 +64,13 @@ void drv_button_read(void) {
   if (buttonTrigger) {
     activityTimer = 0x5A;
     accelSampleCount = 0;
-    if ((walker_status_flags & 0x18) != 0x10) {
+    if ((walker_status_flags & WALKER_MODE_MASK) != WALKER_MODE_DEEP_SLEEP) {
       buttonTrigger = 0;
     }
   }
 
   if (buttonHoldDuration >= 8) {
-    if ((walker_status_flags & 0x18) != 0x10) {
+    if ((walker_status_flags & WALKER_MODE_MASK) != WALKER_MODE_DEEP_SLEEP) {
       sys_enter_deep_sleep();
       walker_status_flags_BIT.input_pending = 1;
     }

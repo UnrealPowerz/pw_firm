@@ -11,7 +11,7 @@
 0072 INT_RTC_WDT f
 0074 INT_RTC_AEC_OVERFLOW f
 0076 INT_SSU_I2C f
-0078 drv_rtc_init_timer_b f
+0078 drv_timer_b_init f
 009a ir_handle_remote_cmd f
 02c4 PowerON_Reset f
 03b4 ir_parse_rx_packet f
@@ -167,7 +167,7 @@
 6816 game_rotate_interaction_log_record f
 693a sys_set_handler f
 694c ui_enter_ir_session f
-6954 sys_init_io_ports f
+6954 sys_begin_ir_session f
 69b8 ui_set_view f
 69be gfx_draw_home_pokemon f
 6a1c ui_reset_substate f
@@ -286,7 +286,7 @@ b124 game_reset_step_data f
 b176 game_sync_walk_status f
 b1ae sys_factory_reset_eeprom f
 b2e2 sys_sync_eeprom_on_startup f
-b390 drv_rtc_load f
+b390 drv_rtc_apply_cached_time f
 b3c0 ui_reset_trainer_card_state f
 b3cc ui_handle_trainer_card f
 b48c ui_render_trainer_card_time f

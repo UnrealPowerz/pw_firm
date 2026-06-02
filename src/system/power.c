@@ -81,7 +81,7 @@ LAB_6bde:
 // ROM: 0xa180  98.5%
 void sys_enter_low_power(void) {
   CKSTPR1 |= 0x04;
-  walker_status_flags = (walker_status_flags & 0xE7) | 0x08;
+  walker_status_flags = (walker_status_flags & 0xE7) | WALKER_MODE_LOW_POWER;
   RTCCR2 |= 0x01;
   stepTimer = 0x1E;
   statusFlags_BIT.sleeping = 0;
@@ -91,11 +91,11 @@ void sys_enter_low_power(void) {
 void sys_enter_deep_sleep(void) {
   activityTimer = 0x3C;
   stepTimer = 0x5A;
-  if ((walker_status_flags & 0x18) != 0x10) {
-    if ((walker_status_flags & 0x18) == 0) {
+  if ((walker_status_flags & WALKER_MODE_MASK) != WALKER_MODE_DEEP_SLEEP) {
+    if ((walker_status_flags & WALKER_MODE_MASK) == WALKER_MODE_ACTIVE) {
       accelSampleCount = 0;
     }
-    walker_status_flags = (walker_status_flags & 0xE7) | 0x10;
+    walker_status_flags = (walker_status_flags & 0xE7) | WALKER_MODE_DEEP_SLEEP;
     RTCCR2 |= 0x01;
     drv_lcd_reset();
   }

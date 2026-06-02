@@ -219,12 +219,12 @@ INT_RTC_AEC_OVERFLOW:
 INT_SSU_I2C:
           rte
 ; =============================================================================
-; Function: drv_rtc_init_timer_b
+; Function: drv_timer_b_init
 ; Address:  0078
 ; Size:     34 bytes
 ; Called by: PowerON_Reset
 ; =============================================================================
-drv_rtc_init_timer_b:
+drv_timer_b_init:
           bset        #H'2, @CKSTPR1
 L_007C:
           mov.b       #H'BF, r0l
@@ -514,7 +514,7 @@ LAB_034c:
           mov.b       r0h, r0l
           jsr         @drv_sound_set_volume:16
           jsr         @drv_lcd_init:16
-          jsr         @drv_rtc_load:16
+          jsr         @drv_rtc_apply_cached_time:16
           mov.w       r7, e0
           mov.w       #H'4, r1
           mov.w       #H'153, r0
@@ -529,7 +529,7 @@ LAB_034c:
           jsr         @ui_reset_substate:16
           sub.b       r0l, r0l
           mov.b       r0l, @currentlyActiveView
-          jsr         @drv_rtc_init_timer_b:16
+          jsr         @drv_timer_b_init:16
           ldc.b       #H'0, ccr
 LAB_03ac:
           mov.w       @currentEventLoopFunc, r0
@@ -841,7 +841,7 @@ timer_b1_overflow:
 ; Function: sys_epilogue_0700
 ; Address:  0700
 ; Size:     20 bytes
-; Called by: drv_rtc_load, ir_parse_rx_packet
+; Called by: drv_rtc_apply_cached_time, ir_parse_rx_packet
 ; =============================================================================
 sys_epilogue_0700:
           pop.l       er6
@@ -1075,7 +1075,7 @@ LAB_087c:
 ; Function: drv_ir_send_discovery
 ; Address:  0880
 ; Size:     86 bytes
-; Called by: sys_init_io_ports
+; Called by: sys_begin_ir_session
 ; =============================================================================
 drv_ir_send_discovery:
           bsr         drv_ir_init_hw:8
@@ -3785,7 +3785,7 @@ LAB_21f2:
 ; Function: gfx_draw_battery_low
 ; Address:  21fe
 ; Size:     78 bytes
-; Called by: ui_render_radar_failure, sys_init_io_ports, ui_render_step_history, ui_render_walk_arrival_anim, ui_render_event_reward_anim
+; Called by: ui_render_radar_failure, sys_begin_ir_session, ui_render_step_history, ui_render_walk_arrival_anim, ui_render_event_reward_anim
 ;            ... and 13 more
 ; Parameters: 2
 ; =============================================================================
@@ -4262,7 +4262,7 @@ sys_wdt_kick:
 ; Function: sys_delay_short
 ; Address:  25ac
 ; Size:     28 bytes
-; Called by: drv_accel_factory_test, drv_adc_sample, drv_adc_test, drv_lcd_delay, drv_rtc_load
+; Called by: drv_accel_factory_test, drv_adc_sample, drv_adc_test, drv_lcd_delay, drv_rtc_apply_cached_time
 ;            ... and 2 more
 ; =============================================================================
 sys_delay_short:
@@ -11711,7 +11711,7 @@ LAB_6938:
 ; Function: sys_set_handler
 ; Address:  693a
 ; Size:     18 bytes
-; Called by: ir_handle_remote_cmd, sys_main_loop_low_power, sys_init_io_ports, sys_main_loop_active, PowerON_Reset
+; Called by: ir_handle_remote_cmd, sys_main_loop_low_power, sys_begin_ir_session, sys_main_loop_active, PowerON_Reset
 ; Parameters: 1
 ; =============================================================================
 sys_set_handler:
@@ -11731,12 +11731,12 @@ ui_enter_ir_session:
           mov.w       @currentEventLoopFunc, r0
           mov.w       #sys_main_loop_low_power, r1
 ; =============================================================================
-; Function: sys_init_io_ports
+; Function: sys_begin_ir_session
 ; Address:  6954
 ; Size:     100 bytes
 ; Called by: (none found - may be entry point or indirect)
 ; =============================================================================
-sys_init_io_ports:
+sys_begin_ir_session:
           cmp.w       r1, r0
           bne         LAB_69b6:8
           mov.b       @walker_status_flags, r0l
@@ -12693,7 +12693,7 @@ LAB_71a2:
 ; Function: ui_render_happy_walker
 ; Address:  71a4
 ; Size:     136 bytes
-; Called by: sys_init_io_ports
+; Called by: sys_begin_ir_session
 ; Parameters: 1
 ; =============================================================================
 ui_render_happy_walker:
@@ -12757,7 +12757,7 @@ LAB_71f2:
 ; Function: ui_render_connecting_screen
 ; Address:  722c
 ; Size:     94 bytes
-; Called by: sys_init_io_ports
+; Called by: sys_begin_ir_session
 ; =============================================================================
 ui_render_connecting_screen:
           mov.b       r0l, r5l
@@ -13939,7 +13939,7 @@ LAB_7ca2:
 ; Function: drv_lcd_flip
 ; Address:  7cac
 ; Size:     78 bytes
-; Called by: sys_main_loop_low_power, sys_init_io_ports, sys_main_loop_active
+; Called by: sys_main_loop_low_power, sys_begin_ir_session, sys_main_loop_active
 ; =============================================================================
 drv_lcd_flip:
           mov.w       #lcdPageOffset, r1
@@ -14346,7 +14346,7 @@ LAB_7fee:
 ; Function: drv_lcd_clear_pages
 ; Address:  7ffc
 ; Size:     176 bytes
-; Called by: drv_lcd_init, sys_main_loop_low_power, sys_init_io_ports, sys_main_loop_active
+; Called by: drv_lcd_init, sys_main_loop_low_power, sys_begin_ir_session, sys_main_loop_active
 ; =============================================================================
 drv_lcd_clear_pages:
           push.w      r6
@@ -18554,7 +18554,7 @@ LAB_a4e4:
 ; Function: drv_rtc_set_time
 ; Address:  a4fe
 ; Size:     214 bytes
-; Called by: drv_rtc_load, drv_rtc_wait_sec, ir_parse_rx_packet
+; Called by: drv_rtc_apply_cached_time, drv_rtc_wait_sec, ir_parse_rx_packet
 ; =============================================================================
 drv_rtc_set_time:
           mov.l       er0, er5
@@ -20114,12 +20114,12 @@ LAB_b380:
           pop.l       er4
           rts
 ; =============================================================================
-; Function: drv_rtc_load
+; Function: drv_rtc_apply_cached_time
 ; Address:  b390
 ; Size:     48 bytes
 ; Called by: PowerON_Reset
 ; =============================================================================
-drv_rtc_load:
+drv_rtc_apply_cached_time:
           push.l      er2
           push.w      r3
           push.l      er4

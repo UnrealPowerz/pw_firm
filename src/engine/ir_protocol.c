@@ -3,7 +3,12 @@
 /*
  * IR (infrared) communication protocol.
  *
- * Four functions in this file:
+ *   sys_begin_ir_session       Entry point — kicks off the IR connection app.
+ *                              Stops any in-progress sound, renders the
+ *                              connect-screen, disables interrupts, sends the
+ *                              IR discovery probe, and installs ir_comm_loop
+ *                              as the foreground event-loop handler. Guarded:
+ *                              only allowed from the low-power loop.
  *
  *   ir_handle_remote_cmd       Post-session action dispatcher. After the IR
  *                              loop completes, this runs the action stored in
@@ -51,6 +56,41 @@
  * The function is at 65.5% match and very score-sensitive; do not refactor
  * the control flow or the LAB layout without re-verifying.
  */
+
+// ROM: 0x6954  83.2%
+void sys_begin_ir_session(event_loop_func_t current_loop,
+                          event_loop_func_t expected_loop) {
+  /* Re-entrancy guard — only allowed from the low-power loop. */
+  if (current_loop != expected_loop) {
+    return;
+  }
+  /* Connect setup disables interrupts, so the sound-timer ISR can't run
+   * during ir_comm_loop. If a beep was still playing when we got here, its
+   * buffer (ACCEL_SAMPLES_X) will be overwritten by IR payload data, and
+   * when we exit connect and interrupts come back, drv_sound_update will
+   * try to play that garbage as notes — producing a continuous screech.
+   * Stop any in-progress sound up front. */
+  soundData = NULL;
+  if (!(walker_status_flags_BIT.session_active)) {
+    drv_lcd_clear_pages(0x40);
+    ui_render_happy_walker(0);
+    drv_lcd_flip();
+    drv_lcd_clear_pages(0x40);
+    ui_render_happy_walker(1);
+  } else {
+    drv_lcd_clear_pages(0x40);
+    ui_render_connecting_screen(0);
+    gfx_draw_battery_low(0, 0x58);
+    drv_lcd_flip();
+    drv_lcd_clear_pages(0x40);
+    ui_render_connecting_screen(1);
+    gfx_draw_battery_low(0, 0x58);
+  }
+  drv_lcd_flip();
+  set_ccr(0x80);
+  drv_ir_send_discovery();
+  sys_set_handler(ir_comm_loop);
+}
 
 // ROM: 0x009a  91.2%
 void ir_handle_remote_cmd(void) {

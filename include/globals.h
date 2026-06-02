@@ -329,67 +329,66 @@ union pw_scratch {
 #define DAT_f580 ((uint8_t *)0xF580)
 #define eepromPageScratch ((uint8_t *)0xF956u)
 extern volatile uint8_t ir_status;
-/* ROM data labels — these point into the single `_romdata` array in
- * src/romdata.c. Defined as macros so the linker keeps the whole array
- * even when some sub-ranges have no in-code references. */
-extern const uint8_t _romdata[1266];
-#define battleAnimP1XFrames ((&_romdata[0x000]))
-#define battleAnimP3YFrames ((&_romdata[0x004]))
-#define battleAnimP3XFrames ((&_romdata[0x005]))
-#define battleAnimP4YFrames ((&_romdata[0x016]))
-#define battleAnimP4XFrames ((&_romdata[0x017]))
-#define battleMoveOutcomeWeights ((&_romdata[0x028]))
-#define captureSuccessProbs ((&_romdata[0x037]))
-#define PERIODTAB ((&_romdata[0x03C]))
-#define IMG_POKEWALKER_LARGE ((&_romdata[0x066]))
-#define walkerFaceNeutral ((&_romdata[0x166]))
-#define walkerFaceHappy ((&_romdata[0x186]))
-#define walkerFaceSad ((&_romdata[0x1A6]))
-#define walkerEmptyExtraGlyph ((&_romdata[0x1C6]))
-#define IMG_POKEWALKER_IR_ACTIVE ((&_romdata[0x1D6]))
-#define font3ByteGlyphs ((&_romdata[0x1E6]))
-#define DAT_bd40 ((&_romdata[0x232]))
-#define _pad_bd60 ((&_romdata[0x252]))
-#define ballDropAnimYTable ((&_romdata[0x262]))
-#define sparklesAnimXYTable ((&_romdata[0x268]))
-#define cloudAnimYTable ((&_romdata[0x26E]))
-#define L_BD82 ((&_romdata[0x274]))
-#define interactionRewardPtrTable ((&_romdata[0x276]))
-#define fftTwiddleTable ((&_romdata[0x2C2]))
-#define musicNoteYTableA ((&_romdata[0x362]))
-#define musicNoteYTableB ((&_romdata[0x363]))
-#define musicNoteInitialState ((&_romdata[0x364]))
-#define _pad_be76 ((&_romdata[0x368]))
-#define _pad_be7e ((&_romdata[0x370]))
-#define _pad_be96 ((&_romdata[0x388]))
-#define routeIconIndices ((&_romdata[0x3A2]))
-#define lcdInitFallbackSeq ((&_romdata[0x3AA]))
-#define _pad_bee4 ((&_romdata[0x3D6]))
-#define fftBinTable ((&_romdata[0x3EA]))
-#define _pad_bf02 ((&_romdata[0x3F4]))
-#define menuItemCostTable ((&_romdata[0x400]))
-#define mainMenuYCoords ((&_romdata[0x406]))
-#define radarStateXTable ((&_romdata[0x40C]))
-#define radarStateYDivisor ((&_romdata[0x410]))
-#define radarFrameMultiplier ((&_romdata[0x413]))
-#define radarYCoordTable ((&_romdata[0x417]))
-#define _pad_bf2a ((&_romdata[0x41C]))
-#define _pad_bf50 ((&_romdata[0x442]))
-#define factoryStr_NG1 ((const char *)(&_romdata[0x468]))
-#define factoryStr_EEP ((const char *)(&_romdata[0x46C]))
-#define factoryStr_NG2 ((const char *)(&_romdata[0x470]))
-#define factoryStr_NG3 ((const char *)(&_romdata[0x474]))
-#define factoryStr_NG4 ((const char *)(&_romdata[0x478]))
-#define factoryStr_V ((const char *)(&_romdata[0x47C]))
-#define factoryStr_NG5 ((const char *)(&_romdata[0x47E]))
-#define factoryStr_OK ((const char *)(&_romdata[0x482]))
-#define factoryStr_NG6 ((const char *)(&_romdata[0x485]))
-#define _pad_bf97 ((&_romdata[0x489]))
-#define nintendoMagic ((&_romdata[0x48A]))
-#define factoryTestSoundData ((&_romdata[0x494]))
-#define hexDigits ((&_romdata[0x49C]))
-#define _dsec_dbsec_table ((&_romdata[0x4AC]))
-#define _rom_tail_padding ((&_romdata[0x4BA]))
+/* ROM data labels — defined as per-label const arrays in src/romdata.c.
+ * optlnk packs them contiguously within `#pragma section P` in source
+ * order, reproducing the original ROM byte layout. */
+extern const uint8_t battleAnimP1XFrames[4];
+extern const uint8_t battleAnimP3YFrames[1];
+extern const uint8_t battleAnimP3XFrames[17];
+extern const uint8_t battleAnimP4YFrames[1];
+extern const uint8_t battleAnimP4XFrames[17];
+extern const uint8_t battleMoveOutcomeWeights[15];
+extern const uint8_t captureSuccessProbs[5];
+extern const uint8_t PERIODTAB[42];
+extern const uint8_t IMG_POKEWALKER_LARGE[256];
+extern const uint8_t walkerFaceNeutral[32];
+extern const uint8_t walkerFaceHappy[32];
+extern const uint8_t walkerFaceSad[32];
+extern const uint8_t walkerEmptyExtraGlyph[16];
+extern const uint8_t IMG_POKEWALKER_IR_ACTIVE[16];
+extern const uint8_t font3ByteGlyphs[76];
+extern const uint8_t DAT_bd40[32];
+extern const uint8_t _pad_bd60[16];
+extern const uint8_t ballDropAnimYTable[6];
+extern const uint8_t sparklesAnimXYTable[6];
+extern const uint8_t cloudAnimYTable[6];
+extern const uint8_t L_BD82[2];
+extern const uint8_t interactionRewardPtrTable[76];
+extern const uint8_t fftTwiddleTable[160];
+extern const uint8_t musicNoteYTableA[1];
+extern const uint8_t musicNoteYTableB[1];
+extern const uint8_t musicNoteInitialState[4];
+extern const uint8_t _pad_be76[8];
+extern const uint8_t _pad_be7e[24];
+extern const uint8_t _pad_be96[26];
+extern const uint8_t routeIconIndices[8];
+extern const uint8_t lcdInitFallbackSeq[44];
+extern const uint8_t _pad_bee4[20];
+extern const uint8_t fftBinTable[10];
+extern const uint8_t _pad_bf02[12];
+extern const uint8_t menuItemCostTable[6];
+extern const uint8_t mainMenuYCoords[6];
+extern const uint8_t radarStateXTable[4];
+extern const uint8_t radarStateYDivisor[3];
+extern const uint8_t radarFrameMultiplier[4];
+extern const uint8_t radarYCoordTable[5];
+extern const uint8_t _pad_bf2a[38];
+extern const uint8_t _pad_bf50[38];
+extern const char factoryStr_NG1[4];
+extern const char factoryStr_EEP[4];
+extern const char factoryStr_NG2[4];
+extern const char factoryStr_NG3[4];
+extern const char factoryStr_NG4[4];
+extern const char factoryStr_V[2];
+extern const char factoryStr_NG5[4];
+extern const char factoryStr_OK[3];
+extern const char factoryStr_NG6[4];
+extern const uint8_t _pad_bf97[1];
+extern const uint8_t nintendoMagic[10];
+extern const uint8_t factoryTestSoundData[8];
+extern const uint8_t hexDigits[16];
+extern const uint8_t _dsec_dbsec_table[14];
+extern const uint8_t _rom_tail_padding[56];
 
 
 /* --- Sound Engine Globals (Fixed addresses) --- */

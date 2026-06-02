@@ -1,37 +1,21 @@
 #include "all_headers.h"
 
-// ROM: 0x6954  83.2%
-void sys_init_io_ports(event_loop_func_t a, event_loop_func_t b) {
-  if (a != b) {
-    return;
-  }
-  /* Connect setup disables interrupts, so the sound-timer ISR can't run
-   * during ir_comm_loop. If a beep was still playing when we got here, its
-   * buffer (ACCEL_SAMPLES_X) will be overwritten by IR payload data, and
-   * when we exit connect and interrupts come back, drv_sound_update will
-   * try to play that garbage as notes — producing a continuous screech.
-   * Stop any in-progress sound up front. */
-  soundData = NULL;
-  if (!(walker_status_flags_BIT.session_active)) {
-    drv_lcd_clear_pages(0x40);
-    ui_render_happy_walker(0);
-    drv_lcd_flip();
-    drv_lcd_clear_pages(0x40);
-    ui_render_happy_walker(1);
-  } else {
-    drv_lcd_clear_pages(0x40);
-    ui_render_connecting_screen(0);
-    gfx_draw_battery_low(0, 0x58);
-    drv_lcd_flip();
-    drv_lcd_clear_pages(0x40);
-    ui_render_connecting_screen(1);
-    gfx_draw_battery_low(0, 0x58);
-  }
-  drv_lcd_flip();
-  set_ccr(0x80);
-  drv_ir_send_discovery();
-  sys_set_handler(ir_comm_loop);
-}
+/*
+ * Main event-loop entry points.
+ *
+ *   sys_main_loop_low_power    Default idle loop body. Sleeps the CPU,
+ *                              wakes on accel/RTC IRQ, samples accel +
+ *                              buttons, ticks the pedometer task queue,
+ *                              renders if a tick fired. Spins up the
+ *                              active loop if sound starts playing.
+ *
+ *   sys_main_loop_active       Sound-playing loop body. Stays awake through
+ *                              sleep() while sound queue drains. Drops back
+ *                              to the low-power loop when sound completes.
+ *
+ * The IR-session kickoff (sys_begin_ir_session) lives in
+ * src/engine/ir_protocol.c alongside the rest of the IR machinery.
+ */
 
 // ROM: 0x7882  95.8%
 void sys_main_loop_low_power(void) {
@@ -43,14 +27,14 @@ void sys_main_loop_low_power(void) {
   IENR1 |= 0x80;
   drv_button_read();
 
-  if (!(walker_status_flags & 0x18)) {
+  if (!(walker_status_flags & WALKER_MODE_MASK)) {
     game_dispatch_pedometer_task();
     if (game_detect_activity()) {
       sys_enter_low_power();
     } else if (statusFlags_BIT.button_event) {
       sys_enter_low_power();
     }
-  } else if ((walker_status_flags & 0x18) == 0x10) {
+  } else if ((walker_status_flags & WALKER_MODE_MASK) == WALKER_MODE_DEEP_SLEEP) {
     game_check_periodic_events();
     ui_dispatch_event();
     if (currentEventLoopFunc == ir_comm_loop) {
@@ -65,7 +49,7 @@ void sys_main_loop_low_power(void) {
   }
 
   if (statusFlags_BIT.tick) {
-    if ((walker_status_flags & 0x18) == 0x10) {
+    if ((walker_status_flags & WALKER_MODE_MASK) == WALKER_MODE_DEEP_SLEEP) {
       drv_lcd_clear_pages(0x40);
       ui_dispatch_draw();
       drv_lcd_flip();
@@ -74,10 +58,10 @@ void sys_main_loop_low_power(void) {
     statusFlags_BIT.tick = 0;
   } else {
     game_dispatch_pedometer_task();
-    if ((walker_status_flags & 0x18) == 0x10) {
+    if ((walker_status_flags & WALKER_MODE_MASK) == WALKER_MODE_DEEP_SLEEP) {
       if (activityTimer == 0) {
         drv_lcd_power_save();
-        walker_status_flags = (walker_status_flags & 0xE7) | 0x08;
+        walker_status_flags = (walker_status_flags & 0xE7) | WALKER_MODE_LOW_POWER;
         wakeupFlagMaybe[0] = 0;
         buttonHoldDuration = 0;
       }
@@ -113,7 +97,7 @@ void sys_main_loop_active(void) {
   ui_dispatch_event();
 
   if (statusFlags_BIT.tick) {
-    if ((walker_status_flags & 0x18) == 0x10) {
+    if ((walker_status_flags & WALKER_MODE_MASK) == WALKER_MODE_DEEP_SLEEP) {
       drv_lcd_clear_pages(0x40);
       ui_dispatch_draw();
       drv_lcd_flip();

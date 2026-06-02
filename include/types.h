@@ -77,6 +77,17 @@ typedef union {
     } BIT;
 } walker_status_t;
 
+/* Power-mode field values for the 0x18 mask in walker_status_flags.
+ * Expressed in their shifted positions so they drop straight into the raw-
+ * byte mask expressions the rest of the codebase uses (the bit-field form
+ * via walker_status_t.mode regresses codegen — see notes in power.c). */
+#define WALKER_MODE_MASK       0x18
+enum walker_power_mode {
+    WALKER_MODE_ACTIVE     = 0x00,
+    WALKER_MODE_LOW_POWER  = 0x08,
+    WALKER_MODE_DEEP_SLEEP = 0x10
+};
+
 /* RamCache_settingsByte packed user settings */
 typedef union {
     uint8_t BYTE;

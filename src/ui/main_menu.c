@@ -23,7 +23,7 @@ enum main_menu_popup {
 
 // ROM: 0x694c  40.0%
 void ui_enter_ir_session(void) {
-  sys_init_io_ports(currentEventLoopFunc, sys_main_loop_low_power);
+  sys_begin_ir_session(currentEventLoopFunc, sys_main_loop_low_power);
 }
 
 // ROM: 0x9756  74.7%

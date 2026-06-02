@@ -28,7 +28,7 @@ uint8_t drv_rtc_wait_sec(void) {
 }
 
 // ROM: 0xb390  46.5%  saves: er2,r3,er4,er5,er6 -> sys_epilogue_0700
-void drv_rtc_load(void) {
+void drv_rtc_apply_cached_time(void) {
   uint16_t i;
 
   i = 0x3A98;
@@ -38,16 +38,6 @@ void drv_rtc_load(void) {
     i--;
   } while (i != 0);
   drv_rtc_set_time(rtcTime);
-}
-
-// ROM: 0x0078  97.7%
-void drv_rtc_init_timer_b(void) {
-  CKSTPR1 |= 0x04;
-  TMB1 = 0xBF;
-  TCB1_TLB1 = 0xF8;
-  IRR2 &= ~0x04;
-  IENR2 |= 0x04;
-  TMB1 |= 0x40;
 }
 
 // ROM: 0xa4fe  89.8%
