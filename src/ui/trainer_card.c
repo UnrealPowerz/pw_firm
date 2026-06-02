@@ -39,7 +39,7 @@ void ui_reset_trainer_card_state(void) {
                                 for awarding the milestone reward */
 
 // ROM: 0xb3cc  75.2%
-void ui_handle_trainer_stats(void) {
+void ui_handle_trainer_card(void) {
   uint16_t reward_flag_addr;
   uint8_t reward_flags;
 

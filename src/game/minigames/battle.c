@@ -157,7 +157,7 @@ void ui_render_battle(void) {
             gfx_draw_route_pokemon_name(0x00, 0x20,
                                         (uint8_t)(gCurSubstateY - 1), 0x05);
           } else {
-            gfx_draw_special_poke_name(0, 0x20, 5);
+            gfx_draw_special_pokemon_name(0, 0x20, 5);
           }
           gfx_draw_text_box(0x30, TEXT_APPEARED, TEXT_BOX_NO_LINES, TEXT_BOX_BLINK);
           goto switch_default;
@@ -192,7 +192,7 @@ void ui_render_battle(void) {
             gfx_draw_route_pokemon_name(0x00, 0x20,
                                         (uint8_t)(gCurSubstateY - 1), 0x05);
           } else {
-            gfx_draw_special_poke_name(0, 0x20, 5);
+            gfx_draw_special_pokemon_name(0, 0x20, 5);
           }
           gfx_draw_text_box(0x30, TEXT_EVADED, TEXT_BOX_NO_LINES, TEXT_BOX_STATIC);
           goto switch_default;
@@ -226,7 +226,7 @@ void ui_render_battle(void) {
             gfx_draw_route_pokemon_name(0x00, 0x20,
                                         (uint8_t)(gCurSubstateY - 1), 0x05);
           } else {
-            gfx_draw_special_poke_name(0, 0x20, 5);
+            gfx_draw_special_pokemon_name(0, 0x20, 5);
           }
           gfx_draw_text_box(0x30, TEXT_ATTACKED, TEXT_BOX_NO_LINES, TEXT_BOX_STATIC);
           goto switch_default;
@@ -247,7 +247,7 @@ void ui_render_battle(void) {
         gfx_draw_route_pokemon_name(0x00, 0x20,
                                     (uint8_t)(gCurSubstateY - 1), 0x05);
       } else {
-        gfx_draw_special_poke_name(0, 0x20, 5);
+        gfx_draw_special_pokemon_name(0, 0x20, 5);
       }
       gfx_draw_text_box(0x30, TEXT_WAS_TOO_STRONG, TEXT_BOX_NO_LINES, TEXT_BOX_STATIC);
       goto switch_default;
@@ -261,7 +261,7 @@ void ui_render_battle(void) {
           gfx_draw_route_pokemon_name(0x00, 0x20,
                                       (uint8_t)(gCurSubstateY - 1), 0x05);
         } else {
-          gfx_draw_special_poke_name(0, 0x20, 5);
+          gfx_draw_special_pokemon_name(0, 0x20, 5);
         }
         gfx_draw_text_box(0x30, TEXT_FLED, TEXT_BOX_NO_LINES, TEXT_BOX_BLINK);
         goto switch_default;
@@ -322,7 +322,7 @@ void ui_render_battle(void) {
         gfx_draw_route_pokemon_name(0x00, 0x20, (uint8_t)(gCurSubstateY - 1),
                                     0x05);
       } else {
-        gfx_draw_special_poke_name(0x00, 0x20, 5);
+        gfx_draw_special_pokemon_name(0x00, 0x20, 5);
       }
       gfx_draw_text_box(0x30, TEXT_WAS_CAUGHT, TEXT_BOX_NO_LINES, TEXT_BOX_BLINK);
       break;
@@ -462,12 +462,12 @@ void game_battle_handle_finish(void) {
     log_block = sbrk(0x30);
     drv_eeprom_read_block(EEPROM_LOG_CONTEXT, log_block, 0x30);
 
-    reward_slot = save_find_empty_reward_slot(log_block);
+    reward_slot = save_find_empty_poke_slot(log_block);
     if (reward_slot >= 3) {
       /* Bag full — bail out to caught-stats peer session. */
       gCurSubstateA = 0;
-      game_start_peer_session();
-      ui_set_view(VIEW_CAUGHT_STATS);
+      ui_init_discard_cursor();
+      ui_set_view(VIEW_DISCARD_PICKER);
       return;
     }
 
@@ -494,7 +494,7 @@ void game_battle_handle_finish(void) {
     scratch = sbrk(0x68);
     event_seed = drv_eeprom_read_u8(EEPROM_EEP_STR);
 
-    if (gfx_xor_rect_ram(scratch, event_seed) != 0)
+    if (save_check_event_bit(scratch, event_seed) != 0)
       return;
 
     hist_flags = drv_eeprom_read_u8(EEPROM_STEP_HIST_FLAGS);

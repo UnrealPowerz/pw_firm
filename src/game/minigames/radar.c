@@ -1,5 +1,41 @@
 #include "all_headers.h"
 
+/*
+ * Pokeradar minigame.
+ *
+ * Four grass patches are arranged in a 2x2 grid. One patch (rolled at init)
+ * hides the encounter; the player gets a limited time per round to navigate
+ * the cursor (BTN_M/L) over the patches and commit (BTN_R) on what they
+ * think is the right one. Successful guesses progress toward an encounter;
+ * the timer running out or any wrong commit ends the game in failure.
+ *
+ * State machine (gCurSubstateZ):
+ *   RADAR_SEARCH         (0) - cursor navigation; runs ui_handle_radar_grass_menu
+ *   RADAR_FADE_TO_BATTLE (1) - shutter fade-in before game_start_battle
+ *   RADAR_REWARD         (2) - item reward "received!" screen; press -> home
+ *   RADAR_LOCK_ANIM      (3) - "Found something!" lock animation; chains back to
+ *                              SEARCH for next round, or to FADE_TO_BATTLE if
+ *                              enough rounds completed
+ *
+ * Globals repurposed for radar:
+ *   gCurSubstateA      = cursor position over the 2x2 patch grid (0..3)
+ *   gCurSubstateY      = encounter pokemon kind (1..3 wild, 4 peer)
+ *   accelXPos          = total rounds required before battle (rolled at init)
+ *   accelYPos          = sub-tick before each timer decrement
+ *   accelZPos_b        = lock-animation timer for RADAR_LOCK_ANIM
+ *   DAT_f7d1           = rounds completed so far
+ *   DAT_f7d5           = time-remaining countdown (SEARCH) / fade-frame (FADE)
+ *   dowsing_item_pos   = secret patch index (0..3), re-rolled each round
+ */
+
+enum radar_state {
+    RADAR_SEARCH         = 0,
+    RADAR_FADE_TO_BATTLE = 1,
+    RADAR_REWARD         = 2,   /* dead: never set in ROM either; case kept in
+                                   render+handle to match the original switch */
+    RADAR_LOCK_ANIM      = 3
+};
+
 // Reason: ROM uses `mov.l #0x1000280, er5` (ER-packs 0x100 size + 0x280 base
 //   into one 32-bit immediate, then uses e5/r5 halves separately). ch38 emits
 //   `mov.w #256, e6` + inline 0x280 immediates at each use site. ROM also
@@ -10,50 +46,53 @@
 // ROM: 0x9f44  45.5%
 void ui_render_pokeradar(void) {
   void *buf;
-  uint8_t a;
+  uint8_t cursor;
   uint8_t i;
   volatile uint16_t base = 0x280;
 
   sys_init_heap();
   buf = sbrk(0x100);
 
-  drv_eeprom_read_block(0x278 + base + (((animTick & 1) + 9) * 0x10), buf,
-                        0x10);
+  /* Animated grass-blade sprite that sits over the player's selected patch. */
+  drv_eeprom_read_block(0x278 + base + (((animTick & 1) + 9) * 0x10), buf, 0x10);
 
-  a = gCurSubstateA;
-  drv_lcd_blit(radarYCoordTable[a] - 8, (a & 1) * 0x18 + 8, buf, 8, 8);
+  cursor = gCurSubstateA;
+  drv_lcd_blit(radarYCoordTable[cursor] - 8, (cursor & 1) * 0x18 + 8, buf, 8, 8);
 
+  /* The four grass patches. */
   drv_eeprom_read_block(0x1A30 + base, buf, 0xC0);
-
   for (i = 0; i < 4; i++) {
     drv_lcd_blit(radarYCoordTable[i], (i & 1) * 0x18, buf, 0x20, 0x18);
   }
 
   if (accelZPos_b != 0) {
+    /* Reveal phase — overlay the encounter icon on the secret patch. */
     drv_eeprom_read_block(0x1AF0 + base, buf, 0x100);
     drv_lcd_blit(radarYCoordTable[dowsing_item_pos] + 0x10,
-                       (dowsing_item_pos & 1) * 0x18, (uint8_t *)buf + 0xC0,
-                       0x10, 0x10);
+                 (dowsing_item_pos & 1) * 0x18, (uint8_t *)buf + 0xC0,
+                 0x10, 0x10);
 
-    if (gCurSubstateZ == 3) {
+    if (gCurSubstateZ == RADAR_LOCK_ANIM) {
       gfx_draw_text_box(0x30, TEXT_FOUND_SOMETHING_EX, TEXT_BOX_FULL, TEXT_BOX_STATIC);
-    } else if (gCurSubstateZ == 1) {
+    } else if (gCurSubstateZ == RADAR_FADE_TO_BATTLE) {
+      /* Vertical shutter close-in before battle. */
       gfx_fill_rect(0, 0, 0x60, (uint8_t)(DAT_f7d5 * 8), 3);
       gfx_fill_rect(0, (uint8_t)(0x40 - DAT_f7d5 * 8), 0x60,
                     (uint8_t)(DAT_f7d5 * 8), 3);
       DAT_f7d5++;
-    } else if (gCurSubstateZ == 2) {
+    } else if (gCurSubstateZ == RADAR_REWARD) {
       gfx_draw_value_with_icon(2, 0x20, 0x0D, gCurSubstateY);
       gfx_draw_text_box(0x30, TEXT_RECEIVED, TEXT_BOX_NO_LINES, TEXT_BOX_BLINK);
     }
   } else {
+    /* Search phase — prompt and (briefly) flash the next-patch hint. */
     gfx_draw_text_box(0x30, TEXT_FIND_A_POKEMON, TEXT_BOX_FULL, TEXT_BOX_STATIC);
     if (accelYPos == 0) {
       drv_eeprom_read_block(0x1AF0 + base, buf, 0x100);
       drv_lcd_blit(radarYCoordTable[dowsing_item_pos] + 0x10,
-                         (dowsing_item_pos & 1) * 0x18,
-                         (uint8_t *)buf + radarFrameMultiplier[DAT_f7d1] * 0x40,
-                         0x10, 0x10);
+                   (dowsing_item_pos & 1) * 0x18,
+                   (uint8_t *)buf + radarFrameMultiplier[DAT_f7d1] * 0x40,
+                   0x10, 0x10);
     }
   }
 
@@ -62,6 +101,7 @@ void ui_render_pokeradar(void) {
 
 // ROM: 0x9dce  91.6%
 void ui_handle_radar_grass_menu(void) {
+  /* Cursor moves: M = back (+3 mod 4 = -1), L = forward (+1 mod 4). */
   if (drv_button_is_triggered(BTN_M) != 0) {
     gCurSubstateA = (gCurSubstateA + 3) & 3;
     drv_sound_play(SND_CURSOR);
@@ -70,36 +110,44 @@ void ui_handle_radar_grass_menu(void) {
     gCurSubstateA = (gCurSubstateA + 1) & 3;
     drv_sound_play(SND_CURSOR);
   }
+
   if (drv_button_is_triggered(BTN_R) != 0) {
+    /* Commit on current patch — only valid while the round timer is alive. */
     if (DAT_f7d5 != 0) {
       if (gCurSubstateA == dowsing_item_pos) {
+        /* Correct patch — start lock animation. */
         drv_sound_play(SND_RADAR_LOCK);
-        gCurSubstateZ = 3;
+        gCurSubstateZ = RADAR_LOCK_ANIM;
         accelZPos_b = 0x10;
         return;
       }
       if (DAT_f7d1 == 0) {
+        /* First-round wrong guess: just beep, don't end the game. */
         drv_sound_play(SND_FAIL);
         return;
       }
     }
+    /* Wrong commit on a later round, or timer already expired -> failure. */
   } else {
+    /* No commit: count down the round timer in two stages (accelYPos drains
+       first, then each accelYPos cycle ticks DAT_f7d5 down by one). */
     {
-      uint8_t y = accelYPos;
-      if (y != 0) {
-        accelYPos = y - 1;
+      uint8_t sub = accelYPos;
+      if (sub != 0) {
+        accelYPos = sub - 1;
         return;
       }
     }
     {
-      uint8_t d5 = DAT_f7d5;
-      if (d5 != 0) {
-        DAT_f7d5 = d5 - 1;
+      uint8_t t = DAT_f7d5;
+      if (t != 0) {
+        DAT_f7d5 = t - 1;
       }
     }
     if (DAT_f7d5 != 0) {
       return;
     }
+    /* Timer hit zero this tick -> failure. */
   }
 
   drv_sound_play(SND_FLED);
@@ -109,45 +157,52 @@ void ui_handle_radar_grass_menu(void) {
 // ROM: 0x9e72  66.6%
 void ui_handle_pokeradar(void) {
   uint32_t r;
-  uint8_t z;
+  uint8_t state;
+
   if (drv_sound_is_playing())
     return;
 
-  z = gCurSubstateZ;
-  if (z == 0) {
+  state = gCurSubstateZ;
+  if (state == RADAR_SEARCH) {
     ui_handle_radar_grass_menu();
     return;
-  } else if (z == 1) {
+  } else if (state == RADAR_FADE_TO_BATTLE) {
+    /* DAT_f7d5 counts up in the render fn; when the shutter is closed enough,
+       launch the actual battle. */
     if (DAT_f7d5 > 4) {
       game_start_battle();
       ui_set_view(VIEW_BATTLE);
     }
     return;
-  } else if (z == 2) {
+  } else if (state == RADAR_REWARD) {
+    /* Item reward shown — press any button to return home. */
     if (drv_button_is_triggered(BTN_ANY) == 0)
       return;
     drv_sound_play(SND_CONFIRM);
     ui_reset_substate();
     ui_set_view(VIEW_HOME);
     return;
-  } else if (z != 3) {
+  } else if (state != RADAR_LOCK_ANIM) {
     return;
   }
 
+  /* RADAR_LOCK_ANIM: hold for accelZPos_b ticks while the reveal plays. */
   if (accelZPos_b == 0)
     return;
   accelZPos_b--;
   if (accelZPos_b != 0)
     return;
 
+  /* Animation done. If we've completed enough rounds, fade to battle;
+     otherwise re-roll the secret patch and go back to searching. */
   if ((int16_t)DAT_f7d1 >= (int16_t)((uint16_t)accelXPos - 1)) {
-    gCurSubstateZ = 1;
+    gCurSubstateZ = RADAR_FADE_TO_BATTLE;
     accelZPos_b = 1;
     DAT_f7d5 = 0;
     return;
   }
 
-  gCurSubstateZ = 0;
+  gCurSubstateZ = RADAR_SEARCH;
   r = sys_get_rng() >> 2;
   accelYPos = (uint8_t)((uint16_t)r % radarStateYDivisor[DAT_f7d1] + 0x10);
   DAT_f7d1++;
@@ -165,17 +220,108 @@ void ui_handle_radar_failure(void) {
   }
 }
 
+// ROM: 0xa12c  75.2%
+void ui_render_radar_failure(void) {
+  uint16_t i;
+  uint8_t *buf;
+
+  /* Draw the 4 grass-patch sprites again (frozen, no animation overlay) +
+     the "It got away..." text-box. */
+  sys_init_heap();
+  buf = sbrk(0xC0);
+  drv_eeprom_read_block(0x1CB0, buf, 0xC0);
+
+  for (i = 0; i < 4; i++) {
+    drv_lcd_blit(radarYCoordTable[i], (uint8_t)((i & 1) * 0x18),
+                 buf, 0x20, 0x18);
+  }
+
+  gfx_draw_text_box(0x30, TEXT_IT_GOT_AWAY, TEXT_BOX_FULL, TEXT_BOX_BLINK);
+  gfx_draw_battery_low(0, 0);
+}
+
+/*
+ * Pre-roll for the radar encounter. Picks what's behind the curtain and
+ * how many rounds the player has to win to reach it:
+ *
+ *   gCurSubstateY = 4  : peer-event encounter (co-op mode + step gates passed)
+ *   gCurSubstateY = 1..3: wild encounter, slot N+1 (solo path, step-gated tiers
+ *                         in the trainer profile at offset 0x82)
+ *   gCurSubstateY = 3, accelXPos low: fall-through small encounter
+ *
+ *   accelXPos: number of rounds the radar minigame should require before
+ *              transitioning to battle (3..4 for peer/wild, 1..2 for the
+ *              fall-through).
+ */
+// ROM: 0x9c48  79.2%
+void game_roll_radar_encounter(void) {
+  uint32_t steps_required;
+  uint8_t *scratch;
+  uint8_t slot;
+  uint8_t rnd_pct;
+  uint8_t *trainer_buf;
+
+  gCurSubstateY = 0;
+  if (((RamCache_settingsByte & 1)) != 0) {
+    uint8_t peer_evt_seed = drv_eeprom_read_u8(EEPROM_EEP_STR);
+    sys_init_heap();
+    scratch = sbrk(0x68);
+    if (save_check_event_bit(scratch, peer_evt_seed) == 0) {
+      if ((drv_eeprom_read_u8(EEPROM_STEP_HIST_FLAGS) & 0x20) == 0) {
+        sys_init_heap();
+        scratch = sbrk(4);
+        drv_eeprom_read_block(0xBF44, scratch, 4);
+        steps_required = ((uint32_t)scratch[1] << 16) |
+                         ((uint32_t)scratch[2] << 8) | scratch[3];
+        if (steps_required <= sessionSteps) {
+          if ((sys_get_rng() % 100) < scratch[2]) {
+            gCurSubstateY = 4;
+            accelXPos = ((sys_get_rng() >> 3) & 1) + 3;
+            return;
+          }
+        }
+      }
+    }
+  }
+
+  /* LAB_9cea: solo path — three step-gated encounter tiers. */
+  sys_init_heap();
+  scratch = sbrk(0x30);
+  drv_eeprom_read_block(EEPROM_LOG_CONTEXT, scratch, 0x30);
+  rnd_pct = (uint8_t)(sys_get_rng() % 100);
+
+  sys_init_heap();
+  trainer_buf = sbrk(0xBE);
+  drv_eeprom_read_block(EEPROM_TRAINER_PROFILE, trainer_buf, 0xBE);
+
+  for (slot = 0; slot < 3; slot++) {
+    if (!game_check_step_unlock((uint16_t)(slot * 2), 0x82, trainer_buf)) {
+      if (trainer_buf[0x88 + slot] > rnd_pct) {
+        gCurSubstateY = slot + 1;
+        /* Codegen note: ROM emits the add as `-slot + (rng>>3 & 1) + 3`,
+           hence the negation order here matters for the score. */
+        accelXPos = (slot * -1) + ((sys_get_rng() >> 3) & 1) + 3;
+        return;
+      }
+    }
+  }
+
+  gCurSubstateY = 3;
+  accelXPos = ((sys_get_rng() >> 3) & 1) + 1;
+}
+
 // ROM: 0x9d92  88.0%
 void game_pokeradar_init(void) {
-  uint8_t *ram_ptr;
-  game_generate_encounter_dowsing();
-  gCurSubstateZ = 0;
-  gCurSubstateA = 0;
-  DAT_f7d1 = 0;
-  accelYPos = 5;
-  ram_ptr = (uint8_t *)0; /* base RAM pointer for reading cached EEPROM */
-  DAT_f7d5 = ram_ptr[0xBF1A];
-  dowsing_item_pos = ((sys_get_rng() << 3) >> 8) &
-                     3; /* Matches `shll.w r0` x 3 and taking high byte */
+  uint8_t *ram_base;
+  game_roll_radar_encounter();         /* rolls gCurSubstateY + accelXPos */
+  gCurSubstateZ = RADAR_SEARCH;
+  gCurSubstateA = 0;                   /* cursor at patch 0 */
+  DAT_f7d1 = 0;                        /* zero rounds completed */
+  accelYPos = 5;                       /* initial sub-tick counter */
+  /* DAT_f7d5 (round timer) seeded from EEPROM cache shadow at 0xBF1A. */
+  ram_base = (uint8_t *)0;
+  DAT_f7d5 = ram_base[0xBF1A];
+  /* Initial secret patch from 2-bit rng slice. */
+  dowsing_item_pos = ((sys_get_rng() << 3) >> 8) & 3;
   accelZPos_b = 0;
 }

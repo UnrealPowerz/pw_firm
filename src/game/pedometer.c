@@ -1,5 +1,51 @@
 #include "all_headers.h"
 
+/*
+ * Pedometer — step detection, step accounting, watts accrual.
+ *
+ * Function clusters:
+ *
+ *   --- Accel-sample → step-rate pipeline ---
+ *     game_detect_activity            Sum of 3-axis sample deltas — has motion?
+ *     game_check_pedometer_activity   Wake from low-power if stepTimer expired.
+ *     game_process_accel_data         Main pipeline (FFT 3 axes + scan peaks +
+ *                                     interpolate + commit step batch + accel-
+ *                                     debug instrumentation).
+ *     game_detect_steps_fft           Scan the FFT output for a step-rate peak
+ *                                     bin; reject if dominated by noise.
+ *     game_pedometer_interpolate_batch
+ *                                     Parabolic interpolation around the peak
+ *                                     bin to recover a sub-bin step rate.
+ *
+ *   --- Step / watts accounting ---
+ *     game_pedometer_set_total        Setter with 9,999,999 cap.
+ *     game_pedometer_increment_step   +1 step + 1/20-watt + save commit; also
+ *                                     logs the step interaction when walking.
+ *     game_pedometer_tick_counters    Batched +1 (called many times per tick
+ *                                     based on stepBatchSize).
+ *     game_add_watts                  Clamped += into watts.
+ *     game_reset_step_data            Full reset (optionally also totals).
+ *     game_rotate_step_history        Daily roll-over: shift the 6-day history
+ *                                     and start a fresh sessionSteps slot.
+ *
+ *   --- Pedometer task dispatch (pedTaskFlags) ---
+ *     game_pedometer_tick_session     Per-second sessionTicksElapsed bump
+ *                                     (pedTaskFlags bit 0 dispatches to here).
+ *     game_dispatch_pedometer_task    Pop bits off pedTaskFlags and run the
+ *                                     corresponding task.
+ *     game_reset_pedometer_flags      Clear the step-detection accumulators.
+ *
+ *   --- Step-gated unlocks ---
+ *     game_check_step_unlock          Reads a uint16 step threshold from a
+ *                                     caller-supplied buffer + offsets;
+ *                                     returns 1 if NOT YET reached (slot is
+ *                                     still locked). Used by the minigame
+ *                                     encounter roller for tiered unlocks.
+ *
+ * Several functions carry "Reason / cannot-fix" markers describing the
+ * specific ch38 vs ROM codegen mismatches; edit those with care.
+ */
+
 // ROM: 0xb124  99.4%
 void game_reset_step_data(uint8_t a) {
   if (a != 0) {
@@ -72,24 +118,6 @@ uint32_t game_pedometer_interpolate_batch(uint8_t flags, uint16_t arg2) {
   return n / (uint32_t)d;
 }
 
-// ROM: 0xa12c  75.2%
-void game_render_step_counter(void) {
-  uint16_t r6;
-  uint8_t *ram_ptr;
-
-  sys_init_heap();
-  ram_ptr = sbrk(0xC0);
-  drv_eeprom_read_block(0x1CB0, ram_ptr, 0xC0);
-
-  for (r6 = 0; r6 < 4; r6++) {
-    drv_lcd_blit(radarYCoordTable[r6], (uint8_t)((r6 & 1) * 0x18),
-                 ram_ptr, 0x20, 0x18);
-  }
-
-  gfx_draw_text_box(0x30, TEXT_IT_GOT_AWAY, TEXT_BOX_FULL, TEXT_BOX_BLINK);
-  gfx_draw_battery_low(0, 0);
-}
-
 // ROM: 0xa1a8  50.2%  saves: r6,r5
 uint8_t game_detect_activity(void) {
   uint16_t total;
@@ -138,6 +166,9 @@ uint8_t game_detect_activity(void) {
 
 // ROM: 0xa2f6  83.8%
 void game_check_pedometer_activity(void) {
+  /* When stepTimer hits 0 (no steps for a while), exit low-power sleep to
+     resume scanning. stepTimer is reset to 30 in game_process_accel_data
+     whenever a non-zero step batch is committed. */
   if (stepTimer == 0) {
     sys_wake_from_low_power();
   }
@@ -165,7 +196,7 @@ void game_pedometer_set_total(uint32_t val) {
 void game_dispatch_pedometer_task(void) {
   if (!statusFlags_BIT.pedometer_paused) {
     if ((pedTaskFlags & 0x01)) {
-      game_pedometer_init_counters();
+      game_pedometer_tick_session();
     }
     if ((pedTaskFlags & 0x02)) {
       game_pedometer_increment_step();
@@ -178,7 +209,9 @@ void game_dispatch_pedometer_task(void) {
 }
 
 // ROM: 0xa396  99.3%
-void game_pedometer_init_counters(void) {
+void game_pedometer_tick_session(void) {
+  /* Increment with overflow guard — sessionTicksElapsed saturates at 0xFFFF
+     rather than wrapping to 0. Driven by pedTaskFlags bit 0 (per-second). */
   if (sessionTicksElapsed + 1 != 0) {
     sessionTicksElapsed++;
   }

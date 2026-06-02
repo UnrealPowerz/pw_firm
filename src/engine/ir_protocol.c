@@ -1,5 +1,57 @@
 #include "all_headers.h"
 
+/*
+ * IR (infrared) communication protocol.
+ *
+ * Four functions in this file:
+ *
+ *   ir_handle_remote_cmd       Post-session action dispatcher. After the IR
+ *                              loop completes, this runs the action stored in
+ *                              REQUESTED_POKEMON_ACTION_TYPE (factory reset,
+ *                              start/end walk, peer play, event reward, etc.).
+ *
+ *   ir_parse_rx_packet         Decode a received 0x68-byte payload into the
+ *                              shared DAT_f7e6 record + extract BCD-encoded
+ *                              scheduled-notify hour + sync RTC if a peer
+ *                              clock value is present.
+ *
+ *   ir_calc_packet_checksum    16-bit one's-complement-style sum over the
+ *                              packet bytes. Alternating bytes go into the
+ *                              high/low byte of the running 32-bit sum, then
+ *                              the upper/lower halves are folded back.
+ *
+ *   ir_comm_loop               The IR comm event loop. Drives the handshake,
+ *                              parses incoming bytes, dispatches command opcodes,
+ *                              and orchestrates the multi-phase EEPROM transfer
+ *                              session.
+ *
+ * Handshake state machine — drives the SYN-style 3-way exchange before any
+ * payload commands are accepted. Stored in `irHandshakeStep`:
+ *
+ *   0 = NONE          - no exchange in progress.
+ *   1 = FC_SENT       - sent the 0xFC probe byte, waiting for peer 0xFA.
+ *   2 = FA_RECEIVED   - peer replied with 0xFA; we sent our 0xFA back.
+ *   3 = F8_SENT       - committed to a session key, sent 0xF8.
+ *   4 = TRAINER_SENT  - sent our trainer record to the peer (post-handshake).
+ *
+ * Session phase — once the handshake completes, the multi-step EEPROM-pair
+ * transfer is gated by `irSessionPhase` (own pokemon → peer pokemon → pokedex
+ * → etc.). Values 1..5; the 0x04 opcode advances the phase.
+ *
+ * LAB_xxxx labels at the bottom of ir_comm_loop are the ROM's exit fan-out:
+ *
+ *   LAB_182e            tx-done epilogue (random LCD reframe + reset cmd pos)
+ *   LAB_14bc            drv_ir_finish_and_execute then -> LAB_182e
+ *   LAB_1252            REQUESTED_POKEMON_ACTION_TYPE = cmdByte then LAB_14bc
+ *   LAB_15e4            REQUESTED_POKEMON_ACTION_TYPE = cmdByte then LAB_182e
+ *   LAB_17ee            send 0x04 ack then -> LAB_182e
+ *   LAB_17ea            write trainer profile, then -> LAB_17ee
+ *   start_eeprom_tx*    queue the next chunk of an EEPROM transfer
+ *
+ * The function is at 65.5% match and very score-sensitive; do not refactor
+ * the control flow or the LAB layout without re-verifying.
+ */
+
 // ROM: 0x009a  91.2%
 void ir_handle_remote_cmd(void) {
   switch (REQUESTED_POKEMON_ACTION_TYPE) {
@@ -26,12 +78,12 @@ void ir_handle_remote_cmd(void) {
 
 enter_test_mode:
   drv_lcd_init();
-  currentlyActiveView = VIEW_DEBUG;
+  currentlyActiveView = VIEW_FACTORY_TEST;
   diag_init_test_mode();
   goto finalize;
 enter_debug_mode:
   currentlyActiveView = VIEW_ACCEL_DEBUG;
-  sys_init_debug_mode();
+  sys_init_accel_debug();
   goto finalize;
 factory_reset_full:
   drv_lcd_init();
@@ -146,26 +198,31 @@ finalize:
 
 // ROM: 0x03b4  55.8%  saves: er2,r3,er4,er5,er6 -> sys_epilogue_0700
 void ir_parse_rx_packet(void) {
-  uint32_t poke_ptr;
-  uint8_t raw;
+  uint32_t peer_rtc;
+  uint8_t hour_raw;
   uint16_t tens, units, bcd;
   uint8_t *payload;
 
+  /* Stash the received payload into the shared DAT_f7e6 record so the rest
+     of the comm-loop case-arms can read it without another copy. */
   payload = drv_ir_get_rx_ptr();
   memcpy(payload, (void *)DAT_f7e6, 0x68);
 
-  raw = DAT_f841;
-  if ((raw & 0xF8) < 0xC0) {
-    bcd = (uint16_t)(raw >> 3);
+  /* DAT_f841 packs an hour in bits 7..3 (top 5 bits, valid if < 0x18).
+     Decode to BCD for the notify-time scheduler. */
+  hour_raw = DAT_f841;
+  if ((hour_raw & 0xF8) < 0xC0) {
+    bcd = (uint16_t)(hour_raw >> 3);
     tens = bcd / 10;
     units = bcd - (tens * 10);
     scheduledNotifyHour = (uint8_t)((tens << 4) | units);
   }
 
-  poke_ptr = peerRcvdRtcTime;
-  if (poke_ptr != 0) {
-    rtcTime = poke_ptr;
-    drv_rtc_set_time(poke_ptr);
+  /* If the peer included a wall-clock time, adopt it. */
+  peer_rtc = peerRcvdRtcTime;
+  if (peer_rtc != 0) {
+    rtcTime = peer_rtc;
+    drv_rtc_set_time(peer_rtc);
   }
 }
 
@@ -176,7 +233,7 @@ uint16_t ir_calc_packet_checksum(uint8_t length, uint8_t *data) {
   uint32_t i;
   uint32_t len;
   uint8_t *ptr;
-  uint8_t b;
+  uint8_t byte;
   uint16_t hi;
   uint16_t lo;
 
@@ -185,16 +242,21 @@ uint16_t ir_calc_packet_checksum(uint8_t length, uint8_t *data) {
   sum = 0;
   i = 0;
 
+  /* Even-indexed bytes go into the upper byte of the running word, odd-indexed
+     bytes into the lower byte. Effectively this folds two bytes at a time
+     into a 16-bit accumulator that grows into a 32-bit sum on overflow. */
   while (i < len) {
-    b = *ptr++;
+    byte = *ptr++;
     if (i & 1) {
-      sum += (uint32_t)b;
+      sum += (uint32_t)byte;
     } else {
-      sum += (uint32_t)b << 8;
+      sum += (uint32_t)byte << 8;
     }
     i++;
   }
 
+  /* Fold the 32-bit sum into 16 bits twice (one's-complement-style carry
+     wrap-around). */
   hi = (uint16_t)(sum >> 16);
   lo = (uint16_t)(sum);
   sum = (uint32_t)hi + (uint32_t)lo;
@@ -725,7 +787,7 @@ void ir_comm_loop(void) {
         }
         *dst = DAT_f840;
       }
-      if (gfx_xor_rect_ram((void *)trainerRecBuf, DAT_f840) != 0) {
+      if (save_check_event_bit((void *)trainerRecBuf, DAT_f840) != 0) {
         drv_ir_send_packet(0x11, 0x9E, 2);
         irResultCode = 6;
         goto LAB_14bc;
@@ -746,7 +808,7 @@ void ir_comm_loop(void) {
         }
         *dst = DAT_f840;
       }
-      if (gfx_xor_rect_ram((void *)trainerRecBuf, DAT_f840) != 0) {
+      if (save_check_event_bit((void *)trainerRecBuf, DAT_f840) != 0) {
         drv_ir_send_packet(0x11, 0x9E, 2);
         irResultCode = 6;
         goto LAB_14bc;

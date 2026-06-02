@@ -20,11 +20,11 @@ void sys_init_io_ports(event_loop_func_t a, event_loop_func_t b) {
     ui_render_happy_walker(1);
   } else {
     drv_lcd_clear_pages(0x40);
-    ui_draw_ir_icon(0);
+    ui_render_connecting_screen(0);
     gfx_draw_battery_low(0, 0x58);
     drv_lcd_flip();
     drv_lcd_clear_pages(0x40);
-    ui_draw_ir_icon(1);
+    ui_render_connecting_screen(1);
     gfx_draw_battery_low(0, 0x58);
   }
   drv_lcd_flip();
@@ -46,9 +46,9 @@ void sys_main_loop_low_power(void) {
   if (!(walker_status_flags & 0x18)) {
     game_dispatch_pedometer_task();
     if (game_detect_activity()) {
-      sys_power_save_low_power();
+      sys_enter_low_power();
     } else if (statusFlags_BIT.button_event) {
-      sys_power_save_low_power();
+      sys_enter_low_power();
     }
   } else if ((walker_status_flags & 0x18) == 0x10) {
     game_check_periodic_events();

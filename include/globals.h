@@ -33,7 +33,7 @@ enum view_id {
     VIEW_BATTLE                = 0x04,
     /* 0x05 unused */
     VIEW_RADAR_FAILURE         = 0x06,
-    VIEW_CAUGHT_STATS          = 0x07,
+    VIEW_DISCARD_PICKER          = 0x07,
     VIEW_TRAINER_CARD          = 0x08,
     VIEW_SETTINGS              = 0x09,
     VIEW_POKE_ITEMS            = 0x0A,
@@ -44,7 +44,7 @@ enum view_id {
     VIEW_WALK_ARRIVAL_ANIM     = 0x0F,
     VIEW_WALK_DEPARTURE_ANIM   = 0x10,
     VIEW_EVENT_REWARD_ANIM     = 0x11,
-    VIEW_DEBUG                 = 0x16,
+    VIEW_FACTORY_TEST                 = 0x16,
     VIEW_ACCEL_DEBUG           = 0x17,
     VIEW_TEXT                  = 0x18
 };
@@ -70,7 +70,7 @@ struct session_save {
     volatile uint32_t rtcTime;
     volatile uint16_t dayCounter;
     volatile uint16_t watts;
-    volatile uint16_t sessionTicksElapsed;   /* ++ per tick in game_pedometer_init_counters,
+    volatile uint16_t sessionTicksElapsed;   /* ++ per tick in game_pedometer_tick_session,
                                                 reset at session start; saturates at 0xFFFF */
     volatile uint8_t  stepWattCounter;
     volatile uint8_t  peerSlotIndex;       /* used only as 1-byte 0..22 ring index */

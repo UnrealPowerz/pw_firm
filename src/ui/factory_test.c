@@ -1,5 +1,33 @@
 #include "all_headers.h"
 
+/*
+ * Factory test (VIEW_FACTORY_TEST, entered via IR command 0xF0).
+ *
+ *   diag_init_test_mode        reset state, set vol/contrast.
+ *   ui_handle_factory_test     progress through the 0x13-stage test sequence
+ *                              driven by gCurSubstateY.
+ *   ui_render_factory_test     per-stage UI (LCD fills, button indicators,
+ *                              NG/OK strings drawn via gfx_draw_string).
+ *
+ *   sys_factory_test           the bare-metal factory-bringup routine called
+ *                              from system/resetprg.c. Bit-bangs commands over
+ *                              SSU to a host fixture, runs sub-tests (EEPROM
+ *                              stress, RTC, accel, ADC), and reports pass/fail.
+ *                              Not reached in normal firmware operation.
+ *
+ *   diag_eeprom_factory_test   the EEPROM-stress sub-test (write-all,
+ *                              read-and-verify, then fill 0xFF).
+ *
+ * Factory-test stages (gCurSubstateY values 0..0x12) progress sequentially.
+ * Each stage either auto-advances after a frame counter (gCurSubstateA >= 4)
+ * or waits for a specific button. The stage numbers are referenced both by
+ * the handler (decide-when-to-advance) and the renderer (decide-what-to-show);
+ * see per-case inline comments below for the role of each stage.
+ *
+ * The companion VIEW_ACCEL_DEBUG view (entered from the final factory-test
+ * stage) lives in src/ui/accel_debug.c.
+ */
+
 // ROM: 0xa72a  29.3%
 uint8_t diag_eeprom_factory_test(uint32_t addr) {
   uint8_t *buf;
@@ -211,7 +239,7 @@ void diag_init_test_mode(void) {
 }
 
 // ROM: 0xaa6c  67.2%
-void ui_handle_debug_input(void) {
+void ui_handle_factory_test(void) {
   uint8_t subY;
   uint8_t subA;
 
@@ -227,6 +255,8 @@ void ui_handle_debug_input(void) {
 
   switch (subY) {
   case 0x00:
+    /* Idle entry — wait for gCurSubstateZ to be poked non-zero by the IR
+       command path, then advance to sound test. */
     if (gCurSubstateZ == 0) {
       return;
     }
@@ -235,6 +265,9 @@ void ui_handle_debug_input(void) {
     return;
 
   case 0x01:
+    /* Sound test. After a 4-frame settle, BTN_LM advances + plays the
+       factory sound. The unreachable BTN_M-decrement branch below is
+       dead code (gCurSubstateY == 1 always true in this case). */
     if (subA < 4) {
       return;
     }
@@ -251,31 +284,42 @@ void ui_handle_debug_input(void) {
     subY = gCurSubstateY - 1;
     goto set_substate_y_and_clear_a;
 
+  /* Stages 0x02..0x06 (LCD fills + SPI/pixel tests) have no handler case —
+     they fall to default and stick until something external advances
+     gCurSubstateY. The render path keeps showing the test pattern. */
+
   case 0x07:
+    /* Middle-button test. */
     if (drv_button_is_triggered(BTN_M) == 0) {
       return;
     }
     goto do_sound_and_inc;
 
   case 0x08:
+    /* Right-button test. */
     if (drv_button_is_triggered(BTN_R) == 0) {
       return;
     }
     goto do_sound_and_inc;
 
   case 0x09:
+    /* Left-button test. */
     if (drv_button_is_triggered(BTN_L) == 0) {
       return;
     }
     goto do_sound_and_inc;
 
   case 0x0A:
+    /* "EEPROM" header shown — short settle, then advance to the test run. */
     if (subA < 2) {
       return;
     }
     goto do_inc;
 
   case 0x0B: {
+    /* EEPROM stress test: read RTC sec twice (debounce), stash, run the
+       64K-EEPROM pattern test, run it again, reset EEPROM to defaults,
+       read RTC sec again as a "soak time" marker. */
     uint8_t s1;
     uint8_t s2;
     do {
@@ -299,6 +343,9 @@ void ui_handle_debug_input(void) {
   }
 
   case 0x0C:
+    /* EEPROM result gate — `dowsing_item_pos` here doubles as a generic
+       pass-flag (1=passed, 0=failed). Wait for the renderer to settle
+       then advance with sound. NG2 is shown if it failed. */
     if (dowsing_item_pos == 0) {
       return;
     }
@@ -308,6 +355,7 @@ void ui_handle_debug_input(void) {
     goto do_sound_and_inc;
 
   case 0x0D: {
+    /* Accel calibration validate — read EEPROM cal block, verify checksum. */
     uint16_t val;
     save_read_reliable(EEPROM_ACCEL_CAL, EEPROM_ACCEL_CAL_BACKUP, (void *)&accelYPos, 2);
     val = accelYPos;
@@ -320,6 +368,7 @@ void ui_handle_debug_input(void) {
   }
 
   case 0x0E:
+    /* Accel calibration result gate. NG3 if dowsing_item_pos == 0. */
     if (dowsing_item_pos == 0) {
       return;
     }
@@ -329,23 +378,29 @@ void ui_handle_debug_input(void) {
     goto do_sound_and_inc;
 
   case 0x0F:
+    /* Accel sample check — advance only once samples diverge from the
+       stashed value (gives the technician time to wiggle the device). */
     if (DAT_f7d1 != *(uint8_t *)(&accelXPos)) {
       goto do_sound_and_inc;
     }
     return;
 
   case 0x10:
+    /* Re-init the accel driver and arm the result check. */
     drv_accel_init();
     dowsing_item_pos = 0;
     goto do_inc;
 
   case 0x11:
+    /* Accel init result gate. NG5 if pass-flag still 0. */
     if (dowsing_item_pos == 0) {
       return;
     }
     goto do_sound_and_inc;
 
   case 0x12:
+    /* Final stage — wait, then any button transitions to the accel-debug
+       view for live threshold inspection. */
     if (subA < 4) {
       return;
     }
@@ -361,7 +416,7 @@ void ui_handle_debug_input(void) {
       ;
     PDR1 |= 0x01;
     currentlyActiveView = VIEW_ACCEL_DEBUG;
-    sys_init_debug_mode();
+    sys_init_accel_debug();
     drv_sound_set_data((uint8_t *)factoryTestSoundData);
     return;
 
@@ -379,13 +434,13 @@ set_substate_y_and_clear_a:
 }
 
 // ROM: 0xad06  50.3%
-void ui_render_debug(void) {
+void ui_render_factory_test(void) {
   uint8_t buf[6];
-  void (*fn858a)(uint8_t, uint8_t, const char *);
+  void (*draw_string)(uint8_t, uint8_t, const char *);
   uint8_t subY;
   uint8_t subA;
 
-  fn858a = gfx_draw_string;
+  draw_string = gfx_draw_string;
   subY = gCurSubstateY;
 
   if (subY > 0x12) {
@@ -397,7 +452,7 @@ void ui_render_debug(void) {
     if (gCurSubstateZ != 0) {
       goto case_d;
     }
-    fn858a(0x20, 0x08, factoryStr_NG1);
+    draw_string(0x20, 0x08, factoryStr_NG1);
     goto case_d;
 
   case 0x01:
@@ -428,53 +483,53 @@ void ui_render_debug(void) {
     if (((uint16_t)animTick >> 1) & 1) {
       goto case_d;
     }
-    fn858a(0x06, 0x38, factoryStr_V);
+    draw_string(0x06, 0x38, factoryStr_V);
     goto case_d;
 
   case 0x08:
     if (((uint16_t)animTick >> 1) & 1) {
       goto case_d;
     }
-    fn858a(0x2D, 0x38, factoryStr_V);
+    draw_string(0x2D, 0x38, factoryStr_V);
     goto case_d;
 
   case 0x09:
     if (((uint16_t)animTick >> 1) & 1) {
       goto case_d;
     }
-    fn858a(0x55, 0x38, factoryStr_V);
+    draw_string(0x55, 0x38, factoryStr_V);
     goto case_d;
 
   case 0x0A:
-    fn858a(0x20, 0x08, factoryStr_EEP);
+    draw_string(0x20, 0x08, factoryStr_EEP);
     goto case_d;
 
   case 0x0C:
     if (dowsing_item_pos != 0) {
       goto case_d;
     }
-    fn858a(0x20, 0x08, factoryStr_NG2);
+    draw_string(0x20, 0x08, factoryStr_NG2);
     goto case_d;
 
   case 0x0E:
     if (dowsing_item_pos != 0) {
       goto case_d;
     }
-    fn858a(0x20, 0x08, factoryStr_NG3);
+    draw_string(0x20, 0x08, factoryStr_NG3);
     goto case_d;
 
   case 0x0F:
     if (DAT_f7d1 != *(uint8_t *)(&accelXPos)) {
       goto case_d;
     }
-    fn858a(0x20, 0x08, factoryStr_NG4);
+    draw_string(0x20, 0x08, factoryStr_NG4);
     goto case_d;
 
   case 0x11:
     if (dowsing_item_pos != 0) {
       goto case_d;
     }
-    fn858a(0x20, 0x08, factoryStr_NG5);
+    draw_string(0x20, 0x08, factoryStr_NG5);
     goto case_d;
 
   case 0x12:
@@ -493,7 +548,7 @@ void ui_render_debug(void) {
       const uint8_t *hexTable = hexDigits;
       uint16_t val = accelYPos;
 
-      fn858a(0x20, 0x00, factoryStr_OK);
+      draw_string(0x20, 0x00, factoryStr_OK);
 
       buf[4] = 0;
       buf[0] = hexTable[(val >> 12) & 0xF];
@@ -502,13 +557,13 @@ void ui_render_debug(void) {
       buf[3] = hexTable[val & 0xF];
       buf[4] = 0;
 
-      fn858a(0x20, 0x18, (const char *)buf);
+      draw_string(0x20, 0x18, (const char *)buf);
     }
 
     if (!(((uint16_t)animTick >> 1) & 1)) {
-      fn858a(0x06, 0x38, factoryStr_V);
-      fn858a(0x2D, 0x38, factoryStr_V);
-      fn858a(0x55, 0x38, factoryStr_V);
+      draw_string(0x06, 0x38, factoryStr_V);
+      draw_string(0x2D, 0x38, factoryStr_V);
+      draw_string(0x55, 0x38, factoryStr_V);
     }
     goto case_d;
 
@@ -521,334 +576,4 @@ case_d:
   if (subA < 4) {
     gCurSubstateA = subA + 1;
   }
-}
-
-// ROM: 0xaebc  66.1%
-void sys_init_debug_mode(void) {
-  accelSampleCount = 0;
-  gCurSubstateY = 0x10;
-  gCurSubstateA = 0;
-  DAT_f7d1 = 0;
-  accelXPos = 0;
-  accelYPos = 0;
-  accelZPos = 0;
-  drv_eeprom_read_block(8, (void *)&DAT_f7d8, 8);
-  walker_status_flags_BIT.session_active = 1;
-}
-
-// ROM: 0xaef8  100.0%
-void sys_noop(void) {}
-
-// Reason: ROM uses `$sp_regsv$3` prologue + `subs #6, r7`; ch38 emits a 12-byte
-//   subs after the helper. Body structure (gfx_draw_string hoisted to r4,
-//   activityTimer/stepTimer resets, digit-to-ASCII conversions via add #0x30,
-//   buf writes via @r6) matches. ch38 stores str-buffer locals differently
-//   from ROM (different sp offsets) so every `@(N, sp)` access diverges.
-// Class: cannot-fix-without-compiler-change (sp_regsv$3 helper + stack
-//   local layout)
-// ROM: 0xaefa  42.6%
-#pragma option noregexpansion /* pragma:auto */
-void ui_render_accel_debug(void) {
-  uint8_t buf[6];
-  void (*fn858a)(uint8_t, uint8_t, const char *);
-  uint8_t *hexTable;
-  uint8_t *p;
-  uint8_t *q;
-
-  fn858a = gfx_draw_string;
-  activityTimer = 0x3C;
-  stepTimer = 0x1E;
-
-  /* Use buf[0..1] for 2-char strings via stack pointer */
-  p = buf;
-  q = p + 1;
-
-  /* Draw gCurSubstateA as ASCII digit at position 0x4C */
-  *p = (uint8_t)(gCurSubstateA + 0x30);
-  *q = 0;
-  fn858a(0x4C, 0x00, (const char *)p);
-
-  /* Draw DAT_f7d8 as ASCII digit at position 0x54 */
-  *p = (uint8_t)(DAT_f7d8 + 0x30);
-  *q = 0;
-  fn858a(0x54, 0x00, (const char *)p);
-
-  hexTable = (uint8_t *)hexDigits;
-
-  /* Draw hex digits of axisStepThresholdLo at 0x820 */
-  {
-    uint16_t val = axisStepThresholdLo;
-    uint16_t tmp;
-    uint8_t *d;
-    d = p;
-    tmp = val / 0x1000;
-    *d = hexTable[tmp & 0xF];
-    d = q;
-    tmp = val;
-    *d = hexTable[tmp & 0xF];
-
-    d = (p + 2);
-    tmp = (val >> 4);
-    *d = hexTable[tmp & 0xF];
-    d = (p + 3);
-    tmp = (val >> 4);
-    *d = hexTable[tmp & 0xF];
-
-    /* Reset and recompute properly */
-    *p = hexTable[(val >> 12) & 0xF];
-    *q = hexTable[(val >> 8) & 0xF];
-    *(p + 2) = hexTable[(val >> 4) & 0xF];
-    *(p + 3) = hexTable[val & 0xF];
-    *(p + 4) = 0;
-    fn858a(0x20, 0x08, (const char *)p);
-  }
-
-  /* Draw hex digits of axisStepThresholdHi at 0x840 */
-  {
-    uint16_t val = axisStepThresholdHi;
-    *p = hexTable[(val >> 12) & 0xF];
-    *q = hexTable[(val >> 8) & 0xF];
-    *(p + 2) = hexTable[(val >> 4) & 0xF];
-    *(p + 3) = hexTable[val & 0xF];
-    *(p + 4) = 0;
-    fn858a(0x40, 0x08, (const char *)p);
-  }
-
-  /* Draw hex digits of axisIdleThreshold at 0x1020 */
-  {
-    uint16_t val = axisIdleThreshold;
-    *p = hexTable[(val >> 12) & 0xF];
-    *q = hexTable[(val >> 8) & 0xF];
-    *(p + 2) = hexTable[(val >> 4) & 0xF];
-    *(p + 3) = hexTable[val & 0xF];
-    *(p + 4) = 0;
-    fn858a(0x20, 0x10, (const char *)p);
-  }
-
-  /* Draw DAT_f7d1 as ASCII digit at 0x104C */
-  *p = (uint8_t)(DAT_f7d1 + 0x30);
-  *q = 0;
-  fn858a(0x4C, 0x10, (const char *)p);
-
-  /* Draw DAT_f7d8_1 (the byte after DAT_f7d8) at 0x1054 */
-  *p = DAT_f7d8_1;
-  fn858a(0x54, 0x10, (const char *)p);
-
-  /* If DAT_f7d1 == DAT_f7d8_1, send SPI command 0xA7 and draw check mark */
-  if (DAT_f7d1 == DAT_f7d8_1) {
-    PDR1 &= ~0x01;
-    PDR1 &= ~0x02;
-    while (!SSSR_BIT.TDRE)
-      ;
-    SSTDR = 0xA7;
-    while (!SSSR_BIT.TEND)
-      ;
-    PDR1 |= 0x01;
-    fn858a(0x08, 0x20, factoryStr_OK);
-  }
-}
-
-// ROM: 0x8766  96.4%
-void diag_lcd_ssu_test_1(void) {
-  uint8_t i;
-  SSER = 0x80;
-  PDR1 &= ~0x01;
-  PDR1 &= ~0x02;
-
-  /* Page B4 */
-  while (!SSSR_BIT.TDRE)
-    ;
-  SSTDR = 0x10;
-  while (!SSSR_BIT.TDRE)
-    ;
-  SSTDR = 0x00;
-  while (!SSSR_BIT.TDRE)
-    ;
-  SSTDR = 0xB4 + (lcdPageOffset * 8);
-  while (!SSSR_BIT.TEND)
-    ;
-  PDR1 |= 0x02;
-  while (!SSSR_BIT.TDRE)
-    ;
-  SSTDR = 0xFF;
-  while (!SSSR_BIT.TDRE)
-    ;
-  SSTDR = 0xFF;
-  for (i = 0; i < 0xBC; i++) {
-    while (!SSSR_BIT.TDRE)
-      ;
-    SSTDR = 0x01;
-  }
-  while (!SSSR_BIT.TDRE)
-    ;
-  SSTDR = 0xFF;
-  while (!SSSR_BIT.TDRE)
-    ;
-  SSTDR = 0xFF;
-  while (!SSSR_BIT.TEND)
-    ;
-  PDR1 &= ~0x02;
-
-  /* Page B5 */
-  while (!SSSR_BIT.TDRE)
-    ;
-  SSTDR = 0x10;
-  while (!SSSR_BIT.TDRE)
-    ;
-  SSTDR = 0x00;
-  while (!SSSR_BIT.TDRE)
-    ;
-  SSTDR = 0xB5 + (lcdPageOffset * 8);
-  while (!SSSR_BIT.TEND)
-    ;
-  PDR1 |= 0x02;
-  while (!SSSR_BIT.TDRE)
-    ;
-  SSTDR = 0xFF;
-  while (!SSSR_BIT.TDRE)
-    ;
-  SSTDR = 0xFF;
-  while (!SSSR_BIT.TEND)
-    ;
-  PDR1 &= ~0x02;
-
-  while (!SSSR_BIT.TDRE)
-    ;
-  SSTDR = 0x15;
-  while (!SSSR_BIT.TDRE)
-    ;
-  SSTDR = 0x0F;
-  while (!SSSR_BIT.TDRE)
-    ;
-  SSTDR = 0xB5 + (lcdPageOffset * 8);
-  while (!SSSR_BIT.TEND)
-    ;
-  PDR1 |= 0x02;
-  while (!SSSR_BIT.TDRE)
-    ;
-  SSTDR = 0xFF;
-  while (!SSSR_BIT.TDRE)
-    ;
-  SSTDR = 0xFF;
-  while (!SSSR_BIT.TEND)
-    ;
-
-  while (!SSSR_BIT.TEND)
-    ;
-  PDR1 |= 0x01;
-}
-
-// ROM: 0x88e2  95.4%
-void diag_lcd_ssu_test_2(void) {
-  uint8_t i;
-  SSER = 0x80;
-  PDR1 &= ~0x01;
-  PDR1 &= ~0x02;
-
-  /* Page B6 */
-  while (!SSSR_BIT.TDRE)
-    ;
-  SSTDR = 0x10;
-  while (!SSSR_BIT.TDRE)
-    ;
-  SSTDR = 0x00;
-  while (!SSSR_BIT.TDRE)
-    ;
-  SSTDR = 0xB6 + (lcdPageOffset * 8);
-  while (!SSSR_BIT.TEND)
-    ;
-  PDR1 |= 0x02;
-  while (!SSSR_BIT.TDRE)
-    ;
-  SSTDR = 0xFF;
-  while (!SSSR_BIT.TDRE)
-    ;
-  SSTDR = 0xFF;
-  for (i = 0; i < 0xBC; i++) {
-    while (!SSSR_BIT.TDRE)
-      ;
-    SSTDR = 0x01;
-  }
-  while (!SSSR_BIT.TDRE)
-    ;
-  SSTDR = 0xFF;
-  while (!SSSR_BIT.TDRE)
-    ;
-  SSTDR = 0xFF;
-  while (!SSSR_BIT.TEND)
-    ;
-  PDR1 &= ~0x02;
-
-  /* Page B7 */
-  while (!SSSR_BIT.TDRE)
-    ;
-  SSTDR = 0x10;
-  while (!SSSR_BIT.TDRE)
-    ;
-  SSTDR = 0x00;
-  while (!SSSR_BIT.TDRE)
-    ;
-  SSTDR = 0xB7 + (lcdPageOffset * 8);
-  while (!SSSR_BIT.TEND)
-    ;
-  PDR1 |= 0x02;
-  while (!SSSR_BIT.TDRE)
-    ;
-  SSTDR = 0xFF;
-  while (!SSSR_BIT.TDRE)
-    ;
-  SSTDR = 0xFF;
-  while (!SSSR_BIT.TEND)
-    ;
-
-  for (i = 0; i < 0xBC; i++) {
-    while (!SSSR_BIT.TDRE)
-      ;
-    SSTDR = 0x80;
-  }
-  while (!SSSR_BIT.TDRE)
-    ;
-  SSTDR = 0xFF;
-  while (!SSSR_BIT.TDRE)
-    ;
-  SSTDR = 0xFF;
-  while (!SSSR_BIT.TEND)
-    ;
-
-  while (!SSSR_BIT.TEND)
-    ;
-  PDR1 |= 0x01;
-}
-
-// ROM: 0x8a36  94.0%
-void diag_lcd_ssu_test_3(void) {
-  uint8_t i;
-  SSER = 0x80;
-  PDR1 &= ~0x01;
-  PDR1 &= ~0x02;
-
-  /* Page B6 */
-  while (!SSSR_BIT.TDRE)
-    ;
-  SSTDR = 0x10;
-  while (!SSSR_BIT.TDRE)
-    ;
-  SSTDR = 0x00;
-  while (!SSSR_BIT.TDRE)
-    ;
-  SSTDR = 0xB6 + (lcdPageOffset * 8);
-  while (!SSSR_BIT.TEND)
-    ;
-  PDR1 |= 0x02;
-  for (i = 0; i < 0xC0; i++) {
-    while (!SSSR_BIT.TDRE)
-      ;
-    SSTDR = 0x01;
-  }
-  while (!SSSR_BIT.TEND)
-    ;
-
-  while (!SSSR_BIT.TEND)
-    ;
-  PDR1 |= 0x01;
 }

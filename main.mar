@@ -291,7 +291,7 @@ LAB_0108:
 LAB_011a:
           mov.b       #H'17, r0l
           mov.b       r0l, @currentlyActiveView
-          jsr         @sys_init_debug_mode:16
+          jsr         @sys_init_accel_debug:16
           jmp         @LAB_02a0:16
 LAB_0128:
           jsr         @drv_lcd_init:16
@@ -800,7 +800,7 @@ game_end_walk:
           mov.l       #H'1ED00ED, er0
           jsr         @save_write_reliable:16
           jsr         @save_clear_data:16
-          jsr         @save_init_defaults:16
+          jsr         @save_clear_peer_log_slots:16
           sub.b       r1l, r1l
           mov.l       #H'6C8B800, er0
           jsr         @drv_eeprom_fill:16
@@ -2091,7 +2091,7 @@ LAB_13c2:
           mov.b       r0l, @er4
           mov.b       @DAT_f840, r1l
           mov.w       #trainerRecBuf, r0
-          jsr         @gfx_xor_rect_ram:16
+          jsr         @save_check_event_bit:16
           mov.b       r0l, r0l
           beq         LAB_1444:8
           mov.b       #H'2, r1l
@@ -2118,7 +2118,7 @@ LAB_140a:
           mov.b       r0l, @er4
           mov.b       @DAT_f840, r1l
           mov.w       #trainerRecBuf, r0
-          jsr         @gfx_xor_rect_ram:16
+          jsr         @save_check_event_bit:16
           mov.b       r0l, r0l
           beq         LAB_1444:8
           mov.b       #H'2, r1l
@@ -2558,12 +2558,12 @@ save_clear_data:
           mov.w       #H'64, e0
           jmp         @drv_eeprom_fill:16
 ; =============================================================================
-; Function: save_init_defaults
+; Function: save_clear_peer_log_slots
 ; Address:  188c
 ; Size:     28 bytes
 ; Called by: sys_factory_reset_eeprom, game_end_walk, game_init_peer_identity
 ; =============================================================================
-save_init_defaults:
+save_clear_peer_log_slots:
           mov.w       #H'CF0C, r6
           mov.b       #H'18, r3l
 LAB_1892:
@@ -2576,12 +2576,12 @@ LAB_1892:
           bne         LAB_1892:8
           rts
 ; =============================================================================
-; Function: save_delete_step_history
+; Function: save_clear_daily_step_log
 ; Address:  18a8
 ; Size:     14 bytes
 ; Called by: sys_factory_reset_eeprom
 ; =============================================================================
-save_delete_step_history:
+save_clear_daily_step_log:
           mov.w       #H'CEF0, r0
           sub.b       r1l, r1l
           mov.w       #H'1C, e0
@@ -2590,7 +2590,7 @@ save_delete_step_history:
 ; Function: gfx_add_borders_to_text
 ; Address:  18b6
 ; Size:     128 bytes
-; Called by: gfx_draw_event_item_name, gfx_draw_event_pokemon_info, gfx_draw_item_name, gfx_draw_own_pokemon_name, gfx_draw_peer_pokemon_name
+; Called by: gfx_draw_event_item_name, gfx_draw_event_pokemon_name, gfx_draw_item_name, gfx_draw_own_pokemon_name, gfx_draw_peer_pokemon_name
 ;            ... and 3 more
 ; Parameters: 4
 ; =============================================================================
@@ -2666,7 +2666,7 @@ LAB_1930:
 ; Function: gfx_draw_own_pokemon_small
 ; Address:  1936
 ; Size:     60 bytes
-; Called by: ui_render_arrival_success, ui_render_social_feelings, ui_render_home_route, ui_render_peer_play, ui_render_pokemon_stats
+; Called by: ui_render_arrival_success, ui_render_bored_gift, ui_render_home_route, ui_render_peer_play, ui_render_inventory_pokemon
 ; Parameters: 2
 ; =============================================================================
 gfx_draw_own_pokemon_small:
@@ -2727,7 +2727,7 @@ gfx_draw_own_pokemon_small_flipped:
 ; Function: gfx_draw_route_pokemon
 ; Address:  19b8
 ; Size:     82 bytes
-; Called by: ui_render_pokemon_stats
+; Called by: ui_render_inventory_pokemon
 ; Parameters: 3
 ; =============================================================================
 gfx_draw_route_pokemon:
@@ -2802,7 +2802,7 @@ LAB_1a44:
 ; Function: gfx_draw_own_pokemon_name
 ; Address:  1a58
 ; Size:     90 bytes
-; Called by: ui_render_arrival_success, ui_render_battle, ui_render_departure_success, ui_render_social_feelings, ui_render_pokemon_stats
+; Called by: ui_render_arrival_success, ui_render_battle, ui_render_departure_success, ui_render_bored_gift, ui_render_inventory_pokemon
 ; Parameters: 4
 ; =============================================================================
 gfx_draw_own_pokemon_name:
@@ -2818,10 +2818,10 @@ gfx_draw_own_pokemon_name:
           mov.w       r0, r6
           cmp.b       #H'30, r5l
           bne         LAB_1a7c:8
-          jsr         @diag_lcd_ssu_test_2:16
+          jsr         @gfx_draw_text_frame_lower:16
           bra         LAB_1a80:8
 LAB_1a7c:
-          jsr         @diag_lcd_ssu_test_1:16
+          jsr         @gfx_draw_text_frame_upper:16
 LAB_1a80:
           mov.w       #H'993E, r4
           mov.w       r4, r0
@@ -2856,7 +2856,7 @@ gfx_draw_peer_pokemon_name:
           mov.w       #H'140, r0
           jsr         @sbrk:16
           mov.w       r0, r6
-          jsr         @diag_lcd_ssu_test_1:16
+          jsr         @gfx_draw_text_frame_upper:16
           mov.w       #H'140, r1
           mov.w       r6, e0
           mov.w       #DAT_f580, r0
@@ -2872,13 +2872,13 @@ gfx_draw_peer_pokemon_name:
           jsr         @drv_lcd_blit:16
           rts
 ; =============================================================================
-; Function: gfx_draw_event_pokemon_info
+; Function: gfx_draw_event_pokemon_name
 ; Address:  1af4
 ; Size:     76 bytes
-; Called by: ui_render_arrival_reward_info, ui_render_pokemon_stats
+; Called by: ui_render_event_reward_info, ui_render_inventory_pokemon
 ; Parameters: 3
 ; =============================================================================
-gfx_draw_event_pokemon_info:
+gfx_draw_event_pokemon_name:
           mov.b       r0l, r4l
           mov.b       r0h, r2l
           mov.b       r1l, r2h
@@ -2888,10 +2888,10 @@ gfx_draw_event_pokemon_info:
           mov.w       r0, r3
           cmp.b       #H'30, r2l
           bne         LAB_1b12:8
-          jsr         @diag_lcd_ssu_test_2:16
+          jsr         @gfx_draw_text_frame_lower:16
           bra         LAB_1b16:8
 LAB_1b12:
-          jsr         @diag_lcd_ssu_test_1:16
+          jsr         @gfx_draw_text_frame_upper:16
 LAB_1b16:
           mov.w       #H'BC00, r0
           mov.w       #H'140, r1
@@ -2908,12 +2908,12 @@ LAB_1b16:
           jsr         @drv_lcd_blit:16
           rts
 ; =============================================================================
-; Function: gfx_draw_special_poke_name
+; Function: gfx_draw_special_pokemon_name
 ; Address:  1b40
 ; Size:     84 bytes
 ; Called by: ui_render_battle
 ; =============================================================================
-gfx_draw_special_poke_name:
+gfx_draw_special_pokemon_name:
           push.w      r5
           push.w      r6
           mov.b       r0l, r2l
@@ -2925,10 +2925,10 @@ gfx_draw_special_poke_name:
           mov.w       r0, r6
           cmp.b       #H'30, r5l
           bne         LAB_1b62:8
-          jsr         @diag_lcd_ssu_test_2:16
+          jsr         @gfx_draw_text_frame_lower:16
           bra         LAB_1b66:8
 LAB_1b62:
-          jsr         @diag_lcd_ssu_test_1:16
+          jsr         @gfx_draw_text_frame_upper:16
 LAB_1b66:
           mov.w       #H'C6FC, r0
           mov.w       #H'140, r1
@@ -2950,7 +2950,7 @@ LAB_1b66:
 ; Function: gfx_draw_item_symbol
 ; Address:  1b94
 ; Size:     50 bytes
-; Called by: ui_render_social_feelings
+; Called by: ui_render_bored_gift
 ; =============================================================================
 gfx_draw_item_symbol:
           mov.b       r0l, r4h
@@ -2974,7 +2974,7 @@ gfx_draw_item_symbol:
 ; Function: gfx_draw_route_pokemon_name
 ; Address:  1bc6
 ; Size:     96 bytes
-; Called by: ui_render_battle, ui_render_caught_poke_stats, ui_render_pokemon_stats
+; Called by: ui_render_battle, ui_render_discard_poke_slot, ui_render_inventory_pokemon
 ; =============================================================================
 gfx_draw_route_pokemon_name:
           push.w      r5
@@ -2989,10 +2989,10 @@ gfx_draw_route_pokemon_name:
           mov.w       r0, r6
           cmp.b       #H'30, r5l
           bne         LAB_1bea:8
-          jsr         @diag_lcd_ssu_test_2:16
+          jsr         @gfx_draw_text_frame_lower:16
           bra         LAB_1bee:8
 LAB_1bea:
-          jsr         @diag_lcd_ssu_test_1:16
+          jsr         @gfx_draw_text_frame_upper:16
 LAB_1bee:
           mov.b       r5h, r0l
           extu.w      r0
@@ -3018,7 +3018,7 @@ LAB_1bee:
 ; Function: gfx_draw_item_name
 ; Address:  1c26
 ; Size:     90 bytes
-; Called by: ui_render_dowsed_item_stats, ui_render_dowsing, ui_render_social_feelings, ui_render_items_stats, ui_render_peer_play
+; Called by: ui_render_discard_item_slot, ui_render_dowsing, ui_render_bored_gift, ui_render_inventory_items, ui_render_peer_play
 ;            ... and 1 more
 ; =============================================================================
 gfx_draw_item_name:
@@ -3060,7 +3060,7 @@ gfx_draw_item_name:
 ; Function: gfx_draw_event_item_name
 ; Address:  1c80
 ; Size:     62 bytes
-; Called by: ui_render_arrival_reward_info, ui_render_dowsing, ui_render_pokemon_stats
+; Called by: ui_render_event_reward_info, ui_render_dowsing, ui_render_inventory_pokemon
 ; =============================================================================
 gfx_draw_event_item_name:
           mov.b       r0l, r4l
@@ -3088,7 +3088,7 @@ gfx_draw_event_item_name:
 ; Function: gfx_draw_treasure_chest_icon
 ; Address:  1cbe
 ; Size:     50 bytes
-; Called by: ui_render_arrival_reward_info, ui_render_pokemon_stats
+; Called by: ui_render_event_reward_info, ui_render_inventory_pokemon
 ; =============================================================================
 gfx_draw_treasure_chest_icon:
           mov.b       r0l, r4h
@@ -3177,12 +3177,12 @@ LAB_1d74:
           pop.w       r6
           rts
 ; =============================================================================
-; Function: gfx_xor_rect_ram
+; Function: save_check_event_bit
 ; Address:  1d7a
 ; Size:     80 bytes
-; Called by: game_check_wild_encounter, game_battle_handle_finish, ir_comm_loop, game_generate_encounter_dowsing
+; Called by: game_check_wild_encounter, game_battle_handle_finish, ir_comm_loop, game_roll_radar_encounter
 ; =============================================================================
-gfx_xor_rect_ram:
+save_check_event_bit:
           push.w      r6
           push.w      r5
           mov.w       r0, r5
@@ -3369,12 +3369,12 @@ LAB_1ec4:
           pop.w       r4
           rts
 ; =============================================================================
-; Function: save_find_empty_reward_slot
+; Function: save_find_empty_poke_slot
 ; Address:  1eca
 ; Size:     36 bytes
 ; Called by: game_battle_handle_finish
 ; =============================================================================
-save_find_empty_reward_slot:
+save_find_empty_poke_slot:
           mov.w       r0, r2
           sub.b       r1l, r1l
           bra         LAB_1ee6:8
@@ -3397,12 +3397,12 @@ LAB_1ee6:
 LAB_1eec:
           rts
 ; =============================================================================
-; Function: gfx_get_sprite_addr
+; Function: save_get_dowsing_item_id
 ; Address:  1eee
 ; Size:     46 bytes
 ; Called by: game_process_interaction_reward, game_calculate_interaction_reward
 ; =============================================================================
-gfx_get_sprite_addr:
+save_get_dowsing_item_id:
           mov.b       r0l, r2l
           jsr         @sys_init_heap:16
           mov.w       #H'BE, r0
@@ -3420,12 +3420,12 @@ gfx_get_sprite_addr:
           mov.w       @er0, r0
           rts
 ; =============================================================================
-; Function: save_find_empty_slot_32bit
+; Function: save_find_empty_item_slot
 ; Address:  1f1c
 ; Size:     34 bytes
 ; Called by: game_process_interaction_reward, game_check_periodic_events, ui_handle_dowsing_selection
 ; =============================================================================
-save_find_empty_slot_32bit:
+save_find_empty_item_slot:
           mov.w       r0, r2
           sub.b       r1l, r1l
           bra         LAB_1f36:8
@@ -3472,7 +3472,7 @@ LAB_1f5a:
 ; Function: gfx_draw_value_with_icon
 ; Address:  1f6c
 ; Size:     130 bytes
-; Called by: ui_render_battle, ui_render_dowsing, ui_render_social_feelings, ui_render_peer_play, ui_render_pokeradar
+; Called by: ui_render_battle, ui_render_dowsing, ui_render_bored_gift, ui_render_peer_play, ui_render_pokeradar
 ; =============================================================================
 gfx_draw_value_with_icon:
           push.w      r4
@@ -3485,7 +3485,7 @@ gfx_draw_value_with_icon:
           mov.w       #H'140, r0
           jsr         @sbrk:16
           mov.w       r0, r5
-          jsr         @diag_lcd_ssu_test_1:16
+          jsr         @gfx_draw_text_frame_upper:16
           sub.b       r0l, r0l
           push.w      r0
           mov.w       #H'85E, r1
@@ -3608,7 +3608,7 @@ LAB_208c:
 ; Function: gfx_draw_text_box
 ; Address:  2096
 ; Size:     226 bytes
-; Called by: game_render_step_counter, ui_render_step_history, ui_draw_ir_icon, ui_render_arrival_success, ui_render_arrival_reward_info
+; Called by: ui_render_radar_failure, ui_render_step_history, ui_render_connecting_screen, ui_render_arrival_success, ui_render_event_reward_info
 ;            ... and 12 more
 ; =============================================================================
 gfx_draw_text_box:
@@ -3785,7 +3785,7 @@ LAB_21f2:
 ; Function: gfx_draw_battery_low
 ; Address:  21fe
 ; Size:     78 bytes
-; Called by: game_render_step_counter, sys_init_io_ports, ui_render_step_history, ui_render_walk_arrival_anim, ui_render_event_reward_anim
+; Called by: ui_render_radar_failure, sys_init_io_ports, ui_render_step_history, ui_render_walk_arrival_anim, ui_render_event_reward_anim
 ;            ... and 13 more
 ; Parameters: 2
 ; =============================================================================
@@ -4495,7 +4495,7 @@ LAB_272e:
 ; Function: drv_accel_init
 ; Address:  273c
 ; Size:     134 bytes
-; Called by: drv_accel_factory_test, PowerON_Reset, ui_handle_debug_input
+; Called by: drv_accel_factory_test, PowerON_Reset, ui_handle_factory_test
 ; =============================================================================
 drv_accel_init:
           push.w      r4
@@ -4581,7 +4581,7 @@ drv_adc_add_calib_checksum:
 ; Function: drv_adc_validate_calib_checksum
 ; Address:  27ec
 ; Size:     50 bytes
-; Called by: drv_adc_check_low_battery, ui_handle_debug_input
+; Called by: drv_adc_check_low_battery, ui_handle_factory_test
 ; =============================================================================
 drv_adc_validate_calib_checksum:
           mov.w       r0, r3
@@ -4939,13 +4939,13 @@ game_battle_handle_finish:
           mov.w       e5, r1
           jsr         @r5
           mov.w       r6, r0
-          jsr         @save_find_empty_reward_slot:16
+          jsr         @save_find_empty_poke_slot:16
           mov.b       r0l, r4h
           cmp.b       #H'3, r0l
           bcs         LAB_2af8:8
           sub.b       r0h, r0h
           mov.b       r0h, @gCurSubstateA
-          jsr         @game_start_peer_session:16
+          jsr         @ui_init_discard_cursor:16
           mov.b       #H'7, r0l
           jsr         @ui_set_view:16
           jmp         @LAB_2c2a:16
@@ -4992,7 +4992,7 @@ LAB_2b4c:
           mov.b       r0l, r4l
           mov.b       r0l, r1l
           mov.w       e3, r0
-          jsr         @gfx_xor_rect_ram:16
+          jsr         @save_check_event_bit:16
           mov.b       r0l, r0l
           bne         LAB_2c2a:16
           mov.w       #H'B800, r0
@@ -5785,7 +5785,7 @@ switchD_3296__caseD_1:
 LAB_3306:
           mov.b       #H'5, r1l
           mov.w       #LAB_2000, r0
-          jsr         @gfx_draw_special_poke_name:16
+          jsr         @gfx_draw_special_pokemon_name:16
 LAB_3310:
           mov.w       #H'10E, r1
           mov.w       #H'1F30, r0
@@ -5858,7 +5858,7 @@ LAB_33a2:
 LAB_33c6:
           mov.b       #H'5, r1l
           mov.w       #LAB_2000, r0
-          jsr         @gfx_draw_special_poke_name:16
+          jsr         @gfx_draw_special_pokemon_name:16
           jmp         @LAB_34ae:16
 LAB_33d4:
           mov.b       @accelXPos, r0l
@@ -5924,7 +5924,7 @@ LAB_3454:
 LAB_3476:
           mov.b       #H'5, r1l
           mov.w       #LAB_2000, r0
-          jsr         @gfx_draw_special_poke_name:16
+          jsr         @gfx_draw_special_pokemon_name:16
 LAB_3480:
           mov.w       #H'E, r1
           mov.w       #H'2330, r0
@@ -5959,7 +5959,7 @@ switchD_3296__caseD_5:
 LAB_34d2:
           mov.b       #H'5, r1l
           mov.w       #LAB_2000, r0
-          jsr         @gfx_draw_special_poke_name:16
+          jsr         @gfx_draw_special_pokemon_name:16
 LAB_34dc:
           mov.w       #H'E, r1
           mov.w       #H'2230, r0
@@ -5992,7 +5992,7 @@ switchD_3296__caseD_7:
 LAB_3530:
           mov.b       #H'5, r1l
           mov.w       #LAB_2000, r0
-          jsr         @gfx_draw_special_poke_name:16
+          jsr         @gfx_draw_special_pokemon_name:16
 LAB_353a:
           mov.w       #H'10E, r1
           mov.w       #H'2130, r0
@@ -6106,7 +6106,7 @@ switchD_3296__caseD_10:
 LAB_363c:
           mov.b       #H'5, r1l
           mov.w       #LAB_2000, r0
-          jsr         @gfx_draw_special_poke_name:16
+          jsr         @gfx_draw_special_pokemon_name:16
 LAB_3646:
           mov.w       #H'10E, r1
           mov.w       #H'2030, r0
@@ -6290,7 +6290,7 @@ LAB_37c0:
 ; Function: drv_sound_set_data
 ; Address:  37c6
 ; Size:     16 bytes
-; Called by: ui_handle_debug_input
+; Called by: ui_handle_factory_test
 ; Parameters: 1
 ; =============================================================================
 drv_sound_set_data:
@@ -6345,7 +6345,7 @@ drv_timerw_disable:
 ; Function: drv_sound_set_volume
 ; Address:  3832
 ; Size:     6 bytes
-; Called by: sys_sync_eeprom_on_startup, diag_init_test_mode, ir_handle_remote_cmd, PowerON_Reset, ui_handle_volume_menu
+; Called by: sys_sync_eeprom_on_startup, diag_init_test_mode, ir_handle_remote_cmd, PowerON_Reset, ui_handle_settings_volume
 ; Parameters: 1
 ; =============================================================================
 drv_sound_set_volume:
@@ -6586,12 +6586,12 @@ drv_timerw_isr:
           pop.l       er1
           rte
 ; =============================================================================
-; Function: game_start_peer_session
+; Function: ui_init_discard_cursor
 ; Address:  3a68
 ; Size:     8 bytes
 ; Called by: game_battle_handle_finish, ui_handle_dowsing
 ; =============================================================================
-game_start_peer_session:
+ui_init_discard_cursor:
           mov.b       #H'1, r0l
           mov.b       r0l, @gCurSubstateZ
           rts
@@ -6599,7 +6599,7 @@ game_start_peer_session:
 ; Function: game_log_poke_interaction
 ; Address:  3a70
 ; Size:     146 bytes
-; Called by: ui_handle_caught_stats_navigation
+; Called by: ui_handle_discard_picker
 ; =============================================================================
 game_log_poke_interaction:
           mov.b       @gCurSubstateY, r0l
@@ -6655,7 +6655,7 @@ LAB_3b00:
 ; Function: game_log_item_interaction
 ; Address:  3b02
 ; Size:     146 bytes
-; Called by: ui_handle_caught_stats_navigation
+; Called by: ui_handle_discard_picker
 ; =============================================================================
 game_log_item_interaction:
           jsr         @sys_init_heap:16
@@ -6709,12 +6709,12 @@ game_log_item_interaction:
           adds        #2, er7
           rts
 ; =============================================================================
-; Function: ui_handle_caught_stats_navigation
+; Function: ui_handle_discard_picker
 ; Address:  3b94
 ; Size:     118 bytes
 ; Called by: ui_dispatch_event
 ; =============================================================================
-ui_handle_caught_stats_navigation:
+ui_handle_discard_picker:
           mov.b       #H'4, r0l
           jsr         @drv_button_is_triggered:16
           mov.b       r0l, r0l
@@ -6767,12 +6767,12 @@ LAB_3c04:
 LAB_3c08:
           rts
 ; =============================================================================
-; Function: ui_render_caught_poke_stats
+; Function: ui_render_discard_poke_slot
 ; Address:  3c0a
 ; Size:     108 bytes
-; Called by: ui_render_inventory_stats_view
+; Called by: ui_render_discard_picker
 ; =============================================================================
-ui_render_caught_poke_stats:
+ui_render_discard_poke_slot:
           jsr         @sys_init_heap:16
           mov.w       #H'40, r0
           jsr         @sbrk:16
@@ -6815,13 +6815,13 @@ LAB_3c6e:
 LAB_3c74:
           rts
 ; =============================================================================
-; Function: ui_render_dowsed_item_stats
+; Function: ui_render_discard_item_slot
 ; Address:  3c76
 ; Size:     98 bytes
-; Called by: ui_render_inventory_stats_view
+; Called by: ui_render_discard_picker
 ; Parameters: 7
 ; =============================================================================
-ui_render_dowsed_item_stats:
+ui_render_discard_item_slot:
           subs        #4, er7
           jsr         @sys_init_heap:16
           mov.w       #H'14, r0
@@ -6863,12 +6863,12 @@ LAB_3cd4:
           adds        #4, er7
           rts
 ; =============================================================================
-; Function: ui_render_inventory_stats_view
+; Function: ui_render_discard_picker
 ; Address:  3cd8
 ; Size:     228 bytes
 ; Called by: ui_dispatch_draw
 ; =============================================================================
-ui_render_inventory_stats_view:
+ui_render_discard_picker:
           mov.w       #drv_lcd_blit, r4
           jsr         @sys_init_heap:16
           mov.w       #H'180, r0
@@ -6941,10 +6941,10 @@ LAB_3d68:
           bgt         LAB_3dba:8
           mov.b       @gCurSubstateA, r0l
           bne         LAB_3dae:8
-          jsr         @ui_render_caught_poke_stats:16
+          jsr         @ui_render_discard_poke_slot:16
           bra         LAB_3db2:8
 LAB_3dae:
-          jsr         @ui_render_dowsed_item_stats:16
+          jsr         @ui_render_discard_item_slot:16
 LAB_3db2:
           mov.w       #H'58, r0
           jsr         @gfx_draw_battery_low:16
@@ -7166,12 +7166,12 @@ LAB_3fbe:
           pop.w       r2
           rts
 ; =============================================================================
-; Function: ui_render_arrival_reward_info
+; Function: ui_render_event_reward_info
 ; Address:  3fc6
 ; Size:     306 bytes
 ; Called by: ui_render_event_reward_anim
 ; =============================================================================
-ui_render_arrival_reward_info:
+ui_render_event_reward_info:
           push.w      r2
           push.w      r3
           push.w      r4
@@ -7219,7 +7219,7 @@ switchD_3ffa__caseD_0:
           jsr         @drv_lcd_blit:16
           mov.b       #H'5, r1l
           mov.w       #LAB_2000, r0
-          jsr         @gfx_draw_event_pokemon_info:16
+          jsr         @gfx_draw_event_pokemon_name:16
           bra         switchD_3ffa__default:8
 switchD_3ffa__caseD_2:
           mov.w       #H'420, r0
@@ -7501,7 +7501,7 @@ LAB_42c0:
           jsr         @ui_draw_arrival_cloud_anim:16
           bra         LAB_42ca:8
 LAB_42c6:
-          jsr         @ui_render_arrival_reward_info:16
+          jsr         @ui_render_event_reward_info:16
 LAB_42ca:
           sub.w       r0, r0
           jmp         @gfx_draw_battery_low:16
@@ -7534,12 +7534,12 @@ ui_draw_poke_departure_anim:
           mov.b       r0l, @gCurSubstateZ
           jmp         @sys_epilogue_6:16
 ; =============================================================================
-; Function: ui_draw_cloud_departure_anim
+; Function: ui_draw_departure_cloud_anim
 ; Address:  4310
 ; Size:     98 bytes
 ; Called by: ui_render_walk_departure_anim
 ; =============================================================================
-ui_draw_cloud_departure_anim:
+ui_draw_departure_cloud_anim:
           push.w      r2
           push.w      r5
           push.w      r6
@@ -7573,12 +7573,12 @@ ui_draw_cloud_departure_anim:
           mov.b       r0l, @gCurSubstateZ
           jmp         @sys_epilogue_r2_r5_r6:16
 ; =============================================================================
-; Function: ui_draw_cloud_anim
+; Function: ui_draw_cloud_rise_anim
 ; Address:  4372
 ; Size:     114 bytes
 ; Called by: ui_render_walk_departure_anim
 ; =============================================================================
-ui_draw_cloud_anim:
+ui_draw_cloud_rise_anim:
           push.w      r2
           push.w      r5
           push.w      r6
@@ -7770,10 +7770,10 @@ LAB_4512:
           jsr         @ui_draw_poke_departure_anim:16
           bra         LAB_452e:8
 LAB_4518:
-          jsr         @ui_draw_cloud_departure_anim:16
+          jsr         @ui_draw_departure_cloud_anim:16
           bra         LAB_452e:8
 LAB_451e:
-          jsr         @ui_draw_cloud_anim:16
+          jsr         @ui_draw_cloud_rise_anim:16
           bra         LAB_452e:8
 LAB_4524:
           jsr         @ui_render_departure_success:16
@@ -7787,7 +7787,7 @@ LAB_452e:
 ; Function: sys_epilogue_r2_r5_r6
 ; Address:  4534
 ; Size:     8 bytes
-; Called by: game_check_periodic_events, ui_draw_ball_sparkles_anim, ui_draw_ball_drop_anim, ui_draw_arrival_cloud_anim, ui_draw_cloud_departure_anim
+; Called by: game_check_periodic_events, ui_draw_ball_sparkles_anim, ui_draw_ball_drop_anim, ui_draw_arrival_cloud_anim, ui_draw_departure_cloud_anim
 ;            ... and 2 more
 ; =============================================================================
 sys_epilogue_r2_r5_r6:
@@ -8177,7 +8177,7 @@ LAB_48d0:
           mov.b       #H'1, r0l
           mov.b       r0l, @gCurSubstateA
           mov.b       @gCurSubstateY, r0l
-          jsr         @game_start_peer_session:16
+          jsr         @ui_init_discard_cursor:16
           mov.b       #H'7, r0l
           bra         LAB_4974:8
 LAB_4900:
@@ -8319,7 +8319,7 @@ game_check_wild_encounter:
           bne         LAB_4a48:8
           mov.b       @(H'7B,er5), r1l
           mov.w       r4, r0
-          jsr         @gfx_xor_rect_ram:16
+          jsr         @save_check_event_bit:16
           mov.b       r0l, r0l
           beq         LAB_4a5e:8
 LAB_4a48:
@@ -8393,7 +8393,7 @@ ui_handle_dowsing_selection:
           mov.w       #H'C, r1
           jsr         @drv_eeprom_read_block:16
           mov.w       r6, r0
-          jsr         @save_find_empty_slot_32bit:16
+          jsr         @save_find_empty_item_slot:16
           mov.b       r0l, @accelZPos
           mov.b       @RamCache_settingsByte, r0l
           bld         #H'0, r0l
@@ -8822,7 +8822,7 @@ LAB_4f48:
 ; Function: game_check_step_unlock
 ; Address:  4f50
 ; Size:     32 bytes
-; Called by: ui_handle_dowsing_selection, game_generate_encounter_dowsing
+; Called by: ui_handle_dowsing_selection, game_roll_radar_encounter
 ; =============================================================================
 game_check_step_unlock:
           add.w       r5, r1
@@ -9751,7 +9751,7 @@ LAB_5740:
 ; Function: drv_eeprom_fill
 ; Address:  5742
 ; Size:     306 bytes
-; Called by: sys_factory_reset_eeprom, save_clear_data, save_delete_step_history, game_end_walk, game_rotate_step_history
+; Called by: sys_factory_reset_eeprom, save_clear_data, save_clear_daily_step_log, game_end_walk, game_rotate_step_history
 ;            ... and 2 more
 ; Parameters: 3
 ; =============================================================================
@@ -10360,7 +10360,7 @@ LAB_5d12:
           mov.w       #totalSteps, r1
           mov.l       #H'2560156, er0
           jsr         @save_write_reliable:16
-          jsr         @save_init_defaults:16
+          jsr         @save_clear_peer_log_slots:16
 LAB_5d4c:
           pop.l       er6
           rts
@@ -10414,7 +10414,7 @@ LAB_5db8:
           mov.b       r0l, @gCurSubstateZ
 LAB_5dbe:
           mov.b       @gCurSubstateZ, r0l
-          jsr         @gfx_get_sprite_addr:16
+          jsr         @save_get_dowsing_item_id:16
           mov.w       r0, e6
           jsr         @sys_init_heap:16
           mov.w       #H'C, e5
@@ -10426,7 +10426,7 @@ LAB_5dbe:
           mov.w       e5, r1
           jsr         @drv_eeprom_read_block:16
           mov.w       r5, r0
-          jsr         @save_find_empty_slot_32bit:16
+          jsr         @save_find_empty_item_slot:16
           mov.b       r0l, r6h
           cmp.b       #H'3, r0l
           bcc         LAB_5e28:8
@@ -10534,12 +10534,12 @@ LAB_5ebe:
 LAB_5eda:
           rts
 ; =============================================================================
-; Function: ui_render_social_feelings
+; Function: ui_render_bored_gift
 ; Address:  5edc
 ; Size:     230 bytes
 ; Called by: ui_dispatch_draw
 ; =============================================================================
-ui_render_social_feelings:
+ui_render_bored_gift:
           jsr         @sys_init_heap:16
           mov.w       #H'C0, r0
           jsr         @sbrk:16
@@ -10696,7 +10696,7 @@ LAB_602c:
           mov.w       #H'C, r1
           jsr         @drv_eeprom_read_block:16
           mov.w       r6, r0
-          jsr         @save_find_empty_slot_32bit:16
+          jsr         @save_find_empty_item_slot:16
           cmp.b       #H'3, r0l
           bcc         LAB_608e:8
           cmp.b       #H'5A, r5l
@@ -11222,7 +11222,7 @@ LAB_6506:
           mov.b       #H'9, r0l
 LAB_6508:
           mov.b       r0l, @accelXPos
-          jsr         @gfx_get_sprite_addr:16
+          jsr         @save_get_dowsing_item_id:16
           extu.w      r5
           shll.w      r5
           shll.w      r5
@@ -11722,12 +11722,12 @@ sys_set_handler:
           pop.w       r6
           rts
 ; =============================================================================
-; Function: ui_start_connection_app
+; Function: ui_enter_ir_session
 ; Address:  694c
 ; Size:     8 bytes
 ; Called by: ui_handle_home, ui_handle_main_menu
 ; =============================================================================
-ui_start_connection_app:
+ui_enter_ir_session:
           mov.w       @currentEventLoopFunc, r0
           mov.w       #sys_main_loop_low_power, r1
 ; =============================================================================
@@ -11756,14 +11756,14 @@ LAB_697e:
           mov.b       #H'40, r0l
           jsr         @drv_lcd_clear_pages:16
           sub.b       r0l, r0l
-          jsr         @ui_draw_ir_icon:16
+          jsr         @ui_render_connecting_screen:16
           sub.w       r0, r0
           jsr         @gfx_draw_battery_low:16
           jsr         @drv_lcd_flip:16
           mov.b       #H'40, r0l
           jsr         @drv_lcd_clear_pages:16
           mov.b       #H'1, r0l
-          jsr         @ui_draw_ir_icon:16
+          jsr         @ui_render_connecting_screen:16
           sub.w       r0, r0
           jsr         @gfx_draw_battery_low:16
 LAB_69a6:
@@ -11862,7 +11862,7 @@ ui_handle_home:
           bld         #H'5, r0l
           bcc         LAB_6ad6:8
 LAB_6a58:
-          jsr         @ui_start_connection_app:16
+          jsr         @ui_enter_ir_session:16
           bra         LAB_6ad6:8
 LAB_6a5e:
           mov.b       @gCurSubstateZ, r0l
@@ -11919,7 +11919,7 @@ LAB_6ad6:
 ; Function: gfx_draw_small_route_icon
 ; Address:  6ad8
 ; Size:     56 bytes
-; Called by: ui_render_social_feelings, ui_render_home_route
+; Called by: ui_render_bored_gift, ui_render_home_route
 ; =============================================================================
 gfx_draw_small_route_icon:
           mov.b       r0l, r5l
@@ -12113,23 +12113,23 @@ LAB_6c82:
 LAB_6c86:
           rts
 ; =============================================================================
-; Function: ui_show_status_screen
+; Function: ui_reset_settings_substate
 ; Address:  6c88
 ; Size:     12 bytes
 ; Called by: ui_handle_main_menu
 ; =============================================================================
-ui_show_status_screen:
+ui_reset_settings_substate:
           sub.b       r0l, r0l
           mov.b       r0l, @gCurSubstateY
           mov.b       r0l, @gCurSubstateZ
           rts
 ; =============================================================================
-; Function: ui_handle_settings_menu
+; Function: ui_handle_settings_main_page
 ; Address:  6c94
 ; Size:     78 bytes
 ; Called by: ui_handle_settings
 ; =============================================================================
-ui_handle_settings_menu:
+ui_handle_settings_main_page:
           mov.b       #H'4, r0l
           jsr         @drv_button_is_triggered:16
           mov.b       r0l, r0l
@@ -12162,12 +12162,12 @@ LAB_6cc2:
 LAB_6ce0:
           rts
 ; =============================================================================
-; Function: ui_handle_volume_menu
+; Function: ui_handle_settings_volume
 ; Address:  6ce2
 ; Size:     138 bytes
 ; Called by: ui_handle_settings
 ; =============================================================================
-ui_handle_volume_menu:
+ui_handle_settings_volume:
           mov.b       #H'4, r0l
           jsr         @drv_button_is_triggered:16
           mov.b       r0l, r0l
@@ -12220,12 +12220,12 @@ LAB_6d26:
 LAB_6d6a:
           rts
 ; =============================================================================
-; Function: ui_handle_shade_menu
+; Function: ui_handle_settings_shade
 ; Address:  6d6c
 ; Size:     144 bytes
 ; Called by: ui_handle_settings
 ; =============================================================================
-ui_handle_shade_menu:
+ui_handle_settings_shade:
           mov.b       #H'4, r0l
           jsr         @drv_button_is_triggered:16
           mov.b       r0l, r0l
@@ -12299,13 +12299,13 @@ ui_handle_settings:
           bne         LAB_6e1c:8
           bra         LAB_6e18:8
 LAB_6e0c:
-          jsr         @ui_handle_settings_menu:16
+          jsr         @ui_handle_settings_main_page:16
           bra         LAB_6e1c:8
 LAB_6e12:
-          jsr         @ui_handle_volume_menu:16
+          jsr         @ui_handle_settings_volume:16
           bra         LAB_6e1c:8
 LAB_6e18:
-          jsr         @ui_handle_shade_menu:16
+          jsr         @ui_handle_settings_shade:16
 LAB_6e1c:
           mov.b       #H'2, r0l
           jsr         @drv_button_is_triggered:16
@@ -12754,12 +12754,12 @@ LAB_71f2:
           jsr         @drv_lcd_blit:16
           rts
 ; =============================================================================
-; Function: ui_draw_ir_icon
+; Function: ui_render_connecting_screen
 ; Address:  722c
 ; Size:     94 bytes
 ; Called by: sys_init_io_ports
 ; =============================================================================
-ui_draw_ir_icon:
+ui_render_connecting_screen:
           mov.b       r0l, r5l
           jsr         @sys_init_heap:16
           mov.w       #H'180, r0
@@ -12907,19 +12907,19 @@ switchD_7364__caseD_6:
           jsr         @ui_handle_radar_failure:16
           bra         switchD_7364__caseD_5:8
 switchD_7364__caseD_7:
-          jsr         @ui_handle_caught_stats_navigation:16
+          jsr         @ui_handle_discard_picker:16
           bra         switchD_7364__caseD_5:8
 switchD_7364__caseD_8:
-          jsr         @ui_handle_trainer_stats:16
+          jsr         @ui_handle_trainer_card:16
           bra         switchD_7364__caseD_5:8
 switchD_7364__caseD_a:
-          jsr         @ui_handle_poke_items:16
+          jsr         @ui_handle_inventory_pokemon:16
           bra         switchD_7364__caseD_5:8
 switchD_7364__caseD_9:
           jsr         @ui_handle_settings:16
           bra         switchD_7364__caseD_5:8
 switchD_7364__caseD_b:
-          jsr         @ui_handle_gifts:16
+          jsr         @ui_handle_inventory_items:16
           bra         switchD_7364__caseD_5:8
 switchD_7364__caseD_e:
           mov.b       @walker_status_flags, r0l
@@ -12945,7 +12945,7 @@ switchD_7364__caseD_11:
           jsr         @ui_handle_event_reward_anim:16
           bra         switchD_7364__caseD_5:8
 switchD_7364__caseD_16:
-          jsr         @ui_handle_debug_input:16
+          jsr         @ui_handle_factory_test:16
           bra         switchD_7364__caseD_5:8
 switchD_7364__caseD_17:
           jsr         @sys_noop:16
@@ -12981,7 +12981,7 @@ LAB_7430:
           jsr         @ui_render_home_bar:16
           bra         switchD_741e__caseD_5:8
 switchD_741e__caseD_c:
-          jsr         @ui_render_social_feelings:16
+          jsr         @ui_render_bored_gift:16
           bra         switchD_741e__caseD_5:8
 switchD_741e__caseD_d:
           jsr         @ui_render_peer_play:16
@@ -12999,22 +12999,22 @@ switchD_741e__caseD_4:
           jsr         @ui_render_battle:16
           bra         switchD_741e__caseD_5:8
 switchD_741e__caseD_6:
-          jsr         @game_render_step_counter:16
+          jsr         @ui_render_radar_failure:16
           bra         switchD_741e__caseD_5:8
 switchD_741e__caseD_7:
-          jsr         @ui_render_inventory_stats_view:16
+          jsr         @ui_render_discard_picker:16
           bra         switchD_741e__caseD_5:8
 switchD_741e__caseD_8:
           jsr         @ui_render_trainer_card:16
           bra         switchD_741e__caseD_5:8
 switchD_741e__caseD_a:
-          jsr         @ui_render_pokemon_stats:16
+          jsr         @ui_render_inventory_pokemon:16
           bra         switchD_741e__caseD_5:8
 switchD_741e__caseD_9:
           jsr         @ui_render_settings:16
           bra         switchD_741e__caseD_5:8
 switchD_741e__caseD_b:
-          jsr         @ui_render_items_stats:16
+          jsr         @ui_render_inventory_items:16
           bra         switchD_741e__caseD_5:8
 switchD_741e__caseD_e:
           mov.b       @walker_status_flags, r0l
@@ -13035,7 +13035,7 @@ switchD_741e__caseD_11:
           jsr         @ui_render_event_reward_anim:16
           bra         switchD_741e__caseD_5:8
 switchD_741e__caseD_16:
-          jsr         @ui_render_debug:16
+          jsr         @ui_render_factory_test:16
           bra         switchD_741e__caseD_5:8
 switchD_741e__caseD_17:
           jsr         @ui_render_accel_debug:16
@@ -13053,7 +13053,7 @@ switchD_741e__caseD_5:
 ui_render_home_bar:
           mov.w       #H'10, e6
           mov.w       #H'280, r3
-          jsr         @diag_lcd_ssu_test_3:16
+          jsr         @gfx_draw_home_section_divider:16
           mov.w       #H'B800, r0
           jsr         @drv_eeprom_read_u8:16
           mov.b       r0l, r4l
@@ -13463,7 +13463,7 @@ sys_main_loop_low_power:
           bld         #H'3, r0l
           bcc         LAB_798a:16
 LAB_78c0:
-          jsr         @sys_power_save_low_power:16
+          jsr         @sys_enter_low_power:16
           jmp         @LAB_798a:16
 LAB_78c8:
           mov.b       @walker_status_flags, r0l
@@ -13868,7 +13868,7 @@ LAB_7be4:
 ; Function: drv_lcd_set_contrast
 ; Address:  7c24
 ; Size:     50 bytes
-; Called by: drv_lcd_init, sys_sync_eeprom_on_startup, diag_init_test_mode, ir_handle_remote_cmd, ui_handle_shade_menu
+; Called by: drv_lcd_init, sys_sync_eeprom_on_startup, diag_init_test_mode, ir_handle_remote_cmd, ui_handle_settings_shade
 ; Parameters: 1
 ; =============================================================================
 drv_lcd_set_contrast:
@@ -14019,7 +14019,7 @@ LAB_7d48:
 ; Function: drv_lcd_clear
 ; Address:  7d4a
 ; Size:     270 bytes
-; Called by: ui_render_debug
+; Called by: ui_render_factory_test
 ; =============================================================================
 drv_lcd_clear:
           mov.b       r0l, r3l
@@ -14145,7 +14145,7 @@ LAB_7e4a:
 ; Function: gfx_fill_rect
 ; Address:  7e58
 ; Size:     352 bytes
-; Called by: ui_draw_ball_sparkles_anim, ui_draw_ball_drop_anim, ui_draw_arrival_cloud_anim, ui_draw_cloud_departure_anim, ui_draw_cloud_anim
+; Called by: ui_draw_ball_sparkles_anim, ui_draw_ball_drop_anim, ui_draw_arrival_cloud_anim, ui_draw_departure_cloud_anim, ui_draw_cloud_rise_anim
 ;            ... and 5 more
 ; Parameters: 4
 ; =============================================================================
@@ -14432,7 +14432,7 @@ LAB_809c:
 ; Function: drv_lcd_blit
 ; Address:  80ac
 ; Size:     574 bytes
-; Called by: game_render_step_counter, ui_draw_ball_sparkles_anim, ui_draw_ball_drop_anim, gfx_draw_battery_low, ui_draw_arrival_cloud_anim
+; Called by: ui_render_radar_failure, ui_draw_ball_sparkles_anim, ui_draw_ball_drop_anim, gfx_draw_battery_low, ui_draw_arrival_cloud_anim
 ;            ... and 39 more
 ; Parameters: 5
 ; =============================================================================
@@ -15032,7 +15032,7 @@ LAB_8576:
 ; Function: gfx_draw_string
 ; Address:  858a
 ; Size:     476 bytes
-; Called by: gfx_draw_string_simple, ui_render_accel_debug, ui_render_debug
+; Called by: gfx_draw_string_simple, ui_render_accel_debug, ui_render_factory_test
 ; =============================================================================
 gfx_draw_string:
           jsr         @$sp_regsv$3:16
@@ -15243,13 +15243,13 @@ LAB_8756:
           bset        #H'0, @PDR1
           jmp         @$spregld2$3:16
 ; =============================================================================
-; Function: diag_lcd_ssu_test_1
+; Function: gfx_draw_text_frame_upper
 ; Address:  8766
 ; Size:     380 bytes
-; Called by: gfx_draw_event_pokemon_info, gfx_draw_value_with_icon, gfx_draw_own_pokemon_name, gfx_draw_peer_pokemon_name, gfx_draw_route_pokemon_name
+; Called by: gfx_draw_event_pokemon_name, gfx_draw_value_with_icon, gfx_draw_own_pokemon_name, gfx_draw_peer_pokemon_name, gfx_draw_route_pokemon_name
 ;            ... and 1 more
 ; =============================================================================
-diag_lcd_ssu_test_1:
+gfx_draw_text_frame_upper:
           mov.w       #lcdPageOffset, r1
           mov.b       #H'80, r0l
           mov.b       r0l, @SSER
@@ -15414,12 +15414,12 @@ LAB_88d4:
           bset        #H'0, @PDR1
           rts
 ; =============================================================================
-; Function: diag_lcd_ssu_test_2
+; Function: gfx_draw_text_frame_lower
 ; Address:  88e2
 ; Size:     340 bytes
-; Called by: gfx_draw_event_pokemon_info, gfx_draw_own_pokemon_name, gfx_draw_route_pokemon_name, gfx_draw_special_poke_name
+; Called by: gfx_draw_event_pokemon_name, gfx_draw_own_pokemon_name, gfx_draw_route_pokemon_name, gfx_draw_special_pokemon_name
 ; =============================================================================
-diag_lcd_ssu_test_2:
+gfx_draw_text_frame_lower:
           mov.b       #H'80, r0l
           mov.b       r0l, @SSER
           bclr        #H'0, @PDR1
@@ -15568,12 +15568,12 @@ LAB_8a28:
           bset        #H'0, @PDR1
           rts
 ; =============================================================================
-; Function: diag_lcd_ssu_test_3
+; Function: gfx_draw_home_section_divider
 ; Address:  8a36
 ; Size:     122 bytes
 ; Called by: ui_render_home_bar
 ; =============================================================================
-diag_lcd_ssu_test_3:
+gfx_draw_home_section_divider:
           mov.b       #H'80, r0l
           mov.b       r0l, @SSER
           bclr        #H'0, @PDR1
@@ -15784,12 +15784,12 @@ LAB_8bc8:
 LAB_8bd0:
           rts
 ; =============================================================================
-; Function: ui_stats_next_index
+; Function: ui_inventory_cursor_next
 ; Address:  8bd2
 ; Size:     60 bytes
-; Called by: ui_handle_gifts, ui_handle_poke_items
+; Called by: ui_handle_inventory_items, ui_handle_inventory_pokemon
 ; =============================================================================
-ui_stats_next_index:
+ui_inventory_cursor_next:
           mov.w       r0, e1
           mov.b       @gCurSubstateY, r1l
           cmp.b       #H'9, r1l
@@ -15827,12 +15827,12 @@ LAB_8c0a:
 LAB_8c0c:
           rts
 ; =============================================================================
-; Function: ui_stats_find_index
+; Function: ui_inventory_cursor_find_present
 ; Address:  8c0e
 ; Size:     84 bytes
-; Called by: ui_stats_reset_cursor, ui_set_stats_view_item
+; Called by: ui_inventory_cursor_reset, ui_inventory_jump_to_items
 ; =============================================================================
-ui_stats_find_index:
+ui_inventory_cursor_find_present:
           push.w      e6
           push.w      r5
           mov.w       #H'A, e6
@@ -15871,12 +15871,12 @@ LAB_8c5c:
           pop.w       e6
           rts
 ; =============================================================================
-; Function: ui_stats_prev_index
+; Function: ui_inventory_cursor_prev
 ; Address:  8c62
 ; Size:     66 bytes
-; Called by: ui_handle_gifts, ui_handle_poke_items
+; Called by: ui_handle_inventory_items, ui_handle_inventory_pokemon
 ; =============================================================================
-ui_stats_prev_index:
+ui_inventory_cursor_prev:
           mov.w       r0, e1
           mov.b       @gCurSubstateY, r1l
           beq         LAB_8c90:8
@@ -15913,12 +15913,12 @@ LAB_8ca0:
 LAB_8ca2:
           rts
 ; =============================================================================
-; Function: ui_stats_cycle_index
+; Function: ui_inventory_cursor_back_wrap
 ; Address:  8ca4
 ; Size:     80 bytes
-; Called by: ui_handle_gifts
+; Called by: ui_handle_inventory_items
 ; =============================================================================
-ui_stats_cycle_index:
+ui_inventory_cursor_back_wrap:
           mov.w       #H'A, e6
           mov.w       r0, r5
           mov.b       @gCurSubstateY, r1l
@@ -15953,29 +15953,29 @@ LAB_8cd2:
 LAB_8cf2:
           rts
 ; =============================================================================
-; Function: ui_stats_reset_cursor
+; Function: ui_inventory_cursor_reset
 ; Address:  8cf4
 ; Size:     14 bytes
 ; Called by: ui_handle_main_menu
 ; =============================================================================
-ui_stats_reset_cursor:
+ui_inventory_cursor_reset:
           mov.b       #H'9, r0l
           mov.b       r0l, @gCurSubstateY
           mov.w       @gCurSubstateA, r0
-          jmp         @ui_stats_find_index:16
+          jmp         @ui_inventory_cursor_find_present:16
 ; =============================================================================
-; Function: ui_handle_poke_items
+; Function: ui_handle_inventory_pokemon
 ; Address:  8d02
 ; Size:     134 bytes
 ; Called by: ui_dispatch_event
 ; =============================================================================
-ui_handle_poke_items:
+ui_handle_inventory_pokemon:
           mov.b       #H'4, r0l
           jsr         @drv_button_is_triggered:16
           mov.b       r0l, r0l
           beq         LAB_8d2a:8
           mov.w       @gCurSubstateA, r0
-          jsr         @ui_stats_prev_index:16
+          jsr         @ui_inventory_cursor_prev:16
           mov.b       r0l, r0l
           beq         LAB_8d24:8
           jsr         @ui_clear_substate_y:16
@@ -15991,12 +15991,12 @@ LAB_8d2a:
           mov.b       r0l, r0l
           beq         LAB_8d5e:8
           mov.w       @gCurSubstateA, r0
-          jsr         @ui_stats_next_index:16
+          jsr         @ui_inventory_cursor_next:16
           mov.b       r0l, r0l
           beq         LAB_8d58:8
           mov.w       @accelXPos, r0
           beq         LAB_8d54:8
-          jsr         @ui_set_stats_view_item:16
+          jsr         @ui_inventory_jump_to_items:16
           mov.b       #H'B, r0l
           jsr         @ui_set_view:16
           mov.b       #H'2, r0l
@@ -16014,7 +16014,7 @@ LAB_8d5e:
           beq         LAB_8d86:8
           mov.w       @accelXPos, r0
           beq         LAB_8d76:8
-          jsr         @ui_set_stats_view_item:16
+          jsr         @ui_inventory_jump_to_items:16
           mov.b       #H'B, r0l
           bra         LAB_8d7c:8
 LAB_8d76:
@@ -16028,12 +16028,12 @@ LAB_8d82:
 LAB_8d86:
           rts
 ; =============================================================================
-; Function: ui_render_pokemon_stats
+; Function: ui_render_inventory_pokemon
 ; Address:  8d88
 ; Size:     896 bytes
 ; Called by: ui_dispatch_draw
 ; =============================================================================
-ui_render_pokemon_stats:
+ui_render_inventory_pokemon:
           subs        #4, er7
           mov.l       #H'100280, er5
           jsr         @sys_init_heap:16
@@ -16125,7 +16125,7 @@ switchD_8dd2__caseD_4:
           jsr         @drv_lcd_blit:16
           mov.b       #H'7, r1l
           mov.w       #H'3000, r0
-          jsr         @gfx_draw_event_pokemon_info:16
+          jsr         @gfx_draw_event_pokemon_name:16
           jmp         @switchD_8dd2__default:16
 switchD_8dd2__caseD_5:
           mov.w       #H'1750, r4
@@ -16379,29 +16379,29 @@ LAB_90fc:
           adds        #4, er7
           rts
 ; =============================================================================
-; Function: ui_set_stats_view_item
+; Function: ui_inventory_jump_to_items
 ; Address:  9108
 ; Size:     14 bytes
-; Called by: ui_handle_main_menu, ui_handle_poke_items
+; Called by: ui_handle_main_menu, ui_handle_inventory_pokemon
 ; =============================================================================
-ui_set_stats_view_item:
+ui_inventory_jump_to_items:
           mov.b       #H'9, r0l
           mov.b       r0l, @gCurSubstateY
           mov.w       @accelXPos, r0
-          jmp         @ui_stats_find_index:16
+          jmp         @ui_inventory_cursor_find_present:16
 ; =============================================================================
-; Function: ui_handle_gifts
+; Function: ui_handle_inventory_items
 ; Address:  9116
 ; Size:     118 bytes
 ; Called by: ui_dispatch_event
 ; =============================================================================
-ui_handle_gifts:
+ui_handle_inventory_items:
           mov.b       #H'4, r0l
           jsr         @drv_button_is_triggered:16
           mov.b       r0l, r0l
           beq         LAB_9150:8
           mov.w       @accelXPos, r0
-          jsr         @ui_stats_prev_index:16
+          jsr         @ui_inventory_cursor_prev:16
           mov.b       r0l, r0l
           beq         LAB_914a:8
           mov.w       @gCurSubstateA, r0
@@ -16409,7 +16409,7 @@ ui_handle_gifts:
           sub.b       r0l, r0l
           mov.b       r0l, @gCurSubstateY
           mov.w       @gCurSubstateA, r0
-          jsr         @ui_stats_cycle_index:16
+          jsr         @ui_inventory_cursor_back_wrap:16
           mov.b       #H'A, r0l
           jsr         @ui_set_view:16
           mov.b       #H'2, r0l
@@ -16423,7 +16423,7 @@ LAB_9150:
           mov.b       r0l, r0l
           beq         LAB_9170:8
           mov.w       @accelXPos, r0
-          jsr         @ui_stats_next_index:16
+          jsr         @ui_inventory_cursor_next:16
           mov.b       r0l, r0l
           beq         LAB_916a:8
 LAB_9166:
@@ -16446,12 +16446,12 @@ LAB_9186:
 LAB_918a:
           rts
 ; =============================================================================
-; Function: ui_render_items_stats
+; Function: ui_render_inventory_items
 ; Address:  918c
 ; Size:     412 bytes
 ; Called by: ui_dispatch_draw
 ; =============================================================================
-ui_render_items_stats:
+ui_render_inventory_items:
           sub.w       #H'6, r7
           mov.w       #drv_lcd_blit, r3
           mov.w       #drv_eeprom_read_block, r4
@@ -17059,7 +17059,7 @@ LAB_9748:
 ; Function: ui_clear_substate_y
 ; Address:  974e
 ; Size:     8 bytes
-; Called by: ui_handle_home, ui_handle_poke_items, ui_handle_settings_menu, ui_handle_trainer_stats
+; Called by: ui_handle_home, ui_handle_inventory_pokemon, ui_handle_settings_main_page, ui_handle_trainer_card
 ; =============================================================================
 ui_clear_substate_y:
           sub.b       r0l, r0l
@@ -17171,7 +17171,7 @@ LAB_983c:
           mov.b       #H'2, r0l
           bra         LAB_98b6:8
 switchD_97b0__caseD_2:
-          jsr         @ui_start_connection_app:16
+          jsr         @ui_enter_ir_session:16
           jmp         @LAB_992c:16
 switchD_97b0__caseD_3:
           mov.b       #H'8, r0l
@@ -17187,7 +17187,7 @@ switchD_97b0__caseD_4:
           mov.w       r0, @gCurSubstateA
           mov.w       @(H'2,er6), r6
           mov.w       r6, @accelXPos
-          jsr         @ui_stats_reset_cursor:16
+          jsr         @ui_inventory_cursor_reset:16
           mov.b       #H'A, r0l
           bra         LAB_98b6:8
 LAB_988a:
@@ -17197,7 +17197,7 @@ LAB_988a:
           mov.w       r0, @gCurSubstateA
           mov.w       @(H'2,er6), r6
           mov.w       r6, @accelXPos
-          jsr         @ui_set_stats_view_item:16
+          jsr         @ui_inventory_jump_to_items:16
           mov.b       #H'B, r0l
           bra         LAB_98b6:8
 LAB_98a6:
@@ -17207,7 +17207,7 @@ LAB_98a8:
           mov.b       #H'4, r0l
           bra         LAB_9928:8
 switchD_97b0__caseD_5:
-          jsr         @ui_show_status_screen:16
+          jsr         @ui_reset_settings_substate:16
           mov.b       #H'9, r0l
 LAB_98b6:
           jsr         @ui_set_view:16
@@ -17571,7 +17571,7 @@ LAB_9c3e:
 ; Function: drv_button_is_triggered
 ; Address:  9c40
 ; Size:     8 bytes
-; Called by: ui_dispatch_event, ui_handle_battle, game_battle_process_turn, ui_handle_bored_gift, ui_handle_debug_input
+; Called by: ui_dispatch_event, ui_handle_battle, game_battle_process_turn, ui_handle_bored_gift, ui_handle_factory_test
 ;            ... and 14 more
 ; Parameters: 1
 ; =============================================================================
@@ -17580,12 +17580,12 @@ drv_button_is_triggered:
           and.b       r0h, r0l
           rts
 ; =============================================================================
-; Function: game_generate_encounter_dowsing
+; Function: game_roll_radar_encounter
 ; Address:  9c48
 ; Size:     330 bytes
 ; Called by: game_pokeradar_init
 ; =============================================================================
-game_generate_encounter_dowsing:
+game_roll_radar_encounter:
           sub.b       r0l, r0l
           mov.b       r0l, @gCurSubstateY
           mov.b       @RamCache_settingsByte, r0l
@@ -17598,7 +17598,7 @@ game_generate_encounter_dowsing:
           mov.w       #H'68, r0
           jsr         @sbrk:16
           mov.b       r6l, r1l
-          jsr         @gfx_xor_rect_ram:16
+          jsr         @save_check_event_bit:16
           mov.b       r0l, r0l
           bne         LAB_9cea:8
           mov.w       #H'B800, r0
@@ -17716,7 +17716,7 @@ LAB_9d90:
 ; Called by: ui_handle_main_menu
 ; =============================================================================
 game_pokeradar_init:
-          jsr         @game_generate_encounter_dowsing:16
+          jsr         @game_roll_radar_encounter:16
           sub.b       r0l, r0l
           mov.b       r0l, @gCurSubstateZ
           mov.b       r0l, @gCurSubstateA
@@ -18098,12 +18098,12 @@ ui_handle_radar_failure:
 LAB_a12a:
           rts
 ; =============================================================================
-; Function: game_render_step_counter
+; Function: ui_render_radar_failure
 ; Address:  a12c
 ; Size:     84 bytes
 ; Called by: ui_dispatch_draw
 ; =============================================================================
-game_render_step_counter:
+ui_render_radar_failure:
           jsr         @sys_init_heap:16
           mov.w       #H'C0, r0
           jsr         @sbrk:16
@@ -18134,12 +18134,12 @@ LAB_a14c:
           jsr         @gfx_draw_battery_low:16
           rts
 ; =============================================================================
-; Function: sys_power_save_low_power
+; Function: sys_enter_low_power
 ; Address:  a180
 ; Size:     40 bytes
 ; Called by: sys_main_loop_low_power
 ; =============================================================================
-sys_power_save_low_power:
+sys_enter_low_power:
           bset        #H'2, @CKSTPR1
           mov.b       @walker_status_flags, r0l
           and.b       #H'E7, r0l
@@ -18392,7 +18392,7 @@ game_dispatch_pedometer_task:
           mov.b       @pedTaskFlags, r0l
           btst        #H'0, r0l
           beq         LAB_a368:8
-          bsr         game_pedometer_init_counters:8
+          bsr         game_pedometer_tick_session:8
 LAB_a368:
           mov.b       @pedTaskFlags, r0l
           btst        #H'1, r0l
@@ -18414,12 +18414,12 @@ LAB_a388:
           pop.l       er2
           rts
 ; =============================================================================
-; Function: game_pedometer_init_counters
+; Function: game_pedometer_tick_session
 ; Address:  a396
 ; Size:     20 bytes
 ; Called by: game_dispatch_pedometer_task
 ; =============================================================================
-game_pedometer_init_counters:
+game_pedometer_tick_session:
           mov.w       @sessionTicksElapsed, r0
           inc.w       #1, r0
           beq         LAB_a3a8:8
@@ -18804,7 +18804,7 @@ LAB_a716:
 ; Function: diag_eeprom_factory_test
 ; Address:  a72a
 ; Size:     214 bytes
-; Called by: sys_factory_test, ui_handle_debug_input
+; Called by: sys_factory_test, ui_handle_factory_test
 ; =============================================================================
 diag_eeprom_factory_test:
           subs        #4, er7
@@ -19055,7 +19055,7 @@ LAB_a936:
 ; Function: drv_lcd_test_pixels
 ; Address:  a962
 ; Size:     224 bytes
-; Called by: ui_render_debug
+; Called by: ui_render_factory_test
 ; =============================================================================
 drv_lcd_test_pixels:
           mov.b       #H'80, r0l
@@ -19175,12 +19175,12 @@ diag_init_test_mode:
           mov.b       #H'4, r0l
           jmp         @drv_lcd_set_contrast:16
 ; =============================================================================
-; Function: ui_handle_debug_input
+; Function: ui_handle_factory_test
 ; Address:  aa6c
 ; Size:     434 bytes
 ; Called by: ui_dispatch_event
 ; =============================================================================
-ui_handle_debug_input:
+ui_handle_factory_test:
           mov.b       #H'3C, r0l
           mov.b       r0l, @activityTimer
           mov.b       #H'1E, r0l
@@ -19335,7 +19335,7 @@ LAB_abfe:
           bset        #H'0, @PDR1
           mov.b       #H'17, r0l
           mov.b       r0l, @currentlyActiveView
-          jsr         @sys_init_debug_mode:16
+          jsr         @sys_init_accel_debug:16
           mov.w       #factoryTestSoundData, r0
           jsr         @drv_sound_set_data:16
 switchD_aa8e__default:
@@ -19344,7 +19344,7 @@ switchD_aa8e__default:
 ; Function: drv_lcd_test_spi
 ; Address:  ac1e
 ; Size:     232 bytes
-; Called by: ui_render_debug
+; Called by: ui_render_factory_test
 ; =============================================================================
 drv_lcd_test_spi:
           mov.b       #H'80, r0l
@@ -19445,12 +19445,12 @@ LAB_acf8:
           bset        #H'0, @PDR1
           rts
 ; =============================================================================
-; Function: ui_render_debug
+; Function: ui_render_factory_test
 ; Address:  ad06
 ; Size:     438 bytes
 ; Called by: ui_dispatch_draw
 ; =============================================================================
-ui_render_debug:
+ui_render_factory_test:
           sub.w       #H'6, r7
           mov.w       #gfx_draw_string, r5
           mov.b       @gCurSubstateY, r0l
@@ -19612,12 +19612,12 @@ LAB_aeb6:
           add.w       #H'6, r7
           rts
 ; =============================================================================
-; Function: sys_init_debug_mode
+; Function: sys_init_accel_debug
 ; Address:  aebc
 ; Size:     60 bytes
-; Called by: ir_handle_remote_cmd, ui_handle_debug_input
+; Called by: ir_handle_remote_cmd, ui_handle_factory_test
 ; =============================================================================
-sys_init_debug_mode:
+sys_init_accel_debug:
           sub.b       r0l, r0l
           mov.b       r0l, @accelSampleCount
           mov.w       #H'10, e0
@@ -19943,7 +19943,7 @@ game_sync_walk_status:
 ; Function: sys_factory_reset_eeprom
 ; Address:  b1ae
 ; Size:     308 bytes
-; Called by: sys_sync_eeprom_on_startup, ir_handle_remote_cmd, sys_factory_test, ui_handle_debug_input
+; Called by: sys_sync_eeprom_on_startup, ir_handle_remote_cmd, sys_factory_test, ui_handle_factory_test
 ; =============================================================================
 sys_factory_reset_eeprom:
           push.w      r3
@@ -20033,8 +20033,8 @@ LAB_b28e:
           bra         LAB_b2c2:8
 LAB_b2b6:
           jsr         @save_clear_data:16
-          jsr         @save_init_defaults:16
-          jsr         @save_delete_step_history:16
+          jsr         @save_clear_peer_log_slots:16
+          jsr         @save_clear_daily_step_log:16
 LAB_b2c2:
           mov.b       r4h, r4h
           beq         LAB_b2d2:8
@@ -20146,12 +20146,12 @@ ui_reset_trainer_card_state:
           mov.b       r0l, @gCurSubstateY
           rts
 ; =============================================================================
-; Function: ui_handle_trainer_stats
+; Function: ui_handle_trainer_card
 ; Address:  b3cc
 ; Size:     192 bytes
 ; Called by: ui_dispatch_event
 ; =============================================================================
-ui_handle_trainer_stats:
+ui_handle_trainer_card:
           mov.b       @gCurSubstateZ, r0l
           bne         LAB_b41c:8
           mov.b       #H'4, r0l
@@ -20164,7 +20164,7 @@ ui_handle_trainer_stats:
           jsr         @drv_sound_play:16
           jsr         @ui_clear_substate_y:16
           mov.b       #H'1, r0l
-          jmp         @ui_handle_trainer_stats__setMenuAndReturn:16
+          jmp         @ui_handle_trainer_card__setMenuAndReturn:16
 LAB_b3f2:
           dec.b       r0l
           mov.b       r0l, @gCurSubstateY
@@ -20201,7 +20201,7 @@ LAB_b436:
           mov.b       #H'1, r0l
           mov.b       r0l, @gCurSubstateZ
           sub.b       r0l, r0l
-          bra         ui_handle_trainer_stats__playSoundAndReturn:8
+          bra         ui_handle_trainer_card__playSoundAndReturn:8
 LAB_b44e:
           mov.w       #H'CE84, r6
           add.w       #H'4, r6
@@ -20217,7 +20217,7 @@ LAB_b44e:
           mov.b       #H'2, r0l
           mov.b       r0l, @gCurSubstateZ
           mov.b       #H'7, r0l
-ui_handle_trainer_stats__playSoundAndReturn:
+ui_handle_trainer_card__playSoundAndReturn:
           jsr         @drv_sound_play:16
           bra         LAB_b48a:8
 LAB_b47a:
@@ -20225,7 +20225,7 @@ LAB_b47a:
           jsr         @drv_sound_play:16
           jsr         @ui_reset_substate:16
           sub.b       r0l, r0l
-ui_handle_trainer_stats__setMenuAndReturn:
+ui_handle_trainer_card__setMenuAndReturn:
           jsr         @ui_set_view:16
 LAB_b48a:
           rts
@@ -20687,7 +20687,7 @@ LAB_b91c:
 ; Function: $BFINC$3
 ; Address:  b924
 ; Size:     42 bytes
-; Called by: game_log_interaction, game_rotate_interaction_log_record, ir_comm_loop, ui_handle_shade_menu, ui_handle_volume_menu
+; Called by: game_log_interaction, game_rotate_interaction_log_record, ir_comm_loop, ui_handle_settings_shade, ui_handle_settings_volume
 ; =============================================================================
 $BFINC$3:
           push.w      r3

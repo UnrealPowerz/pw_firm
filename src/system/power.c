@@ -1,5 +1,30 @@
 #include "all_headers.h"
 
+/*
+ * Power state transitions.
+ *
+ *   sys_enter_low_power     Drop into low-power mode (LCD on, slowed clock).
+ *   sys_enter_deep_sleep    Drop into deep-sleep mode (LCD off, RTCCR2 wakeup).
+ *   sys_wake_from_low_power Exit low-power/deep-sleep back to active.
+ *   sys_enter_sleep         Per-mode CPU SLEEP instruction (mode 0 / 1).
+ *
+ * (Watchdog control lives in src/system/wdt.c.)
+ *
+ * `walker_status_flags` bits 3-4 are the 2-bit power-mode field (mask 0x18):
+ *   0x00 = active
+ *   0x08 = low power     (set by sys_enter_low_power)
+ *   0x10 = deep sleep    (set by sys_enter_deep_sleep)
+ *   0x18 = reserved / unused
+ *
+ *   sys_enter_standby /
+ *   sys_update_standby_state  Two periodic ticks driving the standby (LCD
+ *     fade-out / fade-in) state machine, both touching DAT_f7d1 bits 0/1/2
+ *     and gCurSubstateA. Called alternately from ui_render_home_route based
+ *     on DAT_f7d1.b1 — _standby runs while b1 is clear (entry/exit phase),
+ *     _update_standby_state runs while b1 is set (active-standby tick at
+ *     every 4th animTick, with a periodic b2 toggle for visual blink).
+ */
+
 // ROM: 0x6b4c  88.6%
 void sys_enter_standby(void) {
   if (!DAT_f7d1_BIT.b2) {
@@ -53,15 +78,8 @@ LAB_6bde:
   }
 }
 
-// ROM: 0x259e  97.7%
-void sys_wdt_kick(void) {
-  TCSRWD1 = 0x5E;
-  TCWD = 0;
-  TCSRWD1 = 0x9E;
-}
-
 // ROM: 0xa180  98.5%
-void sys_power_save_low_power(void) {
+void sys_enter_low_power(void) {
   CKSTPR1 |= 0x04;
   walker_status_flags = (walker_status_flags & 0xE7) | 0x08;
   RTCCR2 |= 0x01;
@@ -106,17 +124,3 @@ void sys_enter_sleep(uint16_t mode) {
   }
 }
 
-// ROM: 0x245e  97.4%
-void sys_wdt_unlock(void) {
-  TCSRWD1 = 0x9E;
-  TCSRWD1 = 0xA2;
-  TCSRWD1 = 0x8E;
-}
-
-// ROM: 0x246c  97.3%
-void sys_wdt_init(void) {
-  TCSRWD1 = 0x9E;
-  TCSRWD1 = 0xA6;
-  TCSRWD1 = 0x8E;
-  TMWD = 0xF5;
-}

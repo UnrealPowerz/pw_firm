@@ -1,5 +1,64 @@
 #include "all_headers.h"
 
+/*
+ * Graphics engine.
+ *
+ * Functions grouped by role (search by name to navigate):
+ *
+ *   --- Low-level LCD primitives ---
+ *     gfx_draw_string                bit-banged SPI text writer
+ *     gfx_draw_string_simple         fixed-args wrapper of the above
+ *     gfx_fill_rect                  SPI rectangle fill (4 colour modes)
+ *     gfx_draw_sprite_simple         SPI blit with sub-page y alignment
+ *     gfx_blit_to_buffer             OR a sprite into a destination buffer
+ *     gfx_flip_horiz                 in-place horizontal mirror
+ *     gfx_alpha_blend                blend a smaller sprite into a larger one
+ *
+ *   --- Sprite-from-EEPROM renderers ---
+ *     gfx_draw_home_pokemon          home-screen walker pokemon (animated)
+ *     gfx_draw_own_pokemon_small     small own-pokemon icon (animated)
+ *     gfx_draw_own_pokemon_small_flipped   same, mirrored
+ *     gfx_draw_route_pokemon         wild pokemon icon for a route slot
+ *     gfx_draw_peer_pokemon          peer-event pokemon icon
+ *     gfx_draw_small_route_icon      small route-tier icon
+ *     gfx_draw_treasure_chest_icon   gift / dowsed-item chest sprite
+ *     gfx_draw_present_icon          gift-from-peer sprite
+ *     gfx_draw_item_symbol           generic item icon
+ *     gfx_draw_battery_low           blinking low-battery icon
+ *
+ *   --- Text-line renderers (name strips + borders) ---
+ *     gfx_add_borders_to_text        decorate the 4 sides of a 0x180 text buf
+ *     gfx_add_font_border            3-word OR helper for digit borders
+ *     gfx_draw_text_box              load+border+blit one of the 0x2530 strings
+ *     gfx_draw_own_pokemon_name      blit "own pokemon" name strip
+ *     gfx_draw_peer_pokemon_name     blit peer pokemon name
+ *     gfx_draw_event_pokemon_name    blit event-pokemon name from EEPROM cache
+ *     gfx_draw_special_pokemon_name     blit special-route pokemon name
+ *     gfx_draw_route_pokemon_name    blit wild pokemon name (indexed)
+ *     gfx_draw_item_name             blit item name (indexed)
+ *     gfx_draw_event_item_name       blit special-event item name
+ *
+ *   --- Numeric / icon-tagged display ---
+ *     gfx_draw_numeric_value         base-10 digits, right-to-left, with borders
+ *     gfx_draw_value_with_icon       numeric + small icon on the same row
+ *
+ *   --- Direct-SPI frame primitives (bypass drv_lcd_blit) ---
+ *     gfx_draw_text_frame_upper      rectangle frame on pages B4,B5 (y=0x20)
+ *     gfx_draw_text_frame_lower      rectangle frame on pages B6,B7 (y=0x30)
+ *     gfx_draw_home_section_divider  single horizontal rule at page B6 top
+ *
+ *   --- Mini-animations ---
+ *     gfx_draw_animated_grass        page-aligned shift-with-spillover for the
+ *                                    bobbing grass effect
+ *
+ * Several functions in this file carry "Reason / Class:
+ * cannot-fix-without-compiler-change" comment blocks documenting why the
+ * score is stuck. The comments call out specific ch38 vs ROM codegen
+ * mismatches (prologue helpers, register allocation, constant hoisting).
+ * Edit those functions cautiously — small changes have bounced scores by
+ * double-digit points in prior attempts.
+ */
+
 // ROM: 0x69be  73.7%
 void gfx_draw_home_pokemon(uint8_t x, uint8_t y) {
   uint8_t *ptr;
@@ -55,14 +114,15 @@ void gfx_add_font_border(uint16_t *ptr) {
 // ROM: 0x858a  17.1%  saves: er3,er4,er5,er6
 void gfx_draw_string(uint8_t x, uint8_t y_raw, const char *str) {
   uint8_t y_page;
-  uint8_t c, idx, i;
-  const uint8_t *bmp;
+  uint8_t ch, glyph_idx, i;
+  const uint8_t *glyph;
 
   SSER = 0x80;
   PDR1 &= ~0x01;
   y_page = y_raw >> 3;
   PDR1 &= ~0x02;
 
+  /* Set column address (low 4 + high 3 bits). */
   while (!SSSR_BIT.TDRE)
     ;
   SSTDR = 0x10 | ((x >> 4) & 0x07);
@@ -74,6 +134,7 @@ void gfx_draw_string(uint8_t x, uint8_t y_raw, const char *str) {
     sleep();
   }
 
+  /* Set page address. */
   while (!SSSR_BIT.TDRE)
     ;
   SSTDR = 0xB0 | (uint8_t)(lcdPageOffset * 8 + y_page);
@@ -82,28 +143,31 @@ void gfx_draw_string(uint8_t x, uint8_t y_raw, const char *str) {
   PDR1 |= 0x02;
 
   while (*str) {
-    c = (uint8_t)(*str++);
-    if (c == 0x20) {
+    ch = (uint8_t)(*str++);
+    if (ch == 0x20) {
+      /* Space: 8 blank columns. */
       for (i = 0; i < 8; i++) {
         while (!SSSR_BIT.TDRE)
           ;
         SSTDR = 0;
       }
     } else {
-      if (c <= 0x39)
-        idx = c + 0xD0;
+      /* Map ASCII to glyph table. Digits '0'..'9' (0x30..0x39) and the
+         letters above use slightly different offsets into font3ByteGlyphs. */
+      if (ch <= 0x39)
+        glyph_idx = ch + 0xD0;
       else
-        idx = c + 0xC9;
-      bmp = &font3ByteGlyphs[idx * 3];
+        glyph_idx = ch + 0xC9;
+      glyph = &font3ByteGlyphs[glyph_idx * 3];
       while (!SSSR_BIT.TDRE)
         ;
-      SSTDR = bmp[0];
+      SSTDR = glyph[0];
       while (!SSSR_BIT.TDRE)
         ;
-      SSTDR = bmp[1];
+      SSTDR = glyph[1];
       while (!SSSR_BIT.TDRE)
         ;
-      SSTDR = bmp[2];
+      SSTDR = glyph[2];
       while (!SSSR_BIT.TDRE)
         ;
       SSTDR = 0;
@@ -152,6 +216,236 @@ void gfx_add_borders_to_text(void *buf, uint8_t w, uint8_t h, uint8_t flags) {
   }
 }
 
+/* The three "draw text frame" primitives below bit-bang directly to the
+ * SSD1854 over the SSU (synchronous serial unit), bypassing drv_lcd_blit.
+ * Each one draws a rectangular frame on a fixed pair of LCD pages:
+ *
+ *   gfx_draw_text_frame_upper        pages B4,B5  (pixel rows 32..47) - top
+ *                                    edge horizontal line + left/right rails.
+ *                                    Used by every name-strip / value-with-icon
+ *                                    renderer when drawing at y=0x20.
+ *
+ *   gfx_draw_text_frame_lower        pages B6,B7  (pixel rows 48..63) - top
+ *                                    edge + bottom edge + corners. Used by
+ *                                    the same renderers when drawing at y=0x30.
+ *
+ *   gfx_draw_home_section_divider    page B6      (pixel row 48 only) - single
+ *                                    full-width horizontal rule separating the
+ *                                    home route image from the home status row.
+ *                                    Used by ui_render_home_bar.
+ *
+ * Byte-pattern decode: writing 0x01 across a column lights bit 0 = topmost
+ * pixel of the page (horizontal line at the top of that page); writing 0x80
+ * across lights bit 7 = bottom pixel (line at the bottom); 0xFF at column 0
+ * and the last column draws vertical rails.
+ */
+
+// ROM: 0x8766  96.4%
+void gfx_draw_text_frame_upper(void) {
+  uint8_t i;
+  SSER = 0x80;
+  PDR1 &= ~0x01;
+  PDR1 &= ~0x02;
+
+  /* Page B4: top edge horizontal line, with FF corners. */
+  while (!SSSR_BIT.TDRE)
+    ;
+  SSTDR = 0x10;
+  while (!SSSR_BIT.TDRE)
+    ;
+  SSTDR = 0x00;
+  while (!SSSR_BIT.TDRE)
+    ;
+  SSTDR = 0xB4 + (lcdPageOffset * 8);
+  while (!SSSR_BIT.TEND)
+    ;
+  PDR1 |= 0x02;
+  while (!SSSR_BIT.TDRE)
+    ;
+  SSTDR = 0xFF;
+  while (!SSSR_BIT.TDRE)
+    ;
+  SSTDR = 0xFF;
+  for (i = 0; i < 0xBC; i++) {
+    while (!SSSR_BIT.TDRE)
+      ;
+    SSTDR = 0x01;
+  }
+  while (!SSSR_BIT.TDRE)
+    ;
+  SSTDR = 0xFF;
+  while (!SSSR_BIT.TDRE)
+    ;
+  SSTDR = 0xFF;
+  while (!SSSR_BIT.TEND)
+    ;
+  PDR1 &= ~0x02;
+
+  /* Page B5: left rail. */
+  while (!SSSR_BIT.TDRE)
+    ;
+  SSTDR = 0x10;
+  while (!SSSR_BIT.TDRE)
+    ;
+  SSTDR = 0x00;
+  while (!SSSR_BIT.TDRE)
+    ;
+  SSTDR = 0xB5 + (lcdPageOffset * 8);
+  while (!SSSR_BIT.TEND)
+    ;
+  PDR1 |= 0x02;
+  while (!SSSR_BIT.TDRE)
+    ;
+  SSTDR = 0xFF;
+  while (!SSSR_BIT.TDRE)
+    ;
+  SSTDR = 0xFF;
+  while (!SSSR_BIT.TEND)
+    ;
+  PDR1 &= ~0x02;
+
+  /* Page B5: right rail. */
+  while (!SSSR_BIT.TDRE)
+    ;
+  SSTDR = 0x15;
+  while (!SSSR_BIT.TDRE)
+    ;
+  SSTDR = 0x0F;
+  while (!SSSR_BIT.TDRE)
+    ;
+  SSTDR = 0xB5 + (lcdPageOffset * 8);
+  while (!SSSR_BIT.TEND)
+    ;
+  PDR1 |= 0x02;
+  while (!SSSR_BIT.TDRE)
+    ;
+  SSTDR = 0xFF;
+  while (!SSSR_BIT.TDRE)
+    ;
+  SSTDR = 0xFF;
+  while (!SSSR_BIT.TEND)
+    ;
+
+  while (!SSSR_BIT.TEND)
+    ;
+  PDR1 |= 0x01;
+}
+
+// ROM: 0x88e2  95.4%
+void gfx_draw_text_frame_lower(void) {
+  uint8_t i;
+  SSER = 0x80;
+  PDR1 &= ~0x01;
+  PDR1 &= ~0x02;
+
+  /* Page B6: top edge horizontal line. */
+  while (!SSSR_BIT.TDRE)
+    ;
+  SSTDR = 0x10;
+  while (!SSSR_BIT.TDRE)
+    ;
+  SSTDR = 0x00;
+  while (!SSSR_BIT.TDRE)
+    ;
+  SSTDR = 0xB6 + (lcdPageOffset * 8);
+  while (!SSSR_BIT.TEND)
+    ;
+  PDR1 |= 0x02;
+  while (!SSSR_BIT.TDRE)
+    ;
+  SSTDR = 0xFF;
+  while (!SSSR_BIT.TDRE)
+    ;
+  SSTDR = 0xFF;
+  for (i = 0; i < 0xBC; i++) {
+    while (!SSSR_BIT.TDRE)
+      ;
+    SSTDR = 0x01;
+  }
+  while (!SSSR_BIT.TDRE)
+    ;
+  SSTDR = 0xFF;
+  while (!SSSR_BIT.TDRE)
+    ;
+  SSTDR = 0xFF;
+  while (!SSSR_BIT.TEND)
+    ;
+  PDR1 &= ~0x02;
+
+  /* Page B7: bottom edge horizontal line. */
+  while (!SSSR_BIT.TDRE)
+    ;
+  SSTDR = 0x10;
+  while (!SSSR_BIT.TDRE)
+    ;
+  SSTDR = 0x00;
+  while (!SSSR_BIT.TDRE)
+    ;
+  SSTDR = 0xB7 + (lcdPageOffset * 8);
+  while (!SSSR_BIT.TEND)
+    ;
+  PDR1 |= 0x02;
+  while (!SSSR_BIT.TDRE)
+    ;
+  SSTDR = 0xFF;
+  while (!SSSR_BIT.TDRE)
+    ;
+  SSTDR = 0xFF;
+  while (!SSSR_BIT.TEND)
+    ;
+
+  for (i = 0; i < 0xBC; i++) {
+    while (!SSSR_BIT.TDRE)
+      ;
+    SSTDR = 0x80;
+  }
+  while (!SSSR_BIT.TDRE)
+    ;
+  SSTDR = 0xFF;
+  while (!SSSR_BIT.TDRE)
+    ;
+  SSTDR = 0xFF;
+  while (!SSSR_BIT.TEND)
+    ;
+
+  while (!SSSR_BIT.TEND)
+    ;
+  PDR1 |= 0x01;
+}
+
+// ROM: 0x8a36  94.0%
+void gfx_draw_home_section_divider(void) {
+  uint8_t i;
+  SSER = 0x80;
+  PDR1 &= ~0x01;
+  PDR1 &= ~0x02;
+
+  /* Page B6: full-width horizontal line at the top. */
+  while (!SSSR_BIT.TDRE)
+    ;
+  SSTDR = 0x10;
+  while (!SSSR_BIT.TDRE)
+    ;
+  SSTDR = 0x00;
+  while (!SSSR_BIT.TDRE)
+    ;
+  SSTDR = 0xB6 + (lcdPageOffset * 8);
+  while (!SSSR_BIT.TEND)
+    ;
+  PDR1 |= 0x02;
+  for (i = 0; i < 0xC0; i++) {
+    while (!SSSR_BIT.TDRE)
+      ;
+    SSTDR = 0x01;
+  }
+  while (!SSSR_BIT.TEND)
+    ;
+
+  while (!SSSR_BIT.TEND)
+    ;
+  PDR1 |= 0x01;
+}
+
 // ROM: 0x1936  88.2%
 void gfx_draw_own_pokemon_small(uint8_t x, uint8_t y) {
   uint8_t *buf;
@@ -180,69 +474,69 @@ void gfx_draw_own_pokemon_small_flipped(uint8_t x, uint8_t y) {
 }
 
 // ROM: 0x1a58  69.2%  saves: r4,r5,r6
-void gfx_draw_own_pokemon_name(uint8_t x, uint8_t y, uint8_t flags) {
+void gfx_draw_own_pokemon_name(uint8_t x, uint8_t y, uint8_t borders) {
   uint8_t *buf;
 
   sys_init_heap();
   buf = (uint8_t *)sbrk(0x140);
 
   if (y == 0x30) {
-    diag_lcd_ssu_test_2();
+    gfx_draw_text_frame_lower();
   } else {
-    diag_lcd_ssu_test_1();
+    gfx_draw_text_frame_upper();
   }
 
   drv_eeprom_read_block(0x993E, buf, 0x140);
-  gfx_add_borders_to_text(buf, 0x50, 0x10, flags);
+  gfx_add_borders_to_text(buf, 0x50, 0x10, borders);
   drv_lcd_blit(x, y, buf, 0x50, 0x10);
 }
 
 // ROM: 0x1ab2  83.4%
-void gfx_draw_peer_pokemon_name(uint8_t x, uint8_t y, uint8_t flags) {
+void gfx_draw_peer_pokemon_name(uint8_t x, uint8_t y, uint8_t borders) {
   uint8_t *buf;
 
   sys_init_heap();
   buf = (uint8_t *)sbrk(0x140);
-  diag_lcd_ssu_test_1();
+  gfx_draw_text_frame_upper();
 
   drv_eeprom_read_block(0xF580, buf, 0x140);
-  gfx_add_borders_to_text(buf, 0x50, 0x10, flags);
+  gfx_add_borders_to_text(buf, 0x50, 0x10, borders);
   drv_lcd_blit(x, y, buf, 0x50, 0x10);
 }
 
 // ROM: 0x1af4  81.3%
-void gfx_draw_event_pokemon_info(uint8_t x, uint8_t y, uint8_t flags) {
+void gfx_draw_event_pokemon_name(uint8_t x, uint8_t y, uint8_t borders) {
   uint8_t *buf;
 
   sys_init_heap();
   buf = (uint8_t *)sbrk(0x140);
 
   if (y == 0x30) {
-    diag_lcd_ssu_test_2();
+    gfx_draw_text_frame_lower();
   } else {
-    diag_lcd_ssu_test_1();
+    gfx_draw_text_frame_upper();
   }
 
   drv_eeprom_read_block(0xBC00, buf, 0x140);
-  gfx_add_borders_to_text(buf, 0x50, 0x10, flags);
+  gfx_add_borders_to_text(buf, 0x50, 0x10, borders);
   drv_lcd_blit(x, y, buf, 0x50, 0x10);
 }
 
 // ROM: 0x1b40  76.0%  saves: r5,r6
-void gfx_draw_special_poke_name(uint8_t x, uint8_t y, uint8_t flags) {
+void gfx_draw_special_pokemon_name(uint8_t x, uint8_t y, uint8_t borders) {
   uint8_t *buf;
 
   sys_init_heap();
   buf = (uint8_t *)sbrk(0x140);
 
   if (y == 0x30) {
-    diag_lcd_ssu_test_2();
+    gfx_draw_text_frame_lower();
   } else {
-    diag_lcd_ssu_test_1();
+    gfx_draw_text_frame_upper();
   }
 
   drv_eeprom_read_block(0xC6FC, buf, 0x140);
-  gfx_add_borders_to_text(buf, 0x50, 0x10, flags);
+  gfx_add_borders_to_text(buf, 0x50, 0x10, borders);
   drv_lcd_blit(x, y, buf, 0x50, 0x10);
 }
 
@@ -259,32 +553,32 @@ void gfx_draw_item_symbol(uint8_t x, uint8_t y) {
 
 // ROM: 0x1bc6  81.3%  saves: r5,r6
 void gfx_draw_route_pokemon_name(uint8_t x, uint8_t y, uint8_t index,
-                                 uint8_t flags) {
+                                 uint8_t borders) {
   uint8_t *buf;
 
   sys_init_heap();
   buf = (uint8_t *)sbrk(0x180);
 
   if (y == 0x30) {
-    diag_lcd_ssu_test_2();
+    gfx_draw_text_frame_lower();
   } else {
-    diag_lcd_ssu_test_1();
+    gfx_draw_text_frame_upper();
   }
 
   drv_eeprom_read_block(0xA4FE + (uint16_t)index * 0x140, buf, 0x140);
-  gfx_add_borders_to_text(buf, 0x50, 0x10, flags);
+  gfx_add_borders_to_text(buf, 0x50, 0x10, borders);
   drv_lcd_blit(x, y, buf, 0x50, 0x10);
 }
 
 // ROM: 0x1c26  63.7%  saves: r4,r5,er6
-void gfx_draw_item_name(uint8_t x, uint8_t y, uint8_t index, uint8_t flags) {
+void gfx_draw_item_name(uint8_t x, uint8_t y, uint8_t index, uint8_t borders) {
   uint8_t *buf;
 
   sys_init_heap();
   buf = (uint8_t *)sbrk(0x180);
 
   drv_eeprom_read_block(0xA8BE + (uint16_t)index * 0x180, buf, 0x180);
-  gfx_add_borders_to_text(buf, 0x60, 0x10, flags);
+  gfx_add_borders_to_text(buf, 0x60, 0x10, borders);
   drv_lcd_blit(x, y, buf, 0x60, 0x10);
 }
 
@@ -336,14 +630,14 @@ void gfx_draw_animated_grass(uint8_t w, uint8_t h, int8_t shift, void *buf) {
 
 // ROM: 0x1c80  80.9%
 void gfx_draw_event_item_name(uint8_t x, uint8_t y, uint8_t index,
-                              uint8_t flags) {
+                              uint8_t borders) {
   uint8_t *buf;
 
   sys_init_heap();
   buf = (uint8_t *)sbrk(0x180);
 
   drv_eeprom_read_block(0xBD48, buf, 0x180);
-  gfx_add_borders_to_text(buf, 0x60, 0x10, flags);
+  gfx_add_borders_to_text(buf, 0x60, 0x10, borders);
   drv_lcd_blit(x, y, buf, 0x60, 0x10);
 }
 
@@ -369,91 +663,53 @@ void gfx_draw_present_icon(uint8_t x, uint8_t y) {
   drv_lcd_blit(x, y, buf, 0x20, 0x18);
 }
 
-// ROM: 0x1d7a  79.4%  saves: r6,r5
-uint8_t gfx_xor_rect_ram(void *ptr, uint8_t val) {
-  struct trainer_record *rec = (struct trainer_record *)ptr;
-  uint8_t offset;
-  uint8_t bit;
-
-  if (val == 0)
-    return 0;
-
-  offset = val >> 3;
-  bit = val & 0x7;
-
-  save_read_reliable(EEPROM_TRAINER_REC, EEPROM_TRAINER_REC_BACKUP, (uint8_t *)rec, sizeof(*rec));
-  if (rec->flags_38[offset] & (1 << bit)) {
-    return 1;
-  }
-  return 0;
-}
-
 // ROM: 0x1fee  54.8%  saves: r3,r4,r5,r6
 void gfx_draw_numeric_value(uint8_t x, uint8_t y, uint32_t number,
-                            uint8_t flags) {
+                            uint8_t add_border) {
   {
-    uint16_t *ptr;
+    uint16_t *cursor;
     uint8_t i;
-    uint8_t *digit_buf;
+    uint8_t *digit_sheet;
 
     sys_init_heap();
-    digit_buf = (uint8_t *)sbrk(0x140);
-    drv_eeprom_read_block(0x280, digit_buf, 0x140);
+    /* Load the 10-digit sheet (each digit = 0x20 bytes = 16 words). */
+    digit_sheet = (uint8_t *)sbrk(0x140);
+    drv_eeprom_read_block(0x280, digit_sheet, 0x140);
 
-    if (flags & 0xFF) {
-      ptr = (uint16_t *)digit_buf;
+    if (add_border & 0xFF) {
+      /* OR a top/bottom border into every digit in the sheet. Each digit
+         occupies 16 words; we touch the first 8 (the top half), then skip
+         18 bytes (= 16 bytes of the bottom half + 2 padding) to land on the
+         next digit. The original calls gfx_add_font_border twice per digit,
+         but that helper advances the caller's r6 by 6 each call — a calling-
+         convention abuse C cannot express, so the OR sequence is inlined. */
+      cursor = (uint16_t *)digit_sheet;
       for (i = 10; i != 0; i--) {
-        /* Eight OR'd words per digit, then skip 18 bytes to the next.
-         * (Original calls gfx_add_font_border twice, but that helper
-         * advances the caller's r6 by 6 each call — a calling-convention
-         * abuse C cannot express, so the OR sequence is inlined here.) */
-        ptr[0] |= 0x101;
-        ptr[1] |= 0x101;
-        ptr[2] |= 0x101;
-        ptr[3] |= 0x101;
-        ptr[4] |= 0x101;
-        ptr[5] |= 0x101;
-        ptr[6] |= 0x101;
-        ptr[7] |= 0x101;
-        ptr = (uint16_t *)((uint8_t *)(ptr + 8) + 16);
+        cursor[0] |= 0x101;
+        cursor[1] |= 0x101;
+        cursor[2] |= 0x101;
+        cursor[3] |= 0x101;
+        cursor[4] |= 0x101;
+        cursor[5] |= 0x101;
+        cursor[6] |= 0x101;
+        cursor[7] |= 0x101;
+        cursor = (uint16_t *)((uint8_t *)(cursor + 8) + 16);
       }
     }
 
     if (number == 0) {
-      drv_lcd_blit(x, y, digit_buf, 8, 0x10);
+      /* Single zero — blit digit 0 only. */
+      drv_lcd_blit(x, y, digit_sheet, 8, 0x10);
     } else {
+      /* Render right-to-left, peeling decimal digits from `number`. */
       do {
         uint8_t digit = (uint8_t)(number % 10);
-        drv_lcd_blit(x, y, digit_buf + (digit * 32), 8, 0x10);
+        drv_lcd_blit(x, y, digit_sheet + (digit * 32), 8, 0x10);
         number /= 10;
         x -= 8;
       } while (number != 0);
     }
   }
-}
-
-/* Reason: ROM keeps locals in caller-saved r2/r3; ch38 picks callee-saved
- * r5/r6 and emits PUSH.W R6 / PUSH.W R5 prologue.
- * Even with -regparam=3 enabled (so er2 IS caller-saved), ch38 chose r5/r6
- * here -- score unchanged at 52.8%.  The original compiler must have done
- * inter-procedural analysis to prove drv_eeprom_read_block doesn't clobber
- * r2/r3, then used them as scratch across the call without saving anything.
- * ch38 doesn't do that analysis and conservatively reaches for callee-saved
- * registers.  Pragmas like `#pragma option speed=register` don't reliably
- * help -- and they have file-global scope, so clobbering one regresses
- * neighbouring functions (we saw -13% on gfx_draw_text_box this way).
- * Class: cannot-fix-without-compiler-change */
-// ROM: 0x1eee  52.8%
-uint16_t gfx_get_sprite_addr(uint8_t index) {
-  uint8_t *buf;
-  uint16_t result;
-
-  sys_init_heap();
-  buf = (uint8_t *)sbrk(0xBE);
-  drv_eeprom_read_block(EEPROM_TRAINER_PROFILE, buf, 0xBE);
-
-  result = *(uint16_t *)(buf + 0x8C + (uint16_t)index * 2);
-  return result;
 }
 
 // ROM: 0x19b8  57.9%  saves: r6
@@ -479,27 +735,31 @@ void gfx_draw_route_pokemon(uint8_t x, uint8_t y, uint8_t index) {
 //   constant hoisting)
 // ROM: 0x2096  67.8%  saves: r3,r4,r5,er6
 void gfx_draw_text_box(uint8_t y, uint8_t index, uint8_t borders,
-                       uint8_t flags) {
-  uint8_t *buf, *e16_buf;
+                       uint8_t blink) {
+  uint8_t *buf, *blink_overlay;
   uint16_t i;
 
   sys_init_heap();
   buf = (uint8_t *)sbrk(0x180);
-  e16_buf = (uint8_t *)sbrk(0x18);
+  blink_overlay = (uint8_t *)sbrk(0x18);
 
+  /* Load the indexed 96x16 string + apply borders. */
   drv_eeprom_read_block(0x2530 + (uint16_t)index * 0x180, buf, 0x180);
   gfx_add_borders_to_text(buf, 0x60, 0x10, borders);
 
-  if (flags != 0 && ((animTick >> 1) & 0x01)) {
-    drv_eeprom_read_block(0x638, e16_buf, 0x18);
+  /* Blink: every other animTick beat, mask + OR a small overlay near the
+     right edge of the text strip (used as the "press button to continue"
+     blinking arrow). */
+  if (blink != 0 && ((animTick >> 1) & 0x01)) {
+    drv_eeprom_read_block(0x638, blink_overlay, 0x18);
     for (i = 0; i < 8; i++) {
       uint16_t off = 0x170 + i * 2;
-      uint8_t mask = e16_buf[0x10 + i];
+      uint8_t mask = blink_overlay[0x10 + i];
       buf[off] &= mask;
       buf[off + 1] &= mask;
     }
     for (i = 0; i < 16; i++) {
-      buf[0x170 + i] |= e16_buf[i];
+      buf[0x170 + i] |= blink_overlay[i];
     }
   }
 
@@ -510,21 +770,23 @@ void gfx_draw_text_box(uint8_t y, uint8_t index, uint8_t borders,
 void gfx_draw_value_with_icon(uint8_t x, uint8_t y, uint8_t subtype,
                               uint16_t val) {
   uint8_t *buf;
-  uint16_t *p16;
+  uint16_t *icon16;
   uint16_t i;
 
   sys_init_heap();
   buf = (uint8_t *)sbrk(0x140);
-  diag_lcd_ssu_test_1();
+  gfx_draw_text_frame_upper();
 
+  /* Clear the numeric strip then write the value into it. */
   gfx_fill_rect(1, 0x28, 0x5E, 8, 0);
-
   gfx_draw_numeric_value((uint8_t)(x + 8), y, (uint32_t)val, 0);
 
+  /* Load the icon sprite from EEPROM and OR in a top/bottom border on each
+     16-bit column (0x0101 = bit 0 of both bytes = top + bottom edge pixels). */
   drv_eeprom_read_block(0x420, buf, 0x40);
-  p16 = (uint16_t *)buf;
+  icon16 = (uint16_t *)buf;
   for (i = 0; i < 0x10; i++) {
-    p16[i] |= 0x0101;
+    icon16[i] |= 0x0101;
   }
 
   drv_lcd_blit(x + 16, y, buf, 0x10, 0x10);
@@ -663,23 +925,25 @@ void gfx_flip_horiz(uint8_t w, uint8_t h, void *buf) {
   uint16_t half = (uint16_t)w >> 1;
   uint16_t rows = (uint16_t)h >> 3;
   uint16_t stride = (uint16_t)w << 1;
-  uint8_t *p = (uint8_t *)buf;
-  uint8_t right_init = (uint8_t)(w - 1);
-  uint8_t row, li, ri;
+  uint8_t *row_ptr = (uint8_t *)buf;
+  uint8_t right_start = (uint8_t)(w - 1);
+  uint8_t row, left_idx, right_idx;
 
+  /* For each page-row, swap left/right column-pair words via the classic
+     three-XOR swap. Each "column" is 2 bytes (data + mask plane). */
   for (row = 0; row < rows; row++) {
-    li = 0;
-    ri = right_init;
-    while ((uint16_t)li < half) {
-      uint16_t *L = (uint16_t *)(p + (uint16_t)li * 2);
-      uint16_t *R = (uint16_t *)(p + (uint16_t)ri * 2);
+    left_idx = 0;
+    right_idx = right_start;
+    while ((uint16_t)left_idx < half) {
+      uint16_t *L = (uint16_t *)(row_ptr + (uint16_t)left_idx * 2);
+      uint16_t *R = (uint16_t *)(row_ptr + (uint16_t)right_idx * 2);
       *L ^= *R;
       *R ^= *L;
       *L ^= *R;
-      li++;
-      ri--;
+      left_idx++;
+      right_idx--;
     }
-    p += stride;
+    row_ptr += stride;
   }
 }
 

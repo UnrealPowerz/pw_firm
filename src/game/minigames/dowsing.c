@@ -29,63 +29,6 @@
  *   dowsing_item_pos   = hidden item slot (0..5), chosen at init
  */
 
-// ROM: 0x9c48  79.2%
-void game_generate_encounter_dowsing(void) {
-  uint32_t steps_required;
-  uint8_t *scratch;
-  uint8_t slot;
-  uint8_t rnd_pct;
-  uint8_t *trainer_buf;
-
-  gCurSubstateY = 0;
-  if (((RamCache_settingsByte & 1)) != 0) {
-    uint8_t peer_evt_seed = drv_eeprom_read_u8(EEPROM_EEP_STR);
-    sys_init_heap();
-    scratch = sbrk(0x68);
-    if (gfx_xor_rect_ram(scratch, peer_evt_seed) == 0) {
-      if ((drv_eeprom_read_u8(EEPROM_STEP_HIST_FLAGS) & 0x20) == 0) {
-        sys_init_heap();
-        scratch = sbrk(4);
-        drv_eeprom_read_block(0xBF44, scratch, 4);
-        steps_required = ((uint32_t)scratch[1] << 16) |
-                         ((uint32_t)scratch[2] << 8) | scratch[3];
-        if (steps_required <= sessionSteps) {
-          if ((sys_get_rng() % 100) < scratch[2]) {
-            gCurSubstateY = 4;
-            accelXPos = ((sys_get_rng() >> 3) & 1) + 3;
-            return;
-          }
-        }
-      }
-    }
-  }
-
-  /* LAB_9cea: solo path — three step-gated encounter tiers. */
-  sys_init_heap();
-  scratch = sbrk(0x30);
-  drv_eeprom_read_block(EEPROM_LOG_CONTEXT, scratch, 0x30);
-  rnd_pct = (uint8_t)(sys_get_rng() % 100);
-
-  sys_init_heap();
-  trainer_buf = sbrk(0xBE);
-  drv_eeprom_read_block(EEPROM_TRAINER_PROFILE, trainer_buf, 0xBE);
-
-  for (slot = 0; slot < 3; slot++) {
-    if (!game_check_step_unlock((uint16_t)(slot * 2), 0x82, trainer_buf)) {
-      if (trainer_buf[0x88 + slot] > rnd_pct) {
-        gCurSubstateY = slot + 1;
-        /* Codegen note: ROM emits the add as `-slot + (rng>>3 & 1) + 3`,
-           hence the negation order here matters for the score. */
-        accelXPos = (slot * -1) + ((sys_get_rng() >> 3) & 1) + 3;
-        return;
-      }
-    }
-  }
-
-  gCurSubstateY = 3;
-  accelXPos = ((sys_get_rng() >> 3) & 1) + 1;
-}
-
 // ROM: 0x4792  82.8%
 void game_init_dowsing(void) {
   uint16_t rnd;
@@ -179,8 +122,8 @@ state_found:
     if (save_slot == 3) {
       /* No room left — kick into peer-session caught-stats view. */
       gCurSubstateA = 1;
-      game_start_peer_session();
-      ui_set_view(VIEW_CAUGHT_STATS);
+      ui_init_discard_cursor();
+      ui_set_view(VIEW_DISCARD_PICKER);
       return;
     }
     drv_eeprom_write_block((uint16_t)save_slot * 4 + EEPROM_LOG_ITEMS,
@@ -274,7 +217,7 @@ void game_check_wild_encounter(void) {
     goto no_encounter;
   }
 
-  if (gfx_xor_rect_ram(battle_buf, route_data[0x7B]) == 0) {
+  if (save_check_event_bit(battle_buf, route_data[0x7B]) == 0) {
     goto encounter;
   }
 
@@ -322,7 +265,7 @@ void ui_handle_dowsing_selection(void) {
   item_table = (uint8_t *)sbrk(0x0C);
   drv_eeprom_read_block(EEPROM_LOG_ITEMS, item_table, 0x0C);
 
-  accelZPos_b = save_find_empty_slot_32bit(item_table);
+  accelZPos_b = save_find_empty_item_slot(item_table);
 
   if ((RamCache_settingsByte & 1)) {
     game_check_wild_encounter();

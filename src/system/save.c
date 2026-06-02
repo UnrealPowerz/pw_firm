@@ -1,5 +1,47 @@
 #include "all_headers.h"
 
+/*
+ * EEPROM persistence — redundant writes + corruption recovery.
+ *
+ *   --- Boot integrity ---
+ *     save_write_magic            Write the 8-byte nintendoMagic header at
+ *                                 EEPROM 0 (factory-init mark).
+ *     save_verify_magic           Check the magic; 0 = corrupt / blank chip.
+ *     sys_sync_eeprom_on_startup  Boot-time entry: verify magic, repair from
+ *                                 staged data if a crash interrupted a save,
+ *                                 factory-reset if no magic at all.
+ *
+ *   --- Primary+backup reliability ---
+ *     save_write_reliable         Write a buffer twice (primary + backup
+ *                                 location) with a trailing checksum byte.
+ *     save_read_reliable          Read both copies, compare checksums, repair
+ *                                 the corrupt side if exactly one is good,
+ *                                 zero-fill if both are bad.
+ *
+ *   --- Trainer record event-bit array (trainer.flags_38, 0x10 bytes) ---
+ *     save_set_event_bit          OR a 1 into bit `val` of the array.
+ *     save_check_event_bit        Test bit `val`; returns 0/1.
+ *
+ *   --- Slot finders (3-element arrays) ---
+ *     save_find_empty_poke_slot   Stride 16 (caught-pokemon records).
+ *     save_find_empty_item_slot   Stride 4  (dowsed-item records).
+ *     save_get_dowsing_item_id    Read the per-slot dowsing item id from the
+ *                                 trainer profile at offset 0x8C+idx*2.
+ *
+ *   --- Bulk wipes ---
+ *     save_clear_data             Fill EEPROM_LOG_CONTEXT region with 0.
+ *     save_clear_peer_log_slots   Zero the 0x84-offset interaction-type byte
+ *                                 in all 24 peer-log slots (marks them empty).
+ *     save_clear_daily_step_log   Zero the 0x1C-byte daily step counts
+ *                                 (7 days x 4 bytes). NOT the bigger
+ *                                 EEPROM_STEP_HIST region.
+ *     save_commit_staged_data     Copy staging area to permanent EEPROM
+ *                                 locations (called at boot after a crash).
+ *     sys_factory_reset_eeprom    Full reset — args (b, a):
+ *                                   b=1: also clear trainer.flags_38 event bits
+ *                                   a=1: also zero totals + wipe log region
+ */
+
 // ROM: 0xb0ae  60.5%
 void save_write_magic(void) {
   uint8_t i;
@@ -29,7 +71,7 @@ uint8_t save_verify_magic(void) {
 }
 
 // ROM: 0xb1ae  78.9%  saves: r3,r4,er5,r6 -> er5,er6
-void sys_factory_reset_eeprom(uint8_t b, uint8_t a) {
+void sys_factory_reset_eeprom(uint8_t wipe_event_bits, uint8_t wipe_save_data) {
   uint8_t *ptr;
   register volatile uint8_t *flags_ptr;
   uint32_t zero = 0;
@@ -42,6 +84,8 @@ void sys_factory_reset_eeprom(uint8_t b, uint8_t a) {
   ptr = (uint8_t *)drv_ir_get_rx_ptr();
   save_read_reliable(EEPROM_TRAINER_REC, EEPROM_TRAINER_REC_BACKUP, ptr, 0x68);
 
+  /* Zero the 16 bytes of trainer identity (id, loc, etc.) + the 18-byte
+     at_48 block — always wiped on any reset. */
   *((uint32_t *)(ptr)) = zero;
   *((uint32_t *)(ptr + 4)) = zero;
   *((uint16_t *)(ptr + 8)) = 0;
@@ -52,7 +96,8 @@ void sys_factory_reset_eeprom(uint8_t b, uint8_t a) {
     ptr[0x48 + i] = 0;
   }
 
-  if (b) {
+  /* Conditionally wipe the 16-byte event-bit array (trainer.flags_38). */
+  if (wipe_event_bits) {
     for (i = 0; i < 16; i++) {
       ptr[0x38 + i] = 0;
     }
@@ -69,21 +114,23 @@ void sys_factory_reset_eeprom(uint8_t b, uint8_t a) {
   *((uint32_t *)(ptr + 0x60)) = zero;
 
   save_read_reliable(EEPROM_RESV_0083, EEPROM_RESV_0083_BACKUP, ptr + 0x28, 0x10);
-  if (a) {
+  if (wipe_save_data) {
     *((uint32_t *)(ptr + 0x64)) = zero;
   }
   save_write_reliable(EEPROM_TRAINER_REC, EEPROM_TRAINER_REC_BACKUP, ptr, 0x68);
-  game_reset_step_data(a);
+  game_reset_step_data(wipe_save_data);
 
-  if (a) {
+  if (wipe_save_data) {
+    /* Full wipe: blast the entire log region. */
     drv_eeprom_fill(EEPROM_LOG_REGION, 0x0D4C, 0);
   } else {
+    /* Light cleanup: clear only the structured sub-regions. */
     save_clear_data();
-    save_init_defaults();
-    save_delete_step_history();
+    save_clear_peer_log_slots();
+    save_clear_daily_step_log();
   }
 
-  if (b) {
+  if (wipe_event_bits) {
     drv_eeprom_fill(EEPROM_STEP_HIST_FLAGS, 0x06C8, 0);
   }
 
@@ -237,8 +284,27 @@ void save_set_event_bit(void *ptr, uint8_t val) {
   save_write_reliable(EEPROM_TRAINER_REC, EEPROM_TRAINER_REC_BACKUP, p, 0x68);
 }
 
+// ROM: 0x1d7a  79.4%  saves: r6,r5
+uint8_t save_check_event_bit(void *ptr, uint8_t val) {
+  struct trainer_record *rec = (struct trainer_record *)ptr;
+  uint8_t offset;
+  uint8_t bit;
+
+  if (val == 0)
+    return 0;
+
+  offset = val >> 3;
+  bit = val & 0x7;
+
+  save_read_reliable(EEPROM_TRAINER_REC, EEPROM_TRAINER_REC_BACKUP, (uint8_t *)rec, sizeof(*rec));
+  if (rec->flags_38[offset] & (1 << bit)) {
+    return 1;
+  }
+  return 0;
+}
+
 // ROM: 0x1eca  69.1%
-uint8_t save_find_empty_reward_slot(void *ptr) {
+uint8_t save_find_empty_poke_slot(void *ptr) {
   uint8_t *p = (uint8_t *)ptr;
   uint8_t i;
 
@@ -251,8 +317,32 @@ uint8_t save_find_empty_reward_slot(void *ptr) {
   return 3;
 }
 
+/* Reason: ROM keeps locals in caller-saved r2/r3; ch38 picks callee-saved
+ * r5/r6 and emits PUSH.W R6 / PUSH.W R5 prologue.
+ * Even with -regparam=3 enabled (so er2 IS caller-saved), ch38 chose r5/r6
+ * here -- score unchanged at 52.8%.  The original compiler must have done
+ * inter-procedural analysis to prove drv_eeprom_read_block doesn't clobber
+ * r2/r3, then used them as scratch across the call without saving anything.
+ * ch38 doesn't do that analysis and conservatively reaches for callee-saved
+ * registers.  Pragmas like `#pragma option speed=register` don't reliably
+ * help -- and they have file-global scope, so clobbering one regresses
+ * neighbouring functions (we saw -13% on gfx_draw_text_box this way).
+ * Class: cannot-fix-without-compiler-change */
+// ROM: 0x1eee  52.8%
+uint16_t save_get_dowsing_item_id(uint8_t index) {
+  uint8_t *buf;
+  uint16_t result;
+
+  sys_init_heap();
+  buf = (uint8_t *)sbrk(0xBE);
+  drv_eeprom_read_block(EEPROM_TRAINER_PROFILE, buf, 0xBE);
+
+  result = *(uint16_t *)(buf + 0x8C + (uint16_t)index * 2);
+  return result;
+}
+
 // ROM: 0x1f1c  69.4%
-uint8_t save_find_empty_slot_32bit(void *ptr) {
+uint8_t save_find_empty_item_slot(void *ptr) {
   uint8_t *p = (uint8_t *)ptr;
   uint8_t i;
 
@@ -271,9 +361,9 @@ uint8_t save_find_empty_slot_32bit(void *ptr) {
 // ROM: 0x187e  72.2%
 void save_clear_data(void) { drv_eeprom_fill(EEPROM_LOG_CONTEXT, 0x0064, 0); }
 
-#pragma noregsave(save_init_defaults)
+#pragma noregsave(save_clear_peer_log_slots)
 // ROM: 0x188c  96.9%
-void save_init_defaults(void) {
+void save_clear_peer_log_slots(void) {
   uint16_t addr = 0xCF0C;
   uint8_t i = 0x18;
   do {
@@ -286,4 +376,4 @@ void save_init_defaults(void) {
  * Address: 0x18A8
  */
 // ROM: 0x18a8  72.2%
-void save_delete_step_history(void) { drv_eeprom_fill(EEPROM_LOG_POKE_STATS, 0x001C, 0); }
+void save_clear_daily_step_log(void) { drv_eeprom_fill(EEPROM_LOG_POKE_STATS, 0x001C, 0); }
