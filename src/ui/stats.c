@@ -9,7 +9,7 @@ void ui_set_stats_view_item(void) {
 // ROM: 0x8d02  77.9%
 void ui_handle_poke_items(void) {
   uint8_t sid;
-  if (drv_button_is_triggered(0x04) != 0) {
+  if (drv_button_is_triggered(BTN_M) != 0) {
     if (ui_stats_prev_index(*(volatile uint16_t *)&gCurSubstateA) != 0) {
       ui_clear_substate_y();
       ui_set_view(VIEW_MAIN_MENU);
@@ -20,7 +20,7 @@ void ui_handle_poke_items(void) {
     goto do_play_sound;
   }
 
-  if (drv_button_is_triggered(0x08) != 0) {
+  if (drv_button_is_triggered(BTN_L) != 0) {
     if (ui_stats_next_index(*(volatile uint16_t *)&gCurSubstateA) != 0) {
       if (accelPos_X != 0) {
         ui_set_stats_view_item();
@@ -35,7 +35,7 @@ void ui_handle_poke_items(void) {
     goto do_play_sound;
   }
 
-  if (drv_button_is_triggered(0x02) != 0) {
+  if (drv_button_is_triggered(BTN_R) != 0) {
     if (accelPos_X != 0) {
       ui_set_stats_view_item();
       ui_set_view(VIEW_GIFTS);
@@ -55,7 +55,7 @@ do_play_sound:
 // ROM: 0x9116  81.5%
 void ui_handle_gifts(void) {
   uint8_t sid;
-  if (drv_button_is_triggered(0x04) != 0) {
+  if (drv_button_is_triggered(BTN_M) != 0) {
     if (ui_stats_prev_index(accelPos_X) != 0) {
       if (gCurSubstateA != 0) {
         gCurSubstateY = 0;
@@ -71,7 +71,7 @@ void ui_handle_gifts(void) {
     goto do_play_sound;
   }
 
-  if (drv_button_is_triggered(0x08) != 0) {
+  if (drv_button_is_triggered(BTN_L) != 0) {
     if (ui_stats_next_index(accelPos_X) != 0) {
       sid = 1;
       goto do_play_sound;
@@ -80,7 +80,7 @@ void ui_handle_gifts(void) {
     goto do_play_sound;
   }
 
-  if (drv_button_is_triggered(0x02) != 0) {
+  if (drv_button_is_triggered(BTN_R) != 0) {
     ui_reset_substate();
     ui_set_view(VIEW_HOME);
     sid = 0;
@@ -138,7 +138,7 @@ void ui_render_pokemon_stats(void) {
   case 5:
     drv_eeprom_read_block((uint16_t)(romBase + 0x1750), buf180, 0xC0);
     drv_lcd_blit(0x3C, 0x18, buf180, 0x20, 0x18);
-    gfx_draw_text_box(0x30, 0x11, 0x0F, 0x00);
+    gfx_draw_text_box(0x30, TEXT_SPECIAL_MAP, TEXT_BOX_FULL, TEXT_BOX_STATIC);
     break;
   case 6:
   case 7:
@@ -290,33 +290,33 @@ void ui_render_items_stats(void) {
 
 // ROM: 0x3b94  94.6%
 void ui_handle_caught_stats_navigation(void) {
-  if (drv_button_is_triggered(4)) {
+  if (drv_button_is_triggered(BTN_M)) {
     {
       uint8_t z = gCurSubstateZ;
       if (z == 0) {
         ui_reset_substate();
         ui_set_view(VIEW_HOME);
-        drv_sound_play(1);
+        drv_sound_play(SND_BACK);
         return;
       }
       gCurSubstateZ = z - 1;
     }
-    drv_sound_play(2);
+    drv_sound_play(SND_CURSOR);
   }
 
-  if (drv_button_is_triggered(8)) {
+  if (drv_button_is_triggered(BTN_L)) {
     {
       uint8_t z = gCurSubstateZ;
       if (z == 2) {
-        drv_sound_play(1);
+        drv_sound_play(SND_BACK);
         return;
       }
       gCurSubstateZ = z + 1;
     }
-    drv_sound_play(2);
+    drv_sound_play(SND_CURSOR);
   }
 
-  if (drv_button_is_triggered(2)) {
+  if (drv_button_is_triggered(BTN_R)) {
     if (gCurSubstateA == 0) {
       game_log_poke_interaction();
     } else {
@@ -324,7 +324,7 @@ void ui_handle_caught_stats_navigation(void) {
     }
     ui_reset_substate();
     ui_set_view(VIEW_HOME);
-    drv_sound_play(0);
+    drv_sound_play(SND_CONFIRM);
   }
 }
 

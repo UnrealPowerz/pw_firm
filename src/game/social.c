@@ -327,7 +327,7 @@ void game_process_interaction_reward(uint8_t type) {
 // ROM: 0x5e9e  71.2%
 void ui_handle_bored_gift(void) {
   uint8_t *dest;
-  if (drv_button_is_triggered(0x02)) {
+  if (drv_button_is_triggered(BTN_R)) {
     dest = (uint8_t *)(uintptr_t)accelPos_X;
     if (*dest & 0x01) {
       ui_reset_substate();
@@ -377,17 +377,17 @@ void ui_render_social_feelings(void) {
   } else if (v == 0xFE) {
     gfx_draw_value_with_icon(0x02, 0x20, 0x0D, (uint16_t)r6l);
   } else if (v != 0xFF) {
-    gfx_draw_text_box(0x20, v, 0x0D, 0);
+    gfx_draw_text_box(0x20, v, TEXT_BOX_NO_SHADOW, TEXT_BOX_STATIC);
   }
 
   ptr = (uint8_t *)(uintptr_t)accelPos_X;
   v = *ptr;
   if ((v & 0x18) > 8) {
-    gfx_draw_text_box(0x30, (uint8_t)(ptr[3] + gCurSubstateA), 0x0E, 0x01);
+    gfx_draw_text_box(0x30, (uint8_t)(ptr[3] + gCurSubstateA), TEXT_BOX_NO_LINES, TEXT_BOX_BLINK);
   } else if (ptr[2] == 0xFF) {
-    gfx_draw_text_box(0x30, ptr[3], 0x0F, 0x01);
+    gfx_draw_text_box(0x30, ptr[3], TEXT_BOX_FULL, TEXT_BOX_BLINK);
   } else {
-    gfx_draw_text_box(0x30, ptr[3], 0x0E, 0x01);
+    gfx_draw_text_box(0x30, ptr[3], TEXT_BOX_NO_LINES, TEXT_BOX_BLINK);
   }
   gfx_draw_battery_low(0, 0);
 }
@@ -680,7 +680,7 @@ void ui_render_peer_play(void) {
 
   if (z == 1) {
     gfx_draw_peer_pokemon_name(0x02, 0x20, 1);
-    gfx_draw_text_box(0x30, 0x2B, 0x0E, 0x00);
+    gfx_draw_text_box(0x30, TEXT_WALKER_HAS_ARRIVED, TEXT_BOX_NO_LINES, TEXT_BOX_STATIC);
   } else if (z == 2) {
     uint8_t count = gCurSubstateA + 1;
     uint8_t limit = (gCurSubstateA >> 1) + 1;
@@ -711,10 +711,10 @@ void ui_render_peer_play(void) {
       ui_draw_music_note((uint8_t)(i * 8 + 0x1C), note_y, 0);
     }
   music_done:
-    gfx_draw_text_box(0x30, (uint8_t)DAT_f7d1, 0x0F, 0x00);
+    gfx_draw_text_box(0x30, (uint8_t)DAT_f7d1, TEXT_BOX_FULL, TEXT_BOX_STATIC);
   } else if (z == 3) {
     gfx_draw_present_icon(0x20, 0x04);
-    gfx_draw_text_box(0x30, 0x31, 0x0F, 0x00);
+    gfx_draw_text_box(0x30, TEXT_HERES_A_GIFT, TEXT_BOX_FULL, TEXT_BOX_STATIC);
   } else if (z == 4) {
     gfx_draw_present_icon(0x20, 0x04);
     if (dowsing_item_pos != 0) {
@@ -722,7 +722,7 @@ void ui_render_peer_play(void) {
     } else {
       gfx_draw_item_name(0x00, 0x20, (uint8_t)accelXPos, 0x0D);
     }
-    gfx_draw_text_box(0x30, 0x0F, 0x0E, 0x00);
+    gfx_draw_text_box(0x30, TEXT_RECEIVED, TEXT_BOX_NO_LINES, TEXT_BOX_STATIC);
   }
 
   gCurSubstateA++;
@@ -730,9 +730,9 @@ void ui_render_peer_play(void) {
     gCurSubstateZ++;
     gCurSubstateA = 0;
     if (gCurSubstateZ == 2) {
-      drv_sound_play(9);
+      drv_sound_play(SND_GIFT);
     } else if (gCurSubstateZ == 4) {
-      drv_sound_play(6);
+      drv_sound_play(SND_ANIM_CUE);
     }
   }
 

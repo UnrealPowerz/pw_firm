@@ -3608,7 +3608,7 @@ LAB_208c:
 ; Function: gfx_draw_text_box
 ; Address:  2096
 ; Size:     226 bytes
-; Called by: game_render_step_counter, ui_render_step_history_graph, ui_draw_ir_icon, ui_render_arrival_success, ui_render_arrival_reward_info
+; Called by: game_render_step_counter, ui_render_step_history, ui_draw_ir_icon, ui_render_arrival_success, ui_render_arrival_reward_info
 ;            ... and 12 more
 ; =============================================================================
 gfx_draw_text_box:
@@ -3785,7 +3785,7 @@ LAB_21f2:
 ; Function: gfx_draw_battery_low
 ; Address:  21fe
 ; Size:     78 bytes
-; Called by: game_render_step_counter, sys_init_io_ports, ui_render_step_history_graph, ui_render_walk_arrival_anim, ui_render_event_reward_anim
+; Called by: game_render_step_counter, sys_init_io_ports, ui_render_step_history, ui_render_walk_arrival_anim, ui_render_event_reward_anim
 ;            ... and 13 more
 ; Parameters: 2
 ; =============================================================================
@@ -12791,12 +12791,12 @@ LAB_725e:
           jsr         @gfx_draw_text_box:16
           rts
 ; =============================================================================
-; Function: ui_render_step_history_graph
+; Function: ui_render_step_history
 ; Address:  728a
 ; Size:     190 bytes
 ; Called by: ui_dispatch_draw
 ; =============================================================================
-ui_render_step_history_graph:
+ui_render_step_history:
           jsr         @sys_init_heap:16
           mov.w       #H'180, r0
           jsr         @sbrk:16
@@ -13023,7 +13023,7 @@ switchD_741e__caseD_e:
           jsr         @ui_render_sad_walker:16
           bra         switchD_741e__caseD_5:8
 LAB_7490:
-          jsr         @ui_render_step_history_graph:16
+          jsr         @ui_render_step_history:16
           bra         switchD_741e__caseD_5:8
 switchD_741e__caseD_f:
           jsr         @ui_render_walk_arrival_anim:16

@@ -91,7 +91,7 @@ void ui_render_arrival_success(void) {
   uint16_t uninitializedE0;
   gfx_draw_own_pokemon_small(0x20, 4);
   gfx_draw_own_pokemon_name(0, 0x20, 5);
-  gfx_draw_text_box(0x30, 0x0D, 0x0E, 0x00);
+  gfx_draw_text_box(0x30, TEXT_PEER_HAS_ARRIVED, TEXT_BOX_NO_LINES, TEXT_BOX_STATIC);
 
   {
     uint8_t z = gCurSubstateZ;
@@ -127,7 +127,7 @@ void ui_render_arrival_reward_info(void) {
     case 1:
       drv_eeprom_read_block(off + 0x1750, ptr, 0xC0);
       drv_lcd_blit(0x20, 0x04, ptr, 0x20, 0x18);
-      gfx_draw_text_box(0x20, 0x13, 0x0D, 0x00);
+      gfx_draw_text_box(0x20, TEXT_SPECIAL_ROUTE, TEXT_BOX_NO_SHADOW, TEXT_BOX_STATIC);
       break;
     case 2:
       gfx_draw_treasure_chest_icon(0x20, 0x04);
@@ -136,7 +136,7 @@ void ui_render_arrival_reward_info(void) {
     case 3:
       drv_eeprom_read_block(off + 0x1750, ptr, 0xC0);
       drv_lcd_blit(0x20, 0x04, ptr, 0x20, 0x18);
-      gfx_draw_text_box(0x20, 0x11, 0x0D, 0x00);
+      gfx_draw_text_box(0x20, TEXT_SPECIAL_MAP, TEXT_BOX_NO_SHADOW, TEXT_BOX_STATIC);
       break;
     case 4:
     case 5:
@@ -149,13 +149,13 @@ void ui_render_arrival_reward_info(void) {
       else                         case_off = 0x268;
       drv_eeprom_read_block(off + case_off, ptr, 0x10);
       drv_lcd_blit(0x2C, 0x10, ptr, 0x08, 0x08);
-      gfx_draw_text_box(0x20, 0x12, 0x0D, 0x00);
+      gfx_draw_text_box(0x20, TEXT_STAMP, TEXT_BOX_NO_SHADOW, TEXT_BOX_STATIC);
       break;
     }
     }
   }
 
-  gfx_draw_text_box(0x30, 0x0F, 0x0E, 0x00);
+  gfx_draw_text_box(0x30, TEXT_RECEIVED, TEXT_BOX_NO_LINES, TEXT_BOX_STATIC);
   {
     uint8_t z = gCurSubstateZ;
     if (z < 0x10) {
@@ -190,7 +190,7 @@ case2:
   gCurSubstateZ = 0;
   gCurSubstateY = 3;
 play:
-  drv_sound_play(6);
+  drv_sound_play(SND_ANIM_CUE);
 done:;
 }
 
@@ -226,7 +226,7 @@ void ui_handle_event_reward_anim(void) {
     if (gCurSubstateZ > 4) {
       gCurSubstateY = 4;
       gCurSubstateZ = 0;
-      drv_sound_play(6);
+      drv_sound_play(SND_ANIM_CUE);
     }
     return;
   }
@@ -234,7 +234,7 @@ void ui_handle_event_reward_anim(void) {
     if (gCurSubstateZ != 0) {
       gCurSubstateY = 3;
       gCurSubstateZ = 0;
-      drv_sound_play(6);
+      drv_sound_play(SND_ANIM_CUE);
     }
     return;
   }
@@ -357,7 +357,7 @@ void ui_render_departure_success(void) {
   sbrk(0x180);
 
   gfx_draw_own_pokemon_name(0, 0x20, 5);
-  gfx_draw_text_box(0x30, 0x0E, 0x0E, 0x00);
+  gfx_draw_text_box(0x30, TEXT_PEER_HAS_LEFT, TEXT_BOX_NO_LINES, TEXT_BOX_STATIC);
 
   {
     uint8_t z = gCurSubstateZ;
@@ -384,7 +384,7 @@ void ui_render_operation_completed(void) {
 
   drv_eeprom_read_block(0x2350, ptr, 0x100);
   drv_lcd_blit(0x20, 0x10, ptr, 0x20, 0x20);
-  gfx_draw_text_box(0x30, 0x10, 0x0F, 0x00);
+  gfx_draw_text_box(0x30, TEXT_COMPLETED, TEXT_BOX_FULL, TEXT_BOX_STATIC);
 
   {
     uint8_t z = gCurSubstateZ;
@@ -431,7 +431,7 @@ shared:
   gCurSubstateY = y;
   gCurSubstateZ = 0;
 sound:
-  drv_sound_play(6);
+  drv_sound_play(SND_ANIM_CUE);
 done:
   ;
 }

@@ -36,7 +36,7 @@ void ui_render_pokeradar(void) {
                        0x10, 0x10);
 
     if (gCurSubstateZ == 3) {
-      gfx_draw_text_box(0x30, 0x1D, 0x0F, 0x00);
+      gfx_draw_text_box(0x30, TEXT_FOUND_SOMETHING_EX, TEXT_BOX_FULL, TEXT_BOX_STATIC);
     } else if (gCurSubstateZ == 1) {
       gfx_fill_rect(0, 0, 0x60, (uint8_t)(DAT_f7d5 * 8), 3);
       gfx_fill_rect(0, (uint8_t)(0x40 - DAT_f7d5 * 8), 0x60,
@@ -44,10 +44,10 @@ void ui_render_pokeradar(void) {
       DAT_f7d5++;
     } else if (gCurSubstateZ == 2) {
       gfx_draw_value_with_icon(2, 0x20, 0x0D, gCurSubstateY);
-      gfx_draw_text_box(0x30, 0x0F, 0x0E, 0x01);
+      gfx_draw_text_box(0x30, TEXT_RECEIVED, TEXT_BOX_NO_LINES, TEXT_BOX_BLINK);
     }
   } else {
-    gfx_draw_text_box(0x30, 0x1C, 0x0F, 0x00);
+    gfx_draw_text_box(0x30, TEXT_FIND_A_POKEMON, TEXT_BOX_FULL, TEXT_BOX_STATIC);
     if (accelYPos == 0) {
       drv_eeprom_read_block(0x1AF0 + base, buf, 0x100);
       drv_lcd_blit(radarYCoordTable[dowsing_item_pos] + 0x10,
@@ -62,24 +62,24 @@ void ui_render_pokeradar(void) {
 
 // ROM: 0x9dce  91.6%
 void ui_handle_radar_grass_menu(void) {
-  if (drv_button_is_triggered(0x04) != 0) {
+  if (drv_button_is_triggered(BTN_M) != 0) {
     gCurSubstateA = (gCurSubstateA + 3) & 3;
-    drv_sound_play(2);
+    drv_sound_play(SND_CURSOR);
   }
-  if (drv_button_is_triggered(0x08) != 0) {
+  if (drv_button_is_triggered(BTN_L) != 0) {
     gCurSubstateA = (gCurSubstateA + 1) & 3;
-    drv_sound_play(2);
+    drv_sound_play(SND_CURSOR);
   }
-  if (drv_button_is_triggered(0x02) != 0) {
+  if (drv_button_is_triggered(BTN_R) != 0) {
     if (DAT_f7d5 != 0) {
       if (gCurSubstateA == dowsing_item_pos) {
-        drv_sound_play(3);
+        drv_sound_play(SND_RADAR_LOCK);
         gCurSubstateZ = 3;
         accelZPos_b = 0x10;
         return;
       }
       if (DAT_f7d1 == 0) {
-        drv_sound_play(4);
+        drv_sound_play(SND_FAIL);
         return;
       }
     }
@@ -102,7 +102,7 @@ void ui_handle_radar_grass_menu(void) {
     }
   }
 
-  drv_sound_play(0x0E);
+  drv_sound_play(SND_FLED);
   ui_set_view(VIEW_RADAR_FAILURE);
 }
 
@@ -124,9 +124,9 @@ void ui_handle_pokeradar(void) {
     }
     return;
   } else if (z == 2) {
-    if (drv_button_is_triggered(0x0E) == 0)
+    if (drv_button_is_triggered(BTN_ANY) == 0)
       return;
-    drv_sound_play(0);
+    drv_sound_play(SND_CONFIRM);
     ui_reset_substate();
     ui_set_view(VIEW_HOME);
     return;
@@ -157,9 +157,9 @@ void ui_handle_pokeradar(void) {
 
 // ROM: 0xa10a  97.9%
 void ui_handle_radar_failure(void) {
-  if (drv_button_is_triggered(0x0E) != 0) {
+  if (drv_button_is_triggered(BTN_ANY) != 0) {
     gCurSubstateA = 0;
-    drv_sound_play(4);
+    drv_sound_play(SND_FAIL);
     ui_reset_substate();
     ui_set_view(VIEW_HOME);
   }

@@ -62,10 +62,10 @@ void ui_dispatch_event(void) {
     break;
   case VIEW_STEP_HISTORY:
     if (walker_status_flags_BIT.session_active) {
-      if (drv_button_is_triggered(0x0E)) {
+      if (drv_button_is_triggered(BTN_ANY)) {
         ui_reset_substate();
         ui_set_view(VIEW_HOME);
-        drv_sound_play(0);
+        drv_sound_play(SND_CONFIRM);
       }
     }
     break;
@@ -144,7 +144,7 @@ void ui_dispatch_draw(void) {
     if (!(walker_status_flags_BIT.session_active)) {
       ui_render_sad_walker();
     } else {
-      ui_render_step_history_graph();
+      ui_render_step_history();
     }
     break;
   case VIEW_WALK_ARRIVAL_ANIM:

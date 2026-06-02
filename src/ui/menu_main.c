@@ -8,12 +8,12 @@ void ui_start_connection_app(void) {
 // ROM: 0x6a3e  93.4%
 void ui_handle_home(void) {
   if (!(walker_status_flags_BIT.session_active)) {
-    if (drv_button_is_triggered(2) || (statusFlags_BIT.pedometer_paused)) {
+    if (drv_button_is_triggered(BTN_R) || (statusFlags_BIT.pedometer_paused)) {
       ui_start_connection_app();
     }
   } else {
     if (gCurSubstateZ != 0) {
-      if (drv_button_is_triggered(0x0E)) {
+      if (drv_button_is_triggered(BTN_ANY)) {
         gCurSubstateZ = 0;
         game_process_interaction_reward(gCurSubstateY);
         return;
@@ -21,19 +21,19 @@ void ui_handle_home(void) {
         gCurSubstateZ--;
       }
     }
-    if (drv_button_is_triggered(2)) {
-      drv_sound_play(0);
+    if (drv_button_is_triggered(BTN_R)) {
+      drv_sound_play(SND_CONFIRM);
       ui_clear_substate_y();
       menu_cursor = 2;
       ui_set_view(VIEW_MAIN_MENU);
-    } else if (drv_button_is_triggered(4)) {
+    } else if (drv_button_is_triggered(BTN_M)) {
       menu_cursor = 5;
-      drv_sound_play(0);
+      drv_sound_play(SND_CONFIRM);
       ui_clear_substate_y();
       ui_set_view(VIEW_MAIN_MENU);
-    } else if (drv_button_is_triggered(8)) {
+    } else if (drv_button_is_triggered(BTN_L)) {
       menu_cursor = 0;
-      drv_sound_play(0);
+      drv_sound_play(SND_CONFIRM);
       ui_clear_substate_y();
       ui_set_view(VIEW_MAIN_MENU);
     }
@@ -100,21 +100,21 @@ void ui_show_status_screen(void) {
 
 // ROM: 0x6c94  92.5%
 void ui_handle_settings_menu(void) {
-  if (drv_button_is_triggered(4)) {
+  if (drv_button_is_triggered(BTN_M)) {
     if (gCurSubstateZ == 0) {
-      drv_sound_play(1);
+      drv_sound_play(SND_BACK);
       ui_clear_substate_y();
       ui_set_view(VIEW_MAIN_MENU);
       return;
     } else {
       gCurSubstateZ = 0;
-      drv_sound_play(2);
+      drv_sound_play(SND_CURSOR);
     }
   }
-  if (drv_button_is_triggered(8)) {
+  if (drv_button_is_triggered(BTN_L)) {
     if (gCurSubstateZ != 1) {
       gCurSubstateZ = 1;
-      drv_sound_play(2);
+      drv_sound_play(SND_CURSOR);
     }
   }
 }
@@ -124,7 +124,7 @@ void ui_handle_volume_menu(void) {
   uint8_t vol;
   uint16_t val;
 
-  if (drv_button_is_triggered(4)) {
+  if (drv_button_is_triggered(BTN_M)) {
     vol = (RamCache_settingsByte >> 1) & 0x03;
     val = (uint16_t)((int16_t)(int8_t)vol + 2);
     val = (uint16_t)((int16_t)val % 3);
@@ -132,9 +132,9 @@ void ui_handle_volume_menu(void) {
                                       (((uint8_t)val & 0x03) << 1));
     vol = (RamCache_settingsByte >> 1) & 0x03;
     drv_sound_set_volume(vol);
-    drv_sound_play(2);
+    drv_sound_play(SND_CURSOR);
   }
-  if (drv_button_is_triggered(8)) {
+  if (drv_button_is_triggered(BTN_L)) {
     vol = (RamCache_settingsByte >> 1) & 0x03;
     val = (uint16_t)((int16_t)(int8_t)vol + 1);
     val = (uint16_t)((int16_t)val % 3);
@@ -142,7 +142,7 @@ void ui_handle_volume_menu(void) {
                                       (((uint8_t)val & 0x03) << 1));
     vol = (RamCache_settingsByte >> 1) & 0x03;
     drv_sound_set_volume(vol);
-    drv_sound_play(2);
+    drv_sound_play(SND_CURSOR);
   }
 }
 
@@ -150,22 +150,22 @@ void ui_handle_volume_menu(void) {
 void ui_handle_shade_menu(void) {
   uint8_t shade;
 
-  if (drv_button_is_triggered(4)) {
+  if (drv_button_is_triggered(BTN_M)) {
     if ((RamCache_settingsByte & 0x78) != 0) {
       shade = ((RamCache_settingsByte >> 3) & 0x0F) - 1;
       RamCache_settingsByte = (uint8_t)((RamCache_settingsByte & ~(0x0F << 3)) |
                                         ((shade & 0x0F) << 3));
-      drv_sound_play(2);
+      drv_sound_play(SND_CURSOR);
     }
     shade = (RamCache_settingsByte >> 3) & 0x0F;
     drv_lcd_set_contrast(shade);
   }
-  if (drv_button_is_triggered(8)) {
+  if (drv_button_is_triggered(BTN_L)) {
     if ((RamCache_settingsByte & 0x78) < 0x48) {
       shade = ((RamCache_settingsByte >> 3) & 0x0F) + 1;
       RamCache_settingsByte = (uint8_t)((RamCache_settingsByte & ~(0x0F << 3)) |
                                         ((shade & 0x0F) << 3));
-      drv_sound_play(2);
+      drv_sound_play(SND_CURSOR);
     }
     shade = (RamCache_settingsByte >> 3) & 0x0F;
     drv_lcd_set_contrast(shade);
@@ -181,12 +181,12 @@ void ui_handle_settings(void) {
   } else if (gCurSubstateY == 2) {
     ui_handle_shade_menu();
   }
-  if (drv_button_is_triggered(2)) {
+  if (drv_button_is_triggered(BTN_R)) {
     if (gCurSubstateY == 0) {
-      drv_sound_play(0);
+      drv_sound_play(SND_CONFIRM);
       gCurSubstateY = gCurSubstateZ + 1;
     } else {
-      drv_sound_play(0);
+      drv_sound_play(SND_CONFIRM);
       ui_reset_substate();
       ui_set_view(VIEW_HOME);
       save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (void *)&totalSteps, 0x18);
@@ -371,7 +371,74 @@ void ui_draw_ir_icon(uint8_t show_ir) {
 
   drv_eeprom_read_block(0x2350, buf, 0x100);
   drv_lcd_blit(0x20, 0x10, buf, 0x20, 0x20);
-  gfx_draw_text_box(0x30, 0, 0x0F, 0x00);
+  gfx_draw_text_box(0x30, TEXT_CONNECTING, TEXT_BOX_FULL, TEXT_BOX_STATIC);
+}
+
+/*
+ * Renders VIEW_STEP_HISTORY — the screen shown after a peer/IR exchange
+ * completes (success or failure). The "step-history graph" background art
+ * at EEPROM 0x2350 is always drawn; on top of that, an error text-box is
+ * overlaid based on irResultCode (set by ir_protocol.c):
+ *
+ *   irResultCode  day  text
+ *   1             0    "No trainer found"
+ *   2             1    "Cannot connect"
+ *   3             2    "Cannot complete this connection"
+ *   4             3    "No Pokemon held!"
+ *   5             4    "Cannot connect to trainer again"
+ *   6             5    "Already received this event"
+ *   7             6    "Could not receive..."
+ *   8+            -    no overlay (background + battery only)
+ *
+ * The literal 3 / 0x0A / 8 / 0x0C in the 96x32-text branches are the
+ * continuation slots of the preceding 96x32 string (see gfx_consts.h).
+ */
+// ROM: 0x728a  85.4%
+void ui_render_step_history(void) {
+  uint8_t *buf;
+  uint8_t day;
+
+  sys_init_heap();
+  buf = sbrk(0x180);
+
+  drv_eeprom_read_block(0x2350, buf, 0x100);
+  drv_lcd_blit(0x20, 0x10, buf, 0x20, 0x20);
+
+  day = irResultCode - 1;
+  if (day > 7) {
+    gfx_draw_battery_low(0x58, 0);
+    return;
+  }
+
+  switch (day) {
+  case 0:
+    gfx_draw_text_box(0x30, TEXT_NO_TRAINER_FOUND, TEXT_BOX_FULL, TEXT_BOX_BLINK);
+    break;
+  case 1:
+    gfx_draw_text_box(0x30, TEXT_CANNOT_CONNECT, TEXT_BOX_FULL, TEXT_BOX_BLINK);
+    break;
+  case 2:
+    gfx_draw_text_box(0x20, TEXT_CANNOT_COMPLETE_CONN, TEXT_BOX_NO_SHADOW, TEXT_BOX_STATIC);
+    gfx_draw_text_box(0x30, 3, TEXT_BOX_NO_LINES, TEXT_BOX_BLINK);
+    break;
+  case 4:
+    gfx_draw_text_box(0x20, TEXT_CANNOT_CONNECT_AGAIN, TEXT_BOX_NO_SHADOW, TEXT_BOX_STATIC);
+    gfx_draw_text_box(0x30, 0x0A, TEXT_BOX_NO_LINES, TEXT_BOX_BLINK);
+    break;
+  case 5:
+    gfx_draw_text_box(0x20, TEXT_ALREADY_RECEIVED_EVENT, TEXT_BOX_NO_SHADOW, TEXT_BOX_STATIC);
+    gfx_draw_text_box(0x30, 8, TEXT_BOX_NO_LINES, TEXT_BOX_BLINK);
+    break;
+  case 6:
+    gfx_draw_text_box(0x20, TEXT_COULD_NOT_RECEIVE, TEXT_BOX_NO_SHADOW, TEXT_BOX_STATIC);
+    gfx_draw_text_box(0x30, 0x0C, TEXT_BOX_NO_LINES, TEXT_BOX_BLINK);
+    break;
+  case 3:
+    gfx_draw_text_box(0x30, TEXT_NO_POKEMON_HELD, TEXT_BOX_FULL, TEXT_BOX_BLINK);
+    break;
+  }
+
+  gfx_draw_battery_low(0x58, 0);
 }
 
 // ROM: 0x74bc  86.9%
@@ -478,18 +545,18 @@ void ui_handle_main_menu(void) {
   const uint8_t *costTable = menuItemCostTable;
 
   if (gCurSubstateY != 0) {
-    if (drv_button_is_triggered(0x0E)) {
+    if (drv_button_is_triggered(BTN_ANY)) {
       gCurSubstateY = 0;
-      drv_sound_play(2);
+      drv_sound_play(SND_CURSOR);
     }
     return;
   }
 
-  if (drv_button_is_triggered(2)) {
+  if (drv_button_is_triggered(BTN_R)) {
     cost = costTable[menu_cursor];
     if (watts < cost) {
       gCurSubstateY = 1;
-      drv_sound_play(2);
+      drv_sound_play(SND_CURSOR);
       return;
     }
 
@@ -499,7 +566,7 @@ void ui_handle_main_menu(void) {
       case 0:
         if (!(walker_status_flags_BIT.walking)) {
           gCurSubstateY = 2;
-          drv_sound_play(2);
+          drv_sound_play(SND_CURSOR);
           return;
         }
         cost = costTable[menu_cursor];
@@ -548,7 +615,7 @@ void ui_handle_main_menu(void) {
           return;
         }
         gCurSubstateY = 3;
-        drv_sound_play(2);
+        drv_sound_play(SND_CURSOR);
         return;
       }
       case 5:
@@ -559,26 +626,26 @@ void ui_handle_main_menu(void) {
     }
   }
 
-  if (drv_button_is_triggered(4)) {
+  if (drv_button_is_triggered(BTN_M)) {
     if (menu_cursor == 0) {
       ui_reset_substate();
       ui_set_view(VIEW_HOME);
-      drv_sound_play(1);
+      drv_sound_play(SND_BACK);
       return;
     }
     menu_cursor = (uint8_t)((menu_cursor + 5) % 6);
-    drv_sound_play(2);
+    drv_sound_play(SND_CURSOR);
   }
 
-  if (drv_button_is_triggered(8)) {
+  if (drv_button_is_triggered(BTN_L)) {
     if (menu_cursor == 5) {
       ui_reset_substate();
       ui_set_view(VIEW_HOME);
-      drv_sound_play(1);
+      drv_sound_play(SND_BACK);
     } else {
       menu_cursor = (uint8_t)((menu_cursor + 1) % 6);
     }
-    drv_sound_play(2);
+    drv_sound_play(SND_CURSOR);
   }
 }
 
@@ -647,20 +714,23 @@ void ui_render_main_menu(void) {
       gfx_draw_numeric_value(0x08, 0x30, 3, 0);
     }
 
+    /* "W" icon next to the current watts value (right side) — always drawn. */
+    drv_eeprom_read_block(base + 0x1A0, sprite_buf, 0x40);
+    drv_lcd_blit(0x50, 0x30, sprite_buf, 0x10, 0x10);
+
+    /* Cost row (left "W" + arrow) only for dowsing/radar (cursor < 2). */
     if (menu_cursor < 2) {
-      drv_eeprom_read_block(base + 0x1A0, sprite_buf, 0x40);
-      drv_lcd_blit(0x50, 0x30, sprite_buf, 0x10, 0x10);
       drv_lcd_blit(0x18, 0x30, sprite_buf, 0x10, 0x10);
 
       drv_eeprom_read_block(base + 0x180, sprite_buf, 0x20);
       drv_lcd_blit(0x28, 0x30, sprite_buf, 8, 0x10);
     }
   } else if (gCurSubstateY == 1) {
-    gfx_draw_text_box(0x30, 0x14, 0x0F, 0x01);
+    gfx_draw_text_box(0x30, TEXT_NEED_MORE_WATTS, TEXT_BOX_FULL, TEXT_BOX_BLINK);
   } else if (gCurSubstateY == 2) {
-    gfx_draw_text_box(0x30, 0x15, 0x0F, 0x01);
+    gfx_draw_text_box(0x30, TEXT_NO_POKEMON_HELD, TEXT_BOX_FULL, TEXT_BOX_BLINK);
   } else if (gCurSubstateY == 3) {
-    gfx_draw_text_box(0x30, 0x16, 0x0F, 0x01);
+    gfx_draw_text_box(0x30, TEXT_NOTHING_HELD, TEXT_BOX_FULL, TEXT_BOX_BLINK);
   }
 
   drv_eeprom_read_block(base + 0x338, sprite_buf, 0x40);

@@ -86,7 +86,7 @@ void game_render_step_counter(void) {
                  ram_ptr, 0x20, 0x18);
   }
 
-  gfx_draw_text_box(0x30, 0x1E, 0x0F, 0x01);
+  gfx_draw_text_box(0x30, TEXT_IT_GOT_AWAY, TEXT_BOX_FULL, TEXT_BOX_BLINK);
   gfx_draw_battery_low(0, 0);
 }
 

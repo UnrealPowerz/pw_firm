@@ -238,13 +238,13 @@ void ui_handle_debug_input(void) {
     if (subA < 4) {
       return;
     }
-    if (drv_button_is_triggered(0x0A) != 0) {
+    if (drv_button_is_triggered(BTN_LM) != 0) {
       goto do_sound_and_inc;
     }
     if (gCurSubstateY == 1) {
       return;
     }
-    if (drv_button_is_triggered(0x04) == 0) {
+    if (drv_button_is_triggered(BTN_M) == 0) {
       return;
     }
     drv_sound_set_data((uint8_t *)factoryTestSoundData);
@@ -252,19 +252,19 @@ void ui_handle_debug_input(void) {
     goto set_substate_y_and_clear_a;
 
   case 0x07:
-    if (drv_button_is_triggered(0x04) == 0) {
+    if (drv_button_is_triggered(BTN_M) == 0) {
       return;
     }
     goto do_sound_and_inc;
 
   case 0x08:
-    if (drv_button_is_triggered(0x02) == 0) {
+    if (drv_button_is_triggered(BTN_R) == 0) {
       return;
     }
     goto do_sound_and_inc;
 
   case 0x09:
-    if (drv_button_is_triggered(0x08) == 0) {
+    if (drv_button_is_triggered(BTN_L) == 0) {
       return;
     }
     goto do_sound_and_inc;
@@ -349,7 +349,7 @@ void ui_handle_debug_input(void) {
     if (subA < 4) {
       return;
     }
-    if (drv_button_is_triggered(0x0E) == 0) {
+    if (drv_button_is_triggered(BTN_ANY) == 0) {
       return;
     }
     PDR1 &= ~0x01;

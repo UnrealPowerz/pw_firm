@@ -187,7 +187,7 @@
 711a ui_render_sad_walker f
 71a4 ui_render_happy_walker f
 722c ui_draw_ir_icon f
-728a ui_render_step_history_graph f
+728a ui_render_step_history f
 7348 ui_dispatch_event f
 7406 ui_dispatch_draw f
 74bc ui_render_home_bar f
