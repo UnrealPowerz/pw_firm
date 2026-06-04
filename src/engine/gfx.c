@@ -153,12 +153,12 @@ void gfx_draw_string(uint8_t x, uint8_t y_raw, const char *str) {
       }
     } else {
       /* Map ASCII to glyph table. Digits '0'..'9' (0x30..0x39) and the
-         letters above use slightly different offsets into font3ByteGlyphs. */
+         letters above use slightly different offsets into FONT_3BYTE_GLYPHS. */
       if (ch <= 0x39)
         glyph_idx = ch + 0xD0;
       else
         glyph_idx = ch + 0xC9;
-      glyph = &font3ByteGlyphs[glyph_idx * 3];
+      glyph = &FONT_3BYTE_GLYPHS[glyph_idx * 3];
       while (!SSSR_BIT.TDRE)
         ;
       SSTDR = glyph[0];

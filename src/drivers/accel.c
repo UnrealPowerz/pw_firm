@@ -271,7 +271,7 @@ void drv_accel_fft(void *samples) {
   uint8_t group_size;
   uint8_t twiddle_idx;
   uint8_t k;
-  const int16_t *twiddle = (const int16_t *)fftTwiddleTable;  /* sin table, 48 entries */
+  const int16_t *twiddle = (const int16_t *)FFT_TWIDDLE;  /* sin table, 48 entries */
 
   sys_init_heap();
   real_buf = (int16_t *)sbrk(0x80);

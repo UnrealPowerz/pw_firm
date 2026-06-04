@@ -14,7 +14,7 @@
  *              the peer-sprite EEPROM slots; resets nickname).
  *   default  - just shows a "social feeling" text-box.
  *
- * accelPos_X points at a per-type 4-byte record in interactionRewardPtrTable:
+ * accelPos_X points at a per-type 4-byte record in INTERACTION_REWARD_PTRS:
  *   [0] = flags (bit 0 = exit, bit 1 = show pokemon, bit 2 = show item icon,
  *          bits 3-4 = "use moving text", bits 5-7 = route icon index)
  *   [1] = sound id played by ui_handle_bored_gift on advance
@@ -86,7 +86,7 @@ void game_process_interaction_reward(uint8_t type) {
                                  only set on type 1 (item gift) */
 
   gCurSubstateY = type;
-  accelPos_X = ((const uint16_t *)interactionRewardPtrTable)[type];
+  accelPos_X = ((const uint16_t *)INTERACTION_REWARD_PTRS)[type];
   ui_set_view(VIEW_BORED_GIFT);
   idleSeconds = 0;
 
@@ -173,7 +173,7 @@ void ui_render_bored_gift(void) {
   sys_init_heap();
   sbrk(0xC0);
 
-  /* accelPos_X points into interactionRewardPtrTable: a 4-byte event record.
+  /* accelPos_X points into INTERACTION_REWARD_PTRS: a 4-byte event record.
      event_rec[0] = flag byte (bit 1 = show own poke, bit 2 = show item icon,
        bits 3-4 = animated bottom text, bits 5-7 = route icon index, 0xE0
        sentinel = no route icon).

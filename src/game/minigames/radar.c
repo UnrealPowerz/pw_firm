@@ -57,18 +57,18 @@ void ui_render_pokeradar(void) {
   drv_eeprom_read_block(0x278 + base + (((animTick & 1) + 9) * 0x10), buf, 0x10);
 
   cursor = gCurSubstateA;
-  drv_lcd_blit(radarYCoordTable[cursor] - 8, (cursor & 1) * 0x18 + 8, buf, 8, 8);
+  drv_lcd_blit(RADAR_Y_COORDS[cursor] - 8, (cursor & 1) * 0x18 + 8, buf, 8, 8);
 
   /* The four grass patches. */
   drv_eeprom_read_block(0x1A30 + base, buf, 0xC0);
   for (i = 0; i < 4; i++) {
-    drv_lcd_blit(radarYCoordTable[i], (i & 1) * 0x18, buf, 0x20, 0x18);
+    drv_lcd_blit(RADAR_Y_COORDS[i], (i & 1) * 0x18, buf, 0x20, 0x18);
   }
 
   if (accelZPos_b != 0) {
     /* Reveal phase — overlay the encounter icon on the secret patch. */
     drv_eeprom_read_block(0x1AF0 + base, buf, 0x100);
-    drv_lcd_blit(radarYCoordTable[dowsing_item_pos] + 0x10,
+    drv_lcd_blit(RADAR_Y_COORDS[dowsing_item_pos] + 0x10,
                  (dowsing_item_pos & 1) * 0x18, (uint8_t *)buf + 0xC0,
                  0x10, 0x10);
 
@@ -89,9 +89,9 @@ void ui_render_pokeradar(void) {
     gfx_draw_text_box(0x30, TEXT_FIND_A_POKEMON, TEXT_BOX_FULL, TEXT_BOX_STATIC);
     if (accelYPos == 0) {
       drv_eeprom_read_block(0x1AF0 + base, buf, 0x100);
-      drv_lcd_blit(radarYCoordTable[dowsing_item_pos] + 0x10,
+      drv_lcd_blit(RADAR_Y_COORDS[dowsing_item_pos] + 0x10,
                    (dowsing_item_pos & 1) * 0x18,
-                   (uint8_t *)buf + radarFrameMultiplier[DAT_f7d1] * 0x40,
+                   (uint8_t *)buf + RADAR_FRAME_MULT[DAT_f7d1] * 0x40,
                    0x10, 0x10);
     }
   }
@@ -204,9 +204,9 @@ void ui_handle_pokeradar(void) {
 
   gCurSubstateZ = RADAR_SEARCH;
   r = sys_get_rng() >> 2;
-  accelYPos = (uint8_t)((uint16_t)r % radarStateYDivisor[DAT_f7d1] + 0x10);
+  accelYPos = (uint8_t)((uint16_t)r % RADAR_STATE_Y_DIVISOR[DAT_f7d1] + 0x10);
   DAT_f7d1++;
-  DAT_f7d5 = radarStateXTable[DAT_f7d1];
+  DAT_f7d5 = RADAR_STATE_X[DAT_f7d1];
   dowsing_item_pos = (uint8_t)((sys_get_rng() << 3) & 3);
 }
 
@@ -232,7 +232,7 @@ void ui_render_radar_failure(void) {
   drv_eeprom_read_block(0x1CB0, buf, 0xC0);
 
   for (i = 0; i < 4; i++) {
-    drv_lcd_blit(radarYCoordTable[i], (uint8_t)((i & 1) * 0x18),
+    drv_lcd_blit(RADAR_Y_COORDS[i], (uint8_t)((i & 1) * 0x18),
                  buf, 0x20, 0x18);
   }
 

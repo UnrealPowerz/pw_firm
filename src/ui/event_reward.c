@@ -33,7 +33,7 @@ void ui_draw_ball_sparkles_anim(void) {
 
   drv_eeprom_read_block(0x2040, ptr, 0x10);
   {
-    uint16_t packed = ((const uint16_t *)sparklesAnimXYTable)[gCurSubstateZ];
+    uint16_t packed = ((const uint16_t *)ANIM_SPARKLES_XY)[gCurSubstateZ];
     drv_lcd_blit((uint8_t)packed, (uint8_t)(packed >> 8), ptr, 8, 8);
   }
 

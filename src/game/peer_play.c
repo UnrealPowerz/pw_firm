@@ -210,12 +210,12 @@ void ui_render_peer_play(void) {
         limit = 2;
       table_idx = 1;
     } else if (DAT_f7d1 == 0x30) {
-      ui_draw_music_note(0x2C, musicNoteInitialState[0], 0);
+      ui_draw_music_note(0x2C, MUSIC_NOTE_HEIGHTS[2], 0);  /* peak height */
       goto music_done;
     }
 
     for (i = 0; i < limit; i++) {
-      uint8_t note_y = (table_idx == 0) ? musicNoteYTableA[i] : musicNoteYTableB[i];
+      uint8_t note_y = MUSIC_NOTE_HEIGHTS[i + table_idx];
       ui_draw_music_note((uint8_t)(i * 8 + 0x1C), note_y, 0);
     }
   music_done:

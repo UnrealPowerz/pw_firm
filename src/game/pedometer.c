@@ -309,7 +309,7 @@ uint32_t game_detect_steps_fft(volatile int16_t *fft_res) {
   binBase = (uint16_t *)((uint8_t *)fft_res + 10);
   i = 0;
   do {
-    uint8_t bin = fftBinTable[i];
+    uint8_t bin = FFT_BINS[i];
     uint16_t *pVal = binBase + bin;
     val = *pVal;
     if (val >= 512) {

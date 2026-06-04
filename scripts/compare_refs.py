@@ -56,18 +56,51 @@ C_NOISE_CALLS = {
 # IO register map from iodefine.h
 # ---------------------------------------------------------------------------
 
-def load_io_regs(path=PROJECT_DIR / 'iodefine.h'):
-    """Return {name: addr} and {addr: name} for all _IOR/_IOW macros."""
+def load_io_regs(path=PROJECT_DIR / 'include/iodefine.h'):
+    """Return {name: addr} and {addr: name} for known register/global
+    addresses that appear by NAME in main.mar but as LITERAL ADDRESSES in
+    our C. Sources:
+      - iodefine.h `#define NAME _UAT(..., 0xADDR).*` or `_IO[RW](0xADDR)` —
+        SFR macros where C expands to literal 0xADDR.
+      - globals.h `#define NAME (*(volatile T *)0xADDRu)` — project RAM
+        globals with the same property.
+    These collapse the ASM-name / C-literal mismatch."""
     name2addr, addr2name = {}, {}
+    io_re_a = re.compile(r'#define\s+(\w+)\s+_IO[RW]\((0[xX][0-9A-Fa-f]+)\)')
+    io_re_b = re.compile(r'#define\s+(\w+)\s+_UAT\s*\(\s*\w+\s*,\s*(0[xX][0-9A-Fa-f]+)')
+    io_re_c = re.compile(r'#define\s+(\w+)\s+_U(?:8|16|32)AT\s*\(\s*(0[xX][0-9A-Fa-f]+)\s*\)')
     try:
         with open(path, encoding='latin-1') as f:
             for line in f:
-                m = re.match(r'#define\s+(\w+)\s+_IO[RW]\((0x[0-9A-Fa-f]+)\)', line)
+                m = io_re_a.match(line) or io_re_b.match(line) or io_re_c.match(line)
                 if m:
                     name = m.group(1)
+                    if name.endswith('_BIT'):
+                        continue
                     addr = int(m.group(2), 16)
-                    name2addr[name] = addr
-                    addr2name[addr] = name
+                    name2addr.setdefault(name, addr)
+                    addr2name.setdefault(addr, name)
+    except FileNotFoundError:
+        pass
+    # Also harvest the volatile-pointer macros from globals.h. Their address
+    # operands appear in C as `big_consts` (literal 0xF7XX values), while
+    # main.mar refers to the same byte by the symbolic name. Cross-mapping
+    # these via the macro definition lets compare_refs collapse the noise.
+    # We do NOT load all of symbols.txt here because named externs (e.g.
+    # FFT_TWIDDLE) match by name on both sides already, and forcing them
+    # through the IO codepath creates phantom "missing" entries.
+    macro_re = re.compile(
+        r'#define\s+(\w+)\s+\(\s*\*\s*\(\s*volatile\s+\w+(?:\s*\*)?\s*\*\s*\)\s*'
+        r'(0[xX][0-9A-Fa-f]+)[uU]?\s*\)'
+    )
+    try:
+        with open(PROJECT_DIR / 'include/globals.h') as f:
+            text = f.read()
+        for m in macro_re.finditer(text):
+            name = m.group(1)
+            addr = int(m.group(2), 16)
+            name2addr.setdefault(name, addr)
+            addr2name.setdefault(addr, name)
     except FileNotFoundError:
         pass
     return name2addr, addr2name
@@ -143,10 +176,54 @@ def load_data(asm_path=None, c_path=None):
 # These can cross-match with C big_consts of the same value.
 _ADDR_LABEL_RE = re.compile(r'^(?:L_|DAT_)([0-9A-Fa-f]+)$')
 
+MACRO_ADDRS = {}  # populated lazily from parse_c.py — name -> addr for all
+                  # header macros that resolve to a fixed address (used to
+                  # cross-check paired-32-bit ASM literals)
+def _load_macro_addrs():
+    global MACRO_ADDRS
+    if MACRO_ADDRS:
+        return MACRO_ADDRS
+    sys.path.insert(0, str(SCRIPTS_DIR))
+    try:
+        import parse_c
+        MACRO_ADDRS = parse_c._load_macro_addrs()
+    except Exception:
+        pass
+    return MACRO_ADDRS
+
+
+_SYMBOLS_TXT_DATA = None  # {name -> int_addr} from symbols.txt `d` entries
+def _load_symbols_txt_data():
+    """Load data-symbol addresses (`<addr> <name> d`) from the project's
+    symbols.txt. Used to cross-match ASM-side named data refs against
+    address literals in our C build (e.g. main.mar `RamCache_settingsByte`
+    at 0xF797 ↔ C `g_save.settingsByte`'s expansion address 0xF797)."""
+    global _SYMBOLS_TXT_DATA
+    if _SYMBOLS_TXT_DATA is not None:
+        return _SYMBOLS_TXT_DATA
+    m = {}
+    try:
+        with open(PROJECT_DIR / 'symbols.txt') as f:
+            for line in f:
+                line = line.split('#')[0].strip()
+                parts = line.split()
+                if len(parts) == 3 and parts[2] == 'd':
+                    try:
+                        m[parts[1]] = int(parts[0], 16)
+                    except ValueError:
+                        pass
+    except FileNotFoundError:
+        pass
+    _SYMBOLS_TXT_DATA = m
+    return m
+
 def label_to_addr(label):
-    """If label encodes its own address (L_XXXX / DAT_XXXX), return that int, else None."""
+    """If label encodes its own address (L_XXXX / DAT_XXXX) or is listed in
+    symbols.txt as a data symbol, return its int address, else None."""
     m = _ADDR_LABEL_RE.match(label)
-    return int(m.group(1), 16) if m else None
+    if m:
+        return int(m.group(1), 16)
+    return _load_symbols_txt_data().get(label)
 
 
 # ---------------------------------------------------------------------------
@@ -158,12 +235,14 @@ def compare_func(name, af, cf, io_name2addr, io_addr2name, ignores):
     Return a dict describing all differences between the ASM and C versions.
     """
     func_ignores = ignores.get(name, {})
+    _load_macro_addrs()  # populate MACRO_ADDRS lazily
 
     # --- calls ---
     asm_calls = {c for c in af['calls'] if not (
         c.startswith('common_prologue') or
         c.startswith('common_epilogue_') or
-        c.startswith('sys_epilogue_')
+        c.startswith('sys_epilogue_') or
+        c.startswith('sys_prologue_')
     )}
     c_calls   = set(cf['calls']) - C_NOISE_CALLS
 
@@ -202,6 +281,26 @@ def compare_func(name, af, cf, io_name2addr, io_addr2name, ignores):
 
     # --- large constants (non-IO, non-addr-label) ---
     asm_consts = {int(v, 16) for v in af['big_consts']}
+
+    # H8 ABI packs paired 16-bit addresses into a single 32-bit `mov.l` for
+    # functions like `save_read_reliable(primary_addr, backup_addr, ...)`.
+    # ASM has 0x01ED00ED as one literal; C uses EEPROM_TRAINER_REC (0x00ED)
+    # + EEPROM_TRAINER_REC_BACKUP (0x01ED) macros. The halves are below
+    # ADDR_THRESHOLD so they never enter c_data_consts; instead, treat the
+    # 32-bit literal as matched if both halves are known EEPROM-style
+    # constants that the C function actually references textually. Lookup
+    # is via the project-wide macro-addr map (which already includes the
+    # EEPROM_* defines from eeprom_layout.h).
+    paired = set()
+    c_macros_used = set(cf.get('macros_used', []))
+    # Map every macro name → addr that this C function references textually
+    used_addrs = {MACRO_ADDRS[m] for m in c_macros_used if m in MACRO_ADDRS}
+    for v in list(asm_consts):
+        if v > 0xFFFF:
+            hi, lo = (v >> 16) & 0xFFFF, v & 0xFFFF
+            if hi in used_addrs and lo in used_addrs:
+                paired.add(v)
+    asm_consts -= paired
 
     # --- IO register cross-match ---
     asm_io_addrs     = set(asm_io_refs.values())

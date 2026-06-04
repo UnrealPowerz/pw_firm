@@ -40,7 +40,7 @@ void ui_draw_ball_drop_anim(void) {
 
   drv_eeprom_read_block(offset, ptr, 0x10);
   drv_lcd_blit(
-      0x2c, ballDropAnimYTable[gCurSubstateZ],
+      0x2c, ANIM_BALL_DROP_Y[gCurSubstateZ],
       (void *)ptr, 8, 8);
 
   gfx_fill_rect(0, 0, 0x60, 8, 3);

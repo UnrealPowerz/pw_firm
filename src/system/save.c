@@ -4,7 +4,7 @@
  * EEPROM persistence — redundant writes + corruption recovery.
  *
  *   --- Boot integrity ---
- *     save_write_magic            Write the 8-byte nintendoMagic header at
+ *     save_write_magic            Write the 8-byte NINTENDO_MAGIC header at
  *                                 EEPROM 0 (factory-init mark).
  *     save_verify_magic           Check the magic; 0 = corrupt / blank chip.
  *     sys_sync_eeprom_on_startup  Boot-time entry: verify magic, repair from
@@ -47,7 +47,7 @@ void save_write_magic(void) {
   uint8_t i;
   i = 0;
   do {
-    drv_eeprom_write_u8(i, nintendoMagic[i]);
+    drv_eeprom_write_u8(i, NINTENDO_MAGIC[i]);
     i++;
   } while (i < 8);
 }
@@ -61,7 +61,7 @@ uint8_t save_verify_magic(void) {
   i = 0;
   do {
     eep_val = drv_eeprom_read_u8(i);
-    rom_val = (int16_t)(int8_t)nintendoMagic[i];
+    rom_val = (int16_t)(int8_t)NINTENDO_MAGIC[i];
     if ((int16_t)(uint16_t)eep_val != rom_val) {
       return 0;
     }

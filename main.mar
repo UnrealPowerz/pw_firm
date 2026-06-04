@@ -4789,7 +4789,7 @@ game_battle_process_turn:
           mov.b       #H'64, r1l
           jsr         @$DIVUL$3:16
           mov.b       r1l, r6l
-          mov.w       #battleMoveOutcomeWeights, e1
+          mov.w       #BATTLE_OUTCOME_WEIGHTS, e1
           mov.b       @DAT_f7d8, r0l
           rotl.b      r0l
           rotl.b      r0l
@@ -4987,7 +4987,7 @@ LAB_2b4c:
           mov.w       #H'68, r0
           jsr         @sbrk:16
           mov.w       r0, e3
-          mov.w       #factoryStr_EEP, r0
+          mov.w       #FACTORY_STR_EEP, r0
           jsr         @drv_eeprom_read_u8:16
           mov.b       r0l, r4l
           mov.b       r0l, r1l
@@ -5084,7 +5084,7 @@ game_battle_check_capture_success:
           mov.b       r1l, r0l
           extu.w      r0
           dec.w       #1, r0
-          mov.b       @(captureSuccessProbs,er0), r0l
+          mov.b       @(CAPTURE_PROBS,er0), r0l
           cmp.b       r0l, r6h
           bcc         LAB_2c5e:8
           mov.b       #H'1, r0l
@@ -5125,7 +5125,7 @@ switchD_2c92__caseD_0:
 switchD_2c92__caseD_1:
           mov.b       r6l, r0l
           extu.w      r0
-          mov.b       @(battleAnimP1XFrames,er0), r0l
+          mov.b       @(BATTLE_ANIM_P1_X,er0), r0l
           mov.b       r0l, @DAT_f7d5
           mov.b       @accelXPos, r0l
           mov.b       @dowsing_item_pos, r0h
@@ -5145,12 +5145,12 @@ switchD_2c92__caseD_3:
           mov.b       r6l, r0l
           extu.w      r0
           shll.w      r0
-          mov.b       @(battleAnimP3YFrames,er0), r0l
+          mov.b       @(BATTLE_ANIM_P3_Y,er0), r0l
           mov.b       r0l, @accelYPos
           mov.b       @accelXPos, r0l
           extu.w      r0
           shll.w      r0
-          mov.b       @(battleAnimP3XFrames,er0), r0l
+          mov.b       @(BATTLE_ANIM_P3_X,er0), r0l
           mov.b       r0l, @DAT_f7d5
           jsr         @drv_sound_is_playing:16
           mov.b       r0l, r0l
@@ -5217,12 +5217,12 @@ switchD_2c92__caseD_4:
           mov.b       r6l, r0l
           extu.w      r0
           shll.w      r0
-          mov.b       @(battleAnimP4YFrames,er0), r0l
+          mov.b       @(BATTLE_ANIM_P4_Y,er0), r0l
           mov.b       r0l, @accelYPos
           mov.b       @accelXPos, r0l
           extu.w      r0
           shll.w      r0
-          mov.b       @(battleAnimP4XFrames,er0), r0l
+          mov.b       @(BATTLE_ANIM_P4_X,er0), r0l
           mov.b       r0l, @DAT_f7d5
           jsr         @drv_sound_is_playing:16
           mov.b       r0l, r0l
@@ -5366,7 +5366,7 @@ switchD_2c92__caseD_7:
           mov.w       #H'3, e0
           sub.w       r0, e0
           mov.w       e0, r0
-          mov.b       @(battleAnimP1XFrames,er0), r0l
+          mov.b       @(BATTLE_ANIM_P1_X,er0), r0l
           bra         LAB_2f26:8
 LAB_2f24:
           mov.b       #H'E0, r0l
@@ -5686,7 +5686,7 @@ LAB_3206:
           mov.b       r0h, r2l
           extu.w      r0
           shll.w      r0
-          mov.w       @(fftTwiddleTable,er0), r0
+          mov.w       @(FFT_TWIDDLE,er0), r0
           shll.w      r0
           mov.b       r0h, r0l
           subx        r0h, r0h
@@ -6470,7 +6470,7 @@ LAB_3934:
           mov.w       #ACCEL_SAMPLES_X, r0
           jmp         @LAB_3a42:16
 LAB_3948:
-          mov.w       #PERIODTAB, r5
+          mov.w       #SOUND_PERIOD_TABLE, r5
           mov.w       @er6, r0
           mov.b       @(H'1,er0), r0l
           and.b       #H'7F, r0l
@@ -6558,7 +6558,7 @@ LAB_3a0c:
           mov.b       @(H'1,er0), r0l
           and.b       #H'7F, r0l
           extu.w      r0
-          mov.b       @(PERIODTAB,er0), r0l
+          mov.b       @(SOUND_PERIOD_TABLE,er0), r0l
 LAB_3a3a:
           jsr         @drv_sound_set_freq_pwm:16
 LAB_3a3e:
@@ -6979,7 +6979,7 @@ LAB_3de2:
           mov.w       r6, e0
           mov.b       @gCurSubstateZ, r1l
           extu.w      r1
-          mov.b       @(ballDropAnimYTable,er1), r0h
+          mov.b       @(ANIM_BALL_DROP_Y,er1), r0h
           mov.w       #H'808, r1
           mov.b       #H'2C, r0l
           jsr         @drv_lcd_blit:16
@@ -7030,7 +7030,7 @@ ui_draw_ball_sparkles_anim:
           mov.b       @gCurSubstateZ, r5l
           extu.w      r5
           shll.w      r5
-          add.w       #sparklesAnimXYTable, r5
+          add.w       #ANIM_SPARKLES_XY, r5
           mov.w       r6, e0
           mov.w       #H'808, r1
           mov.b       @(H'1,er5), r0h
@@ -7448,7 +7448,7 @@ LAB_423a:
           jsr         @r6
           mov.w       r0, r5
           mov.w       r0, e0
-          mov.w       #DAT_bd40, r0
+          mov.w       #UNREF_DAT_BD40, r0
           mov.w       #LAB_0188, r1
           jsr         @drv_eeprom_read_block:16
           sub.b       r0l, r0l
@@ -7597,7 +7597,7 @@ ui_draw_cloud_rise_anim:
           mov.w       r6, e0
           mov.b       @gCurSubstateZ, r1l
           extu.w      r1
-          mov.b       @(cloudAnimYTable,er1), r0h
+          mov.b       @(ANIM_CLOUD_Y,er1), r0h
           mov.b       #H'8, r1h
           mov.b       r1h, r1l
           mov.b       #H'2C, r0l
@@ -8249,7 +8249,7 @@ LAB_499a:
 ; Called by: game_check_wild_encounter
 ; =============================================================================
 game_read_wild_poke:
-          mov.w       #DAT_bd40, r3
+          mov.w       #UNREF_DAT_BD40, r3
           mov.w       r0, e0
           mov.w       r3, r0
           mov.w       #LAB_0188, r1
@@ -8262,7 +8262,7 @@ game_read_wild_poke:
 ; Called by: game_check_wild_encounter
 ; =============================================================================
 game_write_wild_poke:
-          mov.w       #DAT_bd40, r2
+          mov.w       #UNREF_DAT_BD40, r2
           mov.w       r0, e0
           mov.w       r2, r0
           mov.w       #LAB_0188, r1
@@ -8555,7 +8555,7 @@ LAB_4c94:
           mov.b       @animTick, r1l
           and.b       #H'3, r1l
           extu.w      r1
-          mov.b       @(L_BD82,er1), r1l
+          mov.b       @(DOWSING_GRASS_BOB,er1), r1l
           mov.w       r6, e0
           mov.w       #H'1010, r0
           jsr         @gfx_draw_animated_grass:16
@@ -10379,7 +10379,7 @@ game_process_interaction_reward:
           mov.b       r6l, r1l
           extu.w      r1
           shll.w      r1
-          mov.w       @(interactionRewardPtrTable,er1), r1
+          mov.w       @(INTERACTION_REWARD_PTRS,er1), r1
           mov.w       r1, @accelXPos
           mov.b       #H'C, r0l
           jsr         @ui_set_view:16
@@ -10850,9 +10850,9 @@ LAB_61a4:
           mov.w       r0, r6
           add.w       #H'10, r0
           shll.w      r0
-          mov.w       @(fftTwiddleTable,er0), e4
+          mov.w       @(FFT_TWIDDLE,er0), e4
           shll.w      r6
-          mov.w       @(fftTwiddleTable,er6), e3
+          mov.w       @(FFT_TWIDDLE,er6), e3
           mov.b       r3h, r3l
           jmp         @LAB_629e:16
 LAB_61c0:
@@ -11367,7 +11367,7 @@ LAB_6634:
 LAB_6638:
           mov.b       r6l, r1l
           extu.w      r1
-          mov.b       @(musicNoteYTableA,er1), r1l
+          mov.b       @(MUSIC_NOTE_Y_A,er1), r1l
           mov.b       r6l, r0l
           mov.b       #H'8, r0h
           mulxu.b     r0h, r0
@@ -11390,7 +11390,7 @@ LAB_6660:
 LAB_6664:
           mov.b       r6l, r1l
           extu.w      r1
-          mov.b       @(musicNoteYTableA,er1), r1l
+          mov.b       @(MUSIC_NOTE_Y_A,er1), r1l
           mov.b       r6l, r0l
           mov.b       #H'8, r0h
           mulxu.b     r0h, r0
@@ -11412,7 +11412,7 @@ LAB_6688:
 LAB_668c:
           mov.b       r6l, r1l
           extu.w      r1
-          mov.b       @(musicNoteYTableB,er1), r1l
+          mov.b       @(MUSIC_NOTE_Y_B,er1), r1l
           mov.b       r6l, r0l
           mov.b       #H'8, r0h
           mulxu.b     r0h, r0
@@ -11434,7 +11434,7 @@ LAB_66b0:
 LAB_66b4:
           mov.b       r6l, r1l
           extu.w      r1
-          mov.b       @(musicNoteYTableB,er1), r1l
+          mov.b       @(MUSIC_NOTE_Y_B,er1), r1l
           mov.b       r6l, r0l
           mov.b       #H'8, r0h
           mulxu.b     r0h, r0
@@ -11447,7 +11447,7 @@ LAB_66cc:
           bcc         LAB_66de:8
           bra         LAB_66b4:8
 LAB_66d2:
-          mov.b       @musicNoteInitialState, r1l
+          mov.b       @MUSIC_NOTE_INIT_STATE, r1l
           mov.w       #H'2C, r0
           jsr         @ui_draw_music_note:16
 LAB_66de:
@@ -12060,7 +12060,7 @@ ui_render_home_route:
           mov.b       @gCurSubstateY, r0l
           extu.w      r0
           dec.w       #1, r0
-          mov.b       @(routeIconIndices,er0), r0l
+          mov.b       @(ROUTE_ICON_INDICES,er0), r0l
           jsr         @gfx_draw_small_route_icon:16
 LAB_6c0e:
           jsr         @ui_render_route_image:16
@@ -12544,7 +12544,7 @@ LAB_7050:
           inc.w       #1, e0
           cmp.w       #H'100, e0
           bcs         LAB_7050:8
-          mov.w       #walkerFaceNeutral, e5
+          mov.w       #IMG_FACE_NEUTRAL, e5
           mov.w       r5, e1
           add.w       #H'50, e1
           sub.w       e0, e0
@@ -12575,7 +12575,7 @@ LAB_7072:
           shar.w      r0
           btst        #H'0, r0l
           beq         LAB_710a:8
-          mov.w       #walkerEmptyExtraGlyph, r3
+          mov.w       #IMG_EXTRA_GLYPH_EMPTY, r3
           mov.w       r5, e1
           add.w       #H'D8, e1
           sub.w       e0, e0
@@ -12649,7 +12649,7 @@ LAB_712e:
           inc.w       #1, e0
           cmp.w       #H'100, e0
           bcs         LAB_712e:8
-          mov.w       #walkerFaceSad, e5
+          mov.w       #IMG_FACE_SAD, e5
           mov.w       r5, r0
           add.w       #H'50, r0
           mov.w       r0, e1
@@ -12722,7 +12722,7 @@ LAB_71ce:
           inc.w       #1, r6
           cmp.w       #H'100, r6
           bcs         LAB_71ce:8
-          mov.w       #walkerFaceHappy, e1
+          mov.w       #IMG_FACE_HAPPY, e1
           mov.w       r5, r0
           add.w       #H'50, r0
           mov.w       r0, e0
@@ -13085,7 +13085,7 @@ LAB_74f6:
 LAB_7514:
           btst        #H'6, r4l
           beq         LAB_755e:8
-          mov.w       #DAT_bd40, r6
+          mov.w       #UNREF_DAT_BD40, r6
           mov.w       r6, r0
           mov.w       #H'8, r1
           mov.w       r5, e0
@@ -13810,7 +13810,7 @@ drv_lcd_init:
           cmp.b       #H'FF, r0l
           bne         LAB_7bb0:8
 LAB_7bac:
-          mov.w       #lcdInitFallbackSeq, r6
+          mov.w       #LCD_INIT_FALLBACK_SEQ, r6
 LAB_7bb0:
           mov.w       r6, r0
           inc.w       #1, r6
@@ -15152,7 +15152,7 @@ LAB_8686:
           mov.b       r6l, r1l
           extu.w      r1
           add.w       r1, r0
-          mov.b       @(font3ByteGlyphs,er0), r0l
+          mov.b       @(FONT_3BYTE_GLYPHS,er0), r0l
           mov.b       r0l, @SSTDR
 LAB_86a0:
           mov.b       @SSSR, r0l
@@ -15163,7 +15163,7 @@ LAB_86a0:
           mov.b       r6l, r1l
           extu.w      r1
           add.w       r1, r0
-          mov.b       @(font3ByteGlyphs,er0), r0l
+          mov.b       @(FONT_3BYTE_GLYPHS,er0), r0l
           mov.b       r0l, @SSTDR
           inc.b       r6l
           cmp.b       #H'3, r6l
@@ -15199,7 +15199,7 @@ LAB_86f0:
           mov.b       r6l, r1l
           extu.w      r1
           add.w       r1, r0
-          mov.b       @(font3ByteGlyphs,er0), r0l
+          mov.b       @(FONT_3BYTE_GLYPHS,er0), r0l
           mov.b       r0l, @SSTDR
 LAB_870a:
           mov.b       @SSSR, r0l
@@ -15210,7 +15210,7 @@ LAB_870a:
           mov.b       r6l, r1l
           extu.w      r1
           add.w       r1, r0
-          mov.b       @(font3ByteGlyphs,er0), r0l
+          mov.b       @(FONT_3BYTE_GLYPHS,er0), r0l
           mov.b       r0l, @SSTDR
           inc.b       r6l
           cmp.b       #H'3, r6l
@@ -16994,7 +16994,7 @@ LAB_96b0:
 LAB_96c4:
           mov.b       r6l, r0l
           extu.w      r0
-          mov.w       #fftBinTable, r4
+          mov.w       #FFT_BINS, r4
           add.w       r0, r4
           mov.b       @er4, r0l
           extu.w      r0
@@ -17088,7 +17088,7 @@ LAB_9774:
           mov.b       r0l, r0l
           beq         LAB_98be:16
           mov.w       @watts, r1
-          mov.w       #menuItemCostTable, r6
+          mov.w       #MENU_ITEM_COSTS, r6
           mov.b       @menu_cursor, r0l
           extu.w      r0
           add.w       r6, r0
@@ -17323,7 +17323,7 @@ LAB_997e:
           mov.b       #H'10, r0l
           push.w      r0
           mov.w       e6, r1
-          mov.b       @(mainMenuYCoords,er1), r1h
+          mov.b       @(MAIN_MENU_Y_COORDS,er1), r1h
           add.b       #H'F8, r1h
           mov.w       r5, e1
           mov.b       #H'4, r1l
@@ -17348,7 +17348,7 @@ LAB_99dc:
           mov.b       #H'10, r0l
           push.w      r0
           mov.w       e6, r1
-          mov.b       @(mainMenuYCoords,er1), r1h
+          mov.b       @(MAIN_MENU_Y_COORDS,er1), r1h
           mov.w       r5, e1
           sub.b       r1l, r1l
           mov.w       r6, e0
@@ -17591,7 +17591,7 @@ game_roll_radar_encounter:
           mov.b       @RamCache_settingsByte, r0l
           bld         #H'0, r0l
           bcc         LAB_9cea:16
-          mov.w       #factoryStr_EEP, r0
+          mov.w       #FACTORY_STR_EEP, r0
           jsr         @drv_eeprom_read_u8:16
           mov.b       r0l, r6l
           jsr         @sys_init_heap:16
@@ -17725,7 +17725,7 @@ game_pokeradar_init:
           mov.b       r0h, @accelYPos
           mov.b       r0l, r1l
           extu.w      r1
-          mov.b       @(radarStateXTable,er1), r1l
+          mov.b       @(RADAR_STATE_X,er1), r1l
           mov.b       r1l, @DAT_f7d5
           jsr         @sys_get_rng:16
           shll.w      r0
@@ -17878,7 +17878,7 @@ LAB_9efc:
           mov.b       @DAT_f7d1, r1l
           extu.w      r1
           extu.w      r0
-          mov.b       @(radarStateYDivisor,er1), r1l
+          mov.b       @(RADAR_STATE_Y_DIVISOR,er1), r1l
           divxu.b     r1l, r0
           add.b       #H'10, r0h
           mov.b       r0h, @accelYPos
@@ -17886,7 +17886,7 @@ LAB_9efc:
           inc.b       r0l
           mov.b       r0l, @DAT_f7d1
           extu.w      r0
-          mov.b       @(radarStateXTable,er0), r0l
+          mov.b       @(RADAR_STATE_X,er0), r0l
           mov.b       r0l, @DAT_f7d5
           jsr         @sys_get_rng:16
           shll.w      r0
@@ -17930,7 +17930,7 @@ ui_render_pokeradar:
           add.b       #H'8, r0l
           mov.b       r4l, r1l
           extu.w      r1
-          mov.b       @(radarYCoordTable,er1), r1l
+          mov.b       @(RADAR_Y_COORDS,er1), r1l
           add.b       #H'F8, r1l
           mov.w       r6, e0
           mov.b       #H'8, r1h
@@ -17953,7 +17953,7 @@ LAB_9fbc:
           mulxu.b     r0h, r0
           mov.b       r0l, r0h
           mov.w       e6, r1
-          mov.b       @(radarYCoordTable,er1), r0l
+          mov.b       @(RADAR_Y_COORDS,er1), r0l
           mov.w       r6, e0
           mov.w       #H'1820, r1
           jsr         @drv_lcd_blit:16
@@ -17976,7 +17976,7 @@ LAB_9fbc:
           mulxu.b     r0h, r0
           mov.b       r4l, r1l
           extu.w      r1
-          mov.b       @(radarYCoordTable,er1), r1l
+          mov.b       @(RADAR_Y_COORDS,er1), r1l
           add.b       #H'10, r1l
           mov.w       r6, e0
           mov.b       #H'10, r1h
@@ -18051,7 +18051,7 @@ LAB_a0a2:
           jsr         @drv_eeprom_read_block:16
           mov.b       @DAT_f7d1, r0l
           extu.w      r0
-          mov.b       @(radarFrameMultiplier,er0), r0l
+          mov.b       @(RADAR_FRAME_MULT,er0), r0l
           extu.w      r0
           mov.w       #H'40, e0
           mulxu.w     e0, er0
@@ -18063,7 +18063,7 @@ LAB_a0a2:
           mulxu.b     r0h, r0
           mov.b       r4l, r1l
           extu.w      r1
-          mov.b       @(radarYCoordTable,er1), r1l
+          mov.b       @(RADAR_Y_COORDS,er1), r1l
           add.b       #H'10, r1l
           mov.w       r6, e0
           mov.b       #H'10, r1h
@@ -18122,7 +18122,7 @@ LAB_a14c:
           mov.b       r0l, r0h
           mov.w       r5, e0
           mov.w       #H'1820, r1
-          mov.b       @(radarYCoordTable,er6), r0l
+          mov.b       @(RADAR_Y_COORDS,er6), r0l
           jsr         @drv_lcd_blit:16
           inc.w       #1, r6
           cmp.w       #H'4, r6
@@ -19215,7 +19215,7 @@ switchD_aa8e__caseD_1:
           jsr         @drv_button_is_triggered:16
           mov.b       r0l, r0l
           beq         switchD_aa8e__default:16
-          mov.w       #factoryTestSoundData, r0
+          mov.w       #FACTORY_TEST_SOUND, r0
           jsr         @drv_sound_set_data:16
           mov.b       @gCurSubstateY, r0l
           dec.b       r0l
@@ -19303,7 +19303,7 @@ switchD_aa8e__caseD_11:
           mov.b       @dowsing_item_pos, r0l
           beq         switchD_aa8e__default:8
 LAB_abc0:
-          mov.w       #factoryTestSoundData, r0
+          mov.w       #FACTORY_TEST_SOUND, r0
           jsr         @drv_sound_set_data:16
 LAB_abc8:
           mov.b       @gCurSubstateY, r0l
@@ -19336,7 +19336,7 @@ LAB_abfe:
           mov.b       #H'17, r0l
           mov.b       r0l, @currentlyActiveView
           jsr         @sys_init_accel_debug:16
-          mov.w       #factoryTestSoundData, r0
+          mov.w       #FACTORY_TEST_SOUND, r0
           jsr         @drv_sound_set_data:16
 switchD_aa8e__default:
           rts
@@ -19464,27 +19464,27 @@ switchD_ad20__switchD:
 switchD_ad20__caseD_0:
           mov.b       @gCurSubstateZ, r0l
           bne         switchD_ad20__caseD_d:16
-          mov.w       #factoryStr_NG1, e0
+          mov.w       #FACTORY_STR_NG1, e0
           jmp         @LAB_adea:16
 switchD_ad20__caseD_a:
-          mov.w       #factoryStr_EEP, e0
+          mov.w       #FACTORY_STR_EEP, e0
           jmp         @LAB_adea:16
 switchD_ad20__caseD_c:
           mov.b       @dowsing_item_pos, r0l
           bne         switchD_ad20__caseD_d:16
-          mov.w       #factoryStr_NG2, e0
+          mov.w       #FACTORY_STR_NG2, e0
           jmp         @LAB_adea:16
 switchD_ad20__caseD_e:
           mov.b       @dowsing_item_pos, r0l
           bne         switchD_ad20__caseD_d:16
-          mov.w       #factoryStr_NG3, e0
+          mov.w       #FACTORY_STR_NG3, e0
           jmp         @LAB_adea:16
 switchD_ad20__caseD_f:
           mov.b       @DAT_f7d1, r0l
           mov.b       @accelXPos, r0h
           cmp.b       r0h, r0l
           bne         switchD_ad20__caseD_d:16
-          mov.w       #factoryStr_NG4, e0
+          mov.w       #FACTORY_STR_NG4, e0
           bra         LAB_adea:8
 switchD_ad20__caseD_1:
           mov.b       #H'3, r0l
@@ -19512,7 +19512,7 @@ switchD_ad20__caseD_7:
           shar.w      r0
           btst        #H'0, r0l
           bne         switchD_ad20__caseD_d:16
-          mov.w       #factoryStr_V, e0
+          mov.w       #FACTORY_STR_V, e0
           mov.w       #H'3806, r0
           jmp         @LAB_aea6:16
 switchD_ad20__caseD_8:
@@ -19521,7 +19521,7 @@ switchD_ad20__caseD_8:
           shar.w      r0
           btst        #H'0, r0l
           bne         switchD_ad20__caseD_d:16
-          mov.w       #factoryStr_V, e0
+          mov.w       #FACTORY_STR_V, e0
           mov.w       #H'382D, r0
           jmp         @LAB_aea6:16
 switchD_ad20__caseD_9:
@@ -19530,12 +19530,12 @@ switchD_ad20__caseD_9:
           shar.w      r0
           btst        #H'0, r0l
           bne         switchD_ad20__caseD_d:16
-          mov.w       #factoryStr_V, e0
+          mov.w       #FACTORY_STR_V, e0
           jmp         @LAB_aea2:16
 switchD_ad20__caseD_11:
           mov.b       @dowsing_item_pos, r0l
           bne         switchD_ad20__caseD_d:16
-          mov.w       #factoryStr_NG5, e0
+          mov.w       #FACTORY_STR_NG5, e0
 LAB_adea:
           mov.w       #H'820, r0
           jmp         @LAB_aea6:16
@@ -19553,7 +19553,7 @@ LAB_ae08:
           bld         #H'3, r0l
           bcc         LAB_ae08:8
           bset        #H'0, @PDR1
-          mov.w       #factoryStr_OK, e0
+          mov.w       #FACTORY_STR_OK, e0
           mov.w       #H'20, r0
           jsr         @r5
           mov.w       r7, r6
@@ -19564,12 +19564,12 @@ LAB_ae08:
           extu.l      er0
           divxu.w     r1, er0
           and.w       #H'F, r0
-          mov.b       @(hexDigits,er0), r0l
+          mov.b       @(HEX_DIGITS,er0), r0l
           mov.b       r0l, @er6
           mov.b       @accelYPos, r0l
           sub.b       r0h, r0h
           and.w       #H'F, r0
-          mov.b       @(hexDigits,er0), r0l
+          mov.b       @(HEX_DIGITS,er0), r0l
           mov.b       r0l, @(H'1,er6)
           mov.w       @accelYPos, r0
           shlr.w      r0
@@ -19577,11 +19577,11 @@ LAB_ae08:
           shlr.w      r0
           shlr.w      r0
           and.w       #H'F, r0
-          mov.b       @(hexDigits,er0), r0l
+          mov.b       @(HEX_DIGITS,er0), r0l
           mov.b       r0l, @(H'2,er6)
           mov.w       @accelYPos, r0
           and.w       #H'F, r0
-          mov.b       @(hexDigits,er0), r0l
+          mov.b       @(HEX_DIGITS,er0), r0l
           mov.b       r0l, @(H'3,er6)
           mov.w       r6, e0
           mov.w       #H'1820, r0
@@ -19591,13 +19591,13 @@ LAB_ae08:
           shar.w      r0
           btst        #H'0, r0l
           bne         switchD_ad20__caseD_d:8
-          mov.w       #factoryStr_V, e0
+          mov.w       #FACTORY_STR_V, e0
           mov.w       #H'3806, r0
           jsr         @r5
-          mov.w       #factoryStr_V, e0
+          mov.w       #FACTORY_STR_V, e0
           mov.w       #H'382D, r0
           jsr         @r5
-          mov.w       #factoryStr_V, e0
+          mov.w       #FACTORY_STR_V, e0
 LAB_aea2:
           mov.w       #H'3855, r0
 LAB_aea6:
@@ -19681,12 +19681,12 @@ ui_render_accel_debug:
           mov.w       #H'1000, r1
           extu.l      er0
           divxu.w     r1, er0
-          mov.b       @(hexDigits,er0), r0l
+          mov.b       @(HEX_DIGITS,er0), r0l
           mov.b       r0l, @er6
           mov.b       @axisStepThresholdLo, r0l
           sub.b       r0h, r0h
           and.w       #H'F, r0
-          mov.b       @(hexDigits,er0), r0l
+          mov.b       @(HEX_DIGITS,er0), r0l
           mov.b       r0l, @er5
           mov.w       r6, r0
           inc.w       #2, r0
@@ -19698,14 +19698,14 @@ ui_render_accel_debug:
           shlr.w      e0
           and.w       #H'F, e0
           mov.w       e0, r1
-          mov.b       @(hexDigits,er1), r1l
+          mov.b       @(HEX_DIGITS,er1), r1l
           mov.b       r1l, @er0
           mov.w       r6, r3
           add.w       #H'3, r3
           mov.w       @axisStepThresholdLo, e0
           and.w       #H'F, e0
           mov.w       e0, r1
-          mov.b       @(hexDigits,er1), r1l
+          mov.b       @(HEX_DIGITS,er1), r1l
           mov.b       r1l, @er3
           sub.b       r1l, r1l
           mov.b       r1l, @(H'4,er6)
@@ -19716,12 +19716,12 @@ ui_render_accel_debug:
           mov.w       #H'1000, r1
           extu.l      er0
           divxu.w     r1, er0
-          mov.b       @(hexDigits,er0), r0l
+          mov.b       @(HEX_DIGITS,er0), r0l
           mov.b       r0l, @er6
           mov.b       @axisStepThresholdHi, r0l
           sub.b       r0h, r0h
           and.w       #H'F, r0
-          mov.b       @(hexDigits,er0), r0l
+          mov.b       @(HEX_DIGITS,er0), r0l
           mov.b       r0l, @er5
           mov.w       @axisStepThresholdHi, r0
           shlr.w      r0
@@ -19730,11 +19730,11 @@ ui_render_accel_debug:
           shlr.w      r0
           and.w       #H'F, r0
           mov.w       e6, r1
-          mov.b       @(hexDigits,er0), r0l
+          mov.b       @(HEX_DIGITS,er0), r0l
           mov.b       r0l, @er1
           mov.w       @axisStepThresholdHi, r0
           and.w       #H'F, r0
-          mov.b       @(hexDigits,er0), r0l
+          mov.b       @(HEX_DIGITS,er0), r0l
           mov.b       r0l, @er3
           mov.w       r6, e0
           mov.w       #H'840, r0
@@ -19743,12 +19743,12 @@ ui_render_accel_debug:
           mov.w       #H'1000, r1
           extu.l      er0
           divxu.w     r1, er0
-          mov.b       @(hexDigits,er0), r0l
+          mov.b       @(HEX_DIGITS,er0), r0l
           mov.b       r0l, @er6
           mov.b       @axisIdleThreshold, r0l
           sub.b       r0h, r0h
           and.w       #H'F, r0
-          mov.b       @(hexDigits,er0), r0l
+          mov.b       @(HEX_DIGITS,er0), r0l
           mov.b       r0l, @er5
           mov.w       @axisIdleThreshold, r0
           shlr.w      r0
@@ -19757,11 +19757,11 @@ ui_render_accel_debug:
           shlr.w      r0
           and.w       #H'F, r0
           mov.w       e6, r1
-          mov.b       @(hexDigits,er0), r0l
+          mov.b       @(HEX_DIGITS,er0), r0l
           mov.b       r0l, @er1
           mov.w       @axisIdleThreshold, r0
           and.w       #H'F, r0
-          mov.b       @(hexDigits,er0), r0l
+          mov.b       @(HEX_DIGITS,er0), r0l
           mov.b       r0l, @er3
           mov.w       r6, e0
           mov.w       #LAB_1020, r0
@@ -19797,7 +19797,7 @@ LAB_b086:
           bld         #H'3, r0l
           bcc         LAB_b086:8
           bset        #H'0, @PDR1
-          mov.w       #factoryStr_OK, e0
+          mov.w       #FACTORY_STR_OK, e0
           mov.w       #H'2008, r0
           jsr         @r4
 LAB_b09c:
@@ -19810,7 +19810,7 @@ LAB_b09c:
 ; Called by: ui_dispatch_draw
 ; =============================================================================
 gfx_draw_string_simple:
-          mov.w       #factoryStr_NG6, e0
+          mov.w       #FACTORY_STR_NG6, e0
           mov.w       #H'808, r0
           jmp         @gfx_draw_string:16
 ; =============================================================================
@@ -19825,7 +19825,7 @@ LAB_b0b0:
           extu.w      r6
           mov.w       r6, e6
           mov.w       e6, r1
-          mov.b       @(nintendoMagic,er1), r1l
+          mov.b       @(NINTENDO_MAGIC,er1), r1l
           mov.w       e6, r0
           jsr         @drv_eeprom_write_u8:16
           inc.b       r6l
@@ -19848,7 +19848,7 @@ LAB_b0cc:
           jsr         @drv_eeprom_read_u8:16
           extu.w      r0
           mov.w       e6, r1
-          mov.b       @(nintendoMagic,er1), r1l
+          mov.b       @(NINTENDO_MAGIC,er1), r1l
           exts.w      r1
           cmp.w       r1, r0
           beq         LAB_b0e8:8
@@ -20994,15 +20994,15 @@ switchD_3296__switchdataD_baea:
           .DATA.W    switchD_3296__caseD_f
           .DATA.W    switchD_3296__caseD_10
           .DATA.W    switchD_3296__caseD_11
-battleAnimP1XFrames:
+BATTLE_ANIM_P1_X:
           .RES.B      4
-battleAnimP3YFrames:
+BATTLE_ANIM_P3_Y:
           .RES.B      1
-battleAnimP3XFrames:
+BATTLE_ANIM_P3_X:
           .RES.B      17
-battleAnimP4YFrames:
+BATTLE_ANIM_P4_Y:
           .RES.B      1
-battleAnimP4XFrames:
+BATTLE_ANIM_P4_X:
           .RES.B      18
 DAT_bb37:
           .RES.B      1
@@ -21010,9 +21010,9 @@ DAT_bb38:
           .RES.B      12
 DAT_bb44:
           .RES.B      1
-captureSuccessProbs:
+CAPTURE_PROBS:
           .RES.B      5
-PERIODTAB:
+SOUND_PERIOD_TABLE:
           .DATA.B     H'F4,H'E6,H'D9,H'CD,H'C2,H'B7,H'AC,H'A3,H'9A,H'91,H'89,H'81,H'7A,H'73,H'6C,H'66
           .DATA.B     H'61,H'5B,H'56,H'51,H'4D,H'48,H'44,H'40,H'3D,H'39,H'36,H'33,H'30,H'2D,H'2B,H'28
           .DATA.B     H'26,H'24,H'22,H'20,H'1E,H'1C,H'1A,H'19,H'17,H'16
@@ -21020,22 +21020,22 @@ IMG_POKEWALKER_LARGE:
           .DATA.B     H'00
 IMG_POKEWALKER_LARGE_1_:
           .RES.B      255
-walkerFaceNeutral:
+IMG_FACE_NEUTRAL:
           .DATA.B     H'00
 DAT_bc75:
           .DATA.B     H'00
           .RES.B      30
-walkerFaceHappy:
+IMG_FACE_HAPPY:
           .DATA.B     H'00
 DAT_bc95:
           .DATA.B     H'00
           .RES.B      30
-walkerFaceSad:
+IMG_FACE_SAD:
           .DATA.B     H'00
 DAT_bcb5:
           .DATA.B     H'00
           .RES.B      30
-walkerEmptyExtraGlyph:
+IMG_EXTRA_GLYPH_EMPTY:
           .DATA.B     H'08
 DAT_bcd5:
           .DATA.B     H'08
@@ -21044,9 +21044,9 @@ IMG_POKEWALKER_IR_ACTIVE:
           .RES.B      5
           .DATA.B     H'11
           .RES.B      10
-font3ByteGlyphs:
+FONT_3BYTE_GLYPHS:
           .RES.B      76
-DAT_bd40:
+UNREF_DAT_BD40:
           .RES.B      32
 switchD_3ffa__switchdataD_bd60:
           .DATA.W    switchD_3ffa__caseD_0
@@ -21057,23 +21057,23 @@ switchD_3ffa__switchdataD_bd60:
           .DATA.W    switchD_3ffa__caseD_5
           .DATA.W    switchD_3ffa__caseD_6
           .DATA.W    switchD_3ffa__caseD_7
-ballDropAnimYTable:
+ANIM_BALL_DROP_Y:
           .RES.B      6
-sparklesAnimXYTable:
+ANIM_SPARKLES_XY:
           .RES.B      6
-cloudAnimYTable:
+ANIM_CLOUD_Y:
           .RES.B      6
-L_BD82:
+DOWSING_GRASS_BOB:
           .RES.B      2
-interactionRewardPtrTable:
+INTERACTION_REWARD_PTRS:
           .RES.B      76
-fftTwiddleTable:
+FFT_TWIDDLE:
           .RES.B      160
-musicNoteYTableA:
+MUSIC_NOTE_Y_A:
           .RES.B      1
-musicNoteYTableB:
+MUSIC_NOTE_Y_B:
           .RES.B      1
-musicNoteInitialState:
+MUSIC_NOTE_INIT_STATE:
           .DATA.B     H'02
           .RES.B      3
 switchD_72ce__switchdataD_be76:
@@ -21085,9 +21085,9 @@ switchD_741e__switchdataD_be96:
           .DATA.B     H'00,H'26,H'2C,H'32,H'38,H'98,H'3E,H'44,H'4A,H'56,H'50,H'5C,H'1A,H'20,H'62,H'76
           .DATA.B     H'7C,H'82,H'98,H'98,H'98,H'98,H'88,H'8E,H'94
           .RES.B      1
-routeIconIndices:
+ROUTE_ICON_INDICES:
           .RES.B      8
-lcdInitFallbackSeq:
+LCD_INIT_FALLBACK_SEQ:
           .DATA.B     H'14
 DAT_beb9:
           .DATA.B     H'48
@@ -21109,7 +21109,7 @@ switchD_8dd2__switchdataD_bee4:
           .DATA.W    switchD_8dd2__caseD_6
           .DATA.W    switchD_8dd2__caseD_6
           .DATA.W    switchD_8dd2__caseD_9
-fftBinTable:
+FFT_BINS:
           .DATA.B     H'03
 DAT_bef9:
           .DATA.B     H'02
@@ -21121,17 +21121,17 @@ switchD_97b0__switchdataD_bf02:
           .DATA.W    switchD_97b0__caseD_3
           .DATA.W    switchD_97b0__caseD_4
           .DATA.W    switchD_97b0__caseD_5
-menuItemCostTable:
+MENU_ITEM_COSTS:
           .RES.B      6
-mainMenuYCoords:
+MAIN_MENU_Y_COORDS:
           .RES.B      6
-radarStateXTable:
+RADAR_STATE_X:
           .RES.B      4
-radarStateYDivisor:
+RADAR_STATE_Y_DIVISOR:
           .RES.B      3
-radarFrameMultiplier:
+RADAR_FRAME_MULT:
           .RES.B      4
-radarYCoordTable:
+RADAR_Y_COORDS:
           .RES.B      5
 switchD_aa8e__switchdataD_bf2a:
           .DATA.W    switchD_aa8e__caseD_0
@@ -21173,31 +21173,31 @@ switchD_ad20__switchdataD_bf50:
           .DATA.W    switchD_ad20__caseD_d
           .DATA.W    switchD_ad20__caseD_11
           .DATA.W    switchD_ad20__caseD_12
-factoryStr_NG1:
+FACTORY_STR_NG1:
           .SDATAZ     "NG1"
-factoryStr_EEP:
+FACTORY_STR_EEP:
           .SDATAZ     "EEP"
-factoryStr_NG2:
+FACTORY_STR_NG2:
           .SDATAZ     "NG2"
-factoryStr_NG3:
+FACTORY_STR_NG3:
           .SDATAZ     "NG3"
-factoryStr_NG4:
+FACTORY_STR_NG4:
           .SDATAZ     "NG4"
-factoryStr_V:
+FACTORY_STR_V:
           .SDATAZ     "V"
-factoryStr_NG5:
+FACTORY_STR_NG5:
           .SDATAZ     "NG5"
-factoryStr_OK:
+FACTORY_STR_OK:
           .SDATAZ     "OK"
-factoryStr_NG6:
+FACTORY_STR_NG6:
           .SDATAZ     "NG6"
           .RES.B      1
-nintendoMagic:
+NINTENDO_MAGIC:
           .SDATAZ     "nintendo"
           .RES.B      1
-factoryTestSoundData:
+FACTORY_TEST_SOUND:
           .RES.B      8
-hexDigits:
+HEX_DIGITS:
           .RES.B      16
 rom_data_start:
           .DATA.W    DAT_bfc4

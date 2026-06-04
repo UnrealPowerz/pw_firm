@@ -15,12 +15,13 @@ OD      = h8300-elf-objdump
 
 INCLUDES = -include=src,include,build/gen,/opt/H8/6_2_2/include
 # Optimization for size and speed to fit in ROM
-CFLAGS_BASE = -cpu=300HN -stack=medium -lang=c -outcode=sjis -nolist -chgincpath -nologo -optimize=1 -cmncode $(INCLUDES)
+CFLAGS_BASE = -cpu=300HN -stack=medium -lang=c -outcode=sjis -nolist -chgincpath -nologo -optimize=1 -cmncode -noalign $(INCLUDES)
 # For linker pipeline: direct .c → .o with goptimize (enables linker same_code)
 CFLAGS_OBJ  = $(CFLAGS_BASE) -goptimize
 # For compare_bin: .c → .s informational pass (asmcode incompatible with goptimize)
 CFLAGS_ASM  = $(CFLAGS_BASE) -Code=Asmcode
 CFLAGS = $(CFLAGS_ASM)
+
 
 ASFLAGS  = -cpu=300HN -nologo
 
@@ -89,7 +90,8 @@ build/link.sub: $(OBJS)
 	@printf -- "-start=PIntPRG,P,PP,C,D\$$DSEC,D\$$BSEC,C\$$DSEC,C\$$BSEC,D/5E\r\n" >> build/link.sub.tmp
 	@printf -- "-start=CP/BB0E\r\n" >> build/link.sub.tmp
 
-	@printf -- "-start=B,R/FE00\r\n"             >> build/link.sub.tmp
+	@printf -- "-start=B_RAM/F780\r\n"           >> build/link.sub.tmp
+	@printf -- "-start=B,R/FEF0\r\n"             >> build/link.sub.tmp
 	@printf -- "-start=S/FF80\r\n"               >> build/link.sub.tmp
 	@printf -- "-form=stype\r\n"             >> build/link.sub.tmp
 	@printf -- "-list=build\\linked.map\r\n" >> build/link.sub.tmp

@@ -29,7 +29,7 @@ void ui_enter_ir_session(void) {
 // ROM: 0x9756  74.7%
 void ui_handle_main_menu(void) {
   uint16_t cost;
-  const uint8_t *costTable = menuItemCostTable;
+  const uint8_t *costTable = MENU_ITEM_COSTS;
 
   /* A popup is active — any button dismisses it back to the normal menu. */
   if (gCurSubstateY != MENU_POPUP_NONE) {
@@ -183,14 +183,14 @@ void ui_render_main_menu(void) {
     if ((uint8_t)i == menu_cursor) {
       uint16_t cursor_addr = (uint16_t)((animTick & 1) + 3) * 0x10 + 0x278 + base;
       drv_eeprom_read_block(cursor_addr, sprite_buf, 0x10);
-      gfx_blit_to_buffer(8, 8, 4, (uint8_t)(mainMenuYCoords[i] - 8),
+      gfx_blit_to_buffer(8, 8, 4, (uint8_t)(MAIN_MENU_Y_COORDS[i] - 8),
                          sprite_buf, e0_buf, 0x10);
     }
 
     {
       uint16_t item_addr = 0xE10 + base + (uint16_t)i * 0x40;
       drv_eeprom_read_block(item_addr, sprite_buf, 0x40);
-      gfx_blit_to_buffer(0x10, 0x10, 0, mainMenuYCoords[i],
+      gfx_blit_to_buffer(0x10, 0x10, 0, MAIN_MENU_Y_COORDS[i],
                          sprite_buf, e0_buf, 0x10);
     }
 

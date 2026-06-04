@@ -32,7 +32,7 @@ void ui_render_empty_eeprom(void) {
 
   for (i = 0; i < 0x20; i++) {
     uint8_t pix;
-    pix = walkerFaceNeutral[i];
+    pix = IMG_FACE_NEUTRAL[i];
     buf[0x50 + i] |= (pix * 8);
     buf[0x50 + i + 0x40] |= (pix / 0x20);
   }
@@ -43,13 +43,13 @@ void ui_render_empty_eeprom(void) {
     if (frame) {
       for (i = 0; i < 0x10; i++) {
         uint8_t pix;
-        pix = walkerEmptyExtraGlyph[i];
+        pix = IMG_EXTRA_GLYPH_EMPTY[i];
         buf[0xD8 + i] |= (pix * 0x10);
       }
       drv_lcd_blit(0x20, 0x10, buf, 0x20, 0x20);
 
       for (i = 0; i < 0x10; i++) {
-        buf[i] = walkerEmptyExtraGlyph[i] / 0x10;
+        buf[i] = IMG_EXTRA_GLYPH_EMPTY[i] / 0x10;
       }
       drv_lcd_blit(0x2C, 0x30, buf, 8, 8);
     } else {
@@ -74,7 +74,7 @@ void ui_render_sad_walker(void) {
   dst = buf + 0x50;
   for (i = 0; i < 0x20; i++) {
     uint8_t pix;
-    pix = walkerFaceSad[i];
+    pix = IMG_FACE_SAD[i];
     dst[i] |= (pix * 8);
     dst[i + 0x40] |= (pix / 0x20);
   }
@@ -111,7 +111,7 @@ void ui_render_happy_walker(uint8_t show_ir) {
   dst = buf + 0x50;
   for (i = 0; i < 0x20; i++) {
     uint8_t pix;
-    pix = walkerFaceHappy[i];
+    pix = IMG_FACE_HAPPY[i];
     dst[i] |= (pix * 8);
     dst[i + 0x40] |= (pix / 0x20);
   }

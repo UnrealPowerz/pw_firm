@@ -187,7 +187,7 @@ void drv_sound_update(void) {
   if ((soundData[1] & 0x7F) == 0x7D) {
     uint32_t t = (uint32_t)0x14000 * soundData[0];
     uint16_t d = (uint16_t)(t / soundHeader);
-    uint8_t divisor = PERIODTAB[soundData[1] & 0x7F];
+    uint8_t divisor = SOUND_PERIOD_TABLE[soundData[1] & 0x7F];
     noteDuration = (uint32_t)d / divisor;
     drv_sound_set_freq_pwm(0);
     soundData += 2;
@@ -197,13 +197,13 @@ void drv_sound_update(void) {
   if (soundData[1] & 0x80) {
     uint32_t t = (uint32_t)0x14000 * soundData[0];
     uint16_t d = (uint16_t)(t / soundHeader);
-    uint8_t divisor = PERIODTAB[soundData[1] & 0x7F];
+    uint8_t divisor = SOUND_PERIOD_TABLE[soundData[1] & 0x7F];
     noteDuration = (uint32_t)d / divisor;
     isSeparateNote = 0;
   } else {
     uint32_t t = (uint32_t)0x14000 * soundData[0];
     uint16_t d = (uint16_t)(t / soundHeader);
-    uint8_t divisor = PERIODTAB[soundData[1] & 0x7F];
+    uint8_t divisor = SOUND_PERIOD_TABLE[soundData[1] & 0x7F];
     d -= 0x140;
     noteDuration = (uint32_t)d / divisor;
     isSeparateNote = 1;
@@ -213,7 +213,7 @@ void drv_sound_update(void) {
     if ((soundData[-1] & 0x80) != 0x80) {
       TMRW = 0x83;
       TCRW = 0xC2;
-      drv_sound_set_freq_pwm(PERIODTAB[soundData[1] & 0x7F]);
+      drv_sound_set_freq_pwm(SOUND_PERIOD_TABLE[soundData[1] & 0x7F]);
     }
   }
 

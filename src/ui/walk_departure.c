@@ -71,7 +71,7 @@ void ui_draw_cloud_rise_anim(void) {
   if (gCurSubstateZ <= 4) {
     drv_eeprom_read_block(0x2480, ptr, 0x10);
     drv_lcd_blit(
-        0x2c, cloudAnimYTable[gCurSubstateZ],
+        0x2c, ANIM_CLOUD_Y[gCurSubstateZ],
         (void *)ptr, 8, 8);
   }
 

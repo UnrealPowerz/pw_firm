@@ -280,7 +280,7 @@ void ui_handle_factory_test(void) {
     if (drv_button_is_triggered(BTN_M) == 0) {
       return;
     }
-    drv_sound_set_data((uint8_t *)factoryTestSoundData);
+    drv_sound_set_data((uint8_t *)FACTORY_TEST_SOUND);
     subY = gCurSubstateY - 1;
     goto set_substate_y_and_clear_a;
 
@@ -417,7 +417,7 @@ void ui_handle_factory_test(void) {
     PDR1 |= 0x01;
     currentlyActiveView = VIEW_ACCEL_DEBUG;
     sys_init_accel_debug();
-    drv_sound_set_data((uint8_t *)factoryTestSoundData);
+    drv_sound_set_data((uint8_t *)FACTORY_TEST_SOUND);
     return;
 
   default:
@@ -425,7 +425,7 @@ void ui_handle_factory_test(void) {
   }
 
 do_sound_and_inc:
-  drv_sound_set_data((uint8_t *)factoryTestSoundData);
+  drv_sound_set_data((uint8_t *)FACTORY_TEST_SOUND);
 do_inc:
   subY = gCurSubstateY + 1;
 set_substate_y_and_clear_a:
@@ -452,7 +452,7 @@ void ui_render_factory_test(void) {
     if (gCurSubstateZ != 0) {
       goto case_d;
     }
-    draw_string(0x20, 0x08, factoryStr_NG1);
+    draw_string(0x20, 0x08, FACTORY_STR_NG1);
     goto case_d;
 
   case 0x01:
@@ -483,53 +483,53 @@ void ui_render_factory_test(void) {
     if (((uint16_t)animTick >> 1) & 1) {
       goto case_d;
     }
-    draw_string(0x06, 0x38, factoryStr_V);
+    draw_string(0x06, 0x38, FACTORY_STR_V);
     goto case_d;
 
   case 0x08:
     if (((uint16_t)animTick >> 1) & 1) {
       goto case_d;
     }
-    draw_string(0x2D, 0x38, factoryStr_V);
+    draw_string(0x2D, 0x38, FACTORY_STR_V);
     goto case_d;
 
   case 0x09:
     if (((uint16_t)animTick >> 1) & 1) {
       goto case_d;
     }
-    draw_string(0x55, 0x38, factoryStr_V);
+    draw_string(0x55, 0x38, FACTORY_STR_V);
     goto case_d;
 
   case 0x0A:
-    draw_string(0x20, 0x08, factoryStr_EEP);
+    draw_string(0x20, 0x08, FACTORY_STR_EEP);
     goto case_d;
 
   case 0x0C:
     if (dowsing_item_pos != 0) {
       goto case_d;
     }
-    draw_string(0x20, 0x08, factoryStr_NG2);
+    draw_string(0x20, 0x08, FACTORY_STR_NG2);
     goto case_d;
 
   case 0x0E:
     if (dowsing_item_pos != 0) {
       goto case_d;
     }
-    draw_string(0x20, 0x08, factoryStr_NG3);
+    draw_string(0x20, 0x08, FACTORY_STR_NG3);
     goto case_d;
 
   case 0x0F:
     if (DAT_f7d1 != *(uint8_t *)(&accelXPos)) {
       goto case_d;
     }
-    draw_string(0x20, 0x08, factoryStr_NG4);
+    draw_string(0x20, 0x08, FACTORY_STR_NG4);
     goto case_d;
 
   case 0x11:
     if (dowsing_item_pos != 0) {
       goto case_d;
     }
-    draw_string(0x20, 0x08, factoryStr_NG5);
+    draw_string(0x20, 0x08, FACTORY_STR_NG5);
     goto case_d;
 
   case 0x12:
@@ -545,10 +545,10 @@ void ui_render_factory_test(void) {
 
     /* Draw hex digits of accelYPos */
     {
-      const uint8_t *hexTable = hexDigits;
+      const uint8_t *hexTable = HEX_DIGITS;
       uint16_t val = accelYPos;
 
-      draw_string(0x20, 0x00, factoryStr_OK);
+      draw_string(0x20, 0x00, FACTORY_STR_OK);
 
       buf[4] = 0;
       buf[0] = hexTable[(val >> 12) & 0xF];
@@ -561,9 +561,9 @@ void ui_render_factory_test(void) {
     }
 
     if (!(((uint16_t)animTick >> 1) & 1)) {
-      draw_string(0x06, 0x38, factoryStr_V);
-      draw_string(0x2D, 0x38, factoryStr_V);
-      draw_string(0x55, 0x38, factoryStr_V);
+      draw_string(0x06, 0x38, FACTORY_STR_V);
+      draw_string(0x2D, 0x38, FACTORY_STR_V);
+      draw_string(0x55, 0x38, FACTORY_STR_V);
     }
     goto case_d;
 

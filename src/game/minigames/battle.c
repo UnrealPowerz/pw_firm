@@ -24,7 +24,7 @@
  *              BTN_L path)
  *   bits 3-4 : attack outcome    (read via (DAT_f7d8 >> 3) & 3)
  *   bits 5-7 : move-class index  (selects 3-entry row in
- *              battleMoveOutcomeWeights)
+ *              BATTLE_OUTCOME_WEIGHTS)
  *
  * Globals repurposed for battle (all named for their non-battle use):
  *   gCurSubstateA      = wiggle/turn counter
@@ -122,9 +122,9 @@ void ui_render_battle(void) {
 
     if (gCurSubstateZ == BS_THROW_BALL) {
       /* "Threw a Poke Ball" — alpha-blend the ball over the pokemon as it
-         arcs in. fftTwiddleTable doubles as a sine table for the arc. */
+         arcs in. FFT_TWIDDLE doubles as a sine table for the arc. */
       uint8_t ball_x = 0x2C - (accelXPos << 2);
-      const int16_t *sine = (const int16_t *)fftTwiddleTable;
+      const int16_t *sine = (const int16_t *)FFT_TWIDDLE;
       int16_t s = sine[(uint16_t)accelXPos << 2];
       uint8_t ball_y = (uint8_t)(0x14 - (uint8_t)((uint16_t)(s << 1) >> 8));
 
@@ -374,10 +374,10 @@ void game_battle_process_turn(void) {
   move_class = (uint8_t)((DAT_f7d8 >> 5) & 0x07);
   weights_idx = (uint8_t)(move_class * 3);
 
-  if (rnd_pct < battleMoveOutcomeWeights[weights_idx + 2]) {
+  if (rnd_pct < BATTLE_OUTCOME_WEIGHTS[weights_idx + 2]) {
     DAT_f7d8 = (DAT_f7d8 & 0xE7) | 0x10;            /* outcome = crit (2) */
-  } else if (rnd_pct < battleMoveOutcomeWeights[weights_idx + 2] +
-                       battleMoveOutcomeWeights[weights_idx + 1]) {
+  } else if (rnd_pct < BATTLE_OUTCOME_WEIGHTS[weights_idx + 2] +
+                       BATTLE_OUTCOME_WEIGHTS[weights_idx + 1]) {
     DAT_f7d8 = (DAT_f7d8 & 0xE7) | 0x08;            /* outcome = evade (1) */
   } else {
     DAT_f7d8 = (DAT_f7d8 & 0xE7);                   /* outcome = hit (0) */
@@ -438,7 +438,7 @@ uint8_t game_battle_check_capture_success(void) {
 
   if (DAT_f7d1 == 0)
     return 0;
-  if (captureSuccessProbs[DAT_f7d1 - 1] > rnd_pct)
+  if (CAPTURE_PROBS[DAT_f7d1 - 1] > rnd_pct)
     return 1;
   return 0;
 }
@@ -558,7 +558,7 @@ void ui_handle_battle(void) {
     break;
 
   case BS_APPEARED:
-    DAT_f7d5 = battleAnimP1XFrames[tick];
+    DAT_f7d5 = BATTLE_ANIM_P1_X[tick];
     if (accelXPos < dowsing_item_pos)
       return;
     DAT_f7d8_BIT.b0 = 1;        /* started_fight flag */
@@ -575,8 +575,8 @@ void ui_handle_battle(void) {
        or — if HP runs out — to the fled screen. */
     uint8_t outcome;
     uint8_t hp;
-    accelYPos = battleAnimP3YFrames[(uint16_t)tick * 2];
-    DAT_f7d5 = battleAnimP3XFrames[(uint16_t)tick * 2];
+    accelYPos = BATTLE_ANIM_P3[tick].y;
+    DAT_f7d5 = BATTLE_ANIM_P3[tick].x;
     if (drv_sound_is_playing())
       return;
     if (tick < dwell)
@@ -625,8 +625,8 @@ void ui_handle_battle(void) {
        Sub == 0 decrements gCurSubstateA (player turn counter); when it hits
        zero the player has lost. */
     uint8_t sub;
-    accelYPos = battleAnimP4YFrames[(uint16_t)tick * 2];
-    DAT_f7d5 = battleAnimP4XFrames[(uint16_t)tick * 2];
+    accelYPos = BATTLE_ANIM_P4[tick].y;
+    DAT_f7d5 = BATTLE_ANIM_P4[tick].x;
     if (drv_sound_is_playing())
       return;
     if (tick < dwell)
@@ -707,7 +707,7 @@ void ui_handle_battle(void) {
     if (tick > 3) {
       DAT_f7d5 = 0xE0;
     } else {
-      DAT_f7d5 = battleAnimP1XFrames[3 - tick];
+      DAT_f7d5 = BATTLE_ANIM_P1_X[3 - tick];
     }
     if (drv_button_is_triggered(BTN_ANY)) {
       void *trainer_buf, *log_buf;

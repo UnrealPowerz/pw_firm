@@ -62,7 +62,7 @@ void ui_render_accel_debug(void) {
   *q = 0;
   draw_string(0x54, 0x00, (const char *)p);
 
-  hexTable = (uint8_t *)hexDigits;
+  hexTable = (uint8_t *)HEX_DIGITS;
 
   /* Draw hex digits of axisStepThresholdLo at 0x820 */
   {
@@ -133,6 +133,6 @@ void ui_render_accel_debug(void) {
     while (!SSSR_BIT.TEND)
       ;
     PDR1 |= 0x01;
-    draw_string(0x08, 0x20, factoryStr_OK);
+    draw_string(0x08, 0x20, FACTORY_STR_OK);
   }
 }

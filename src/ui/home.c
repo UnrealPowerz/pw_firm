@@ -72,7 +72,7 @@ void ui_render_home_route(void) {
 
   if (gCurSubstateZ != 0) {
     uint8_t idx;
-    idx = routeIconIndices[gCurSubstateY - 1];
+    idx = ROUTE_ICON_INDICES[gCurSubstateY - 1];
     gfx_draw_small_route_icon(idx);
   }
   ui_render_route_image();

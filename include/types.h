@@ -139,6 +139,13 @@ typedef union {
     } BIT;
 } byte_bits_t;
 
+/* Interleaved (Y, X) byte coord pair used by sprite-position tables
+ * (BATTLE_ANIM_P3 / BATTLE_ANIM_P4). 2-byte struct, no padding on H8. */
+struct yx_pair {
+    uint8_t y;
+    uint8_t x;
+};
+
 /* Per-tick handler installed in currentEventLoopFunc / passed to
  * sys_set_handler(). The main loop calls this from the foreground; both
  * sleep/active loops and the IR comm loop are installed via this pointer. */

@@ -192,6 +192,12 @@ def parse_functions(lines, func_names, all_labels):
                     func_call_ptrs.add(lbl)
                 elif lbl in data_labels:
                     data_refs.add(lbl)
+                elif not is_local_label(lbl) and not REG_PAT.match(lbl):
+                    # Symbolic reference whose definition isn't in main.mar
+                    # (e.g. a rename that touched usage but not the label
+                    # row in the data section). Treat as data ref so it
+                    # can still cross-match with C-side accesses.
+                    data_refs.add(lbl)
 
         # ---- Large hex immediates (scan whole line including .DATA.W etc.) ----
         for m in re.finditer(r"#H'([0-9A-Fa-f]+)", line):

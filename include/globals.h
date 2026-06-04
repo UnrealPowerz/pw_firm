@@ -3,6 +3,27 @@
 
 #include "types.h"
 
+/* ============================================================
+ * RAM data layout (B_RAM section 0xF780..0xFEEF)
+ *
+ * `struct b_ram_section` mirrors main.mar's B_RAM symbol-by-symbol.
+ * The single instance `g` is declared in src/globals.c and anchored
+ * at 0xF780 by the linker (see -start=B_RAM/F780 in Makefile).
+ *
+ * Defined ABOVE the volatile-pointer macros that follow so member
+ * identifiers don't get macro-expanded inside the struct definition.
+ * Members are currently storage-only — every existing macro below
+ * still drives RAM access; per-member migration to `g.<name>` is a
+ * later step that requires deleting the corresponding macros first.
+ *
+ * Verify with `scripts/compare_data_layout.py --section B_RAM`.
+ * ============================================================ */
+struct b_ram_section {
+#include "b_ram_layout.h"
+};
+
+extern volatile struct b_ram_section g;
+
 /* --- System Status Flags --- */
 #define statusFlags (*(volatile uint8_t *)0xF7B5u)
 #define statusFlags_BIT (((volatile status_flags_t *)&statusFlags)->BIT)
@@ -332,63 +353,62 @@ extern volatile uint8_t ir_status;
 /* ROM data labels — defined as per-label const arrays in src/romdata.c.
  * optlnk packs them contiguously within `#pragma section P` in source
  * order, reproducing the original ROM byte layout. */
-extern const uint8_t battleAnimP1XFrames[4];
-extern const uint8_t battleAnimP3YFrames[1];
-extern const uint8_t battleAnimP3XFrames[17];
-extern const uint8_t battleAnimP4YFrames[1];
-extern const uint8_t battleAnimP4XFrames[17];
-extern const uint8_t battleMoveOutcomeWeights[15];
-extern const uint8_t captureSuccessProbs[5];
-extern const uint8_t PERIODTAB[42];
+extern const uint8_t BATTLE_ANIM_P1_X[4];
+extern const struct yx_pair BATTLE_ANIM_P3[9];
+extern const struct yx_pair BATTLE_ANIM_P4[9];
+extern const uint8_t BATTLE_OUTCOME_WEIGHTS[15];
+extern const uint8_t CAPTURE_PROBS[5];
+extern const uint8_t SOUND_PERIOD_TABLE[42];
 extern const uint8_t IMG_POKEWALKER_LARGE[256];
-extern const uint8_t walkerFaceNeutral[32];
-extern const uint8_t walkerFaceHappy[32];
-extern const uint8_t walkerFaceSad[32];
-extern const uint8_t walkerEmptyExtraGlyph[16];
+extern const uint8_t IMG_FACE_NEUTRAL[32];
+extern const uint8_t IMG_FACE_HAPPY[32];
+extern const uint8_t IMG_FACE_SAD[32];
+extern const uint8_t IMG_EXTRA_GLYPH_EMPTY[16];
 extern const uint8_t IMG_POKEWALKER_IR_ACTIVE[16];
-extern const uint8_t font3ByteGlyphs[76];
-extern const uint8_t DAT_bd40[32];
-extern const uint8_t _pad_bd60[16];
-extern const uint8_t ballDropAnimYTable[6];
-extern const uint8_t sparklesAnimXYTable[6];
-extern const uint8_t cloudAnimYTable[6];
-extern const uint8_t L_BD82[2];
-extern const uint8_t interactionRewardPtrTable[76];
-extern const uint8_t fftTwiddleTable[160];
-extern const uint8_t musicNoteYTableA[1];
-extern const uint8_t musicNoteYTableB[1];
-extern const uint8_t musicNoteInitialState[4];
-extern const uint8_t _pad_be76[8];
-extern const uint8_t _pad_be7e[24];
-extern const uint8_t _pad_be96[26];
-extern const uint8_t routeIconIndices[8];
-extern const uint8_t lcdInitFallbackSeq[44];
-extern const uint8_t _pad_bee4[20];
-extern const uint8_t fftBinTable[10];
-extern const uint8_t _pad_bf02[12];
-extern const uint8_t menuItemCostTable[6];
-extern const uint8_t mainMenuYCoords[6];
-extern const uint8_t radarStateXTable[4];
-extern const uint8_t radarStateYDivisor[3];
-extern const uint8_t radarFrameMultiplier[4];
-extern const uint8_t radarYCoordTable[5];
-extern const uint8_t _pad_bf2a[38];
-extern const uint8_t _pad_bf50[38];
-extern const char factoryStr_NG1[4];
-extern const char factoryStr_EEP[4];
-extern const char factoryStr_NG2[4];
-extern const char factoryStr_NG3[4];
-extern const char factoryStr_NG4[4];
-extern const char factoryStr_V[2];
-extern const char factoryStr_NG5[4];
-extern const char factoryStr_OK[3];
-extern const char factoryStr_NG6[4];
-extern const uint8_t _pad_bf97[1];
-extern const uint8_t nintendoMagic[10];
-extern const uint8_t factoryTestSoundData[8];
-extern const uint8_t hexDigits[16];
-extern const uint8_t _dsec_dbsec_table[14];
-extern const uint8_t _rom_tail_padding[56];
+extern const uint8_t FONT_3BYTE_GLYPHS[108];
+extern const uint16_t UNREF_SWITCH_TABLE_3FFA[8];
+extern const uint8_t ANIM_BALL_DROP_Y[6];
+extern const uint8_t ANIM_SPARKLES_XY[6];
+extern const uint8_t ANIM_CLOUD_Y[5];
+extern const uint8_t PAD_BD81[1];
+extern const int8_t DOWSING_GRASS_BOB[2];
+extern const uint16_t INTERACTION_REWARD_PTRS[38];
+extern const int16_t FFT_TWIDDLE[80];
+extern const uint8_t MUSIC_NOTE_HEIGHTS[6];
+extern const uint8_t UNREF_SWITCH_LUT_72CE[8];
+extern const uint8_t UNREF_SWITCH_LUT_7364[24];
+extern const uint8_t UNREF_SWITCH_LUT_741E[26];
+extern const uint8_t ROUTE_ICON_INDICES[8];
+extern const uint8_t LCD_INIT_FALLBACK_SEQ[44];
+extern const uint16_t UNREF_SWITCH_TABLE_8DD2[10];
+extern const uint8_t FFT_BINS[10];
+extern const uint16_t UNREF_SWITCH_TABLE_97B0[6];
+extern const uint8_t MENU_ITEM_COSTS[6];
+extern const uint8_t MAIN_MENU_Y_COORDS[6];
+extern const uint8_t RADAR_STATE_X[4];
+extern const uint8_t RADAR_STATE_Y_DIVISOR[3];
+extern const uint8_t RADAR_FRAME_MULT[4];
+extern const uint8_t RADAR_Y_COORDS[4];
+extern const uint8_t PAD_BF29[1];
+extern const uint16_t UNREF_SWITCH_TABLE_AA8E[19];
+extern const uint16_t UNREF_SWITCH_TABLE_AD20[19];
+extern const char FACTORY_STR_NG1[4];
+extern const char FACTORY_STR_EEP[4];
+extern const char FACTORY_STR_NG2[4];
+extern const char FACTORY_STR_NG3[4];
+extern const char FACTORY_STR_NG4[4];
+extern const char FACTORY_STR_V[2];
+extern const char FACTORY_STR_NG5[4];
+extern const char FACTORY_STR_OK[3];
+extern const char FACTORY_STR_NG6[4];
+extern const uint8_t PAD_BF97[1];
+extern const char NINTENDO_MAGIC[9];
+extern const uint8_t PAD_BFA1[1];
+extern const uint8_t FACTORY_TEST_SOUND[8];
+extern const char HEX_DIGITS[16];
+extern const uint16_t CRT_INIT_TABLE[5];
+extern const uint8_t CRT_INIT_DATA[4];
+extern const uint8_t ROM_TAIL_PADDING[56];
 
 
 /* --- Sound Engine Globals (Fixed addresses) --- */

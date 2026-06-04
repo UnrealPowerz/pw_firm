@@ -193,7 +193,7 @@ void drv_lcd_init(void) {
 
   ptr = buf;
   if (*ptr == 0 || *ptr == 0xFF) {
-    ptr = (uint8_t *)lcdInitFallbackSeq;
+    ptr = (uint8_t *)LCD_INIT_FALLBACK_SEQ;
   }
 
   lcdShadeBase = *ptr++;
