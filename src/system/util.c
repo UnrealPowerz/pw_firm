@@ -16,12 +16,12 @@ void sys_delay_short(void) {
 }
 
 // ROM: 0x25c8  66.7%
-void sys_seed_rng(uint32_t seed) { nextRandom = seed; }
+void sys_seed_rng(uint32_t seed) { g.nextRandom = seed; }
 
 // ROM: 0x25d0  58.3%  saves: er3,er4,er5,er6
 uint32_t sys_get_rng(void) {
-  uint32_t x = nextRandom * 1664525 + 1013904223;
-  nextRandom = x;
+  uint32_t x = g.nextRandom * 1664525 + 1013904223;
+  g.nextRandom = x;
   return x;
 }
 

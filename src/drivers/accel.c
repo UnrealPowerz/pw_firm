@@ -105,45 +105,45 @@ void drv_accel_sample(void) {
     ;
   PDR9 |= 0x01;
 
-  accelXSamples[accelSampleCount] = (int8_t)buf[1];
-  accelYSamples[accelSampleCount] = (int8_t)buf[3];
-  accelZSamples[accelSampleCount] = (int8_t)buf[5];
+  accelXSamples[g.accelSampleCount] = (int8_t)buf[1];
+  accelYSamples[g.accelSampleCount] = (int8_t)buf[3];
+  accelZSamples[g.accelSampleCount] = (int8_t)buf[5];
 
-  if ((uint8_t)currentlyActiveView == VIEW_ACCEL_DEBUG) {
-    prev_count = (accelSampleCount + 0x3F) & 0x3F;
-    if (accelSampleCount == 0) {
+  if ((uint8_t)g.currentlyActiveView == VIEW_ACCEL_DEBUG) {
+    prev_count = (g.accelSampleCount + 0x3F) & 0x3F;
+    if (g.accelSampleCount == 0) {
       accelPos_X = 0;
       accelPos_Y = 0;
-      accelZPos = 0;
+      g.accelZPos = 0;
     }
 
-    if ((int16_t)accelXSamples[accelSampleCount] -
+    if ((int16_t)accelXSamples[g.accelSampleCount] -
             (int16_t)accelXSamples[prev_count] <
         0) {
-      accelPos_X += (uint16_t)(-accelXSamples[accelSampleCount] +
+      accelPos_X += (uint16_t)(-accelXSamples[g.accelSampleCount] +
                                accelXSamples[prev_count]);
     } else {
-      accelPos_X += (uint16_t)(accelXSamples[accelSampleCount] -
+      accelPos_X += (uint16_t)(accelXSamples[g.accelSampleCount] -
                                accelXSamples[prev_count]);
     }
 
-    if ((int16_t)accelYSamples[accelSampleCount] -
+    if ((int16_t)accelYSamples[g.accelSampleCount] -
             (int16_t)accelYSamples[prev_count] <
         0) {
-      accelPos_Y += (uint16_t)(-accelYSamples[accelSampleCount] +
+      accelPos_Y += (uint16_t)(-accelYSamples[g.accelSampleCount] +
                                accelYSamples[prev_count]);
     } else {
-      accelPos_Y += (uint16_t)(accelYSamples[accelSampleCount] -
+      accelPos_Y += (uint16_t)(accelYSamples[g.accelSampleCount] -
                                accelYSamples[prev_count]);
     }
 
-    if ((int16_t)accelZSamples[accelSampleCount] -
+    if ((int16_t)accelZSamples[g.accelSampleCount] -
             (int16_t)accelZSamples[prev_count] <
         0) {
-      accelZPos += (uint16_t)(-accelZSamples[accelSampleCount] +
+      g.accelZPos += (uint16_t)(-accelZSamples[g.accelSampleCount] +
                               accelZSamples[prev_count]);
     } else {
-      accelZPos += (uint16_t)(accelZSamples[accelSampleCount] -
+      g.accelZPos += (uint16_t)(accelZSamples[g.accelSampleCount] -
                               accelZSamples[prev_count]);
     }
   }

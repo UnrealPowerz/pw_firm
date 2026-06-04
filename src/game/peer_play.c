@@ -11,13 +11,13 @@
  *   ui_handle_peer_play             Empty per-tick handler — rendering does
  *                                   all the work (advances on its own).
  *   game_calculate_interaction_reward
- *                                   Compute the watts/item reward tier from
+ *                                   Compute the g.watts/item reward tier from
  *                                   step counts; populate the next free
  *                                   dowsing item slot if appropriate.
  *   ui_draw_music_note              Helper to blit a single music-note sprite
  *                                   with optional vertical shift.
  *   ui_render_peer_play             Main renderer — five-phase animation
- *                                   driven by gCurSubstateZ (0..4).
+ *                                   driven by g.gCurSubstateZ (0..4).
  *
  *   game_find_seen_peer             EEPROM scan called from ir_protocol.c
  *                                   during handshake to check if a peer's
@@ -45,8 +45,8 @@ void game_calculate_interaction_reward(void) {
 
   /* score = own session steps + peer session steps + 10*(own recent + peer recent),
      clamped to 20000. */
-  score = sessionSteps + *(uint32_t *)peer_steps;
-  total_daily_steps = recentSessionSteps + *(uint16_t *)(peer_steps + 4);
+  score = g.sessionSteps + *(uint32_t *)peer_steps;
+  total_daily_steps = g.recentSessionSteps + *(uint16_t *)(peer_steps + 4);
   score += (uint32_t)total_daily_steps * 10;
 
   if (score > 20000) {
@@ -60,46 +60,46 @@ void game_calculate_interaction_reward(void) {
     }
   }
 
-  dowsing_item_pos = 0;
+  g.dowsing_item_pos = 0;
   if (free_slot < 10) {
     /* Watts award = score/200, clamped to [1, 99]. */
-    dowsing_item_pos = (uint8_t)(score / 200);
-    if (dowsing_item_pos == 0) {
-      dowsing_item_pos = 1;
+    g.dowsing_item_pos = (uint8_t)(score / 200);
+    if (g.dowsing_item_pos == 0) {
+      g.dowsing_item_pos = 1;
     }
-    if (dowsing_item_pos > 99) {
-      dowsing_item_pos = 99;
+    if (g.dowsing_item_pos > 99) {
+      g.dowsing_item_pos = 99;
     }
-    game_add_watts(dowsing_item_pos);
+    game_add_watts(g.dowsing_item_pos);
   }
 
-  /* Pick the result-text index (DAT_f7d1 = 0x2C..0x30 → TEXT_HAD_ADVENTURES,
+  /* Pick the result-text index (g.DAT_f7d1 = 0x2C..0x30 → TEXT_HAD_ADVENTURES,
      PLAY_BATTLED, etc.) and the dowsing-item index based on score tier. */
   if (score >= 20000) {
-    DAT_f7d1 = 0x2C;
-    if (dowsing_item_pos != 0) return;
-    accelXPos = (sessionSteps > *(uint32_t *)peer_steps) ? 0 : 1;
+    g.DAT_f7d1 = 0x2C;
+    if (g.dowsing_item_pos != 0) return;
+    g.accelXPos = (g.sessionSteps > *(uint32_t *)peer_steps) ? 0 : 1;
   } else if (score >= 10000) {
-    DAT_f7d1 = 0x2D;
-    if (dowsing_item_pos != 0) return;
-    accelXPos = (sessionSteps > *(uint32_t *)peer_steps) ? 2 : 3;
+    g.DAT_f7d1 = 0x2D;
+    if (g.dowsing_item_pos != 0) return;
+    g.accelXPos = (g.sessionSteps > *(uint32_t *)peer_steps) ? 2 : 3;
   } else if (score >= 5000) {
-    DAT_f7d1 = 0x2E;
-    if (dowsing_item_pos != 0) return;
-    accelXPos = (sessionSteps > *(uint32_t *)peer_steps) ? 4 : 5;
+    g.DAT_f7d1 = 0x2E;
+    if (g.dowsing_item_pos != 0) return;
+    g.accelXPos = (g.sessionSteps > *(uint32_t *)peer_steps) ? 4 : 5;
   } else if (score >= 2500) {
-    DAT_f7d1 = 0x2F;
-    if (dowsing_item_pos != 0) return;
-    accelXPos = (sessionSteps > *(uint32_t *)peer_steps) ? 6 : 7;
+    g.DAT_f7d1 = 0x2F;
+    if (g.dowsing_item_pos != 0) return;
+    g.accelXPos = (g.sessionSteps > *(uint32_t *)peer_steps) ? 6 : 7;
   } else {
-    DAT_f7d1 = 0x30;
-    if (dowsing_item_pos != 0) return;
-    accelXPos = (sessionSteps > *(uint32_t *)peer_steps) ? 8 : 9;
+    g.DAT_f7d1 = 0x30;
+    if (g.dowsing_item_pos != 0) return;
+    g.accelXPos = (g.sessionSteps > *(uint32_t *)peer_steps) ? 8 : 9;
   }
 
   /* Write the chosen item id into the free slot. */
   {
-    uint16_t item_id = save_get_dowsing_item_id(accelXPos);
+    uint16_t item_id = save_get_dowsing_item_id(g.accelXPos);
     item_table[free_slot * 2] = item_id;
     drv_eeprom_write_block(0xCEC8, item_table, 0x28);
   }
@@ -114,13 +114,13 @@ void ui_start_peer_play_app(void) {
   sys_init_heap();
   buf = sbrk(0x38);
   drv_eeprom_read_block(0xF6C0, buf, 0x38);
-  /* Copy bit 0 of buf[0x37] into bit 1 of gCurSubstateY -- the ROM uses
+  /* Copy bit 0 of buf[0x37] into bit 1 of g.gCurSubstateY -- the ROM uses
    * bld+bst here, which means the destination bit is unconditionally set
    * to the source bit (not OR'd as the original C suggested). */
-  ((byte_bits_t *)&gCurSubstateY)->BIT.b1 =
+  ((byte_bits_t *)&g.gCurSubstateY)->BIT.b1 =
       ((byte_bits_t *)&buf[0x37])->BIT.b0;
-  gCurSubstateZ = 0;
-  gCurSubstateA = 0;
+  g.gCurSubstateZ = 0;
+  g.gCurSubstateA = 0;
   game_calculate_interaction_reward();
   game_rotate_interaction_log();
   game_rotate_interaction_log_record();
@@ -146,9 +146,9 @@ void ui_draw_music_note(uint8_t x, uint8_t y, uint8_t shift) {
 //   caller's r3/r4/r5/r6 freely, like ui_load_inventory_mask. ch38 emits
 //   `push.l er6; push.l er5; push.w r4; push.w r3` (12 bytes), breaking
 //   alignment from byte 0. ROM also uses the `bld/bst` bit-copy idiom
-//   (`bld #1, gCurSubstateY; bst #0, r6l`) for the `r6l = (gCurSubstateY >>
+//   (`bld #1, g.gCurSubstateY; bst #0, r6l`) for the `r6l = (g.gCurSubstateY >>
 //   1) & 1` pattern; ch38 emits the `btst/beq/mov #1` triple from the
-//   explicit `if (gCurSubstateY & 2) r6l = 1` form. Rewriting that one site
+//   explicit `if (g.gCurSubstateY & 2) r6l = 1` form. Rewriting that one site
 //   with byte_bits_t bit-copy might gain ~2pp but the prologue blocker caps
 //   the function regardless. Body's branch structure and call args look
 //   correct.
@@ -156,18 +156,18 @@ void ui_draw_music_note(uint8_t x, uint8_t y, uint8_t shift) {
 //   ABI blocker as ui_load_inventory_mask / gfx_draw_animated_grass)
 // ROM: 0x6574  23.1%
 void ui_render_peer_play(void) {
-  uint8_t z = gCurSubstateZ;
+  uint8_t z = g.gCurSubstateZ;
   uint8_t peer_facing = 0;     /* 0 = flipped, 1 = native (driven by Y bit 1) */
   uint8_t step, entry_x, r0h;
 
   if (z < 3) {
     gfx_draw_own_pokemon_small(0x38, 0x08);
-    if (gCurSubstateY & 0x02) {
+    if (g.gCurSubstateY & 0x02) {
       peer_facing = 1;
     }
     if (z == 0) {
       /* Phase 0: peer walks in from the left. x = 8 - 3*(7 - A). */
-      step = (uint8_t)(7 - gCurSubstateA);
+      step = (uint8_t)(7 - g.gCurSubstateA);
       r0h = 3;
       step *= r0h;
       entry_x = (uint8_t)(8 - step);
@@ -190,26 +190,26 @@ void ui_render_peer_play(void) {
     gfx_draw_peer_pokemon_name(0x02, 0x20, 1);
     gfx_draw_text_box(0x30, TEXT_WALKER_HAS_ARRIVED, TEXT_BOX_NO_LINES, TEXT_BOX_STATIC);
   } else if (z == 2) {
-    uint8_t count = gCurSubstateA + 1;
-    uint8_t limit = (gCurSubstateA >> 1) + 1;
+    uint8_t count = g.gCurSubstateA + 1;
+    uint8_t limit = (g.gCurSubstateA >> 1) + 1;
     uint8_t table_idx = 0;
     uint8_t i;
 
-    if (DAT_f7d1 == 0x2C) {
+    if (g.DAT_f7d1 == 0x2C) {
       limit = count;
       if (limit > 5)
         limit = 5;
-    } else if (DAT_f7d1 == 0x2D) {
+    } else if (g.DAT_f7d1 == 0x2D) {
       if (limit > 4)
         limit = 4;
-    } else if (DAT_f7d1 == 0x2E) {
+    } else if (g.DAT_f7d1 == 0x2E) {
       if (limit > 3)
         limit = 3;
-    } else if (DAT_f7d1 == 0x2F) {
+    } else if (g.DAT_f7d1 == 0x2F) {
       if (limit > 2)
         limit = 2;
       table_idx = 1;
-    } else if (DAT_f7d1 == 0x30) {
+    } else if (g.DAT_f7d1 == 0x30) {
       ui_draw_music_note(0x2C, MUSIC_NOTE_HEIGHTS[2], 0);  /* peak height */
       goto music_done;
     }
@@ -219,32 +219,32 @@ void ui_render_peer_play(void) {
       ui_draw_music_note((uint8_t)(i * 8 + 0x1C), note_y, 0);
     }
   music_done:
-    gfx_draw_text_box(0x30, (uint8_t)DAT_f7d1, TEXT_BOX_FULL, TEXT_BOX_STATIC);
+    gfx_draw_text_box(0x30, (uint8_t)g.DAT_f7d1, TEXT_BOX_FULL, TEXT_BOX_STATIC);
   } else if (z == 3) {
     gfx_draw_present_icon(0x20, 0x04);
     gfx_draw_text_box(0x30, TEXT_HERES_A_GIFT, TEXT_BOX_FULL, TEXT_BOX_STATIC);
   } else if (z == 4) {
     gfx_draw_present_icon(0x20, 0x04);
-    if (dowsing_item_pos != 0) {
-      gfx_draw_value_with_icon(0x02, 0x20, 0x0D, (uint16_t)dowsing_item_pos);
+    if (g.dowsing_item_pos != 0) {
+      gfx_draw_value_with_icon(0x02, 0x20, 0x0D, (uint16_t)g.dowsing_item_pos);
     } else {
-      gfx_draw_item_name(0x00, 0x20, (uint8_t)accelXPos, 0x0D);
+      gfx_draw_item_name(0x00, 0x20, (uint8_t)g.accelXPos, 0x0D);
     }
     gfx_draw_text_box(0x30, TEXT_RECEIVED, TEXT_BOX_NO_LINES, TEXT_BOX_STATIC);
   }
 
-  gCurSubstateA++;
-  if (gCurSubstateA >= 8) {
-    gCurSubstateZ++;
-    gCurSubstateA = 0;
-    if (gCurSubstateZ == 2) {
+  g.gCurSubstateA++;
+  if (g.gCurSubstateA >= 8) {
+    g.gCurSubstateZ++;
+    g.gCurSubstateA = 0;
+    if (g.gCurSubstateZ == 2) {
       drv_sound_play(SND_GIFT);
-    } else if (gCurSubstateZ == 4) {
+    } else if (g.gCurSubstateZ == 4) {
       drv_sound_play(SND_ANIM_CUE);
     }
   }
 
-  if (gCurSubstateZ >= 5) {
+  if (g.gCurSubstateZ >= 5) {
     ui_reset_substate();
     ui_set_view(VIEW_HOME);
   }

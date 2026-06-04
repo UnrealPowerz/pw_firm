@@ -3,8 +3,8 @@
 /*
  * Main menu (VIEW_MAIN_MENU) — the 6-entry scrolling menu reached from home.
  *
- * Cursor is `menu_cursor` (0..5, see enum main_menu_item in
- * include/menu_consts.h). gCurSubstateY tracks any overlay popup (see
+ * Cursor is `g.menu_cursor` (0..5, see enum main_menu_item in
+ * include/menu_consts.h). g.gCurSubstateY tracks any overlay popup (see
  * enum main_menu_popup below) that suppresses the normal display until
  * a button is pressed.
  *
@@ -12,8 +12,8 @@
  * MENU_CONNECTION and from the home-screen R-button shortcut.
  */
 
-/* Main-menu overlay popups (gCurSubstateY in ui_handle_main_menu /
-   ui_render_main_menu). NONE = normal cursor/watts display. */
+/* Main-menu overlay popups (g.gCurSubstateY in ui_handle_main_menu /
+   ui_render_main_menu). NONE = normal cursor/g.watts display. */
 enum main_menu_popup {
     MENU_POPUP_NONE         = 0,
     MENU_POPUP_NEED_WATTS   = 1,
@@ -23,7 +23,7 @@ enum main_menu_popup {
 
 // ROM: 0x694c  40.0%
 void ui_enter_ir_session(void) {
-  sys_begin_ir_session(currentEventLoopFunc, sys_main_loop_low_power);
+  sys_begin_ir_session(g.currentEventLoopFunc, sys_main_loop_low_power);
 }
 
 // ROM: 0x9756  74.7%
@@ -32,49 +32,49 @@ void ui_handle_main_menu(void) {
   const uint8_t *costTable = MENU_ITEM_COSTS;
 
   /* A popup is active — any button dismisses it back to the normal menu. */
-  if (gCurSubstateY != MENU_POPUP_NONE) {
+  if (g.gCurSubstateY != MENU_POPUP_NONE) {
     if (drv_button_is_triggered(BTN_ANY)) {
-      gCurSubstateY = MENU_POPUP_NONE;
+      g.gCurSubstateY = MENU_POPUP_NONE;
       drv_sound_play(SND_CURSOR);
     }
     return;
   }
 
   if (drv_button_is_triggered(BTN_R)) {
-    cost = costTable[menu_cursor];
-    if (watts < cost) {
-      gCurSubstateY = MENU_POPUP_NEED_WATTS;
+    cost = costTable[g.menu_cursor];
+    if (g.watts < cost) {
+      g.gCurSubstateY = MENU_POPUP_NEED_WATTS;
       drv_sound_play(SND_CURSOR);
       return;
     }
 
-    if (menu_cursor > MENU_SETTINGS) {
+    if (g.menu_cursor > MENU_SETTINGS) {
     } else {
-      switch (menu_cursor) {
+      switch (g.menu_cursor) {
       case MENU_POKERADAR:
         if (!(walker_status_flags_BIT.walking)) {
-          gCurSubstateY = MENU_POPUP_NO_POKEMON;
+          g.gCurSubstateY = MENU_POPUP_NO_POKEMON;
           drv_sound_play(SND_CURSOR);
           return;
         }
-        cost = costTable[menu_cursor];
-        if (watts < cost) {
-          watts = 0;
+        cost = costTable[g.menu_cursor];
+        if (g.watts < cost) {
+          g.watts = 0;
         } else {
-          watts -= cost;
+          g.watts -= cost;
         }
-        save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (uint8_t *)&totalSteps, 0x18);
+        save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (uint8_t *)&g.totalSteps, 0x18);
         ui_set_view(VIEW_POKERADAR);
         game_pokeradar_init();
         return;
       case MENU_DOWSING:
-        cost = costTable[menu_cursor];
-        if (watts < cost) {
-          watts = 0;
+        cost = costTable[g.menu_cursor];
+        if (g.watts < cost) {
+          g.watts = 0;
         } else {
-          watts -= cost;
+          g.watts -= cost;
         }
-        save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (uint8_t *)&totalSteps, 0x18);
+        save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (uint8_t *)&g.totalSteps, 0x18);
         game_init_dowsing();
         ui_set_view(VIEW_DOWSING);
         return;
@@ -89,21 +89,21 @@ void ui_handle_main_menu(void) {
         uint16_t mask[2];
         ui_load_inventory_mask(mask);
         if (mask[0] != 0) {
-          *(volatile uint16_t *)&gCurSubstateA = mask[0];
+          *(volatile uint16_t *)&g.gCurSubstateA = mask[0];
           accelPos_X = mask[1];
           ui_inventory_cursor_reset();
           ui_set_view(VIEW_POKE_ITEMS);
           return;
         }
         if (mask[1] != 0) {
-          *(volatile uint16_t *)&gCurSubstateA = mask[0];
+          *(volatile uint16_t *)&g.gCurSubstateA = mask[0];
           accelPos_X = mask[1];
           ui_inventory_jump_to_items();
           ui_set_view(VIEW_GIFTS);
           return;
         }
         /* Nothing in either pokemon or item slots — show the empty popup. */
-        gCurSubstateY = MENU_POPUP_NOTHING_HELD;
+        g.gCurSubstateY = MENU_POPUP_NOTHING_HELD;
         drv_sound_play(SND_CURSOR);
         return;
       }
@@ -118,23 +118,23 @@ void ui_handle_main_menu(void) {
   /* Cursor scroll (with wrap). M past MENU_POKERADAR and L past MENU_SETTINGS
      exit back to home. */
   if (drv_button_is_triggered(BTN_M)) {
-    if (menu_cursor == MENU_POKERADAR) {
+    if (g.menu_cursor == MENU_POKERADAR) {
       ui_reset_substate();
       ui_set_view(VIEW_HOME);
       drv_sound_play(SND_BACK);
       return;
     }
-    menu_cursor = (uint8_t)((menu_cursor + 5) % 6);
+    g.menu_cursor = (uint8_t)((g.menu_cursor + 5) % 6);
     drv_sound_play(SND_CURSOR);
   }
 
   if (drv_button_is_triggered(BTN_L)) {
-    if (menu_cursor == MENU_SETTINGS) {
+    if (g.menu_cursor == MENU_SETTINGS) {
       ui_reset_substate();
       ui_set_view(VIEW_HOME);
       drv_sound_play(SND_BACK);
     } else {
-      menu_cursor = (uint8_t)((menu_cursor + 1) % 6);
+      g.menu_cursor = (uint8_t)((g.menu_cursor + 1) % 6);
     }
     drv_sound_play(SND_CURSOR);
   }
@@ -169,7 +169,7 @@ void ui_render_main_menu(void) {
 
   /* Current selection item rendering */
   {
-    uint16_t addr = (uint16_t)menu_cursor * 0x140 + 0x690 + base;
+    uint16_t addr = (uint16_t)g.menu_cursor * 0x140 + 0x690 + base;
     drv_eeprom_read_block(addr, sprite_buf, 0x140);
     drv_lcd_blit(8, 0, sprite_buf, 0x50, 0x10);
   }
@@ -180,8 +180,8 @@ void ui_render_main_menu(void) {
       e0_buf[j] = 0;
     }
 
-    if ((uint8_t)i == menu_cursor) {
-      uint16_t cursor_addr = (uint16_t)((animTick & 1) + 3) * 0x10 + 0x278 + base;
+    if ((uint8_t)i == g.menu_cursor) {
+      uint16_t cursor_addr = (uint16_t)((g.animTick & 1) + 3) * 0x10 + 0x278 + base;
       drv_eeprom_read_block(cursor_addr, sprite_buf, 0x10);
       gfx_blit_to_buffer(8, 8, 4, (uint8_t)(MAIN_MENU_Y_COORDS[i] - 8),
                          sprite_buf, e0_buf, 0x10);
@@ -197,31 +197,31 @@ void ui_render_main_menu(void) {
     drv_lcd_blit((uint8_t)(i * 0x10), 0x10, e0_buf, 0x10, 0x20);
   }
 
-  if (gCurSubstateY == MENU_POPUP_NONE) {
-    gfx_draw_numeric_value(0x48, 0x30, watts, 0);
+  if (g.gCurSubstateY == MENU_POPUP_NONE) {
+    gfx_draw_numeric_value(0x48, 0x30, g.watts, 0);
     /* Cost number: dowsing costs 10, radar costs 3. */
-    if (menu_cursor == MENU_POKERADAR) {
+    if (g.menu_cursor == MENU_POKERADAR) {
       gfx_draw_numeric_value(0x08, 0x30, 10, 0);
-    } else if (menu_cursor == MENU_DOWSING) {
+    } else if (g.menu_cursor == MENU_DOWSING) {
       gfx_draw_numeric_value(0x08, 0x30, 3, 0);
     }
 
-    /* "W" icon next to the current watts value (right side) — always drawn. */
+    /* "W" icon next to the current g.watts value (right side) — always drawn. */
     drv_eeprom_read_block(base + 0x1A0, sprite_buf, 0x40);
     drv_lcd_blit(0x50, 0x30, sprite_buf, 0x10, 0x10);
 
     /* Cost row (left "W" + arrow) only for the two minigames with a cost. */
-    if (menu_cursor < MENU_CONNECTION) {
+    if (g.menu_cursor < MENU_CONNECTION) {
       drv_lcd_blit(0x18, 0x30, sprite_buf, 0x10, 0x10);
 
       drv_eeprom_read_block(base + 0x180, sprite_buf, 0x20);
       drv_lcd_blit(0x28, 0x30, sprite_buf, 8, 0x10);
     }
-  } else if (gCurSubstateY == MENU_POPUP_NEED_WATTS) {
+  } else if (g.gCurSubstateY == MENU_POPUP_NEED_WATTS) {
     gfx_draw_text_box(0x30, TEXT_NEED_MORE_WATTS, TEXT_BOX_FULL, TEXT_BOX_BLINK);
-  } else if (gCurSubstateY == MENU_POPUP_NO_POKEMON) {
+  } else if (g.gCurSubstateY == MENU_POPUP_NO_POKEMON) {
     gfx_draw_text_box(0x30, TEXT_NO_POKEMON_HELD, TEXT_BOX_FULL, TEXT_BOX_BLINK);
-  } else if (gCurSubstateY == MENU_POPUP_NOTHING_HELD) {
+  } else if (g.gCurSubstateY == MENU_POPUP_NOTHING_HELD) {
     gfx_draw_text_box(0x30, TEXT_NOTHING_HELD, TEXT_BOX_FULL, TEXT_BOX_BLINK);
   }
 

@@ -21,18 +21,18 @@ __entry(vect = 0) void PowerON_Reset(void) {
     drv_eeprom_write_u8(EEPROM_BOOT_COUNTER, cnt);
   }
 
-  /* totalSteps is volatile uint32_t, cast to uint8_t* for zeroing */
+  /* g.totalSteps is volatile uint32_t, cast to uint8_t* for zeroing */
   for (i = 0; i < 0x3E; i++) {
-    ((uint8_t *)&totalSteps)[i] = 0;
+    ((uint8_t *)&g.totalSteps)[i] = 0;
   }
 
-  scheduledNotifyHour = 0;
+  g.scheduledNotifyHour = 0;
   statusFlags_BIT.lcd_dirty = 1;
-  walker_status_flags = (walker_status_flags & 0xE7) | WALKER_MODE_DEEP_SLEEP;
+  g.walker_status_flags = (g.walker_status_flags & 0xE7) | WALKER_MODE_DEEP_SLEEP;
 
-  activityTimer = 0x3C;
-  stepTimer = 0x5A;
-  idleSeconds = 0xE10;
+  g.activityTimer = 0x3C;
+  g.stepTimer = 0x5A;
+  g.idleSeconds = 0xE10;
 
   game_reset_pedometer_flags();
   sys_factory_test();
@@ -47,7 +47,7 @@ __entry(vect = 0) void PowerON_Reset(void) {
   drv_timerw_init();
 
   {
-    uint8_t vol = (RamCache_settingsByte >> 1) & 0x3;
+    uint8_t vol = (g.settingsByte >> 1) & 0x3;
     drv_sound_set_volume(vol);
   }
 
@@ -66,11 +66,11 @@ __entry(vect = 0) void PowerON_Reset(void) {
 
   sys_set_handler(sys_main_loop_low_power);
   ui_reset_substate();
-  currentlyActiveView = VIEW_HOME;
+  g.currentlyActiveView = VIEW_HOME;
   drv_timer_b_init();
 
   while (1) {
     set_ccr(0x00);
-    currentEventLoopFunc();
+    g.currentEventLoopFunc();
   }
 }

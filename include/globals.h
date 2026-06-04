@@ -25,22 +25,11 @@ struct b_ram_section {
 extern volatile struct b_ram_section g;
 
 /* --- System Status Flags --- */
-#define statusFlags (*(volatile uint8_t *)0xF7B5u)
-#define statusFlags_BIT (((volatile status_flags_t *)&statusFlags)->BIT)
-#define wakeupFlagMaybe ((uint8_t *)0xF7BBu)
+#define statusFlags_BIT (((volatile status_flags_t *)&g.statusFlags)->BIT)
 extern volatile uint8_t status_flags_f7f1;   /* DAT_f7f1 */
-#define walker_status_flags (*(volatile uint8_t *)0xF7B6u)
-#define _pad_f7b7 (*(volatile uint8_t *)0xF7B7u)
-#define walker_status_flags_BIT (((volatile walker_status_t *)&walker_status_flags)->BIT)
+#define walker_status_flags_BIT (((volatile walker_status_t *)&g.walker_status_flags)->BIT)
 
 /* --- LCD & UI / Timers --- */
-#define DAT_f7ab (*(volatile uint8_t *)0xF7ABu)
-#define animTick (*(volatile uint8_t *)0xF7ACu)
-#define irResultCode (*(volatile uint8_t *)0xF7ADu)
-#define accelSampleCount (*(volatile uint8_t *)0xF7AEu)
-#define activityTimer (*(volatile uint8_t *)0xF7AFu)
-#define stepTimer (*(volatile uint8_t *)0xF7B0u)
-#define currentlyActiveView (*(volatile uint8_t *)0xF7B1u)
 
 /* View IDs dispatched by ui_dispatch_event / ui_dispatch_draw.
  * Walk-anim views are named from the walker's perspective: ARRIVAL when a
@@ -69,96 +58,43 @@ enum view_id {
     VIEW_ACCEL_DEBUG           = 0x17,
     VIEW_TEXT                  = 0x18
 };
-#define stepBatchSize (*(volatile uint8_t *)0xF7B2u)
-#define subStepCount (*(volatile uint8_t *)0xF7B3u)
-#define batchAccumulator (*(volatile uint8_t *)0xF7B4u)
 
 /* --- Button Input --- */
-#define buttonInputRaw (*(volatile uint8_t *)0xF798u)
-#define buttonInputRaw_BIT (((volatile button_input_t *)&buttonInputRaw)->BIT)
-#define prevButtonInputRaw (*(volatile uint8_t *)0xF799u)
-#define buttonTrigger (*(volatile uint8_t *)0xF79Au)
-#define buttonHoldDuration (*(volatile uint8_t *)0xF79Bu)
+#define buttonInputRaw_BIT (((volatile button_input_t *)&g.buttonInputRaw)->BIT)
 
 /* --- Pedometer & Activity --- */
 /* Persisted save block at 0xF780..F797 (see struct session_save in globals.c).
  * Each member is exposed as a macro so existing call sites referring to the
  * field by its top-level name continue to compile and so &name remains a
  * valid pointer to the underlying byte. */
-struct session_save {
-    volatile uint32_t totalSteps;
-    volatile uint32_t RamCache_STEP_COUNT_maybe;
-    volatile uint32_t rtcTime;
-    volatile uint16_t dayCounter;
-    volatile uint16_t watts;
-    volatile uint16_t sessionTicksElapsed;   /* ++ per tick in game_pedometer_tick_session,
-                                                reset at session start; saturates at 0xFFFF */
-    volatile uint8_t  stepWattCounter;
-    volatile uint8_t  peerSlotIndex;       /* used only as 1-byte 0..22 ring index */
-    volatile uint8_t  _peer_slot_tail[3];  /* original alloc was uint32; high bytes always 0 */
-    volatile uint8_t  settingsByte;
-};
-#define g_save (*(struct session_save *)0xF780u)
-#define totalSteps                  (g_save.totalSteps)
-#define RamCache_STEP_COUNT_maybe   (g_save.RamCache_STEP_COUNT_maybe)
-#define rtcTime                     (g_save.rtcTime)
-#define dayCounter                  (g_save.dayCounter)
-#define watts                       (g_save.watts)
-#define sessionTicksElapsed         (g_save.sessionTicksElapsed)
-#define stepWattCounter             (g_save.stepWattCounter)
-#define peerSlotIndex               (g_save.peerSlotIndex)
 
-#define sessionSteps (*(volatile uint32_t *)0xF79Cu)
-#define recentSessionSteps (*(volatile uint16_t *)0xF7A0u)
-#define idleSeconds (*(volatile uint16_t *)0xF7A2u)
-#define rtcSec (*(volatile uint8_t *)0xF7A4u)
-#define rtcMin (*(volatile uint8_t *)0xF7A5u)
-#define rtcHour (*(volatile uint8_t *)0xF7A6u)
-#define pedTaskFlags (*(volatile uint8_t *)0xF7A7u)
-#define pedTaskFlags_BIT (((volatile ped_task_flags_t *)&pedTaskFlags)->BIT)
-#define scheduledNotifyHour (*(volatile uint8_t *)0xF7A8u)
-#define lcdShadeBase (*(volatile uint8_t *)0xF7A9u)
-#define menu_cursor (*(volatile uint8_t *)0xF7AAu)
+#define pedTaskFlags_BIT (((volatile ped_task_flags_t *)&g.pedTaskFlags)->BIT)
 
 /* --- Substate Management & Sensor Data --- */
-#define gCurSubstateY (*(volatile uint8_t *)0xF7CEu)
-#define gCurSubstateZ (*(volatile uint8_t *)0xF7CFu)
-#define gCurSubstateA (*(volatile uint8_t *)0xF7D0u)
-/* gCurSubstateY -- bits 0/1 used as flags via bset/bclr/bst in ROM. */
-#define gCurSubstateY_BIT (((volatile byte_bits_t *)&gCurSubstateY)->BIT)
+/* g.gCurSubstateY -- bits 0/1 used as flags via bset/bclr/bst in ROM. */
+#define gCurSubstateY_BIT (((volatile byte_bits_t *)&g.gCurSubstateY)->BIT)
 
-/* DAT_f7d8 -- bit 0 used as a flag in battle.c via bset/bclr in ROM. */
-#define DAT_f7d8_BIT (((volatile byte_bits_t *)&DAT_f7d8)->BIT)
+/* g.DAT_f7d8 -- bit 0 used as a flag in battle.c via bset/bclr in ROM. */
+#define DAT_f7d8_BIT (((volatile byte_bits_t *)&g.DAT_f7d8)->BIT)
 
 /* irPacketReceivedFlag -- bit 0 used; ROM emits bset/bclr. */
 #define irPacketReceivedFlag_BIT (((volatile byte_bits_t *)&irPacketReceivedFlag)->BIT)
 
-#define DAT_f7d1 (*(volatile uint8_t *)0xF7D1u)
-#define DAT_f7d1_BIT (((volatile byte_bits_t *)&DAT_f7d1)->BIT)
-#define accelXPos (*(volatile uint8_t *)0xF7D2u)
+#define DAT_f7d1_BIT (((volatile byte_bits_t *)&g.DAT_f7d1)->BIT)
 /* 16-bit "accel physics" view: the accel driver and game_process_accel_data
  * read these positions as uint16 (mov.w) while game/UI code uses the byte form
  * above for slot indices. */
 #define accelPos_X (*(volatile uint16_t *)0xF7D2u)
 #define accelPos_Y (*(volatile uint16_t *)0xF7D4u)
-#define dowsing_item_pos (*(volatile uint8_t *)0xF7D3u)
-#define accelYPos (*(volatile uint8_t *)0xF7D4u)
-#define DAT_f7d5 (*(volatile uint8_t *)0xF7D5u)
-#define accelZPos (*(volatile uint16_t *)0xF7D6u)
 /* 0xF7D6 is accessed as a BYTE (mov.b) in most game-logic contexts (dowsing
  * slot index, radar countdown, etc.); only the accel-physics accumulator in
  * drv_accel_sample treats it as the high byte of a uint16. This alias is the
  * byte view. */
 #define accelZPos_b (*(volatile uint8_t *)0xF7D6u)
-#define DAT_f7d8 (*(volatile uint8_t *)0xF7D8u)
-#define DAT_f7d8_1 (*(volatile uint8_t *)0xF7D9u)
 /* 0xF7D8 is also accessed as a 16-bit word in dowsing (item ID) — disassembly
- * shows mov.w @DAT_f7d8 + drv_eeprom_write_block size 2. The byte alias above
+ * shows mov.w @g.DAT_f7d8 + drv_eeprom_write_block size 2. The byte alias above
  * is used by battle.c and pedometer.c for flag/limit bytes. */
 #define DAT_f7d8_w (*(volatile uint16_t *)0xF7D8u)
-#define axisStepThresholdLo (*(volatile uint16_t *)0xF7DAu)
-#define axisStepThresholdHi (*(volatile uint16_t *)0xF7DCu)
-#define axisIdleThreshold (*(volatile uint16_t *)0xF7DEu)
 
 /* 0xF866..0xF955: 240-byte multi-purpose scratch region (sibling of g_scratch).
  * Memory is reused across mutually-exclusive subsystems:
@@ -307,7 +243,7 @@ union pw_scratch {
 #define DAT_f844        (g_scratch.as_struct.at_5e)
 /* peerRcvdRtcTime: uint32 at offset +0x60 of the IR transfer buffer
  * (g_scratch). When a peer-sync packet is received, this field holds the
- * peer's RTC time; ir_parse_rx_packet uses it to slave our rtcTime if
+ * peer's RTC time; ir_parse_rx_packet uses it to slave our g.rtcTime if
  * non-zero. (Same memory is the at_60 8-byte slot of g_scratch.) */
 #define peerRcvdRtcTime (g_scratch.as_struct.at_60)
 /* trainerRecBuf: 8-byte field that's the START of a 0x68-byte trainer-record
@@ -326,24 +262,16 @@ union pw_scratch {
 
 /* --- Control Flow --- */
 /* Per-tick handler invoked from the main loop; type defined in types.h. */
-#define currentEventLoopFunc (*(event_loop_func_t *)0xF7E0u)
-#define savedEventLoopFunc (*(event_loop_func_t *)0xF7E2u)
 
 /* --- RNG & Memory --- */
-#define nextRandom (*(volatile uint32_t *)0xF7C0u)
-#define heapPointer (*(volatile uint16_t *)0xF7BEu)
 
 /* --- LCD & EEPROM --- */
-#define lcdPageOffset (*(volatile uint8_t *)0xF7E4u)
 #define _pad_f7e5 (*(volatile uint8_t *)0xF7E5u)
-#define RamCache_settingsByte       (g_save.settingsByte)
-#define RamCache_settingsByte_BIT (((volatile settings_byte_t *)&RamCache_settingsByte)->BIT)
+#define RamCache_settingsByte_BIT (((volatile settings_byte_t *)&g.settingsByte)->BIT)
 
 /* --- Step Processing & IR Comm: see g_scratch2 union above for the full
  * 240-byte scratch region; these symbols are macros. Only globals NOT
  * inside the union are still declared here. */
-#define commandPos (*(volatile uint8_t *)0xF7BAu)
-#define lastCommandTime (*(volatile uint16_t *)0xF7B8u)
 /* Absolute hardware-address aliases (no allocation -- compiler generates
  * direct pointer literals). */
 #define DAT_f088 (*(volatile uint8_t *)0xF088)
@@ -412,12 +340,7 @@ extern const uint8_t ROM_TAIL_PADDING[56];
 
 
 /* --- Sound Engine Globals (Fixed addresses) --- */
-#define soundData (*(uint8_t * *)0xF7C4u)
-#define soundHeader (*(uint8_t *)0xF7CCu)
 #define _pad_f7cd (*(uint8_t *)0xF7CDu)
-#define volume (*(uint8_t *)0xF7C6u)
 #define _pad_f7c7 (*(uint8_t *)0xF7C7u)
-#define noteDuration (*(uint16_t *)0xF7C8u)
-#define isSeparateNote (*(uint16_t *)0xF7CAu)
 
 #endif /* GLOBALS_H */

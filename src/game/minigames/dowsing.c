@@ -6,11 +6,11 @@
  * The player picks one of 6 grid positions; the device reveals whether they
  * found the hidden item. The item slot is rolled at game start
  * (game_init_dowsing). If "co-op mode" (peer dowsing) is active —
- * RamCache_settingsByte bit 0 set — encounter generation and selection follow
+ * g.settingsByte bit 0 set — encounter generation and selection follow
  * the peer/special-event path; otherwise the solo path uses the trainer's
  * step-unlock table.
  *
- * State machine driven by gCurSubstateZ:
+ * State machine driven by g.gCurSubstateZ:
  *   0 = idle (player picking slot)
  *   1 = digging animation (after OK pressed)
  *   2 = item found
@@ -18,39 +18,39 @@
  *   4 = reveal screen (after all attempts exhausted)
  *
  * Globals repurposed for dowsing state:
- *   gCurSubstateY      = result slot index / item kind
- *   gCurSubstateA      = animation tick countdown
- *   accelXPos          = attempts remaining (counts down)
- *   accelYPos          = "marked-wrong" slot
+ *   g.gCurSubstateY      = result slot index / item kind
+ *   g.gCurSubstateA      = animation tick countdown
+ *   g.accelXPos          = attempts remaining (counts down)
+ *   g.accelYPos          = "marked-wrong" slot
  *   accelZPos_b        = save-slot index for the awarded item
- *   DAT_f7d1           = cursor position (0..5)
- *   DAT_f7d5           = watt reward (nonzero => show watts on found screen)
+ *   g.DAT_f7d1           = cursor position (0..5)
+ *   g.DAT_f7d5           = watt reward (nonzero => show g.watts on found screen)
  *   DAT_f7d8_w         = item id awarded
- *   dowsing_item_pos   = hidden item slot (0..5), chosen at init
+ *   g.dowsing_item_pos   = hidden item slot (0..5), chosen at init
  */
 
 // ROM: 0x4792  82.8%
 void game_init_dowsing(void) {
   uint16_t rnd;
 
-  gCurSubstateZ = 0;
-  DAT_f7d1 = 0;
-  accelXPos = 2;
+  g.gCurSubstateZ = 0;
+  g.DAT_f7d1 = 0;
+  g.accelXPos = 2;
 
   rnd = (uint16_t)sys_get_rng();
   rnd <<= 3;
   rnd = (uint16_t)((uint8_t)(rnd >> 8));
-  dowsing_item_pos = (uint8_t)((int16_t)rnd % 6);
+  g.dowsing_item_pos = (uint8_t)((int16_t)rnd % 6);
 
-  accelYPos = 0xFF;
-  DAT_f7d5 = 0;
+  g.accelYPos = 0xFF;
+  g.DAT_f7d5 = 0;
 }
 
 // ROM: 0x47ce  82.0%
 void ui_handle_dowsing(void) {
   uint8_t state;
 
-  state = gCurSubstateZ;
+  state = g.gCurSubstateZ;
 
   if (state == 0) {
     goto state_idle;
@@ -67,61 +67,61 @@ void ui_handle_dowsing(void) {
 
 state_idle:
   if (drv_button_is_triggered(BTN_R)) {
-    if (DAT_f7d1 == accelYPos) {
+    if (g.DAT_f7d1 == g.accelYPos) {
       /* Already marked as wrong — beep but don't advance. */
       drv_sound_play(SND_BACK);
       return;
     }
     drv_sound_play(SND_CONFIRM);
-    gCurSubstateZ = 1;
-    gCurSubstateA = 4;
+    g.gCurSubstateZ = 1;
+    g.gCurSubstateA = 4;
     return;
   }
   if (drv_button_is_triggered(BTN_M)) {
-    DAT_f7d1 = (uint8_t)(((int32_t)((uint16_t)DAT_f7d1 + 5)) % 6);
+    g.DAT_f7d1 = (uint8_t)(((int32_t)((uint16_t)g.DAT_f7d1 + 5)) % 6);
     drv_sound_play(SND_CURSOR);
   }
   if (drv_button_is_triggered(BTN_L)) {
-    DAT_f7d1 = (uint8_t)(((int32_t)((uint16_t)DAT_f7d1 + 1)) % 6);
+    g.DAT_f7d1 = (uint8_t)(((int32_t)((uint16_t)g.DAT_f7d1 + 1)) % 6);
     drv_sound_play(SND_CURSOR);
     return;
   }
   return;
 
 state_digging:
-  if (gCurSubstateA != 0) {
+  if (g.gCurSubstateA != 0) {
     return;
   }
   if (drv_sound_is_playing()) {
     return;
   }
-  if (DAT_f7d1 == dowsing_item_pos) {
-    gCurSubstateZ = 2;
+  if (g.DAT_f7d1 == g.dowsing_item_pos) {
+    g.gCurSubstateZ = 2;
     ui_handle_dowsing_selection();
     drv_sound_play(SND_DOWSE_HIT);
     return;
   }
   /* Wrong slot. */
-  gCurSubstateZ = 3;
+  g.gCurSubstateZ = 3;
   drv_sound_play(SND_FAIL);
-  if (accelXPos == 2) {
-    accelYPos = DAT_f7d1;
+  if (g.accelXPos == 2) {
+    g.accelYPos = g.DAT_f7d1;
   }
-  accelXPos--;
+  g.accelXPos--;
   return;
 
 state_found:
   if (!drv_button_is_triggered(BTN_ANY)) {
     return;
   }
-  if ((RamCache_settingsByte & 1)) {
+  if ((g.settingsByte & 1)) {
     goto exit_to_home;
   }
   {
     uint8_t save_slot = accelZPos_b;
     if (save_slot == 3) {
       /* No room left — kick into peer-session caught-stats view. */
-      gCurSubstateA = 1;
+      g.gCurSubstateA = 1;
       ui_init_discard_cursor();
       ui_set_view(VIEW_DISCARD_PICKER);
       return;
@@ -147,10 +147,10 @@ state_miss:
   if (!drv_button_is_triggered(BTN_ANY)) {
     return;
   }
-  if (accelXPos != 0) {
+  if (g.accelXPos != 0) {
     /* Still have attempts left — bounce back to idle. */
     drv_sound_play(SND_CONFIRM);
-    gCurSubstateZ = 4;
+    g.gCurSubstateZ = 4;
     return;
   }
   drv_sound_play(SND_CONFIRM);
@@ -163,7 +163,7 @@ state_reveal:
     return;
   }
   drv_sound_play(SND_CONFIRM);
-  gCurSubstateZ = 0;
+  g.gCurSubstateZ = 0;
   return;
 }
 
@@ -201,7 +201,7 @@ void game_check_wild_encounter(void) {
     steps_required = (uint32_t)(((w & 0xFF00) >> 8) | ((w & 0xFF) << 8));
   }
 
-  if (sessionSteps < steps_required) {
+  if (g.sessionSteps < steps_required) {
     goto no_encounter;
   }
 
@@ -222,7 +222,7 @@ void game_check_wild_encounter(void) {
   }
 
 no_encounter:
-  DAT_f7d5 = (uint8_t)((accelXPos << 2) + 2);
+  g.DAT_f7d5 = (uint8_t)((g.accelXPos << 2) + 2);
   game_add_watts(10);
   return;
 
@@ -233,7 +233,7 @@ encounter:
     uint8_t *trainer_buf = (uint8_t *)sbrk(0xBE);
     drv_eeprom_read_block(EEPROM_TRAINER_PROFILE, trainer_buf, 0xBE);
 
-    gCurSubstateY = 0x0A;
+    g.gCurSubstateY = 0x0A;
 
     *((uint32_t *)encounter_data) = *((uint32_t *)route_data);
     *((uint16_t *)(encounter_data + 0x4)) = *((uint16_t *)(route_data + 0x4));
@@ -267,7 +267,7 @@ void ui_handle_dowsing_selection(void) {
 
   accelZPos_b = save_find_empty_item_slot(item_table);
 
-  if ((RamCache_settingsByte & 1)) {
+  if ((g.settingsByte & 1)) {
     game_check_wild_encounter();
     return;
   }
@@ -296,7 +296,7 @@ void ui_handle_dowsing_selection(void) {
     slot = 9;
   }
 
-  gCurSubstateY = slot;
+  g.gCurSubstateY = slot;
   DAT_f7d8_w = *((uint16_t *)(trainer_buf + 0x8C + (uint16_t)slot * 2));
 }
 
@@ -310,8 +310,8 @@ void ui_render_dowsing_grass(void) {
   sys_init_heap();
   buf = (uint8_t *)sbrk(0x180);
 
-  /* Player sprite (frame selected by accelXPos). */
-  drv_eeprom_read_block(sprites_base + (uint16_t)accelXPos * 0x20, buf, 0x20);
+  /* Player sprite (frame selected by g.accelXPos). */
+  drv_eeprom_read_block(sprites_base + (uint16_t)g.accelXPos * 0x20, buf, 0x20);
   drv_lcd_blit(0x40, 0, buf, 0x08, 0x10);
 
   /* Background top strip. */
@@ -324,7 +324,7 @@ void ui_render_dowsing_grass(void) {
   /* Grass background — different art in co-op vs solo. */
   {
     uint16_t bg_addr;
-    if ((RamCache_settingsByte & 1)) {
+    if ((g.settingsByte & 1)) {
       bg_addr = 0xC83C;
     } else {
       bg_addr = 0x8FBE;
@@ -335,9 +335,9 @@ void ui_render_dowsing_grass(void) {
 
   /* Tick down dig animation. */
   {
-    uint8_t a = gCurSubstateA;
+    uint8_t a = g.gCurSubstateA;
     if (a != 0) {
-      gCurSubstateA = a - 1;
+      g.gCurSubstateA = a - 1;
     }
   }
 
@@ -345,24 +345,24 @@ void ui_render_dowsing_grass(void) {
   drv_eeprom_read_block(0x18D0 + sprites_base, buf, 0x80);
   for (i = 0; i < 6; i++) {
     uint8_t x = (uint8_t)(i * 0x10);
-    if ((uint8_t)i == accelYPos) {
+    if ((uint8_t)i == g.accelYPos) {
       /* "Wrong-slot" marker. */
       drv_lcd_blit(x, 0x18, buf + 0x40, 0x10, 0x10);
-    } else if ((uint8_t)i != DAT_f7d1) {
+    } else if ((uint8_t)i != g.DAT_f7d1) {
       drv_lcd_blit(x, 0x18, buf, 0x10, 0x10);
     }
   }
 
-  /* Bobbing grass overlay — animTick selects one of 4 wobble offsets. */
+  /* Bobbing grass overlay — g.animTick selects one of 4 wobble offsets. */
   {
-    uint8_t anim = animTick & 0x03;
+    uint8_t anim = g.animTick & 0x03;
     gfx_draw_animated_grass(
         0x10, 0x10, (int8_t)*((volatile uint8_t *)(0xBD82 + anim)), buf);
   }
 
   /* Highlighted cursor on top. */
   {
-    uint8_t cursor_x = (uint8_t)(DAT_f7d1 * 0x10);
+    uint8_t cursor_x = (uint8_t)(g.DAT_f7d1 * 0x10);
     drv_lcd_blit(cursor_x, 0x18, buf, 0x10, 0x10);
   }
 
@@ -386,7 +386,7 @@ void ui_render_dowsing(void) {
 
   sprites_base = 0x280;
 
-  if (gCurSubstateZ == 1) {
+  if (g.gCurSubstateZ == 1) {
     ui_render_dowsing_grass();
     goto end;
   }
@@ -395,9 +395,9 @@ void ui_render_dowsing(void) {
   sprite_sheet = (uint8_t *)sbrk(0x140);
   buf = (uint8_t *)sbrk(0x180);
 
-  /* Player sprite — load full sheet, then point at frame accelXPos. */
+  /* Player sprite — load full sheet, then point at frame g.accelXPos. */
   drv_eeprom_read_block(sprites_base, sprite_sheet, 0x140);
-  sprite_sheet += (uint16_t)accelXPos * 0x20;
+  sprite_sheet += (uint16_t)g.accelXPos * 0x20;
   drv_lcd_blit(0x40, 0, sprite_sheet, 0x08, 0x10);
 
   /* Background pieces. */
@@ -410,7 +410,7 @@ void ui_render_dowsing(void) {
   /* Grass background. */
   {
     uint16_t bg_addr;
-    if ((RamCache_settingsByte & 1)) {
+    if ((g.settingsByte & 1)) {
       bg_addr = 0xC83C;
     } else {
       bg_addr = 0x8FBE;
@@ -420,9 +420,9 @@ void ui_render_dowsing(void) {
   drv_lcd_blit(0, 0, buf, 0x20, 0x18);
 
   {
-    uint8_t a = gCurSubstateA;
+    uint8_t a = g.gCurSubstateA;
     if (a != 0) {
-      gCurSubstateA = a - 1;
+      g.gCurSubstateA = a - 1;
     }
   }
 
@@ -431,11 +431,11 @@ void ui_render_dowsing(void) {
   for (i = 0; i < 6; i++) {
     uint8_t x = (uint8_t)(i * 0x10);
 
-    if (gCurSubstateZ == 2 && (uint8_t)i == DAT_f7d1) {
+    if (g.gCurSubstateZ == 2 && (uint8_t)i == g.DAT_f7d1) {
       /* Found state hides the cursor slot — item sprite drawn below. */
       continue;
     }
-    if ((uint8_t)i == accelYPos) {
+    if ((uint8_t)i == g.accelYPos) {
       drv_lcd_blit(x, 0x18, buf + 0x40, 0x10, 0x10);
     } else {
       drv_lcd_blit(x, 0x18, buf, 0x10, 0x10);
@@ -443,28 +443,28 @@ void ui_render_dowsing(void) {
   }
 
   /* Per-substate overlay. */
-  if (gCurSubstateZ == 0) {
+  if (g.gCurSubstateZ == 0) {
     /* Idle: dowsing rod, two-frame bob. */
-    uint8_t frame = animTick & 0x01;
+    uint8_t frame = g.animTick & 0x01;
     uint8_t rod_x;
     drv_eeprom_read_block(0x278 + sprites_base + (uint16_t)frame * 0x10, buf,
                           0x10);
-    rod_x = (uint8_t)(DAT_f7d1 * 0x10 + 0x04);
+    rod_x = (uint8_t)(g.DAT_f7d1 * 0x10 + 0x04);
     drv_lcd_blit(rod_x, 0x28, buf, 8, 8);
     gfx_draw_text_box(0x30, TEXT_DISCOVER_AN_ITEM, TEXT_BOX_FULL, TEXT_BOX_STATIC);
 
-  } else if (gCurSubstateZ == 2) {
-    /* Found item: draw item icon and either watts or item name. */
+  } else if (g.gCurSubstateZ == 2) {
+    /* Found item: draw item icon and either g.watts or item name. */
     uint8_t item_x;
     drv_eeprom_read_block(0x208 + sprites_base, buf, 0x10);
-    item_x = (uint8_t)(DAT_f7d1 * 0x10 + 0x04);
+    item_x = (uint8_t)(g.DAT_f7d1 * 0x10 + 0x04);
     drv_lcd_blit(item_x, 0x18, buf, 8, 8);
 
-    if (DAT_f7d5 != 0) {
-      gfx_draw_value_with_icon(0x02, 0x20, 0x0D, (uint16_t)DAT_f7d5);
+    if (g.DAT_f7d5 != 0) {
+      gfx_draw_value_with_icon(0x02, 0x20, 0x0D, (uint16_t)g.DAT_f7d5);
       gfx_draw_text_box(0x30, TEXT_RECEIVED, TEXT_BOX_NO_LINES, TEXT_BOX_BLINK);
     } else {
-      uint8_t result_kind = gCurSubstateY;
+      uint8_t result_kind = g.gCurSubstateY;
       if (result_kind >= 0x0A) {
         gfx_draw_event_item_name(0x00, 0x20, 0, 0x0D);
       } else {
@@ -473,24 +473,24 @@ void ui_render_dowsing(void) {
       gfx_draw_text_box(0x30, TEXT_FOUND, TEXT_BOX_NO_LINES, TEXT_BOX_BLINK);
     }
 
-  } else if (gCurSubstateZ == 3) {
+  } else if (g.gCurSubstateZ == 3) {
     gfx_draw_text_box(0x30, TEXT_NOTHING_FOUND, TEXT_BOX_FULL, TEXT_BOX_BLINK);
 
     /* Reveal the hidden item only after all attempts are spent. The loop
        draws the icon 3 times for emphasis (single-frame flash effect). */
-    if (accelXPos == 0) {
+    if (g.accelXPos == 0) {
       uint16_t k;
       drv_eeprom_read_block(0x208 + sprites_base, buf, 0x10);
       for (k = 3; k > 0; k--) {
-        uint8_t item_x = (uint8_t)(dowsing_item_pos * 0x10 + 0x04);
+        uint8_t item_x = (uint8_t)(g.dowsing_item_pos * 0x10 + 0x04);
         drv_lcd_blit(item_x, 0x16, buf, 8, 8);
       }
     }
 
-  } else if (gCurSubstateZ == 4) {
+  } else if (g.gCurSubstateZ == 4) {
     /* Proximity indicator: |cursor - hidden| < 2 ⇒ "close", else "far". */
-    int16_t diff = (int16_t)(uint16_t)DAT_f7d1 -
-                   (int16_t)(uint16_t)dowsing_item_pos;
+    int16_t diff = (int16_t)(uint16_t)g.DAT_f7d1 -
+                   (int16_t)(uint16_t)g.dowsing_item_pos;
     uint16_t dist = diff < 0 ? (uint16_t)(-diff) : (uint16_t)diff;
 
     if (dist < 2) {

@@ -77,9 +77,9 @@ void sys_factory_reset_eeprom(uint8_t wipe_event_bits, uint8_t wipe_save_data) {
   uint32_t zero = 0;
   uint16_t i;
 
-  sessionSteps = zero;
-  recentSessionSteps = 0;
-  walker_status_flags &= ~0x06;
+  g.sessionSteps = zero;
+  g.recentSessionSteps = 0;
+  g.walker_status_flags &= ~0x06;
 
   ptr = (uint8_t *)drv_ir_get_rx_ptr();
   save_read_reliable(EEPROM_TRAINER_REC, EEPROM_TRAINER_REC_BACKUP, ptr, 0x68);
@@ -142,15 +142,15 @@ void sys_sync_eeprom_on_startup(void) {
   uint8_t magic;
 
   if (save_verify_magic() != 0) {
-    save_read_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (void *)&totalSteps, 0x18);
-    if ((RamCache_settingsByte & 0x78) > 0x48) {
-      RamCache_settingsByte = (RamCache_settingsByte & 0x87) | 0x20;
+    save_read_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (void *)&g.totalSteps, 0x18);
+    if ((g.settingsByte & 0x78) > 0x48) {
+      g.settingsByte = (g.settingsByte & 0x87) | 0x20;
     }
     game_sync_walk_status();
   } else {
     sys_factory_reset_eeprom(1, 1);
-    drv_sound_set_volume((RamCache_settingsByte >> 1) & 0x3);
-    drv_lcd_set_contrast((RamCache_settingsByte >> 3) & 0xF);
+    drv_sound_set_volume((g.settingsByte >> 1) & 0x3);
+    drv_lcd_set_contrast((g.settingsByte >> 3) & 0xF);
     save_write_magic();
   }
 

@@ -109,17 +109,17 @@ void drv_ir_send_packet(uint8_t pktLen, uint8_t cmdType, uint8_t subtype) {
 // ROM: 0x0880  81.8%
 void drv_ir_send_discovery(void) {
   drv_ir_init_hw();
-  irResultCode = 0x00;
-  nextSessionKey = nextRandom;
+  g.irResultCode = 0x00;
+  nextSessionKey = g.nextRandom;
   sessionKey = nextSessionKey;
   irHandshakeStep = 0x01;
   irTimeoutRetryCount = 0x00;
   irCrcRetryCount = 0x00;
   REQUESTED_POKEMON_ACTION_TYPE = 0xFF;
   irPacketReceivedFlag_BIT.b0 = 0;
-  commandPos = 0x00;
+  g.commandPos = 0x00;
   DAT_f8c1 = 0x00;
-  lastCommandTime = TCNT;
+  g.lastCommandTime = TCNT;
   irSessionPhase = 0x00;
   drv_ir_tx_u8(0xFC);
 }

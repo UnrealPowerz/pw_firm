@@ -10,7 +10,7 @@
  *
  * Player input mapping (game_battle_process_turn, called from PICK_MOVE):
  *   BTN_M = Attack       -> ATTACK_ANIM
- *   BTN_L = Defend/Flee  -> branches on DAT_f7d8 bits 3-4:
+ *   BTN_L = Defend/Flee  -> branches on g.DAT_f7d8 bits 3-4:
  *                            m==0 -> COUNTER_ANIM
  *                            m==1 -> STARE_DOWN
  *                            m==2 -> FLED  (only path that leaves)
@@ -18,35 +18,35 @@
  *
  * State enum: see `enum battle_state` below. Transitions documented per-case.
  *
- * DAT_f7d8 packed flags (named where understood):
+ * g.DAT_f7d8 packed flags (named where understood):
  *   bit 0    : started_fight (set in render case 1)
- *   bits 1-2 : counter sub-mode  (read via (DAT_f7d8 >> 1) & 3, written by
+ *   bits 1-2 : counter sub-mode  (read via (g.DAT_f7d8 >> 1) & 3, written by
  *              BTN_L path)
- *   bits 3-4 : attack outcome    (read via (DAT_f7d8 >> 3) & 3)
+ *   bits 3-4 : attack outcome    (read via (g.DAT_f7d8 >> 3) & 3)
  *   bits 5-7 : move-class index  (selects 3-entry row in
  *              BATTLE_OUTCOME_WEIGHTS)
  *
  * Globals repurposed for battle (all named for their non-battle use):
- *   gCurSubstateA      = wiggle/turn counter
- *   gCurSubstateY      = pokemon kind (1..3 wild route slot, 4 peer)
- *   accelXPos          = per-state animation tick (counts up to dowsing_item_pos)
- *   accelYPos          = pokemon sprite y position (animation frame)
- *   accelZPos          = watts paid on loss (state 5)
- *   DAT_f7d1           = HP/wiggle bar segments left
- *   DAT_f7d5           = pokemon sprite x position / ball x position
- *   DAT_f7d8           = packed flags byte (see above)
- *   DAT_f7d8_1         = wiggle-success counter (3 caps capture)
- *   dowsing_item_pos   = state-dwell length (frames to wait before advancing)
+ *   g.gCurSubstateA      = wiggle/turn counter
+ *   g.gCurSubstateY      = pokemon kind (1..3 wild route slot, 4 peer)
+ *   g.accelXPos          = per-state animation tick (counts up to g.dowsing_item_pos)
+ *   g.accelYPos          = pokemon sprite y position (animation frame)
+ *   g.accelZPos          = g.watts paid on loss (state 5)
+ *   g.DAT_f7d1           = HP/wiggle bar segments left
+ *   g.DAT_f7d5           = pokemon sprite x position / ball x position
+ *   g.DAT_f7d8           = packed flags byte (see above)
+ *   g.DAT_f7d8_1         = wiggle-success counter (3 caps capture)
+ *   g.dowsing_item_pos   = state-dwell length (frames to wait before advancing)
  */
 
 enum battle_state {
     BS_INTRO          = 0,   /* vertical-shutter scroll-in                       */
     BS_APPEARED       = 1,   /* "<pokemon> appeared!" banner; button -> PICK_MOVE */
     BS_PICK_MOVE      = 2,   /* waits on player input (game_battle_process_turn) */
-    BS_ATTACK_ANIM    = 3,   /* hit / evade / crit by (DAT_f7d8>>3)&3            */
+    BS_ATTACK_ANIM    = 3,   /* hit / evade / crit by (g.DAT_f7d8>>3)&3            */
     BS_COUNTER_ANIM   = 4,   /* counter; loops to PICK_MOVE or chains ATTACK_ANIM */
     BS_DEFEATED       = 5,   /* "<pokemon> was too strong" -> LOST               */
-    BS_LOST           = 6,   /* "Lost!" + watts forfeit; button -> home          */
+    BS_LOST           = 6,   /* "Lost!" + g.watts forfeit; button -> home          */
     BS_FLED           = 7,   /* "fled..." screen; button -> home (SND_FAIL)      */
     BS_STARE_DOWN     = 8,   /* "Stare down!" -> PICK_MOVE                       */
     BS_ALMOST_HAD_IT  = 9,   /* "Almost had it!" -> FLED                         */
@@ -77,42 +77,42 @@ void ui_render_battle(void) {
   mask_buf   = (uint8_t *)sbrk(0x18);
   frame_buf  = (uint8_t *)sbrk(0x08);
 
-  /* Own-pokemon back sprite (top of screen) — frame from animTick. */
-  addr = (uint16_t)(animTick & 1) * 0xC0 + 0x91BE;
+  /* Own-pokemon back sprite (top of screen) — frame from g.animTick. */
+  addr = (uint16_t)(g.animTick & 1) * 0xC0 + 0x91BE;
   read_eeprom(addr, sprite_buf, 0xC0);
-  blit((uint8_t)accelYPos, 8, sprite_buf, 0x20, 0x18);
+  blit((uint8_t)g.accelYPos, 8, sprite_buf, 0x20, 0x18);
 
   /* HP/turn pips for player side (top row). */
   read_eeprom(0x280 + 0x1DB0, sprite_buf, 0x10);
-  for (i = 0; i < gCurSubstateA; i++) {
+  for (i = 0; i < g.gCurSubstateA; i++) {
     blit((uint8_t)(0x38 + (i << 3)), 0, sprite_buf, 8, 8);
   }
 
   /* HP/wiggle pips for wild side (bottom row). Only drawn once the
      "started_fight" bit is set (case 1 advances past intro). */
-  if (DAT_f7d8 & 0x01) {
-    for (i = 0; i < DAT_f7d1; i++) {
+  if (g.DAT_f7d8 & 0x01) {
+    for (i = 0; i < g.DAT_f7d1; i++) {
       blit((uint8_t)(0x08 + (i << 3)), 0x18, sprite_buf, 8, 8);
     }
   }
 
   /* Wild-pokemon sprite. Suppressed for ball-fly / wiggle / caught states
      (>= BS_BALL_FLY), where the ball overlay takes over. */
-  if (gCurSubstateZ <= BS_THROW_BALL) {
-    uint8_t kind = gCurSubstateY;
+  if (g.gCurSubstateZ <= BS_THROW_BALL) {
+    uint8_t kind = g.gCurSubstateY;
     if (kind < 4) {
       /* Route encounter (kinds 1..3): index into 16-byte metadata table at
          0x8F52 to read the flip flag, then load 0x180-byte sprite. */
       read_eeprom(0x8F52 + (uint16_t)(kind - 1) * 16, sprite_buf, 0x10);
       flip = sprite_buf[0x0E] & 0x01;
       addr = 0x9A7E + (uint16_t)(kind - 1) * 0x180 +
-             (uint16_t)(animTick & 1) * 0xC0;
+             (uint16_t)(g.animTick & 1) * 0xC0;
     } else {
       /* Peer-sourced encounter (kind == 4): metadata at EEPROM 0xBF08,
          sprite at 0xBF7C. */
       read_eeprom(0xBF08, sprite_buf, 0x10);
       flip = sprite_buf[0x0E] & 0x01;
-      addr = 0xBF7C + (uint16_t)(animTick & 1) * 0xC0;
+      addr = 0xBF7C + (uint16_t)(g.animTick & 1) * 0xC0;
     }
 
     read_eeprom(addr, sprite_buf, 0x180);
@@ -120,12 +120,12 @@ void ui_render_battle(void) {
       gfx_flip_horiz(0x20, 0x18, sprite_buf);
     }
 
-    if (gCurSubstateZ == BS_THROW_BALL) {
+    if (g.gCurSubstateZ == BS_THROW_BALL) {
       /* "Threw a Poke Ball" — alpha-blend the ball over the pokemon as it
          arcs in. FFT_TWIDDLE doubles as a sine table for the arc. */
-      uint8_t ball_x = 0x2C - (accelXPos << 2);
+      uint8_t ball_x = 0x2C - (g.accelXPos << 2);
       const int16_t *sine = (const int16_t *)FFT_TWIDDLE;
-      int16_t s = sine[(uint16_t)accelXPos << 2];
+      int16_t s = sine[(uint16_t)g.accelXPos << 2];
       uint8_t ball_y = (uint8_t)(0x14 - (uint8_t)((uint16_t)(s << 1) >> 8));
 
       read_eeprom(0x280 + 0x1E0, mask_buf, 0x10);
@@ -133,29 +133,29 @@ void ui_render_battle(void) {
 
       blit((uint8_t)ball_x, ball_y, mask_buf, 8, 8);
       gfx_alpha_blend(sprite_buf, 0x20, 0x18, mask_buf, frame_buf,
-                      ball_x - DAT_f7d5, ball_y, 0x08);
-      blit((uint8_t)DAT_f7d5, 0, sprite_buf, 0x20, 0x18);
+                      ball_x - g.DAT_f7d5, ball_y, 0x08);
+      blit((uint8_t)g.DAT_f7d5, 0, sprite_buf, 0x20, 0x18);
     } else {
-      gfx_draw_sprite_simple((uint8_t)DAT_f7d5, 0, 0x18, 0x20, sprite_buf);
+      gfx_draw_sprite_simple((uint8_t)g.DAT_f7d5, 0, 0x18, 0x20, sprite_buf);
     }
   }
 
-  if (gCurSubstateZ <= BS_BALL_MISS) {
-    switch (gCurSubstateZ) {
+  if (g.gCurSubstateZ <= BS_BALL_MISS) {
+    switch (g.gCurSubstateZ) {
     case BS_INTRO:
       /* Vertical shutter close-in: black bars shrink from top and bottom. */
-      if (accelXPos < 3) {
-        uint8_t bar_h = (uint8_t)((3 - accelXPos) * 8);
+      if (g.accelXPos < 3) {
+        uint8_t bar_h = (uint8_t)((3 - g.accelXPos) * 8);
         gfx_fill_rect(0, 0, 0x60, bar_h, 3);
         gfx_fill_rect(0, (uint8_t)(0x40 - bar_h), 0x60, bar_h, 3);
       }
       break;
     case BS_APPEARED:
-      if (accelXPos >= dowsing_item_pos) {
+      if (g.accelXPos >= g.dowsing_item_pos) {
         if (!drv_sound_is_playing()) {
-          if (gCurSubstateY < 4) {
+          if (g.gCurSubstateY < 4) {
             gfx_draw_route_pokemon_name(0x00, 0x20,
-                                        (uint8_t)(gCurSubstateY - 1), 0x05);
+                                        (uint8_t)(g.gCurSubstateY - 1), 0x05);
           } else {
             gfx_draw_special_pokemon_name(0, 0x20, 5);
           }
@@ -170,27 +170,27 @@ void ui_render_battle(void) {
       blit(0x00, 0x20, sprite_buf, 0x60, 0x20);
       goto switch_default;
     case BS_ATTACK_ANIM: {
-      /* Player-attack animation. Outcome is in DAT_f7d8 bits 3-4:
+      /* Player-attack animation. Outcome is in g.DAT_f7d8 bits 3-4:
          0 = hit, 1 = enemy evaded, 2 = critical hit. */
-      uint8_t outcome = (DAT_f7d8 >> 3) & 0x03;
+      uint8_t outcome = (g.DAT_f7d8 >> 3) & 0x03;
       if (outcome == 0) {
-        if (accelXPos == 4) {
+        if (g.accelXPos == 4) {
           drv_sound_play(SND_ATTACK_HIT);
           read_eeprom(0x280 + 0x1BF0, sprite_buf, 0x80);
           blit(0x28, 0x00, sprite_buf, 0x10, 0x20);
         }
-        if (accelXPos >= 4) {
+        if (g.accelXPos >= 4) {
           gfx_draw_own_pokemon_name(0x00, 0x20, 5);
           gfx_draw_text_box(0x30, TEXT_ATTACKED, TEXT_BOX_NO_LINES, TEXT_BOX_STATIC);
           goto switch_default;
         }
       } else if (outcome == 1) {
-        if (accelXPos == 4)
+        if (g.accelXPos == 4)
           drv_sound_play(SND_ATTACK_MISS);
-        if (accelXPos >= 4) {
-          if (gCurSubstateY < 4) {
+        if (g.accelXPos >= 4) {
+          if (g.gCurSubstateY < 4) {
             gfx_draw_route_pokemon_name(0x00, 0x20,
-                                        (uint8_t)(gCurSubstateY - 1), 0x05);
+                                        (uint8_t)(g.gCurSubstateY - 1), 0x05);
           } else {
             gfx_draw_special_pokemon_name(0, 0x20, 5);
           }
@@ -198,12 +198,12 @@ void ui_render_battle(void) {
           goto switch_default;
         }
       } else if (outcome == 2) {
-        if (accelXPos == 4) {
+        if (g.accelXPos == 4) {
           drv_sound_play(SND_CRIT_HIT);
           read_eeprom(0x280 + 0x1C70, sprite_buf, 0x80);
           blit(0x28, 0x00, sprite_buf, 0x10, 0x20);
         }
-        if (accelXPos >= 4) {
+        if (g.accelXPos >= 4) {
           gfx_draw_text_box(0x20, TEXT_CRITICAL_HIT, TEXT_BOX_NO_SHADOW, TEXT_BOX_STATIC);
           gfx_draw_text_box(0x30, TEXT_BLANK, TEXT_BOX_NO_LINES, TEXT_BOX_STATIC);
           goto switch_default;
@@ -212,19 +212,19 @@ void ui_render_battle(void) {
       break;
     }
     case BS_COUNTER_ANIM: {
-      /* Counter-attack animation. Sub-mode in DAT_f7d8 bits 1-2:
+      /* Counter-attack animation. Sub-mode in g.DAT_f7d8 bits 1-2:
          0 = enemy hit you, 1 = you evaded. */
-      uint8_t sub = (DAT_f7d8 >> 1) & 0x03;
+      uint8_t sub = (g.DAT_f7d8 >> 1) & 0x03;
       if (sub == 0) {
-        if (accelXPos == 4) {
+        if (g.accelXPos == 4) {
           drv_sound_play(SND_ATTACK_HIT);
           read_eeprom(0x280 + 0x1BF0, sprite_buf, 0x80);
           blit(0x28, 0x00, sprite_buf, 0x10, 0x20);
         }
-        if (accelXPos >= 4) {
-          if (gCurSubstateY < 4) {
+        if (g.accelXPos >= 4) {
+          if (g.gCurSubstateY < 4) {
             gfx_draw_route_pokemon_name(0x00, 0x20,
-                                        (uint8_t)(gCurSubstateY - 1), 0x05);
+                                        (uint8_t)(g.gCurSubstateY - 1), 0x05);
           } else {
             gfx_draw_special_pokemon_name(0, 0x20, 5);
           }
@@ -232,9 +232,9 @@ void ui_render_battle(void) {
           goto switch_default;
         }
       } else if (sub == 1) {
-        if (accelXPos == 4)
+        if (g.accelXPos == 4)
           drv_sound_play(SND_ATTACK_MISS);
-        if (accelXPos >= 4) {
+        if (g.accelXPos >= 4) {
           gfx_draw_own_pokemon_name(0, 0x20, 5);
           gfx_draw_text_box(0x30, TEXT_EVADED, TEXT_BOX_NO_LINES, TEXT_BOX_STATIC);
           goto switch_default;
@@ -243,23 +243,23 @@ void ui_render_battle(void) {
       break;
     }
     case BS_DEFEATED:
-      if (gCurSubstateY < 4) {
+      if (g.gCurSubstateY < 4) {
         gfx_draw_route_pokemon_name(0x00, 0x20,
-                                    (uint8_t)(gCurSubstateY - 1), 0x05);
+                                    (uint8_t)(g.gCurSubstateY - 1), 0x05);
       } else {
         gfx_draw_special_pokemon_name(0, 0x20, 5);
       }
       gfx_draw_text_box(0x30, TEXT_WAS_TOO_STRONG, TEXT_BOX_NO_LINES, TEXT_BOX_STATIC);
       goto switch_default;
     case BS_LOST:
-      gfx_draw_value_with_icon(2, 0x20, 0x0D, (uint16_t)accelZPos);
+      gfx_draw_value_with_icon(2, 0x20, 0x0D, (uint16_t)g.accelZPos);
       gfx_draw_text_box(0x30, TEXT_LOST, TEXT_BOX_NO_LINES, TEXT_BOX_BLINK);
       goto switch_default;
     case BS_FLED:
-      if (accelXPos > 3) {
-        if (gCurSubstateY < 4) {
+      if (g.accelXPos > 3) {
+        if (g.gCurSubstateY < 4) {
           gfx_draw_route_pokemon_name(0x00, 0x20,
-                                      (uint8_t)(gCurSubstateY - 1), 0x05);
+                                      (uint8_t)(g.gCurSubstateY - 1), 0x05);
         } else {
           gfx_draw_special_pokemon_name(0, 0x20, 5);
         }
@@ -291,7 +291,7 @@ void ui_render_battle(void) {
 
     case BS_WIGGLE_ROLL: {
       /* Ball wiggle: 4-frame animation drifts the ball x by ±1. */
-      uint8_t phase = animTick & 3;
+      uint8_t phase = g.animTick & 3;
       uint8_t wiggle_x;
       if (phase == 0)
         wiggle_x = 0x13;
@@ -309,17 +309,17 @@ void ui_render_battle(void) {
       read_eeprom(0x460, sprite_buf, 0x10);
       blit(20, 0x0C, sprite_buf, 8, 8);
       read_eeprom(0x2040, sprite_buf, 0x10);
-      blit((uint8_t)(12 - accelXPos),
-           (uint8_t)(10 - 2 * accelXPos), sprite_buf, 8, 8);
-      blit((uint8_t)(28 + accelXPos),
-           (uint8_t)(12 - 2 * accelXPos), sprite_buf, 8, 8);
+      blit((uint8_t)(12 - g.accelXPos),
+           (uint8_t)(10 - 2 * g.accelXPos), sprite_buf, 8, 8);
+      blit((uint8_t)(28 + g.accelXPos),
+           (uint8_t)(12 - 2 * g.accelXPos), sprite_buf, 8, 8);
       break;
 
     case BS_CAUGHT_TEXT:
       read_eeprom(0x460, sprite_buf, 0x10);
       blit(20, 0x0C, sprite_buf, 8, 8);
-      if (gCurSubstateY < 4) {
-        gfx_draw_route_pokemon_name(0x00, 0x20, (uint8_t)(gCurSubstateY - 1),
+      if (g.gCurSubstateY < 4) {
+        gfx_draw_route_pokemon_name(0x00, 0x20, (uint8_t)(g.gCurSubstateY - 1),
                                     0x05);
       } else {
         gfx_draw_special_pokemon_name(0x00, 0x20, 5);
@@ -335,24 +335,24 @@ void ui_render_battle(void) {
     }
   switch_default:
     gfx_draw_battery_low(0, 0);
-    accelXPos++;
-    if (accelXPos > dowsing_item_pos) {
-      accelXPos = dowsing_item_pos;
+    g.accelXPos++;
+    if (g.accelXPos > g.dowsing_item_pos) {
+      g.accelXPos = g.dowsing_item_pos;
     }
   }
 }
 
 // ROM: 0x2938  99.7%
 void game_start_battle(void) {
-  gCurSubstateZ = BS_INTRO;
-  gCurSubstateA = 4;          /* 4 player HP/turn pips */
-  DAT_f7d1 = 4;               /* 4 wild HP/wiggle pips */
-  accelXPos = 0;
-  dowsing_item_pos = 6;       /* state-0 intro dwell length */
-  accelYPos = 0x38;
-  DAT_f7d5 = 0xE0;
-  DAT_f7d8 &= 0x1E;           /* preserve bits 1-4, clear move-class + flag */
-  DAT_f7d8_1 = 0;             /* wiggle-success counter */
+  g.gCurSubstateZ = BS_INTRO;
+  g.gCurSubstateA = 4;          /* 4 player HP/turn pips */
+  g.DAT_f7d1 = 4;               /* 4 wild HP/wiggle pips */
+  g.accelXPos = 0;
+  g.dowsing_item_pos = 6;       /* state-0 intro dwell length */
+  g.accelYPos = 0x38;
+  g.DAT_f7d5 = 0xE0;
+  g.DAT_f7d8 &= 0x1E;           /* preserve bits 1-4, clear move-class + flag */
+  g.DAT_f7d8_1 = 0;             /* wiggle-success counter */
   drv_sound_play(SND_BATTLE_START);
 }
 
@@ -371,53 +371,53 @@ void game_battle_process_turn(void) {
      and chosen by cumulative compare. */
   rnd = sys_get_rng();
   rnd_pct = (uint8_t)((rnd >> 3) % 100);
-  move_class = (uint8_t)((DAT_f7d8 >> 5) & 0x07);
+  move_class = (uint8_t)((g.DAT_f7d8 >> 5) & 0x07);
   weights_idx = (uint8_t)(move_class * 3);
 
   if (rnd_pct < BATTLE_OUTCOME_WEIGHTS[weights_idx + 2]) {
-    DAT_f7d8 = (DAT_f7d8 & 0xE7) | 0x10;            /* outcome = crit (2) */
+    g.DAT_f7d8 = (g.DAT_f7d8 & 0xE7) | 0x10;            /* outcome = crit (2) */
   } else if (rnd_pct < BATTLE_OUTCOME_WEIGHTS[weights_idx + 2] +
                        BATTLE_OUTCOME_WEIGHTS[weights_idx + 1]) {
-    DAT_f7d8 = (DAT_f7d8 & 0xE7) | 0x08;            /* outcome = evade (1) */
+    g.DAT_f7d8 = (g.DAT_f7d8 & 0xE7) | 0x08;            /* outcome = evade (1) */
   } else {
-    DAT_f7d8 = (DAT_f7d8 & 0xE7);                   /* outcome = hit (0) */
+    g.DAT_f7d8 = (g.DAT_f7d8 & 0xE7);                   /* outcome = hit (0) */
   }
 
   /* Attack (middle button). */
   if (drv_button_is_triggered(BTN_M) != 0) {
     uint8_t outcome;
-    DAT_f7d8 &= 0xF9;
-    outcome = (uint8_t)((DAT_f7d8 >> 3) & 3);
+    g.DAT_f7d8 &= 0xF9;
+    outcome = (uint8_t)((g.DAT_f7d8 >> 3) & 3);
     if (outcome != 3) {
-      gCurSubstateZ = BS_ATTACK_ANIM;
-      accelXPos = 0;
-      dowsing_item_pos = 8;
+      g.gCurSubstateZ = BS_ATTACK_ANIM;
+      g.accelXPos = 0;
+      g.dowsing_item_pos = 8;
       return;
     }
   }
 
-  /* Defend / Flee (left button). The sub-mode (DAT_f7d8 bits 3-4) picks
+  /* Defend / Flee (left button). The sub-mode (g.DAT_f7d8 bits 3-4) picks
      between counter-anim, stare-down, and the only flee path. */
   if (drv_button_is_triggered(BTN_L) != 0) {
     uint8_t sub_mode;
-    DAT_f7d8 = (uint8_t)((DAT_f7d8 & 0xF9) | 0x02);
-    sub_mode = (uint8_t)((DAT_f7d8 >> 3) & 3);
+    g.DAT_f7d8 = (uint8_t)((g.DAT_f7d8 & 0xF9) | 0x02);
+    sub_mode = (uint8_t)((g.DAT_f7d8 >> 3) & 3);
     if (sub_mode == 2) {
       drv_sound_play(SND_FLED);
-      gCurSubstateZ = BS_FLED;
-      accelXPos = 0;
-      dowsing_item_pos = 0x0A;
+      g.gCurSubstateZ = BS_FLED;
+      g.accelXPos = 0;
+      g.dowsing_item_pos = 0x0A;
       return;
     } else if (sub_mode == 1) {
       drv_sound_play(SND_CONFIRM);
-      gCurSubstateZ = BS_STARE_DOWN;
-      accelXPos = 0;
-      dowsing_item_pos = 6;
+      g.gCurSubstateZ = BS_STARE_DOWN;
+      g.accelXPos = 0;
+      g.dowsing_item_pos = 6;
       return;
     } else if (sub_mode == 0) {
-      gCurSubstateZ = BS_COUNTER_ANIM;
-      accelXPos = 0;
-      dowsing_item_pos = 8;
+      g.gCurSubstateZ = BS_COUNTER_ANIM;
+      g.accelXPos = 0;
+      g.dowsing_item_pos = 8;
       return;
     }
   }
@@ -425,9 +425,9 @@ void game_battle_process_turn(void) {
   /* Throw ball (right button). */
   if (drv_button_is_triggered(BTN_R) != 0) {
     drv_sound_play(SND_BALL_THROW);
-    gCurSubstateZ = BS_THROW_BALL;
-    accelXPos = 0;
-    dowsing_item_pos = 6;
+    g.gCurSubstateZ = BS_THROW_BALL;
+    g.accelXPos = 0;
+    g.dowsing_item_pos = 6;
   }
 }
 
@@ -436,16 +436,16 @@ uint8_t game_battle_check_capture_success(void) {
   uint32_t rnd = sys_get_rng();
   uint8_t rnd_pct = (uint8_t)((rnd >> 3) % 100);
 
-  if (DAT_f7d1 == 0)
+  if (g.DAT_f7d1 == 0)
     return 0;
-  if (CAPTURE_PROBS[DAT_f7d1 - 1] > rnd_pct)
+  if (CAPTURE_PROBS[g.DAT_f7d1 - 1] > rnd_pct)
     return 1;
   return 0;
 }
 
 // ROM: 0x2a96  84.9%  saves: er5,e6
 void game_battle_handle_finish(void) {
-  uint8_t kind_idx = (uint8_t)(gCurSubstateY - 1);
+  uint8_t kind_idx = (uint8_t)(g.gCurSubstateY - 1);
 
   if (kind_idx > 3)
     return;
@@ -465,7 +465,7 @@ void game_battle_handle_finish(void) {
     reward_slot = save_find_empty_poke_slot(log_block);
     if (reward_slot >= 3) {
       /* Bag full — bail out to caught-stats peer session. */
-      gCurSubstateA = 0;
+      g.gCurSubstateA = 0;
       ui_init_discard_cursor();
       ui_set_view(VIEW_DISCARD_PICKER);
       return;
@@ -479,7 +479,7 @@ void game_battle_handle_finish(void) {
     drv_eeprom_read_block(EEPROM_TRAINER_PROFILE, trainer_buf, 0xBE);
 
     gift_buf = sbrk(0x88);
-    game_log_interaction(trainer_buf, gift_buf, 0x0D, 0, 0, (uint8_t)gCurSubstateY);
+    game_log_interaction(trainer_buf, gift_buf, 0x0D, 0, 0, (uint8_t)g.gCurSubstateY);
   } else {
     /* Peer-pokemon catch: copy the peer-event blocks from the staging area
        (0xBF08+) into their permanent homes (0xBA44+), mark the event
@@ -522,22 +522,22 @@ void game_battle_handle_finish(void) {
     drv_eeprom_read_block(EEPROM_TRAINER_PROFILE, trainer_buf, 0xBE);
 
     gift_buf = (void *)sbrk(0x88);
-    game_log_interaction(trainer_buf, gift_buf, 0x0E, 0x01, 0, (uint8_t)gCurSubstateY);
+    game_log_interaction(trainer_buf, gift_buf, 0x0E, 0x01, 0, (uint8_t)g.gCurSubstateY);
   }
 }
 
 // Reason: ROM hoists `mov.l #0x880000, er5` (ER-packing of constants 0x88
-//   and 0) plus `mov.w #0xBE, e6` at entry, and pre-loads accelXPos/
-//   dowsing_item_pos into r6l/r6h before the dispatch. ch38 inlines all of
+//   and 0) plus `mov.w #0xBE, e6` at entry, and pre-loads g.accelXPos/
+//   g.dowsing_item_pos into r6l/r6h before the dispatch. ch38 inlines all of
 //   these at their use sites. ROM has no prologue; ch38 emits `$sp_regsv$3`.
 //   Body switch-jump-table structure matches.
 // Class: cannot-fix-without-compiler-change (ER-packing + no-prologue + constant
 //   hoisting). Same Tier-3 cluster as ui_render_battle / gfx_blit_to_buffer.
 // ROM: 0x2c62  54.1%
 void ui_handle_battle(void) {
-  uint8_t state = (uint8_t)gCurSubstateZ;
-  uint8_t tick = accelXPos;
-  uint8_t dwell = dowsing_item_pos;
+  uint8_t state = (uint8_t)g.gCurSubstateZ;
+  uint8_t tick = g.accelXPos;
+  uint8_t dwell = g.dowsing_item_pos;
 
   if (state == BS_PICK_MOVE) {
     /* State 2 input handling is its own function. */
@@ -552,20 +552,20 @@ void ui_handle_battle(void) {
   case BS_INTRO:
     if (tick < dwell)
       return;
-    gCurSubstateZ = BS_APPEARED;
-    accelXPos = 0;
-    dowsing_item_pos = 3;
+    g.gCurSubstateZ = BS_APPEARED;
+    g.accelXPos = 0;
+    g.dowsing_item_pos = 3;
     break;
 
   case BS_APPEARED:
-    DAT_f7d5 = BATTLE_ANIM_P1_X[tick];
-    if (accelXPos < dowsing_item_pos)
+    g.DAT_f7d5 = BATTLE_ANIM_P1_X[tick];
+    if (g.accelXPos < g.dowsing_item_pos)
       return;
     DAT_f7d8_BIT.b0 = 1;        /* started_fight flag */
     if (drv_sound_is_playing())
       return;
     if (drv_button_is_triggered(BTN_ANY)) {
-      gCurSubstateZ = BS_PICK_MOVE;
+      g.gCurSubstateZ = BS_PICK_MOVE;
     }
     break;
 
@@ -575,98 +575,98 @@ void ui_handle_battle(void) {
        or — if HP runs out — to the fled screen. */
     uint8_t outcome;
     uint8_t hp;
-    accelYPos = BATTLE_ANIM_P3[tick].y;
-    DAT_f7d5 = BATTLE_ANIM_P3[tick].x;
+    g.accelYPos = BATTLE_ANIM_P3[tick].y;
+    g.DAT_f7d5 = BATTLE_ANIM_P3[tick].x;
     if (drv_sound_is_playing())
       return;
     if (tick < dwell)
       return;
-    accelYPos = 0x38;
-    DAT_f7d5 = 8;
-    hp = DAT_f7d1;
-    outcome = (uint8_t)((DAT_f7d8 >> 3) & 0x03);
+    g.accelYPos = 0x38;
+    g.DAT_f7d5 = 8;
+    hp = g.DAT_f7d1;
+    outcome = (uint8_t)((g.DAT_f7d8 >> 3) & 0x03);
     if (outcome == 0) {
       uint8_t next_class;
       if (hp <= 1)
         goto hp_empty;
-      DAT_f7d1 = hp - 1;
-      next_class = (uint8_t)((DAT_f7d8 >> 1) & 0x03);
+      g.DAT_f7d1 = hp - 1;
+      next_class = (uint8_t)((g.DAT_f7d8 >> 1) & 0x03);
       if (next_class == 0)
         goto enter_counter;
       if (next_class != 1)
         return;
-      gCurSubstateZ = BS_PICK_MOVE;
-      DAT_f7d8 = (uint8_t)((DAT_f7d8 & 0x1F) | 0x20);  /* move-class = 1 */
+      g.gCurSubstateZ = BS_PICK_MOVE;
+      g.DAT_f7d8 = (uint8_t)((g.DAT_f7d8 & 0x1F) | 0x20);  /* move-class = 1 */
       return;
     } else if (outcome == 1) {
       goto enter_counter;
     } else if (outcome == 2) {
       if (hp <= 2)
         goto hp_empty;
-      DAT_f7d1 = hp - 2;
+      g.DAT_f7d1 = hp - 2;
       goto enter_counter;
     }
     return;
   hp_empty:
-    DAT_f7d1 = 0;
+    g.DAT_f7d1 = 0;
     drv_sound_play(SND_FLED);
-    gCurSubstateZ = BS_FLED;
-    accelXPos = 0;
-    dowsing_item_pos = 0x0A;
+    g.gCurSubstateZ = BS_FLED;
+    g.accelXPos = 0;
+    g.dowsing_item_pos = 0x0A;
     break;
   enter_counter:
-    gCurSubstateZ = BS_COUNTER_ANIM;
-    accelXPos = 0;
-    dowsing_item_pos = 8;
+    g.gCurSubstateZ = BS_COUNTER_ANIM;
+    g.accelXPos = 0;
+    g.dowsing_item_pos = 8;
   } break;
 
   case BS_COUNTER_ANIM: {
     /* Counter-attack: sub bits 1-2 pick between enemy-hit and player-evade.
-       Sub == 0 decrements gCurSubstateA (player turn counter); when it hits
+       Sub == 0 decrements g.gCurSubstateA (player turn counter); when it hits
        zero the player has lost. */
     uint8_t sub;
-    accelYPos = BATTLE_ANIM_P4[tick].y;
-    DAT_f7d5 = BATTLE_ANIM_P4[tick].x;
+    g.accelYPos = BATTLE_ANIM_P4[tick].y;
+    g.DAT_f7d5 = BATTLE_ANIM_P4[tick].x;
     if (drv_sound_is_playing())
       return;
     if (tick < dwell)
       return;
-    accelYPos = 0x38;
-    DAT_f7d5 = 8;
-    sub = (uint8_t)((DAT_f7d8 >> 1) & 0x03);
+    g.accelYPos = 0x38;
+    g.DAT_f7d5 = 8;
+    sub = (uint8_t)((g.DAT_f7d8 >> 1) & 0x03);
     if (sub == 0) {
       uint8_t next_class;
-      uint8_t new_a = (uint8_t)(gCurSubstateA - 1);
-      gCurSubstateA = new_a;
+      uint8_t new_a = (uint8_t)(g.gCurSubstateA - 1);
+      g.gCurSubstateA = new_a;
       if (new_a == 0) {
-        gCurSubstateZ = BS_DEFEATED;
-        accelXPos = 0;
-        dowsing_item_pos = 6;
+        g.gCurSubstateZ = BS_DEFEATED;
+        g.accelXPos = 0;
+        g.dowsing_item_pos = 6;
         return;
       }
       /* Rotate to next move-class encoded in bits 3-4. */
-      next_class = (uint8_t)((DAT_f7d8 >> 3) & 0x03);
+      next_class = (uint8_t)((g.DAT_f7d8 >> 3) & 0x03);
       if (next_class == 0) {
-        DAT_f7d8 = (uint8_t)((DAT_f7d8 & 0x1F) | 0x20);
+        g.DAT_f7d8 = (uint8_t)((g.DAT_f7d8 & 0x1F) | 0x20);
       } else if (next_class == 1) {
-        DAT_f7d8 = (uint8_t)((DAT_f7d8 & 0x1F) | 0x60);
+        g.DAT_f7d8 = (uint8_t)((g.DAT_f7d8 & 0x1F) | 0x60);
       } else if (next_class == 2) {
-        DAT_f7d8 = (uint8_t)((DAT_f7d8 & 0x1F) | 0x40);
+        g.DAT_f7d8 = (uint8_t)((g.DAT_f7d8 & 0x1F) | 0x40);
       }
-      gCurSubstateZ = BS_PICK_MOVE;
+      g.gCurSubstateZ = BS_PICK_MOVE;
       return;
     }
     if (sub == 1) {
-      gCurSubstateZ = BS_ATTACK_ANIM;
-      accelXPos = 0;
-      dowsing_item_pos = 8;
+      g.gCurSubstateZ = BS_ATTACK_ANIM;
+      g.accelXPos = 0;
+      g.dowsing_item_pos = 8;
       return;
     }
     return;
   } break;
 
   case BS_DEFEATED:
-    /* "was too strong" — record the loss and forfeit up to 10 watts. */
+    /* "was too strong" — record the loss and forfeit up to 10 g.watts. */
     if (tick < dwell)
       return;
     {
@@ -675,24 +675,24 @@ void ui_handle_battle(void) {
       sys_init_heap();
       trainer_buf = sbrk(0xBE);
       drv_eeprom_read_block(EEPROM_TRAINER_PROFILE, trainer_buf, 0xBE);
-      if (gCurSubstateY < 4) {
+      if (g.gCurSubstateY < 4) {
         log_buf = sbrk(0x10);
-        game_log_interaction(log_buf, trainer_buf, 0x10, 0x00, 0, (uint8_t)gCurSubstateY);
+        game_log_interaction(log_buf, trainer_buf, 0x10, 0x00, 0, (uint8_t)g.gCurSubstateY);
       } else {
         log_buf = sbrk(0x110);
-        game_log_interaction(log_buf, trainer_buf, 0x10, 0x01, 0, (uint8_t)gCurSubstateY);
+        game_log_interaction(log_buf, trainer_buf, 0x10, 0x01, 0, (uint8_t)g.gCurSubstateY);
       }
-      if (watts >= 10) {
-        accelZPos = 10;
+      if (g.watts >= 10) {
+        g.accelZPos = 10;
       } else {
-        accelZPos = (uint8_t)watts;
+        g.accelZPos = (uint8_t)g.watts;
       }
-      watts -= accelZPos;
-      save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (void *)&totalSteps, 0x18);
+      g.watts -= g.accelZPos;
+      save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (void *)&g.totalSteps, 0x18);
     }
-    gCurSubstateZ = BS_LOST;
-    accelXPos = 0;
-    dowsing_item_pos = 8;
+    g.gCurSubstateZ = BS_LOST;
+    g.accelXPos = 0;
+    g.dowsing_item_pos = 8;
     break;
 
   case BS_LOST:
@@ -705,21 +705,21 @@ void ui_handle_battle(void) {
   case BS_FLED:
     /* "fled" screen — slide ball off, then wait for input to log + exit. */
     if (tick > 3) {
-      DAT_f7d5 = 0xE0;
+      g.DAT_f7d5 = 0xE0;
     } else {
-      DAT_f7d5 = BATTLE_ANIM_P1_X[3 - tick];
+      g.DAT_f7d5 = BATTLE_ANIM_P1_X[3 - tick];
     }
     if (drv_button_is_triggered(BTN_ANY)) {
       void *trainer_buf, *log_buf;
       sys_init_heap();
       trainer_buf = sbrk(0xBE);
       drv_eeprom_read_block(EEPROM_TRAINER_PROFILE, trainer_buf, 0xBE);
-      if (gCurSubstateY < 4) {
+      if (g.gCurSubstateY < 4) {
         log_buf = sbrk(0x10);
-        game_log_interaction(log_buf, trainer_buf, 0x0F, 0x00, 0, (uint8_t)gCurSubstateY);
+        game_log_interaction(log_buf, trainer_buf, 0x0F, 0x00, 0, (uint8_t)g.gCurSubstateY);
       } else {
         log_buf = sbrk(0x110);
-        game_log_interaction(log_buf, trainer_buf, 0x0F, 0x01, 0, (uint8_t)gCurSubstateY);
+        game_log_interaction(log_buf, trainer_buf, 0x0F, 0x01, 0, (uint8_t)g.gCurSubstateY);
       }
       drv_sound_play(SND_FAIL);
       ui_reset_substate();
@@ -731,8 +731,8 @@ void ui_handle_battle(void) {
     /* Stare down — bump move-class to "max" then drop back to state 2. */
     if (tick < dwell)
       return;
-    gCurSubstateZ = BS_PICK_MOVE;
-    DAT_f7d8 = (uint8_t)((DAT_f7d8 & 0x1F) | 0x80);
+    g.gCurSubstateZ = BS_PICK_MOVE;
+    g.DAT_f7d8 = (uint8_t)((g.DAT_f7d8 & 0x1F) | 0x80);
     break;
 
   case BS_ALMOST_HAD_IT:
@@ -740,50 +740,50 @@ void ui_handle_battle(void) {
     if (tick < dwell)
       return;
     drv_sound_play(SND_FLED);
-    gCurSubstateZ = BS_FLED;
-    accelXPos = 0;
-    dowsing_item_pos = 0x0A;
+    g.gCurSubstateZ = BS_FLED;
+    g.accelXPos = 0;
+    g.dowsing_item_pos = 0x0A;
     break;
 
   case BS_THROW_BALL:
     /* Ball thrown — clear started_fight bit, start ball-flight. */
     if (tick < dwell)
       return;
-    DAT_f7d8 &= ~0x01;
-    gCurSubstateZ = BS_BALL_FLY;
-    accelXPos = 0;
-    dowsing_item_pos = 2;
+    g.DAT_f7d8 &= ~0x01;
+    g.gCurSubstateZ = BS_BALL_FLY;
+    g.accelXPos = 0;
+    g.dowsing_item_pos = 2;
     break;
 
   case BS_BALL_FLY:
     if (tick < dwell)
       return;
-    gCurSubstateZ = BS_BALL_LAND;
-    accelXPos = 0;
-    dowsing_item_pos = 3;
+    g.gCurSubstateZ = BS_BALL_LAND;
+    g.accelXPos = 0;
+    g.dowsing_item_pos = 3;
     break;
 
   case BS_BALL_LAND:
     if (tick < dwell)
       return;
-    gCurSubstateZ = BS_WIGGLE_ROLL;
-    accelXPos = 0;
-    dowsing_item_pos = 4;
+    g.gCurSubstateZ = BS_WIGGLE_ROLL;
+    g.accelXPos = 0;
+    g.dowsing_item_pos = 4;
     break;
 
   case BS_WIGGLE_CHECK:
     /* Wiggle-success: third success in a row caps off as caught. */
     if (tick < dwell)
       return;
-    if (DAT_f7d8_1 >= 3) {
-      gCurSubstateZ = BS_CAUGHT_FANFARE;
-      accelXPos = 0;
-      dowsing_item_pos = 6;
+    if (g.DAT_f7d8_1 >= 3) {
+      g.gCurSubstateZ = BS_CAUGHT_FANFARE;
+      g.accelXPos = 0;
+      g.dowsing_item_pos = 6;
       drv_sound_play(SND_FANFARE);
     } else {
-      gCurSubstateZ = BS_WIGGLE_ROLL;
-      accelXPos = 0;
-      dowsing_item_pos = 4;
+      g.gCurSubstateZ = BS_WIGGLE_ROLL;
+      g.accelXPos = 0;
+      g.dowsing_item_pos = 4;
     }
     break;
 
@@ -792,14 +792,14 @@ void ui_handle_battle(void) {
     if (tick < dwell)
       return;
     if (game_battle_check_capture_success()) {
-      DAT_f7d8_1++;
-      gCurSubstateZ = BS_WIGGLE_CHECK;
-      accelXPos = 0;
-      dowsing_item_pos = 4;
+      g.DAT_f7d8_1++;
+      g.gCurSubstateZ = BS_WIGGLE_CHECK;
+      g.accelXPos = 0;
+      g.dowsing_item_pos = 4;
     } else {
-      gCurSubstateZ = BS_BALL_MISS;
-      accelXPos = 0;
-      dowsing_item_pos = 1;
+      g.gCurSubstateZ = BS_BALL_MISS;
+      g.accelXPos = 0;
+      g.dowsing_item_pos = 1;
     }
     break;
 
@@ -807,9 +807,9 @@ void ui_handle_battle(void) {
     /* Second fanfare beat before showing "was caught!" text. */
     if (tick < dwell)
       return;
-    gCurSubstateZ = BS_CAUGHT_TEXT;
-    accelXPos = 0;
-    dowsing_item_pos = 6;
+    g.gCurSubstateZ = BS_CAUGHT_TEXT;
+    g.accelXPos = 0;
+    g.dowsing_item_pos = 6;
     drv_sound_play(SND_FANFARE);
     break;
 
@@ -820,7 +820,7 @@ void ui_handle_battle(void) {
     if (!drv_button_is_triggered(BTN_ANY))
       return;
     game_battle_handle_finish();
-    if (currentlyActiveView != VIEW_BATTLE)
+    if (g.currentlyActiveView != VIEW_BATTLE)
       return;
     ui_reset_substate();
     ui_set_view(VIEW_HOME);
@@ -830,9 +830,9 @@ void ui_handle_battle(void) {
     /* Ball miss — fall through to "Almost had it!". */
     if (tick < dwell)
       return;
-    gCurSubstateZ = BS_ALMOST_HAD_IT;
-    accelXPos = 0;
-    dowsing_item_pos = 6;
+    g.gCurSubstateZ = BS_ALMOST_HAD_IT;
+    g.accelXPos = 0;
+    g.dowsing_item_pos = 6;
     break;
   }
 }

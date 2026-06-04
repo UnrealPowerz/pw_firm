@@ -4,7 +4,7 @@
  * Peer interaction log — 23-slot circular log in EEPROM written when the
  * walker pokemon catches something, dowses an item, completes a peer-play
  * session, etc. Slots are 0x88 bytes each at EEPROM_PEER_SLOT_BASE +
- * peerSlotIndex * 0x88. peerSlotIndex wraps mod 23.
+ * g.peerSlotIndex * 0x88. g.peerSlotIndex wraps mod 23.
  *
  *   game_log_interaction        Low-level: writes one log slot.
  *   game_log_poke_interaction   Wraps log_interaction for a caught pokemon
@@ -57,7 +57,7 @@ void game_log_interaction(uint8_t *trainer, uint8_t *log_slot,
   uint8_t prev_type;
 
   /* Probe the existing slot for its interaction type. */
-  slot_off = (uint16_t)peerSlotIndex * 0x88 + 0xCF0C;
+  slot_off = (uint16_t)g.peerSlotIndex * 0x88 + 0xCF0C;
   prev_type = drv_eeprom_read_u8(slot_off + 0x84);
 
   /* Don't overwrite anything with a 0x1B-typed entry. */
@@ -69,8 +69,8 @@ void game_log_interaction(uint8_t *trainer, uint8_t *log_slot,
 
   /* If the prior slot was the special 0x19 marker, skip to the next one. */
   if (prev_type == 0x19) {
-    peerSlotIndex = (uint8_t)((int16_t)((uint16_t)peerSlotIndex + 1) % 23);
-    slot_off = (uint16_t)peerSlotIndex * 0x88 + 0xCF0C;
+    g.peerSlotIndex = (uint8_t)((int16_t)((uint16_t)g.peerSlotIndex + 1) % 23);
+    slot_off = (uint16_t)g.peerSlotIndex * 0x88 + 0xCF0C;
   }
 
   /* For "fresh" interaction types (>0x0A), zero out the buffer first. */
@@ -82,9 +82,9 @@ void game_log_interaction(uint8_t *trainer, uint8_t *log_slot,
 
   log_slot[0x84] = interaction_type;
   *((uint16_t *)(log_slot + 0x0E)) = val_at_0e;
-  *((uint32_t *)log_slot) = rtcTime;
-  *((uint16_t *)(log_slot + 0x78)) = recentSessionSteps;
-  *((uint32_t *)(log_slot + 0x7C)) = sessionSteps;
+  *((uint32_t *)log_slot) = g.rtcTime;
+  *((uint16_t *)(log_slot + 0x78)) = g.recentSessionSteps;
+  *((uint32_t *)(log_slot + 0x7C)) = g.sessionSteps;
   *((uint16_t *)(log_slot + 0x0A)) = *((uint16_t *)trainer);
 
   /* Copy nickname bytes: trainer+0x10 -> log_slot+0x20, 0x16 bytes */
@@ -171,9 +171,9 @@ void game_log_interaction(uint8_t *trainer, uint8_t *log_slot,
 
   /* Commit the slot to EEPROM and advance the circular index. */
   drv_eeprom_write_block(slot_off, log_slot, 0x88);
-  peerSlotIndex = (uint8_t)((int16_t)((uint16_t)peerSlotIndex + 1) % 23);
+  g.peerSlotIndex = (uint8_t)((int16_t)((uint16_t)g.peerSlotIndex + 1) % 23);
 
-  save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (void *)&totalSteps, 0x18);
+  save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (void *)&g.totalSteps, 0x18);
 }
 
 // ROM: 0x3a70  82.4%
@@ -183,23 +183,23 @@ void game_log_poke_interaction(void) {
   uint16_t sub_y;
   void *slot_buf;
 
-  if (gCurSubstateY == 0)
+  if (g.gCurSubstateY == 0)
     return;
 
   /* Copy the chosen pokemon slot into the log context at the discard cursor's
-     position (gCurSubstateZ * 0x10), then write the whole block back. */
+     position (g.gCurSubstateZ * 0x10), then write the whole block back. */
   sys_init_heap();
   log_block = sbrk(0x30);
   drv_eeprom_read_block(EEPROM_LOG_CONTEXT, log_block, 0x30);
 
-  drv_eeprom_read_block(EEPROM_POKEMON_SLOTS + ((gCurSubstateY - 1) * 0x10),
-                        log_block + (gCurSubstateZ * 0x10), 0x10);
+  drv_eeprom_read_block(EEPROM_POKEMON_SLOTS + ((g.gCurSubstateY - 1) * 0x10),
+                        log_block + (g.gCurSubstateZ * 0x10), 0x10);
   drv_eeprom_write_block(EEPROM_LOG_CONTEXT, log_block, 0x30);
 
   trainer_buf = sbrk(0xBE);
   drv_eeprom_read_block(EEPROM_TRAINER_PROFILE, trainer_buf, 0xBE);
 
-  sub_y = gCurSubstateY;
+  sub_y = g.gCurSubstateY;
   slot_buf = sbrk(0x88);
   /* ROM r0=trainer_buf, e0=slot_buf. sub_y is the event_subtype (6th arg,
      pushed); val_at_0e (e1) is 0. */
@@ -219,8 +219,8 @@ void game_log_item_interaction(void) {
   log_block = sbrk(0x0C);
   drv_eeprom_read_block(EEPROM_LOG_ITEMS, log_block, 0x0C);
 
-  drv_eeprom_read_block(EEPROM_SUBY_LOOKUP_TABLE + (gCurSubstateY * 2),
-                        log_block + (gCurSubstateZ * 4), 0x02);
+  drv_eeprom_read_block(EEPROM_SUBY_LOOKUP_TABLE + (g.gCurSubstateY * 2),
+                        log_block + (g.gCurSubstateZ * 4), 0x02);
   drv_eeprom_write_block(EEPROM_LOG_ITEMS, log_block, 0x0C);
 
   trainer_buf = sbrk(0xBE);
@@ -229,11 +229,11 @@ void game_log_item_interaction(void) {
   slot_buf = sbrk(0x88);
   /* `scratch_val` is unused locally but the assignment is preserved because
      ch38 allocates a stack slot to match the ROM's frame. */
-  scratch_val = ((uint32_t)(*(uint16_t *)(trainer_buf + (gCurSubstateY * 2) + 0x8C)) << 16) |
+  scratch_val = ((uint32_t)(*(uint16_t *)(trainer_buf + (g.gCurSubstateY * 2) + 0x8C)) << 16) |
                 0x0B;
   (void)scratch_val;
   game_log_interaction(trainer_buf, slot_buf, 0x0B, 0x00,
-                       *(uint16_t *)(trainer_buf + (gCurSubstateY * 2) + 0x8C), 0);
+                       *(uint16_t *)(trainer_buf + (g.gCurSubstateY * 2) + 0x8C), 0);
 }
 
 // ROM: 0x67de  85.9%
@@ -302,14 +302,14 @@ void game_rotate_interaction_log_record(void) {
     log_record[0x10 + i] = peer_data[0x26 + i];
   }
 
-  if (dowsing_item_pos == 0) {
-    uint8_t accel_val = accelXPos;
+  if (g.dowsing_item_pos == 0) {
+    uint8_t accel_val = g.accelXPos;
     if (accel_val < 10) {
-      /* ROM: r1h=settings_bit (d_high), e1=trainer[0x8C+accelXPos*2] uint16
+      /* ROM: r1h=settings_bit (d_high), e1=trainer[0x8C+g.accelXPos*2] uint16
        * (val_at_0e), push=0 (event_subtype). */
       game_log_interaction(
           trainer_buf, log_record, accel_val + 1,
-          (uint8_t)((RamCache_settingsByte & 1)),
+          (uint8_t)((g.settingsByte & 1)),
           *(uint16_t *)(trainer_buf + 0x8C + (uint16_t)accel_val * 2), 0);
     }
   }

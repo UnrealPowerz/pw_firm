@@ -37,7 +37,7 @@ void drv_rtc_apply_cached_time(void) {
     sys_delay_short();
     i--;
   } while (i != 0);
-  drv_rtc_set_time(rtcTime);
+  drv_rtc_set_time(g.rtcTime);
 }
 
 // ROM: 0xa4fe  89.8%
@@ -62,9 +62,9 @@ void drv_rtc_set_time(uint32_t time_sec) {
   hr_bcd = (uint8_t)((rem / 10) * 16);
   hr_bcd |= (uint8_t)(rem % 10);
 
-  rtcHour = hr_bcd;
-  rtcMin = min_bcd;
-  rtcSec = sec_bcd;
+  g.rtcHour = hr_bcd;
+  g.rtcMin = min_bcd;
+  g.rtcSec = sec_bcd;
 
   CKSTPR1 |= 0x01;
   RTCCR1 &= ~0x80;

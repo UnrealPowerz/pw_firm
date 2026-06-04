@@ -19,7 +19,7 @@ __interrupt(vect=13) void INT_SLEEP(void) {}
 // ROM: 0xa300  84.9%  saves: r0
 __interrupt(vect=16) void irq0(void) {
     statusFlags_BIT.button_event = 1;
-    wakeupFlagMaybe[0] = 1;
+    g.wakeupFlagMaybe[0] = 1;
     CKSTPR1 |= 0x04;
     IRR1 &= ~0x01;
 }
@@ -48,19 +48,19 @@ __interrupt(vect=24) void drv_rtc_handle_half_sec(void) { RTCFLG &= ~0x02; }
 __interrupt(vect=25) void drv_rtc_handle_sec(void) {
     uint8_t sec = RSECDR;
     if (!(sec & 0x80)) {
-        rtcSec = sec;
+        g.rtcSec = sec;
     }
-    rtcTime++;
-    if (idleSeconds < 0xE10) {
-        idleSeconds++;
+    g.rtcTime++;
+    if (g.idleSeconds < 0xE10) {
+        g.idleSeconds++;
     } else {
-        idleSeconds = 0xE10;
+        g.idleSeconds = 0xE10;
     }
-    if (activityTimer != 0) {
-        activityTimer--;
+    if (g.activityTimer != 0) {
+        g.activityTimer--;
     }
-    if (stepTimer != 0) {
-        stepTimer--;
+    if (g.stepTimer != 0) {
+        g.stepTimer--;
     }
     RTCFLG &= ~0x04;
 }
@@ -69,9 +69,9 @@ __interrupt(vect=25) void drv_rtc_handle_sec(void) {
 __interrupt(vect=26) void drv_rtc_handle_min(void) {
     uint8_t min = RMINDR;
     if (!(min & 0x80)) {
-        rtcMin = min;
+        g.rtcMin = min;
     }
-    pedTaskFlags |= 0x01;
+    g.pedTaskFlags |= 0x01;
     RTCFLG &= ~0x08;
 }
 
@@ -79,9 +79,9 @@ __interrupt(vect=26) void drv_rtc_handle_min(void) {
 __interrupt(vect=27) void drv_rtc_handle_hour(void) {
     uint8_t hr = RHRDR;
     if (!(hr & 0x80)) {
-        rtcHour = RHRDR;
+        g.rtcHour = RHRDR;
     }
-    pedTaskFlags |= 0x02;
+    g.pedTaskFlags |= 0x02;
     RTCFLG &= ~0x10;
 }
 

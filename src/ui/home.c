@@ -19,13 +19,13 @@ void ui_handle_home(void) {
       ui_enter_ir_session();
     }
   } else {
-    if (gCurSubstateZ != 0) {
+    if (g.gCurSubstateZ != 0) {
       if (drv_button_is_triggered(BTN_ANY)) {
-        gCurSubstateZ = 0;
-        game_process_interaction_reward(gCurSubstateY);
+        g.gCurSubstateZ = 0;
+        game_process_interaction_reward(g.gCurSubstateY);
         return;
       } else {
-        gCurSubstateZ--;
+        g.gCurSubstateZ--;
       }
     }
     /* Home-screen button shortcuts: each jumps straight into a main-menu
@@ -33,15 +33,15 @@ void ui_handle_home(void) {
     if (drv_button_is_triggered(BTN_R)) {
       drv_sound_play(SND_CONFIRM);
       ui_clear_substate_y();
-      menu_cursor = MENU_CONNECTION;
+      g.menu_cursor = MENU_CONNECTION;
       ui_set_view(VIEW_MAIN_MENU);
     } else if (drv_button_is_triggered(BTN_M)) {
-      menu_cursor = MENU_SETTINGS;
+      g.menu_cursor = MENU_SETTINGS;
       drv_sound_play(SND_CONFIRM);
       ui_clear_substate_y();
       ui_set_view(VIEW_MAIN_MENU);
     } else if (drv_button_is_triggered(BTN_L)) {
-      menu_cursor = MENU_POKERADAR;
+      g.menu_cursor = MENU_POKERADAR;
       drv_sound_play(SND_CONFIRM);
       ui_clear_substate_y();
       ui_set_view(VIEW_MAIN_MENU);
@@ -56,7 +56,7 @@ void ui_render_route_image(void) {
 
   sys_init_heap();
   ptr = sbrk(0xC0);
-  if ((RamCache_settingsByte & 1)) {
+  if ((g.settingsByte & 1)) {
     addr = 0xC83C;
   } else {
     addr = 0x8FBE;
@@ -70,16 +70,16 @@ void ui_render_home_route(void) {
   uint8_t *buf;
   uint8_t subA;
 
-  if (gCurSubstateZ != 0) {
+  if (g.gCurSubstateZ != 0) {
     uint8_t idx;
-    idx = ROUTE_ICON_INDICES[gCurSubstateY - 1];
+    idx = ROUTE_ICON_INDICES[g.gCurSubstateY - 1];
     gfx_draw_small_route_icon(idx);
   }
   ui_render_route_image();
   if (!(walker_status_flags_BIT.walking)) {
     return;
   }
-  subA = gCurSubstateA;
+  subA = g.gCurSubstateA;
   if (!DAT_f7d1_BIT.b1) {
     gfx_draw_home_pokemon(subA, 0);
   } else if (!DAT_f7d1_BIT.b2) {
@@ -193,7 +193,7 @@ void ui_render_home_bar(void) {
   {
     uint8_t fmt;
     fmt = 1;
-    gfx_draw_numeric_value(0x58, 0x30, sessionSteps, fmt);
+    gfx_draw_numeric_value(0x58, 0x30, g.sessionSteps, fmt);
   }
 
   gfx_draw_battery_low(0, 0);

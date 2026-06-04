@@ -1,7 +1,7 @@
 #include "all_headers.h"
 
 /*
- * UI dispatcher — the per-tick event/render fanout from currentlyActiveView
+ * UI dispatcher — the per-tick event/render fanout from g.currentlyActiveView
  * to the handler/render pair for each VIEW_* in include/globals.h.
  *
  * The main loop calls:
@@ -12,9 +12,9 @@
  *                                               renderer, then finalizes SPI.
  *
  * Helpers:
- *   ui_set_view()           writes currentlyActiveView (one-liner).
+ *   ui_set_view()           writes g.currentlyActiveView (one-liner).
  *   ui_reset_substate()     zeroes the substate cursors before a view switch.
- *   ui_clear_substate_y()   zeroes only gCurSubstateY (one-liner).
+ *   ui_clear_substate_y()   zeroes only g.gCurSubstateY (one-liner).
  *   sys_set_handler()       swaps the foreground event-loop function pointer,
  *                           saving the prior one for restoration. Used when
  *                           entering / leaving the IR app's low-power loop.
@@ -22,19 +22,19 @@
 
 // ROM: 0x693a  61.7%  saves: r6
 void sys_set_handler(event_loop_func_t func) {
-  savedEventLoopFunc = currentEventLoopFunc;
-  currentEventLoopFunc = func;
+  g.savedEventLoopFunc = g.currentEventLoopFunc;
+  g.currentEventLoopFunc = func;
 }
 
 // ROM: 0x69b8  100.0%
-void ui_set_view(uint8_t viewId) { currentlyActiveView = viewId; }
+void ui_set_view(uint8_t viewId) { g.currentlyActiveView = viewId; }
 
 // ROM: 0x6a1c  77.0%
 void ui_reset_substate(void) {
-  gCurSubstateY = 0;
-  gCurSubstateZ = 0;
-  gCurSubstateA = 0x20;       /* initial animation tick / dwell countdown */
-  DAT_f7d1 &= ~0x07;          /* clear the 3 low flag bits (b0/b1/b2) used by
+  g.gCurSubstateY = 0;
+  g.gCurSubstateZ = 0;
+  g.gCurSubstateA = 0x20;       /* initial animation tick / dwell countdown */
+  g.DAT_f7d1 &= ~0x07;          /* clear the 3 low flag bits (b0/b1/b2) used by
                                  home + battle; preserve the upper byte state */
 }
 
@@ -43,7 +43,7 @@ void ui_dispatch_event(void) {
   /* Tick the RNG once per input frame so that even views without user-driven
      randomness still advance the state. Return value is intentionally ignored. */
   sys_get_rng();
-  switch (currentlyActiveView) {
+  switch (g.currentlyActiveView) {
   case VIEW_HOME:
     ui_handle_home();
     break;
@@ -111,7 +111,7 @@ void ui_dispatch_event(void) {
   default:
     break;
   }
-  DAT_f7ab++;                   /* coarse activity / debounce tick counter */
+  g.DAT_f7ab++;                   /* coarse activity / debounce tick counter */
   /* Wait for the last LCD SPI transfer to drain, then drop chip-select. */
   while (!SSSR_BIT.TEND)
     ;
@@ -120,7 +120,7 @@ void ui_dispatch_event(void) {
 
 // ROM: 0x7406  84.4%  saves: er2,er3,er4,er5,er6
 void ui_dispatch_draw(void) {
-  switch (currentlyActiveView) {
+  switch (g.currentlyActiveView) {
   case VIEW_HOME:
     if (!(walker_status_flags_BIT.session_active)) {
       ui_render_empty_eeprom();
@@ -201,4 +201,4 @@ void ui_dispatch_draw(void) {
 }
 
 // ROM: 0x974e  100.0%
-void ui_clear_substate_y(void) { gCurSubstateY = 0; }
+void ui_clear_substate_y(void) { g.gCurSubstateY = 0; }

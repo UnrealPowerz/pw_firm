@@ -5,11 +5,11 @@
  *
  * Triggered from system/main.c (via game_check_periodic_events) when the
  * walker has been idle for long enough and the RNG rolls a hit. The reward
- * type is stored in gCurSubstateY and dispatched in game_process_interaction_reward:
+ * type is stored in g.gCurSubstateY and dispatched in game_process_interaction_reward:
  *
  *   type 1   - dowsing-style item gift  (selects an item from the trainer's
- *              table based on recentSessionSteps; populates EEPROM_LOG_ITEMS).
- *   type 2-5 - watts reward (50/20/10/?? depending on type).
+ *              table based on g.recentSessionSteps; populates EEPROM_LOG_ITEMS).
+ *   type 2-5 - g.watts reward (50/20/10/?? depending on type).
  *   type 7   - first-time peer-identity setup (copies sprite ROM regions to
  *              the peer-sprite EEPROM slots; resets nickname).
  *   default  - just shows a "social feeling" text-box.
@@ -29,7 +29,7 @@ void game_init_peer_identity(void) {
   register uint8_t *temp_buf;
   uint16_t i;
 
-  recentSessionSteps = 0;
+  g.recentSessionSteps = 0;
   walker_status_flags_BIT.walking = 1;
 
   sys_init_heap();
@@ -70,9 +70,9 @@ void game_init_peer_identity(void) {
     }
 
     drv_eeprom_write_block(EEPROM_TRAINER_PROFILE, temp_buf, 0xBE);
-    sessionTicksElapsed = 0;
+    g.sessionTicksElapsed = 0;
 
-    save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (void *)&totalSteps, 0x18);
+    save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (void *)&g.totalSteps, 0x18);
     save_clear_peer_log_slots();
   }
 }
@@ -85,19 +85,19 @@ void game_process_interaction_reward(uint8_t type) {
   uint16_t item_id = 0;       /* passed as val_at_0e to game_log_interaction;
                                  only set on type 1 (item gift) */
 
-  gCurSubstateY = type;
+  g.gCurSubstateY = type;
   accelPos_X = ((const uint16_t *)INTERACTION_REWARD_PTRS)[type];
   ui_set_view(VIEW_BORED_GIFT);
-  idleSeconds = 0;
+  g.idleSeconds = 0;
 
   switch (type) {
   case 1:
-    if (recentSessionSteps < 4500) {
-      gCurSubstateZ = (int8_t)(9 - (recentSessionSteps / 500));
+    if (g.recentSessionSteps < 4500) {
+      g.gCurSubstateZ = (int8_t)(9 - (g.recentSessionSteps / 500));
     } else {
-      gCurSubstateZ = 0;
+      g.gCurSubstateZ = 0;
     }
-    item_id = save_get_dowsing_item_id((uint8_t)gCurSubstateZ);
+    item_id = save_get_dowsing_item_id((uint8_t)g.gCurSubstateZ);
     sys_init_heap();
     slot_buf = sbrk(0x0C);
     drv_eeprom_read_block(EEPROM_LOG_ITEMS, slot_buf, 0x0C);
@@ -107,22 +107,22 @@ void game_process_interaction_reward(uint8_t type) {
     }
     break;
   case 2:
-    gCurSubstateZ = 50;
+    g.gCurSubstateZ = 50;
     game_add_watts(50);
     break;
   case 3:
-    gCurSubstateZ = 20;
+    g.gCurSubstateZ = 20;
     game_add_watts(20);
     break;
   case 4:
-    gCurSubstateZ = 10;
+    g.gCurSubstateZ = 10;
     game_add_watts(10);
     break;
   case 7:
     game_init_peer_identity();
     break;
   default:
-    gCurSubstateZ = 0;
+    g.gCurSubstateZ = 0;
     break;
   }
 
@@ -131,7 +131,7 @@ void game_process_interaction_reward(uint8_t type) {
   drv_eeprom_read_block(EEPROM_TRAINER_PROFILE, trainer_buf, 0xBE);
 
   {
-    uint8_t settings_bit = ((RamCache_settingsByte & 1));
+    uint8_t settings_bit = ((g.settingsByte & 1));
     slot_buf = sbrk(0x88);
     /* ROM: r1h=settings_bit (use_wild_data flag), e1=item_id (val_at_0e),
        push=0 (event_subtype). */
@@ -140,9 +140,9 @@ void game_process_interaction_reward(uint8_t type) {
   }
 
   if (type >= 2 && type <= 5) {
-    gCurSubstateA = (uint8_t)(sys_get_rng() % 3);
+    g.gCurSubstateA = (uint8_t)(sys_get_rng() % 3);
   } else {
-    gCurSubstateA = 0;
+    g.gCurSubstateA = 0;
   }
 }
 
@@ -198,9 +198,9 @@ void ui_render_bored_gift(void) {
     gfx_draw_item_symbol(0x14, 0x14);
   }
 
-  /* gCurSubstateZ doubles as the prize count (watts amount or item index)
+  /* g.gCurSubstateZ doubles as the prize count (g.watts amount or item index)
      for the value/item displays. */
-  prize_count = gCurSubstateZ;
+  prize_count = g.gCurSubstateZ;
   event_rec = (uint8_t *)(uintptr_t)accelPos_X;
   flags = event_rec[2];
   if (flags == 0xFC) {
@@ -218,7 +218,7 @@ void ui_render_bored_gift(void) {
   event_rec = (uint8_t *)(uintptr_t)accelPos_X;
   flags = *event_rec;
   if ((flags & 0x18) > 8) {
-    gfx_draw_text_box(0x30, (uint8_t)(event_rec[3] + gCurSubstateA), TEXT_BOX_NO_LINES, TEXT_BOX_BLINK);
+    gfx_draw_text_box(0x30, (uint8_t)(event_rec[3] + g.gCurSubstateA), TEXT_BOX_NO_LINES, TEXT_BOX_BLINK);
   } else if (event_rec[2] == 0xFF) {
     gfx_draw_text_box(0x30, event_rec[3], TEXT_BOX_FULL, TEXT_BOX_BLINK);
   } else {
@@ -233,18 +233,18 @@ void game_check_periodic_events(void) {
   uint8_t prob;
   uint8_t *buf;
 
-  if ((walker_status_flags & WALKER_MODE_MASK) != WALKER_MODE_DEEP_SLEEP)
+  if ((g.walker_status_flags & WALKER_MODE_MASK) != WALKER_MODE_DEEP_SLEEP)
     return;
-  if (currentlyActiveView != VIEW_HOME)
+  if (g.currentlyActiveView != VIEW_HOME)
     return;
   if (!(walker_status_flags_BIT.input_pending))
     return;
 
   walker_status_flags_BIT.input_pending = 0;
-  gCurSubstateY = 0;
-  gCurSubstateZ = 0;
+  g.gCurSubstateY = 0;
+  g.gCurSubstateZ = 0;
 
-  daily_steps = recentSessionSteps;
+  daily_steps = g.recentSessionSteps;
   (void)daily_steps;
 
   prob = (uint8_t)(sys_get_rng() % 100);
@@ -252,11 +252,11 @@ void game_check_periodic_events(void) {
     return;
 
   if (!(walker_status_flags_BIT.walking)) {
-    if (recentSessionSteps < 300)
+    if (g.recentSessionSteps < 300)
       return;
-    gCurSubstateY = 0x07;
+    g.gCurSubstateY = 0x07;
   } else {
-    if (idleSeconds < 3600)
+    if (g.idleSeconds < 3600)
       return;
 
     sys_init_heap();
@@ -268,21 +268,21 @@ void game_check_periodic_events(void) {
     buf = (uint8_t *)sbrk(0x0C);
     drv_eeprom_read_block(EEPROM_LOG_ITEMS, buf, 0x0C);
 
-    daily_steps = recentSessionSteps;
+    daily_steps = g.recentSessionSteps;
     if (save_find_empty_item_slot(buf) < 3 && prob >= 90 &&
         daily_steps >= 500) {
-      gCurSubstateY = 0x01;
+      g.gCurSubstateY = 0x01;
     } else if (prob >= 80 && daily_steps >= 250) {
-      gCurSubstateY = 0x02;
+      g.gCurSubstateY = 0x02;
     } else if (daily_steps >= 200) {
-      gCurSubstateY = 0x03;
+      g.gCurSubstateY = 0x03;
     } else if (daily_steps >= 100) {
-      gCurSubstateY = 0x04;
-    } else if (sessionTicksElapsed >= 60 && daily_steps <= 50) {
-      gCurSubstateY = 0x05;
+      g.gCurSubstateY = 0x04;
+    } else if (g.sessionTicksElapsed >= 60 && daily_steps <= 50) {
+      g.gCurSubstateY = 0x05;
     } else {
       return;
     }
   }
-  gCurSubstateZ = 0x30;
+  g.gCurSubstateZ = 0x30;
 }

@@ -1,13 +1,13 @@
 #include "all_headers.h"
 
 /*
- * Pedometer — step detection, step accounting, watts accrual.
+ * Pedometer — step detection, step accounting, g.watts accrual.
  *
  * Function clusters:
  *
  *   --- Accel-sample → step-rate pipeline ---
  *     game_detect_activity            Sum of 3-axis sample deltas — has motion?
- *     game_check_pedometer_activity   Wake from low-power if stepTimer expired.
+ *     game_check_pedometer_activity   Wake from low-power if g.stepTimer expired.
  *     game_process_accel_data         Main pipeline (FFT 3 axes + scan peaks +
  *                                     interpolate + commit step batch + accel-
  *                                     debug instrumentation).
@@ -17,21 +17,21 @@
  *                                     Parabolic interpolation around the peak
  *                                     bin to recover a sub-bin step rate.
  *
- *   --- Step / watts accounting ---
+ *   --- Step / g.watts accounting ---
  *     game_pedometer_set_total        Setter with 9,999,999 cap.
  *     game_pedometer_increment_step   +1 step + 1/20-watt + save commit; also
  *                                     logs the step interaction when walking.
  *     game_pedometer_tick_counters    Batched +1 (called many times per tick
- *                                     based on stepBatchSize).
- *     game_add_watts                  Clamped += into watts.
+ *                                     based on g.stepBatchSize).
+ *     game_add_watts                  Clamped += into g.watts.
  *     game_reset_step_data            Full reset (optionally also totals).
  *     game_rotate_step_history        Daily roll-over: shift the 6-day history
- *                                     and start a fresh sessionSteps slot.
+ *                                     and start a fresh g.sessionSteps slot.
  *
- *   --- Pedometer task dispatch (pedTaskFlags) ---
- *     game_pedometer_tick_session     Per-second sessionTicksElapsed bump
- *                                     (pedTaskFlags bit 0 dispatches to here).
- *     game_dispatch_pedometer_task    Pop bits off pedTaskFlags and run the
+ *   --- Pedometer task dispatch (g.pedTaskFlags) ---
+ *     game_pedometer_tick_session     Per-second g.sessionTicksElapsed bump
+ *                                     (g.pedTaskFlags bit 0 dispatches to here).
+ *     game_dispatch_pedometer_task    Pop bits off g.pedTaskFlags and run the
  *                                     corresponding task.
  *     game_reset_pedometer_flags      Clear the step-detection accumulators.
  *
@@ -49,17 +49,17 @@
 // ROM: 0xb124  99.4%
 void game_reset_step_data(uint8_t a) {
   if (a != 0) {
-    totalSteps = 0;
-    dayCounter = 0;
-    rtcTime = 0xD2B0B80;
-    RamCache_STEP_COUNT_maybe = 0;
+    g.totalSteps = 0;
+    g.dayCounter = 0;
+    g.rtcTime = 0xD2B0B80;
+    g.RamCache_STEP_COUNT_maybe = 0;
   }
-  sessionTicksElapsed = 0;
-  watts = 0;
-  stepWattCounter = 0;
-  RamCache_settingsByte = (RamCache_settingsByte & 0xA4) | 0x24;
-  peerSlotIndex = 0;
-  save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (uint8_t *)&totalSteps, 0x18);
+  g.sessionTicksElapsed = 0;
+  g.watts = 0;
+  g.stepWattCounter = 0;
+  g.settingsByte = (g.settingsByte & 0xA4) | 0x24;
+  g.peerSlotIndex = 0;
+  save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (uint8_t *)&g.totalSteps, 0x18);
 }
 
 // ROM: 0x9328  77.8%
@@ -124,37 +124,37 @@ uint8_t game_detect_activity(void) {
   uint16_t prev;
   volatile uint16_t p_copy;
 
-  prev = accelSampleCount;
+  prev = g.accelSampleCount;
   prev += 0x3F;
   prev &= 0x3F;
   p_copy = prev;
 
-  if (((int16_t)accelXSamples[accelSampleCount] -
+  if (((int16_t)accelXSamples[g.accelSampleCount] -
        (int16_t)accelXSamples[prev]) >= 0) {
-    total = (uint16_t)((int16_t)accelXSamples[accelSampleCount] -
+    total = (uint16_t)((int16_t)accelXSamples[g.accelSampleCount] -
                        (int16_t)accelXSamples[p_copy]);
   } else {
-    total = (uint16_t)((uint16_t)(-((int16_t)accelXSamples[accelSampleCount])) +
+    total = (uint16_t)((uint16_t)(-((int16_t)accelXSamples[g.accelSampleCount])) +
                        (uint16_t)accelXSamples[p_copy]);
   }
 
-  if (((int16_t)accelYSamples[accelSampleCount] -
+  if (((int16_t)accelYSamples[g.accelSampleCount] -
        (int16_t)accelYSamples[prev]) >= 0) {
-    total += (uint16_t)((int16_t)accelYSamples[accelSampleCount] -
+    total += (uint16_t)((int16_t)accelYSamples[g.accelSampleCount] -
                         (int16_t)accelYSamples[p_copy]);
   } else {
     total +=
-        (uint16_t)((uint16_t)(-((int16_t)accelYSamples[accelSampleCount])) +
+        (uint16_t)((uint16_t)(-((int16_t)accelYSamples[g.accelSampleCount])) +
                    (uint16_t)accelYSamples[p_copy]);
   }
 
-  if (((int16_t)accelZSamples[accelSampleCount] -
+  if (((int16_t)accelZSamples[g.accelSampleCount] -
        (int16_t)accelZSamples[prev]) >= 0) {
-    total += (uint16_t)((int16_t)accelZSamples[accelSampleCount] -
+    total += (uint16_t)((int16_t)accelZSamples[g.accelSampleCount] -
                         (int16_t)accelZSamples[p_copy]);
   } else {
     total +=
-        (uint16_t)((uint16_t)(-((int16_t)accelZSamples[accelSampleCount])) +
+        (uint16_t)((uint16_t)(-((int16_t)accelZSamples[g.accelSampleCount])) +
                    (uint16_t)accelZSamples[p_copy]);
   }
 
@@ -166,54 +166,54 @@ uint8_t game_detect_activity(void) {
 
 // ROM: 0xa2f6  83.8%
 void game_check_pedometer_activity(void) {
-  /* When stepTimer hits 0 (no steps for a while), exit low-power sleep to
-     resume scanning. stepTimer is reset to 30 in game_process_accel_data
+  /* When g.stepTimer hits 0 (no steps for a while), exit low-power sleep to
+     resume scanning. g.stepTimer is reset to 30 in game_process_accel_data
      whenever a non-zero step batch is committed. */
-  if (stepTimer == 0) {
+  if (g.stepTimer == 0) {
     sys_wake_from_low_power();
   }
 }
 
 // ROM: 0xa32e  90.0%
 void game_pedometer_set_total(uint32_t val) {
-  totalSteps;
+  g.totalSteps;
   if (val >= 9999999) {
     val = 9999999;
   }
-  totalSteps = val;
+  g.totalSteps = val;
 }
 
-/* Reason: do NOT bit-field-ize pedTaskFlags.
- * Tested converting `(pedTaskFlags & 0x0N)` to `pedTaskFlags_BIT.<name>` and the
+/* Reason: do NOT bit-field-ize g.pedTaskFlags.
+ * Tested converting `(g.pedTaskFlags & 0x0N)` to `pedTaskFlags_BIT.<name>` and the
  * function regressed by -12.8% (67.9% -> 55.1%).  The ROM tests these
  * three bits with `btst #N, r0l; beq` (the original C used `& mask` in
  * if-conditions), not with `bld; bcc`.  Flat-mask form is what matches
- * here, even though for statusFlags the bit-field form is the one that
+ * here, even though for g.statusFlags the bit-field form is the one that
  * matches.  Lesson: always check `bld` vs `btst` count for the global in
  * main.mar before sweeping it to bit-field form.
  * Class: do-not-bit-field */
 // ROM: 0xa34a  69.0%  saves: er2,r3,r5,er6
 void game_dispatch_pedometer_task(void) {
   if (!statusFlags_BIT.pedometer_paused) {
-    if ((pedTaskFlags & 0x01)) {
+    if ((g.pedTaskFlags & 0x01)) {
       game_pedometer_tick_session();
     }
-    if ((pedTaskFlags & 0x02)) {
+    if ((g.pedTaskFlags & 0x02)) {
       game_pedometer_increment_step();
     }
-    if ((pedTaskFlags & 0x04)) {
+    if ((g.pedTaskFlags & 0x04)) {
       game_rotate_step_history();
     }
-    pedTaskFlags &= 0xF8;
+    g.pedTaskFlags &= 0xF8;
   }
 }
 
 // ROM: 0xa396  99.3%
 void game_pedometer_tick_session(void) {
-  /* Increment with overflow guard — sessionTicksElapsed saturates at 0xFFFF
-     rather than wrapping to 0. Driven by pedTaskFlags bit 0 (per-second). */
-  if (sessionTicksElapsed + 1 != 0) {
-    sessionTicksElapsed++;
+  /* Increment with overflow guard — g.sessionTicksElapsed saturates at 0xFFFF
+     rather than wrapping to 0. Driven by g.pedTaskFlags bit 0 (per-second). */
+  if (g.sessionTicksElapsed + 1 != 0) {
+    g.sessionTicksElapsed++;
   }
 }
 
@@ -221,11 +221,11 @@ void game_pedometer_tick_session(void) {
 void game_pedometer_increment_step(void) {
   statusFlags_BIT.battery_check_request = 1;
 
-  if (totalSteps < 9999999 && RamCache_STEP_COUNT_maybe < 9999999) {
-    RamCache_STEP_COUNT_maybe++;
+  if (g.totalSteps < 9999999 && g.RamCache_STEP_COUNT_maybe < 9999999) {
+    g.RamCache_STEP_COUNT_maybe++;
   }
 
-  save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (uint8_t *)&totalSteps, 0x18);
+  save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (uint8_t *)&g.totalSteps, 0x18);
 
   if ((walker_status_flags_BIT.walking) != 0) {
     void *buf;
@@ -237,7 +237,7 @@ void game_pedometer_increment_step(void) {
     drv_eeprom_read_block(EEPROM_TRAINER_PROFILE, buf, 0xBE);
 
     val = 0;
-    if (((RamCache_settingsByte & 1)) != 0) {
+    if (((g.settingsByte & 1)) != 0) {
       val = 1;
     }
 
@@ -245,9 +245,9 @@ void game_pedometer_increment_step(void) {
     game_log_interaction(buf, extra_buf, 0x1B, (uint8_t)val, 0, 0);
   }
 
-  recentSessionSteps = 0;
-  if (rtcHour == scheduledNotifyHour) {
-    pedTaskFlags |= 0x04;
+  g.recentSessionSteps = 0;
+  if (g.rtcHour == g.scheduledNotifyHour) {
+    g.pedTaskFlags |= 0x04;
   }
 }
 
@@ -258,13 +258,13 @@ void game_rotate_step_history(void) {
   uint8_t j;
 
   {
-    uint16_t d = dayCounter;
+    uint16_t d = g.dayCounter;
     if (d < 9999) {
-      dayCounter = d + 1;
+      g.dayCounter = d + 1;
     }
   }
 
-  save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (uint8_t *)&totalSteps, 0x18);
+  save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (uint8_t *)&g.totalSteps, 0x18);
 
   sys_init_heap();
   buf = sbrk(0x1C);
@@ -275,10 +275,10 @@ void game_rotate_step_history(void) {
         ((uint32_t *)((uint8_t *)buf + 20))[-(int)i];
   }
 
-  *(uint32_t *)buf = sessionSteps;
+  *(uint32_t *)buf = g.sessionSteps;
   drv_eeprom_write_block(EEPROM_LOG_POKE_STATS, buf, 0x1C);
 
-  sessionSteps = 0;
+  g.sessionSteps = 0;
 
   for (j = 10; j != 0; j--) {
     drv_eeprom_fill((uint16_t)((j * 0x224) + 0xDC08), 0x0028, 0xFF);
@@ -372,39 +372,39 @@ void game_process_accel_data(void) {
 
   steps = game_detect_steps_fft(fft_results);
 
-  view = currentlyActiveView;
+  view = g.currentlyActiveView;
   if (view == VIEW_ACCEL_DEBUG) {
-    sub = gCurSubstateA;
-    limit = DAT_f7d8;
+    sub = g.gCurSubstateA;
+    limit = g.DAT_f7d8;
     if (sub < limit) {
       if (steps != 0) {
-        gCurSubstateA = sub + 1;
-        threshold = axisStepThresholdLo;
+        g.gCurSubstateA = sub + 1;
+        threshold = g.axisStepThresholdLo;
         tx = accelPos_X;
         if (tx < threshold)
-          currentlyActiveView = VIEW_TEXT;
+          g.currentlyActiveView = VIEW_TEXT;
         ty = accelPos_Y;
         if (ty < threshold)
-          currentlyActiveView = VIEW_TEXT;
-        tz = accelZPos;
+          g.currentlyActiveView = VIEW_TEXT;
+        tz = g.accelZPos;
         if (tz < threshold)
-          currentlyActiveView = VIEW_TEXT;
-        threshold = axisStepThresholdHi;
+          g.currentlyActiveView = VIEW_TEXT;
+        threshold = g.axisStepThresholdHi;
         tx = accelPos_X;
         if (tx > threshold)
-          currentlyActiveView = VIEW_TEXT;
+          g.currentlyActiveView = VIEW_TEXT;
         ty = accelPos_Y;
         if (ty > threshold)
-          currentlyActiveView = VIEW_TEXT;
-        tz = accelZPos;
+          g.currentlyActiveView = VIEW_TEXT;
+        tz = g.accelZPos;
         if (tz > threshold)
-          currentlyActiveView = VIEW_TEXT;
+          g.currentlyActiveView = VIEW_TEXT;
       }
-    } else if (DAT_f7d1 < DAT_f7d8_1) {
-      threshold = axisIdleThreshold;
+    } else if (g.DAT_f7d1 < g.DAT_f7d8_1) {
+      threshold = g.axisIdleThreshold;
       if (accelPos_X < threshold && accelPos_Y < threshold &&
-          accelZPos < threshold) {
-        DAT_f7d1++;
+          g.accelZPos < threshold) {
+        g.DAT_f7d1++;
       }
     }
   }
@@ -419,49 +419,49 @@ void game_process_accel_data(void) {
       stepDetectAccum = accumulation;
       pendingStepDetect = 0;
 
-      stepBatchSize = (uint8_t)(accumulation >> 9);
+      g.stepBatchSize = (uint8_t)(accumulation >> 9);
       stepDetectAccum = accumulation & 0x1FF;
 
-      recentSessionSteps += (uint16_t)stepBatchSize;
-      if (recentSessionSteps > 9999) {
-        recentSessionSteps = 9999;
+      g.recentSessionSteps += (uint16_t)g.stepBatchSize;
+      if (g.recentSessionSteps > 9999) {
+        g.recentSessionSteps = 9999;
       }
 
-      sessionSteps += (uint32_t)stepBatchSize;
-      if (sessionSteps > 99999) {
-        sessionSteps = 99999;
+      g.sessionSteps += (uint32_t)g.stepBatchSize;
+      if (g.sessionSteps > 99999) {
+        g.sessionSteps = 99999;
       }
 
-      game_pedometer_set_total(totalSteps + (uint32_t)stepBatchSize);
+      game_pedometer_set_total(g.totalSteps + (uint32_t)g.stepBatchSize);
 
-      stepWattCounter += stepBatchSize;
-      if (stepWattCounter >= 20) {
-        stepWattCounter -= 20;
-        i = watts + 1;
+      g.stepWattCounter += g.stepBatchSize;
+      if (g.stepWattCounter >= 20) {
+        g.stepWattCounter -= 20;
+        i = g.watts + 1;
         if (i > 9999) {
           i = 9999;
         }
-        watts = i;
+        g.watts = i;
       }
     }
 
     {
       uint32_t accumulation = stepDetectAccum + steps;
       stepDetectAccum = accumulation;
-      stepBatchSize = (uint8_t)(accumulation >> 9);
+      g.stepBatchSize = (uint8_t)(accumulation >> 9);
       stepDetectAccum = accumulation & 0x1FF;
     }
 
-    if (stepBatchSize != 0) {
-      stepTimer = 30;
+    if (g.stepBatchSize != 0) {
+      g.stepTimer = 30;
     }
-    subStepCount = 0;
-    batchAccumulator = 32;
+    g.subStepCount = 0;
+    g.batchAccumulator = 32;
   }
 }
 
 // Reads a little-endian uint16 "step threshold" from buf[a + b] and reports
-// whether the player has NOT yet reached it (sessionSteps < threshold), i.e.
+// whether the player has NOT yet reached it (g.sessionSteps < threshold), i.e.
 // the slot is still locked. ROM took the buffer pointer implicitly in r5 (a
 // caller-saved register the callers leave set) and returned the comparison via
 // the carry flag; both callers do `bcs <skip>`. Passing `buf` explicitly is
@@ -471,56 +471,56 @@ void game_process_accel_data(void) {
 uint8_t game_check_step_unlock(uint16_t a, uint16_t b, const uint8_t *buf) {
   const uint8_t *p = buf + a + b;
   uint16_t threshold = (uint16_t)(p[0] | ((uint16_t)p[1] << 8));
-  return (uint8_t)(sessionSteps < (uint32_t)threshold);
+  return (uint8_t)(g.sessionSteps < (uint32_t)threshold);
 }
 
 // ROM: 0x24ac  91.6%
 void game_pedometer_tick_counters(void) {
-  if (subStepCount == stepBatchSize) {
+  if (g.subStepCount == g.stepBatchSize) {
     return;
   }
 
-  batchAccumulator += stepBatchSize;
-  if (batchAccumulator <= 0x40) {
+  g.batchAccumulator += g.stepBatchSize;
+  if (g.batchAccumulator <= 0x40) {
     return;
   }
 
-  recentSessionSteps++;
-  if (recentSessionSteps > 9999) {
-    recentSessionSteps = 9999;
+  g.recentSessionSteps++;
+  if (g.recentSessionSteps > 9999) {
+    g.recentSessionSteps = 9999;
   }
 
-  sessionSteps++;
-  if (sessionSteps > 99999) {
-    sessionSteps = 99999;
+  g.sessionSteps++;
+  if (g.sessionSteps > 99999) {
+    g.sessionSteps = 99999;
   }
 
-  game_pedometer_set_total(totalSteps + 1);
+  game_pedometer_set_total(g.totalSteps + 1);
 
-  stepWattCounter++;
-  if (stepWattCounter >= 20) {
+  g.stepWattCounter++;
+  if (g.stepWattCounter >= 20) {
     uint16_t w;
-    stepWattCounter -= 20;
-    w = watts + 1;
+    g.stepWattCounter -= 20;
+    w = g.watts + 1;
     if (w > 9999) {
       w = 9999;
     }
-    watts = w;
+    g.watts = w;
   }
 
-  subStepCount++;
-  if (subStepCount > stepBatchSize) {
-    subStepCount = stepBatchSize;
+  g.subStepCount++;
+  if (g.subStepCount > g.stepBatchSize) {
+    g.subStepCount = g.stepBatchSize;
   }
 
-  batchAccumulator -= 0x40;
+  g.batchAccumulator -= 0x40;
 }
 
 // ROM: 0x1f3e  91.1%
 void game_add_watts(uint16_t amount) {
-  watts += amount;
-  if (watts > 9999) {
-    watts = 9999;
+  g.watts += amount;
+  if (g.watts > 9999) {
+    g.watts = 9999;
   }
-  save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (void *)&totalSteps, 0x18);
+  save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (void *)&g.totalSteps, 0x18);
 }
