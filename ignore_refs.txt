@@ -1,0 +1,43 @@
+# Per-function ref-diff ignore list for scripts/compare_refs.py.
+# Format: <function>:<category>:<missing|extra>:<item>
+# Categories: calls, data, io, const
+#
+# Known acceptable divergences between main.mar (reference disassembly) and
+# our C source. Each entry has a short reason in a trailing comment.
+
+# --- C-side merges: we collapsed multiple main.mar labels into one C array ---
+ui_handle_battle:data:missing:BATTLE_ANIM_P3_X     # merged Y/X into struct yx_pair[]
+ui_handle_battle:data:missing:BATTLE_ANIM_P3_Y     # ^
+ui_handle_battle:data:missing:BATTLE_ANIM_P4_X     # ^
+ui_handle_battle:data:missing:BATTLE_ANIM_P4_Y     # ^
+ui_handle_battle:data:extra:BATTLE_ANIM_P3         # ^ (new struct array name)
+ui_handle_battle:data:extra:BATTLE_ANIM_P4         # ^
+ui_render_peer_play:data:missing:MUSIC_NOTE_INIT_STATE  # merged into MUSIC_NOTE_HEIGHTS[6]
+ui_render_peer_play:data:missing:MUSIC_NOTE_Y_A    # ^
+ui_render_peer_play:data:missing:MUSIC_NOTE_Y_B    # ^
+ui_render_peer_play:data:extra:MUSIC_NOTE_HEIGHTS  # ^
+game_read_wild_poke:data:missing:UNREF_DAT_BD40    # merged into FONT_3BYTE_GLYPHS[108]
+game_write_wild_poke:data:missing:UNREF_DAT_BD40   # ^
+ui_handle_event_reward_anim:data:missing:UNREF_DAT_BD40 # ^
+ui_render_dowsing:data:missing:UNREF_DAT_BD40      # ^
+
+# --- C-side helper inlining: ASM in-functions what C delegates ---
+drv_eeprom_read_block:io:missing:SSRDR(0xf0e9)     # C calls drv_eeprom_spi_transfer() which reads SSRDR
+gfx_draw_numeric_value:calls:missing:gfx_add_font_border  # inlined per design (calling-convention abuse)
+
+# --- C-side helper extraction: C factors out what ASM inlines ---
+ui_render_battle:calls:missing:gfx_draw_present_icon  # ASM uses computed call via #addr+offset
+
+# --- Address-base alternate encoding: ASM uses base+inline-offset where C uses absolute ---
+game_rotate_step_history:const:missing:0xdc00      # ASM #0xDC00+8 inline; C uses 0xDC08
+game_rotate_step_history:const:extra:0xdc08        # ^
+
+# --- memcpy: C uses memcpy() where ASM inlines a byte-copy loop ---
+ir_comm_loop:calls:extra:memcpy
+ir_parse_rx_packet:calls:extra:memcpy
+
+# --- PowerON_Reset INITSCT name difference: ch38 emits __INITSCT, our resetprg uses _INITSCT alias ---
+PowerON_Reset:calls:missing:__INITSCT
+PowerON_Reset:calls:extra:_INITSCT
+PowerON_Reset:calls:extra:sys_init_heap
+PowerON_Reset:const:missing:0xff80                 # stack address loaded by INITSCT
