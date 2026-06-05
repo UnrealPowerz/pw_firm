@@ -84,7 +84,7 @@ void game_start_walk(void) {
 
   drv_eeprom_fill(EEPROM_STEP_HIST, 0x1568, 0);
 
-  g.recentSessionSteps = 0;
+  g.session_recentSteps = 0;
   g.save_sessionTicksElapsed = 0;
   g.save_peerSlotIndex = 0;
   g.save_watts = 0;

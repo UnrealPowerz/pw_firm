@@ -32,7 +32,7 @@ __entry(vect = 0) void PowerON_Reset(void) {
 
   g.activityTimer = 0x3C;
   g.stepTimer = 0x5A;
-  g.idleSeconds = 0xE10;
+  g.session_idleSeconds = 0xE10;
 
   game_reset_pedometer_flags();
   sys_factory_test();

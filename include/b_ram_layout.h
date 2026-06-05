@@ -29,9 +29,9 @@
 /* 0xF79B */ volatile uint8_t  btn_holdDuration;
 
 /* --- Activity / timing --- */
-/* 0xF79C */ volatile uint32_t sessionSteps;
-/* 0xF7A0 */ volatile uint16_t recentSessionSteps;
-/* 0xF7A2 */ volatile uint16_t idleSeconds;
+/* 0xF79C */ volatile uint32_t session_steps;
+/* 0xF7A0 */ volatile uint16_t session_recentSteps;
+/* 0xF7A2 */ volatile uint16_t session_idleSeconds;
 /* 0xF7A4 */ volatile uint8_t  rtc_seconds;
 /* 0xF7A5 */ volatile uint8_t  rtc_minutes;
 /* 0xF7A6 */ volatile uint8_t  rtc_hours;

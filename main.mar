@@ -296,17 +296,17 @@ LAB_011a:
 LAB_0128:
           jsr         @drv_lcd_init:16
           mov.w       #H'E10, r0
-          mov.w       r0, @idleSeconds
+          mov.w       r0, @session_idleSeconds
           mov.w       #H'101, r0
           bra         LAB_0152:8
 LAB_013a:
           mov.w       #H'E10, r0
-          mov.w       r0, @idleSeconds
+          mov.w       r0, @session_idleSeconds
           mov.w       #H'100, r0
           bra         LAB_0152:8
 LAB_0148:
           mov.w       #H'E10, r0
-          mov.w       r0, @idleSeconds
+          mov.w       r0, @session_idleSeconds
           sub.w       r0, r0
 LAB_0152:
           jsr         @sys_factory_reset_eeprom:16
@@ -493,7 +493,7 @@ LAB_02fa:
           mov.b       #H'5A, r0l
           mov.b       r0l, @stepTimer
           mov.w       #H'E10, r0
-          mov.w       r0, @idleSeconds
+          mov.w       r0, @session_idleSeconds
           jsr         @game_reset_pedometer_flags:16
           jsr         @sys_factory_test:16
           jsr         @sys_wdt_unlock:16
@@ -669,7 +669,7 @@ LAB_04da:
           mov.l       #H'1568DE24, er0
           jsr         @drv_eeprom_fill:16
           sub.w       r0, r0
-          mov.w       r0, @recentSessionSteps
+          mov.w       r0, @session_recentSteps
           mov.w       r0, @save_sessionTicksElapsed
           mov.b       r0l, @save_peerSlotIndex
           mov.w       r0, @save_watts
@@ -1663,9 +1663,9 @@ LAB_0f04:
           mov.w       #eepromPageScratch, r4
           jsr         @drv_ir_get_rx_ptr:16
           mov.w       r0, r5
-          mov.l       @sessionSteps, er1
+          mov.l       @session_steps, er1
           mov.l       er1, @er0
-          mov.w       @recentSessionSteps, e0
+          mov.w       @session_recentSteps, e0
           mov.w       e0, @(H'4,er0)
           mov.w       #H'8F00, r0
           mov.w       #H'10, r1
@@ -2384,9 +2384,9 @@ LAB_16da:
           mov.w       #eepromPageScratch, r4
           jsr         @drv_ir_get_rx_ptr:16
           mov.w       r0, r5
-          mov.l       @sessionSteps, er1
+          mov.l       @session_steps, er1
           mov.l       er1, @er0
-          mov.w       @recentSessionSteps, e0
+          mov.w       @session_recentSteps, e0
           mov.w       e0, @(H'4,er0)
           mov.w       #H'8F00, r0
           mov.w       #H'10, r1
@@ -4161,23 +4161,23 @@ game_pedometer_tick_counters:
           mov.b       r0l, @batchAccumulator
           cmp.b       #H'40, r0l
           bls         LAB_256c:16
-          mov.w       @recentSessionSteps, r0
+          mov.w       @session_recentSteps, r0
           inc.w       #1, r0
-          mov.w       r0, @recentSessionSteps
-          mov.w       @recentSessionSteps, r0
+          mov.w       r0, @session_recentSteps
+          mov.w       @session_recentSteps, r0
           cmp.w       #H'270F, r0
           bls         LAB_24e6:8
           mov.w       #H'270F, r0
-          mov.w       r0, @recentSessionSteps
+          mov.w       r0, @session_recentSteps
 LAB_24e6:
-          mov.l       @sessionSteps, er0
+          mov.l       @session_steps, er0
           inc.l       #1, er0
-          mov.l       er0, @sessionSteps
-          mov.l       @sessionSteps, er0
+          mov.l       er0, @session_steps
+          mov.l       @session_steps, er0
           cmp.l       #H'1869F, er0
           bls         LAB_250e:8
           mov.l       #H'1869F, er0
-          mov.l       er0, @sessionSteps
+          mov.l       er0, @session_steps
 LAB_250e:
           mov.l       @save_totalSteps, er0
           inc.l       #1, er0
@@ -7868,9 +7868,9 @@ LAB_45bc:
           mov.w       e5, @(H'E,er6)
           mov.l       @save_rtcTime, er0
           mov.l       er0, @er6
-          mov.w       @recentSessionSteps, r0
+          mov.w       @session_recentSteps, r0
           mov.w       r0, @(H'78,er6)
-          mov.l       @sessionSteps, er0
+          mov.l       @session_steps, er0
           mov.l       er0, @(H'7C,er6)
           mov.w       @er5, r0
           mov.w       r0, @(H'A,er6)
@@ -8298,7 +8298,7 @@ game_check_wild_encounter:
           sub.b       r1l, r1l
           or.w        r1, r0
           extu.l      er0
-          mov.l       @sessionSteps, er1
+          mov.l       @session_steps, er1
           cmp.l       er0, er1
           bcs         LAB_4a48:8
           jsr         @sys_get_rng:16
@@ -8836,7 +8836,7 @@ game_check_step_unlock:
           sub.b       r1l, r1l
           or.w        r1, r0
           extu.l      er0
-          mov.l       @sessionSteps, er1
+          mov.l       @session_steps, er1
           cmp.l       er0, er1
           rts
 ; =============================================================================
@@ -10264,7 +10264,7 @@ game_init_peer_identity:
           push.l      er6
           mov.w       #H'BE, e5
           sub.w       r0, r0
-          mov.w       r0, @recentSessionSteps
+          mov.w       r0, @session_recentSteps
           mov.w       #walker_status_flags, r0
           bset        #H'2, @r0
           jsr         @sys_init_heap:16
@@ -10384,7 +10384,7 @@ game_process_interaction_reward:
           mov.b       #H'C, r0l
           jsr         @ui_set_view:16
           sub.w       r0, r0
-          mov.w       r0, @idleSeconds
+          mov.w       r0, @session_idleSeconds
           mov.b       r6l, r0l
           cmp.b       #H'1, r0l
           beq         LAB_5d98:8
@@ -10398,10 +10398,10 @@ game_process_interaction_reward:
           bne         LAB_5e22:16
           jmp         @LAB_5e1c:16
 LAB_5d98:
-          mov.w       @recentSessionSteps, r0
+          mov.w       @session_recentSteps, r0
           cmp.w       #H'1194, r0
           bcc         LAB_5db8:8
-          mov.w       @recentSessionSteps, r0
+          mov.w       @session_recentSteps, r0
           extu.l      er0
           mov.w       #H'1F4, r1
           divxu.w     r1, er0
@@ -10658,7 +10658,7 @@ game_check_periodic_events:
           sub.b       r0l, r0l
           mov.b       r0l, @gCurSubstateY
           mov.b       r0l, @gCurSubstateZ
-          mov.w       @recentSessionSteps, r0
+          mov.w       @session_recentSteps, r0
           mov.w       r0, @er7
           jsr         @sys_get_rng:16
           sub.l       er1, er1
@@ -10669,13 +10669,13 @@ game_check_periodic_events:
           mov.b       @walker_status_flags, r0l
           bld         #H'2, r0l
           bcs         LAB_602c:8
-          mov.w       @recentSessionSteps, r0
+          mov.w       @session_recentSteps, r0
           cmp.w       #H'12C, r0
           bcs         LAB_60d4:16
           mov.b       #H'7, r0l
           jmp         @LAB_60ca:16
 LAB_602c:
-          mov.w       @idleSeconds, r0
+          mov.w       @session_idleSeconds, r0
           cmp.w       #H'E10, r0
           bcs         LAB_60d4:16
           jsr         @sys_init_heap:16
@@ -11095,10 +11095,10 @@ game_calculate_interaction_reward:
           mov.w       #H'CEC8, r0
           mov.w       e6, r1
           jsr         @drv_eeprom_read_block:16
-          mov.l       @sessionSteps, er3
+          mov.l       @session_steps, er3
           mov.l       @er4, er0
           add.l       er0, er3
-          mov.w       @recentSessionSteps, r0
+          mov.w       @session_recentSteps, r0
           mov.w       @(H'4,er4), e0
           add.w       e0, r0
           mov.w       #H'A, e0
@@ -11150,7 +11150,7 @@ LAB_6438:
           mov.b       r0l, @DAT_f7d1
           mov.b       @dowsing_item_pos, r0l
           bne         LAB_6526:16
-          mov.l       @sessionSteps, er0
+          mov.l       @session_steps, er0
           mov.l       @er4, er1
           cmp.l       er1, er0
           bls         LAB_6462:8
@@ -11166,7 +11166,7 @@ LAB_6468:
           mov.b       r0l, @DAT_f7d1
           mov.b       @dowsing_item_pos, r0l
           bne         LAB_6526:16
-          mov.l       @sessionSteps, er0
+          mov.l       @session_steps, er0
           mov.l       @er4, er1
           cmp.l       er1, er0
           bls         LAB_6490:8
@@ -11182,7 +11182,7 @@ LAB_6494:
           mov.b       r0l, @DAT_f7d1
           mov.b       @dowsing_item_pos, r0l
           bne         LAB_6526:8
-          mov.l       @sessionSteps, er0
+          mov.l       @session_steps, er0
           mov.l       @er4, er1
           cmp.l       er1, er0
           bls         LAB_64ba:8
@@ -11198,7 +11198,7 @@ LAB_64be:
           mov.b       r0l, @DAT_f7d1
           mov.b       @dowsing_item_pos, r0l
           bne         LAB_6526:8
-          mov.l       @sessionSteps, er0
+          mov.l       @session_steps, er0
           mov.l       @er4, er1
           cmp.l       er1, er0
           bls         LAB_64e4:8
@@ -11212,7 +11212,7 @@ LAB_64e8:
           mov.b       r0l, @DAT_f7d1
           mov.b       @dowsing_item_pos, r0l
           bne         LAB_6526:8
-          mov.l       @sessionSteps, er0
+          mov.l       @session_steps, er0
           mov.l       @er4, er1
           cmp.l       er1, er0
           bls         LAB_6506:8
@@ -13243,7 +13243,7 @@ LAB_7664:
 LAB_768e:
           mov.b       #H'1, r0l
           push.w      r0
-          mov.l       @sessionSteps, er1
+          mov.l       @session_steps, er1
           mov.w       #H'3058, r0
           jsr         @gfx_draw_numeric_value:16
           adds        #2, er7
@@ -16894,25 +16894,25 @@ LAB_9570:
           mov.l       er0, @stepDetectAccum
           mov.b       @stepBatchSize, r0l
           extu.w      r0
-          mov.w       @recentSessionSteps, e0
+          mov.w       @session_recentSteps, e0
           add.w       r0, e0
-          mov.w       e0, @recentSessionSteps
-          mov.w       @recentSessionSteps, r0
+          mov.w       e0, @session_recentSteps
+          mov.w       @session_recentSteps, r0
           cmp.w       #H'270F, r0
           bls         LAB_95d0:8
           mov.w       #H'270F, r0
-          mov.w       r0, @recentSessionSteps
+          mov.w       r0, @session_recentSteps
 LAB_95d0:
           sub.l       er0, er0
           mov.b       @stepBatchSize, r0l
-          mov.l       @sessionSteps, er1
+          mov.l       @session_steps, er1
           add.l       er0, er1
-          mov.l       er1, @sessionSteps
-          mov.l       @sessionSteps, er0
+          mov.l       er1, @session_steps
+          mov.l       @session_steps, er0
           cmp.l       #H'1869F, er0
           bls         LAB_95fe:8
           mov.l       #H'1869F, er0
-          mov.l       er0, @sessionSteps
+          mov.l       er0, @session_steps
 LAB_95fe:
           sub.l       er0, er0
           mov.b       @stepBatchSize, r0l
@@ -17622,7 +17622,7 @@ game_roll_radar_encounter:
           sub.b       r1l, r1l
           or.w        r1, r0
           extu.l      er0
-          mov.l       @sessionSteps, er1
+          mov.l       @session_steps, er1
           cmp.l       er0, er1
           bcs         LAB_9cea:8
           jsr         @sys_get_rng:16
@@ -18481,7 +18481,7 @@ LAB_a3de:
           adds        #2, er7
 LAB_a440:
           sub.w       r0, r0
-          mov.w       r0, @recentSessionSteps
+          mov.w       r0, @session_recentSteps
           mov.b       @scheduledNotifyHour, r0l
           mov.b       @rtc_hours, r0h
           cmp.b       r0h, r0l
@@ -18530,14 +18530,14 @@ LAB_a4aa:
           sub.w       #H'4, r5
           cmp.b       #H'6, r3l
           bcs         LAB_a4aa:8
-          mov.l       @sessionSteps, er0
+          mov.l       @session_steps, er0
           mov.l       er0, @er6
           mov.w       r6, e0
           mov.w       #H'CEF0, r0
           mov.w       e6, r1
           jsr         @drv_eeprom_write_block:16
           sub.l       er0, er0
-          mov.l       er0, @sessionSteps
+          mov.l       er0, @session_steps
           mov.w       #H'DC00, r6
           mov.b       #H'A, r5l
 LAB_a4e4:
@@ -18738,13 +18738,13 @@ LAB_a692:
           mov.l       @save_rtcTime, er0
           inc.l       #1, er0
           mov.l       er0, @save_rtcTime
-          mov.w       @idleSeconds, r0
+          mov.w       @session_idleSeconds, r0
           inc.w       #1, r0
           cmp.w       #H'E10, r0
           bls         LAB_a6b0:8
           mov.w       #H'E10, r0
 LAB_a6b0:
-          mov.w       r0, @idleSeconds
+          mov.w       r0, @session_idleSeconds
           mov.b       @activityTimer, r0l
           beq         LAB_a6c4:8
           mov.b       @activityTimer, r0l
@@ -19953,9 +19953,9 @@ sys_factory_reset_eeprom:
           sub.l       er5, er5
           mov.b       r0l, r4h
           mov.b       r0h, r4l
-          mov.l       er5, @sessionSteps
+          mov.l       er5, @session_steps
           sub.w       e0, e0
-          mov.w       e0, @recentSessionSteps
+          mov.w       e0, @session_recentSteps
           mov.w       #walker_status_flags, r1
           bclr        #H'1, @r1
           bclr        #H'2, @r1
@@ -21353,11 +21353,11 @@ btn_trigger:
           .RES.B      1
 btn_holdDuration:
           .RES.B      1
-sessionSteps:
+session_steps:
           .RES.B      4
-recentSessionSteps:
+session_recentSteps:
           .RES.B      2
-idleSeconds:
+session_idleSeconds:
           .RES.B      2
 rtc_seconds:
           .RES.B      1

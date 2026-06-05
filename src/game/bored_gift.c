@@ -8,7 +8,7 @@
  * type is stored in g.gCurSubstateY and dispatched in game_process_interaction_reward:
  *
  *   type 1   - dowsing-style item gift  (selects an item from the trainer's
- *              table based on g.recentSessionSteps; populates EEPROM_LOG_ITEMS).
+ *              table based on g.session_recentSteps; populates EEPROM_LOG_ITEMS).
  *   type 2-5 - g.save_watts reward (50/20/10/?? depending on type).
  *   type 7   - first-time peer-identity setup (copies sprite ROM regions to
  *              the peer-sprite EEPROM slots; resets nickname).
@@ -29,7 +29,7 @@ void game_init_peer_identity(void) {
   register uint8_t *temp_buf;
   uint16_t i;
 
-  g.recentSessionSteps = 0;
+  g.session_recentSteps = 0;
   walker_status_flags_BIT.walking = 1;
 
   sys_init_heap();
@@ -88,12 +88,12 @@ void game_process_interaction_reward(uint8_t type) {
   g.gCurSubstateY = type;
   accelPos_X = ((const uint16_t *)INTERACTION_REWARD_PTRS)[type];
   ui_set_view(VIEW_BORED_GIFT);
-  g.idleSeconds = 0;
+  g.session_idleSeconds = 0;
 
   switch (type) {
   case 1:
-    if (g.recentSessionSteps < 4500) {
-      g.gCurSubstateZ = (int8_t)(9 - (g.recentSessionSteps / 500));
+    if (g.session_recentSteps < 4500) {
+      g.gCurSubstateZ = (int8_t)(9 - (g.session_recentSteps / 500));
     } else {
       g.gCurSubstateZ = 0;
     }
@@ -244,7 +244,7 @@ void game_check_periodic_events(void) {
   g.gCurSubstateY = 0;
   g.gCurSubstateZ = 0;
 
-  daily_steps = g.recentSessionSteps;
+  daily_steps = g.session_recentSteps;
   (void)daily_steps;
 
   prob = (uint8_t)(sys_get_rng() % 100);
@@ -252,11 +252,11 @@ void game_check_periodic_events(void) {
     return;
 
   if (!(walker_status_flags_BIT.walking)) {
-    if (g.recentSessionSteps < 300)
+    if (g.session_recentSteps < 300)
       return;
     g.gCurSubstateY = 0x07;
   } else {
-    if (g.idleSeconds < 3600)
+    if (g.session_idleSeconds < 3600)
       return;
 
     sys_init_heap();
@@ -268,7 +268,7 @@ void game_check_periodic_events(void) {
     buf = (uint8_t *)sbrk(0x0C);
     drv_eeprom_read_block(EEPROM_LOG_ITEMS, buf, 0x0C);
 
-    daily_steps = g.recentSessionSteps;
+    daily_steps = g.session_recentSteps;
     if (save_find_empty_item_slot(buf) < 3 && prob >= 90 &&
         daily_steps >= 500) {
       g.gCurSubstateY = 0x01;

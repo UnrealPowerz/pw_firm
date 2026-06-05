@@ -127,15 +127,15 @@ enter_debug_mode:
   goto finalize;
 factory_reset_full:
   drv_lcd_init();
-  g.idleSeconds = 0xE10;
+  g.session_idleSeconds = 0xE10;
   sys_factory_reset_eeprom(1, 1);
   goto apply_volume_and_contrast;
 factory_reset_partial:
-  g.idleSeconds = 0xE10;
+  g.session_idleSeconds = 0xE10;
   sys_factory_reset_eeprom(0, 1);
   goto apply_volume_and_contrast;
 factory_reset_minimal:
-  g.idleSeconds = 0xE10;
+  g.session_idleSeconds = 0xE10;
   sys_factory_reset_eeprom(0, 0);
 apply_volume_and_contrast:
   drv_sound_set_volume((g.save_settings >> 1) & 0x3);
@@ -557,8 +557,8 @@ void ir_comm_loop(void) {
         uint8_t i;
         drv_eeprom_write_block(0xF6C0, payload, 0x38);
         rxptr = drv_ir_get_rx_ptr();
-        *(uint32_t *)rxptr = g.sessionSteps;
-        *(uint16_t *)(rxptr + 4) = g.recentSessionSteps;
+        *(uint32_t *)rxptr = g.session_steps;
+        *(uint16_t *)(rxptr + 4) = g.session_recentSteps;
         drv_eeprom_read_block(EEPROM_TRAINER_PROFILE, eepromPageScratch, 0x10);
         ((byte_bits_t *)&rxptr[0x37])->BIT.b0 =
             ((byte_bits_t *)&eepromPageScratch[0x0E])->BIT.b0;

@@ -193,7 +193,7 @@ void ui_render_home_bar(void) {
   {
     uint8_t fmt;
     fmt = 1;
-    gfx_draw_numeric_value(0x58, 0x30, g.sessionSteps, fmt);
+    gfx_draw_numeric_value(0x58, 0x30, g.session_steps, fmt);
   }
 
   gfx_draw_battery_low(0, 0);

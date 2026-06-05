@@ -77,8 +77,8 @@ void sys_factory_reset_eeprom(uint8_t wipe_event_bits, uint8_t wipe_save_data) {
   uint32_t zero = 0;
   uint16_t i;
 
-  g.sessionSteps = zero;
-  g.recentSessionSteps = 0;
+  g.session_steps = zero;
+  g.session_recentSteps = 0;
   g.walker_status_flags &= ~0x06;
 
   ptr = (uint8_t *)drv_ir_get_rx_ptr();

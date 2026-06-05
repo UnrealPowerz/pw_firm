@@ -273,7 +273,7 @@ void game_roll_radar_encounter(void) {
         drv_eeprom_read_block(0xBF44, scratch, 4);
         steps_required = ((uint32_t)scratch[1] << 16) |
                          ((uint32_t)scratch[2] << 8) | scratch[3];
-        if (steps_required <= g.sessionSteps) {
+        if (steps_required <= g.session_steps) {
           if ((sys_get_rng() % 100) < scratch[2]) {
             g.gCurSubstateY = 4;
             g.accelXPos = ((sys_get_rng() >> 3) & 1) + 3;

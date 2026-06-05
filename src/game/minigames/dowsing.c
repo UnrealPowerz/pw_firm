@@ -201,7 +201,7 @@ void game_check_wild_encounter(void) {
     steps_required = (uint32_t)(((w & 0xFF00) >> 8) | ((w & 0xFF) << 8));
   }
 
-  if (g.sessionSteps < steps_required) {
+  if (g.session_steps < steps_required) {
     goto no_encounter;
   }
 

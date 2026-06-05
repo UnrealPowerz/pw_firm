@@ -51,10 +51,10 @@ __interrupt(vect=25) void drv_rtc_handle_sec(void) {
         g.rtc_seconds = sec;
     }
     g.save_rtcTime++;
-    if (g.idleSeconds < 0xE10) {
-        g.idleSeconds++;
+    if (g.session_idleSeconds < 0xE10) {
+        g.session_idleSeconds++;
     } else {
-        g.idleSeconds = 0xE10;
+        g.session_idleSeconds = 0xE10;
     }
     if (g.activityTimer != 0) {
         g.activityTimer--;

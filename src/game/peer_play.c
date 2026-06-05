@@ -45,8 +45,8 @@ void game_calculate_interaction_reward(void) {
 
   /* score = own session steps + peer session steps + 10*(own recent + peer recent),
      clamped to 20000. */
-  score = g.sessionSteps + *(uint32_t *)peer_steps;
-  total_daily_steps = g.recentSessionSteps + *(uint16_t *)(peer_steps + 4);
+  score = g.session_steps + *(uint32_t *)peer_steps;
+  total_daily_steps = g.session_recentSteps + *(uint16_t *)(peer_steps + 4);
   score += (uint32_t)total_daily_steps * 10;
 
   if (score > 20000) {
@@ -78,23 +78,23 @@ void game_calculate_interaction_reward(void) {
   if (score >= 20000) {
     g.DAT_f7d1 = 0x2C;
     if (g.dowsing_item_pos != 0) return;
-    g.accelXPos = (g.sessionSteps > *(uint32_t *)peer_steps) ? 0 : 1;
+    g.accelXPos = (g.session_steps > *(uint32_t *)peer_steps) ? 0 : 1;
   } else if (score >= 10000) {
     g.DAT_f7d1 = 0x2D;
     if (g.dowsing_item_pos != 0) return;
-    g.accelXPos = (g.sessionSteps > *(uint32_t *)peer_steps) ? 2 : 3;
+    g.accelXPos = (g.session_steps > *(uint32_t *)peer_steps) ? 2 : 3;
   } else if (score >= 5000) {
     g.DAT_f7d1 = 0x2E;
     if (g.dowsing_item_pos != 0) return;
-    g.accelXPos = (g.sessionSteps > *(uint32_t *)peer_steps) ? 4 : 5;
+    g.accelXPos = (g.session_steps > *(uint32_t *)peer_steps) ? 4 : 5;
   } else if (score >= 2500) {
     g.DAT_f7d1 = 0x2F;
     if (g.dowsing_item_pos != 0) return;
-    g.accelXPos = (g.sessionSteps > *(uint32_t *)peer_steps) ? 6 : 7;
+    g.accelXPos = (g.session_steps > *(uint32_t *)peer_steps) ? 6 : 7;
   } else {
     g.DAT_f7d1 = 0x30;
     if (g.dowsing_item_pos != 0) return;
-    g.accelXPos = (g.sessionSteps > *(uint32_t *)peer_steps) ? 8 : 9;
+    g.accelXPos = (g.session_steps > *(uint32_t *)peer_steps) ? 8 : 9;
   }
 
   /* Write the chosen item id into the free slot. */

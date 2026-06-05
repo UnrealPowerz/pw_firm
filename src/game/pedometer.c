@@ -26,7 +26,7 @@
  *     game_add_watts                  Clamped += into g.save_watts.
  *     game_reset_step_data            Full reset (optionally also totals).
  *     game_rotate_step_history        Daily roll-over: shift the 6-day history
- *                                     and start a fresh g.sessionSteps slot.
+ *                                     and start a fresh g.session_steps slot.
  *
  *   --- Pedometer task dispatch (g.pedTaskFlags) ---
  *     game_pedometer_tick_session     Per-second g.save_sessionTicksElapsed bump
@@ -245,7 +245,7 @@ void game_pedometer_increment_step(void) {
     game_log_interaction(buf, extra_buf, 0x1B, (uint8_t)val, 0, 0);
   }
 
-  g.recentSessionSteps = 0;
+  g.session_recentSteps = 0;
   if (g.rtc_hours == g.scheduledNotifyHour) {
     g.pedTaskFlags |= 0x04;
   }
@@ -275,10 +275,10 @@ void game_rotate_step_history(void) {
         ((uint32_t *)((uint8_t *)buf + 20))[-(int)i];
   }
 
-  *(uint32_t *)buf = g.sessionSteps;
+  *(uint32_t *)buf = g.session_steps;
   drv_eeprom_write_block(EEPROM_LOG_POKE_STATS, buf, 0x1C);
 
-  g.sessionSteps = 0;
+  g.session_steps = 0;
 
   for (j = 10; j != 0; j--) {
     drv_eeprom_fill((uint16_t)((j * 0x224) + 0xDC08), 0x0028, 0xFF);
@@ -422,14 +422,14 @@ void game_process_accel_data(void) {
       g.stepBatchSize = (uint8_t)(accumulation >> 9);
       stepDetectAccum = accumulation & 0x1FF;
 
-      g.recentSessionSteps += (uint16_t)g.stepBatchSize;
-      if (g.recentSessionSteps > 9999) {
-        g.recentSessionSteps = 9999;
+      g.session_recentSteps += (uint16_t)g.stepBatchSize;
+      if (g.session_recentSteps > 9999) {
+        g.session_recentSteps = 9999;
       }
 
-      g.sessionSteps += (uint32_t)g.stepBatchSize;
-      if (g.sessionSteps > 99999) {
-        g.sessionSteps = 99999;
+      g.session_steps += (uint32_t)g.stepBatchSize;
+      if (g.session_steps > 99999) {
+        g.session_steps = 99999;
       }
 
       game_pedometer_set_total(g.save_totalSteps + (uint32_t)g.stepBatchSize);
@@ -461,7 +461,7 @@ void game_process_accel_data(void) {
 }
 
 // Reads a little-endian uint16 "step threshold" from buf[a + b] and reports
-// whether the player has NOT yet reached it (g.sessionSteps < threshold), i.e.
+// whether the player has NOT yet reached it (g.session_steps < threshold), i.e.
 // the slot is still locked. ROM took the buffer pointer implicitly in r5 (a
 // caller-saved register the callers leave set) and returned the comparison via
 // the carry flag; both callers do `bcs <skip>`. Passing `buf` explicitly is
@@ -471,7 +471,7 @@ void game_process_accel_data(void) {
 uint8_t game_check_step_unlock(uint16_t a, uint16_t b, const uint8_t *buf) {
   const uint8_t *p = buf + a + b;
   uint16_t threshold = (uint16_t)(p[0] | ((uint16_t)p[1] << 8));
-  return (uint8_t)(g.sessionSteps < (uint32_t)threshold);
+  return (uint8_t)(g.session_steps < (uint32_t)threshold);
 }
 
 // ROM: 0x24ac  91.6%
@@ -485,14 +485,14 @@ void game_pedometer_tick_counters(void) {
     return;
   }
 
-  g.recentSessionSteps++;
-  if (g.recentSessionSteps > 9999) {
-    g.recentSessionSteps = 9999;
+  g.session_recentSteps++;
+  if (g.session_recentSteps > 9999) {
+    g.session_recentSteps = 9999;
   }
 
-  g.sessionSteps++;
-  if (g.sessionSteps > 99999) {
-    g.sessionSteps = 99999;
+  g.session_steps++;
+  if (g.session_steps > 99999) {
+    g.session_steps = 99999;
   }
 
   game_pedometer_set_total(g.save_totalSteps + 1);
