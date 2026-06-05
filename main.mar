@@ -426,7 +426,7 @@ LAB_027c:
           mov.b       r0h, @ui_substateA
           bra         LAB_02a0:8
 LAB_0282:
-          mov.b       @irResultCode, r0l
+          mov.b       @ir_resultCode, r0l
           beq         LAB_0296:8
           mov.b       #H'E, r0l
           jsr         @ui_set_view:16
@@ -1080,7 +1080,7 @@ LAB_087c:
 drv_ir_send_discovery:
           bsr         drv_ir_init_hw:8
           sub.b       r0l, r0l
-          mov.b       r0l, @irResultCode
+          mov.b       r0l, @ir_resultCode
           mov.l       @nextRandom, er1
           mov.l       er1, @nextSessionKey
           mov.l       @nextSessionKey, er1
@@ -1093,10 +1093,10 @@ drv_ir_send_discovery:
           mov.b       r0h, @REQUESTED_POKEMON_ACTION_TYPE
           mov.w       #irPacketReceivedFlag, r1
           bclr        #H'0, @r1
-          mov.b       r0l, @commandPos
+          mov.b       r0l, @ir_commandPos
           mov.b       r0l, @DAT_f8c1
           mov.w       @TCNT, e0
-          mov.w       e0, @lastCommandTime
+          mov.w       e0, @ir_lastCommandTime
           mov.b       r0l, @irSessionPhase
           mov.b       #H'FC, r0l
           jmp         @drv_ir_tx_u8:16
@@ -1115,7 +1115,7 @@ ir_comm_loop:
           mov.b       @SSR3:8, r0l
           and.b       #H'C4, r0l
           mov.b       r0l, @SSR3:8
-          mov.b       @commandPos, r5l
+          mov.b       @ir_commandPos, r5l
           bld         #H'6, @SSR3
           bcc         LAB_0930:8
           cmp.b       #H'88, r5l
@@ -1123,23 +1123,23 @@ ir_comm_loop:
           mov.b       @RDR3:8, r0l
           mov.b       r0l, @rdr_data
           mov.b       #H'8, r0l
-          mov.b       r0l, @irResultCode
+          mov.b       r0l, @ir_resultCode
           jmp         @LAB_0a74:16
 LAB_090e:
-          mov.b       @commandPos, r0l
+          mov.b       @ir_commandPos, r0l
           inc.b       r0l
-          mov.b       r0l, @commandPos
+          mov.b       r0l, @ir_commandPos
           dec.b       r0l
           extu.w      r0
           mov.b       @RDR3:8, r1l
           xor.b       #H'AA, r1l
           mov.b       r1l, @(commandType,er0)
           mov.w       @TCNT, r0
-          mov.w       r0, @lastCommandTime
+          mov.w       r0, @ir_lastCommandTime
           jmp         @sys_ir_comm_loop__finishIRComms:16
 LAB_0930:
           mov.w       @TCNT, e6
-          mov.w       @lastCommandTime, r0
+          mov.w       @ir_lastCommandTime, r0
           sub.w       r0, e6
           cmp.w       #H'4, e6
           bls         sys_ir_comm_loop__finishIRComms:16
@@ -1159,11 +1159,11 @@ LAB_0964:
           bld         #H'0, r0l
           bcc         LAB_0976:8
           mov.b       #H'2, r0l
-          mov.b       r0l, @irResultCode
+          mov.b       r0l, @ir_resultCode
           jmp         @LAB_0a74:16
 LAB_0976:
           mov.b       #H'1, r0l
-          mov.b       r0l, @irResultCode
+          mov.b       r0l, @ir_resultCode
           jmp         @LAB_0a74:16
 LAB_0980:
           jsr         @sys_get_rng:16
@@ -1177,10 +1177,10 @@ LAB_0986:
           mulxu.w     e0, er0
           mov.w       r0, e6
           mov.w       @TCNT, r0
-          mov.w       r0, @lastCommandTime
+          mov.w       r0, @ir_lastCommandTime
 LAB_09a0:
           mov.w       @TCNT, r0
-          mov.w       @lastCommandTime, e0
+          mov.w       @ir_lastCommandTime, e0
           sub.w       e0, r0
           cmp.w       e6, r0
           bcs         LAB_09a0:8
@@ -1195,18 +1195,18 @@ LAB_09a0:
           mov.w       e6, r0
           jsr         @drv_lcd_set_start:16
           mov.w       @TCNT, r0
-          mov.w       r0, @lastCommandTime
+          mov.w       r0, @ir_lastCommandTime
           jmp         @sys_ir_comm_loop__finishIRComms:16
 LAB_09d8:
           mov.b       r5l, r5l
           beq         sys_ir_comm_loop__finishIRComms:16
           mov.w       #irPacketReceivedFlag, r0
           bset        #H'0, @r0
-          mov.b       @commandPos, r0l
+          mov.b       @ir_commandPos, r0l
           cmp.b       #H'1, r0l
           bne         LAB_0a2c:8
           sub.b       r0l, r0l
-          mov.b       r0l, @commandPos
+          mov.b       r0l, @ir_commandPos
           mov.b       @commandType, r0l
           cmp.b       #H'FC, r0l
           bne         sys_ir_comm_loop__finishIRComms:16
@@ -1237,20 +1237,20 @@ LAB_0a2c:
           mov.b       r0l, @(H'2,er5)
           mov.b       r0l, @(H'3,er5)
           sub.l       er1, er1
-          mov.b       @commandPos, r1l
+          mov.b       @ir_commandPos, r1l
           mov.w       r5, r0
           jsr         @ir_calc_packet_checksum:16
           cmp.w       r0, e6
           beq         LAB_0a7c:8
           sub.b       r0l, r0l
-          mov.b       r0l, @commandPos
+          mov.b       r0l, @ir_commandPos
           mov.b       @irCrcRetryCount, r0l
           inc.b       r0l
           mov.b       r0l, @irCrcRetryCount
           cmp.b       #H'14, r0l
           bcs         sys_ir_comm_loop__finishIRComms:16
           mov.b       #H'2, r0l
-          mov.b       r0l, @irResultCode
+          mov.b       r0l, @ir_resultCode
 LAB_0a74:
           jsr         @drv_ir_finish_and_execute:16
           jmp         @sys_ir_comm_loop__finishIRComms:16
@@ -1259,7 +1259,7 @@ LAB_0a7c:
           mov.l       er0, @(H'2,er7)
           mov.b       @(H'1,er5), r4l
           mov.b       @er5, r3l
-          mov.b       @commandPos, r4h
+          mov.b       @ir_commandPos, r4h
           add.b       #H'F8, r4h
           mov.w       e5, r5
           add.w       #commandType, r5
@@ -1443,10 +1443,10 @@ LAB_0c8e:
           mulxu.w     e0, er0
           mov.w       r0, e6
           mov.w       @TCNT, r0
-          mov.w       r0, @lastCommandTime
+          mov.w       r0, @ir_lastCommandTime
 LAB_0ca8:
           mov.w       @TCNT, r0
-          mov.w       @lastCommandTime, e0
+          mov.w       @ir_lastCommandTime, e0
           sub.w       e0, r0
           cmp.w       e6, r0
           bcs         LAB_0ca8:8
@@ -1455,17 +1455,17 @@ LAB_0ca8:
           mov.b       #H'FC, r0l
           jsr         @drv_ir_tx_u8:16
           mov.w       @TCNT, r0
-          mov.w       r0, @lastCommandTime
+          mov.w       r0, @ir_lastCommandTime
           jmp         @LAB_182e:16
 LAB_0cce:
           mov.b       #H'3, r0l
-          mov.b       r0l, @irResultCode
+          mov.b       r0l, @ir_resultCode
           jmp         @LAB_14bc:16
 LAB_0cd8:
           cmp.b       #H'2, r4l
           beq         LAB_0ce6:8
           mov.b       #H'3, r0l
-          mov.b       r0l, @irResultCode
+          mov.b       r0l, @ir_resultCode
           jmp         @LAB_14bc:16
 LAB_0ce6:
           mov.b       @irHandshakeStep, r0l
@@ -1509,7 +1509,7 @@ LAB_0d32:
           mov.w       #H'1268, r0
           jsr         @drv_ir_send_packet:16
           mov.b       #H'3, r0l
-          mov.b       r0l, @irResultCode
+          mov.b       r0l, @ir_resultCode
           jmp         @LAB_14bc:16
 LAB_0d74:
           mov.b       @DAT_f841, r0l
@@ -1519,7 +1519,7 @@ LAB_0d74:
           mov.w       #H'1268, r0
           jsr         @drv_ir_send_packet:16
           mov.b       #H'3, r0l
-          mov.b       r0l, @irResultCode
+          mov.b       r0l, @ir_resultCode
           jmp         @LAB_14bc:16
 LAB_0d90:
           bld         #H'1, r0l
@@ -1528,7 +1528,7 @@ LAB_0d90:
           mov.w       #H'1268, r0
           jsr         @drv_ir_send_packet:16
           mov.b       #H'3, r0l
-          mov.b       r0l, @irResultCode
+          mov.b       r0l, @ir_resultCode
           jmp         @LAB_14bc:16
 LAB_0da8:
           mov.b       @(H'5C,er5), r0l
@@ -1539,7 +1539,7 @@ LAB_0da8:
           mov.w       #H'1268, r0
           jsr         @drv_ir_send_packet:16
           mov.b       #H'3, r0l
-          mov.b       r0l, @irResultCode
+          mov.b       r0l, @ir_resultCode
           jmp         @LAB_14bc:16
 LAB_0dc8:
           mov.b       @DAT_f844, r0l
@@ -1548,7 +1548,7 @@ LAB_0dc8:
           mov.w       #H'1268, r0
           jsr         @drv_ir_send_packet:16
           mov.b       #H'3, r0l
-          mov.b       r0l, @irResultCode
+          mov.b       r0l, @ir_resultCode
           jmp         @LAB_14bc:16
 LAB_0de2:
           mov.b       @(H'5B,er5), r0l
@@ -1558,7 +1558,7 @@ LAB_0de2:
           mov.w       #H'1268, r0
           jsr         @drv_ir_send_packet:16
           mov.b       #H'4, r0l
-          mov.b       r0l, @irResultCode
+          mov.b       r0l, @ir_resultCode
           jmp         @LAB_14bc:16
 LAB_0dfe:
           mov.w       #g_scratch+H'10, r0
@@ -1569,7 +1569,7 @@ LAB_0dfe:
           mov.w       #H'1C00, r0
           jsr         @drv_ir_send_packet:16
           mov.b       #H'5, r0l
-          mov.b       r0l, @irResultCode
+          mov.b       r0l, @ir_resultCode
           jmp         @LAB_14bc:16
 LAB_0e1e:
           mov.b       #H'2, r1l
@@ -1590,20 +1590,20 @@ LAB_0e28:
           bld         #H'0, r0l
           bcs         LAB_0e58:8
           mov.b       #H'3, r0l
-          mov.b       r0l, @irResultCode
+          mov.b       r0l, @ir_resultCode
           jmp         @LAB_14bc:16
 LAB_0e58:
           mov.b       @DAT_f841, r0l
           bld         #H'0, r0l
           bcs         LAB_0e6a:8
           mov.b       #H'3, r0l
-          mov.b       r0l, @irResultCode
+          mov.b       r0l, @ir_resultCode
           jmp         @LAB_14bc:16
 LAB_0e6a:
           bld         #H'1, r0l
           bcs         LAB_0e78:8
           mov.b       #H'3, r0l
-          mov.b       r0l, @irResultCode
+          mov.b       r0l, @ir_resultCode
           jmp         @LAB_14bc:16
 LAB_0e78:
           mov.b       @(H'5C,er5), r0l
@@ -1611,20 +1611,20 @@ LAB_0e78:
           cmp.b       r0h, r0l
           beq         LAB_0e8e:8
           mov.b       #H'3, r0l
-          mov.b       r0l, @irResultCode
+          mov.b       r0l, @ir_resultCode
           jmp         @LAB_14bc:16
 LAB_0e8e:
           mov.b       @DAT_f844, r0l
           beq         LAB_0e9e:8
           mov.b       #H'3, r0l
-          mov.b       r0l, @irResultCode
+          mov.b       r0l, @ir_resultCode
           jmp         @LAB_14bc:16
 LAB_0e9e:
           mov.b       @(H'5B,er5), r0l
           bld         #H'1, r0l
           bcs         LAB_0eb0:8
           mov.b       #H'4, r0l
-          mov.b       r0l, @irResultCode
+          mov.b       r0l, @ir_resultCode
           jmp         @LAB_14bc:16
 LAB_0eb0:
           mov.w       #g_scratch+H'10, r0
@@ -1635,7 +1635,7 @@ LAB_0eb0:
           mov.w       #H'1C00, r0
           jsr         @drv_ir_send_packet:16
           mov.b       #H'5, r0l
-          mov.b       r0l, @irResultCode
+          mov.b       r0l, @ir_resultCode
           jmp         @LAB_14bc:16
 LAB_0ed0:
           mov.w       #H'F400, r5
@@ -1741,7 +1741,7 @@ LAB_1006:
           jmp         @LAB_1252:16
 LAB_100c:
           mov.b       #H'5, r0l
-          mov.b       r0l, @irResultCode
+          mov.b       r0l, @ir_resultCode
           jmp         @LAB_14bc:16
 LAB_1016:
           jsr         @drv_ir_get_rx_ptr:16
@@ -1781,7 +1781,7 @@ LAB_1072:
           jmp         @LAB_182a:16
 LAB_1092:
           mov.b       #H'3, r0l
-          mov.b       r0l, @irResultCode
+          mov.b       r0l, @ir_resultCode
           jmp         @LAB_14bc:16
 LAB_109c:
           mov.b       #H'2, r1l
@@ -1800,7 +1800,7 @@ LAB_10ac:
           jmp         @LAB_182a:16
 LAB_10cc:
           mov.b       #H'3, r0l
-          mov.b       r0l, @irResultCode
+          mov.b       r0l, @ir_resultCode
           jmp         @LAB_14bc:16
 LAB_10d6:
           mov.b       #H'2, r1l
@@ -1825,7 +1825,7 @@ LAB_1106:
           jmp         @LAB_1252:16
 LAB_1116:
           mov.b       #H'3, r0l
-          mov.b       r0l, @irResultCode
+          mov.b       r0l, @ir_resultCode
           jmp         @LAB_14bc:16
 LAB_1120:
           jsr         @ir_parse_rx_packet:16
@@ -1845,7 +1845,7 @@ LAB_113c:
           jmp         @LAB_15e4:16
 LAB_114c:
           mov.b       #H'3, r0l
-          mov.b       r0l, @irResultCode
+          mov.b       r0l, @ir_resultCode
           jmp         @LAB_14bc:16
 LAB_1156:
           mov.w       r6, r0
@@ -1949,7 +1949,7 @@ LAB_1252:
           jmp         @LAB_14bc:16
 LAB_125a:
           mov.b       #H'3, r0l
-          mov.b       r0l, @irResultCode
+          mov.b       r0l, @ir_resultCode
           jmp         @LAB_14bc:16
 LAB_1264:
           mov.b       #H'2, r1l
@@ -2098,7 +2098,7 @@ LAB_13c2:
           mov.w       #H'9E11, r0
           jsr         @drv_ir_send_packet:16
           mov.b       #H'6, r0l
-          mov.b       r0l, @irResultCode
+          mov.b       r0l, @ir_resultCode
           jmp         @LAB_14bc:16
 LAB_13fe:
           jsr         @ir_parse_rx_packet:16
@@ -2125,7 +2125,7 @@ LAB_140a:
           mov.w       #H'9E11, r0
           jsr         @drv_ir_send_packet:16
           mov.b       #H'6, r0l
-          mov.b       r0l, @irResultCode
+          mov.b       r0l, @ir_resultCode
           bra         LAB_14bc:8
 LAB_1444:
           mov.b       r3l, r0h
@@ -2178,14 +2178,14 @@ LAB_149a:
           mov.w       #H'9E00, r0
           jsr         @drv_ir_send_packet:16
           mov.b       #H'7, r0l
-          mov.b       r0l, @irResultCode
+          mov.b       r0l, @ir_resultCode
           bra         LAB_14bc:8
 LAB_14ac:
           mov.b       #H'2, r1l
           mov.w       #H'9C00, r0
           jsr         @drv_ir_send_packet:16
           mov.b       #H'7, r0l
-          mov.b       r0l, @irResultCode
+          mov.b       r0l, @ir_resultCode
 LAB_14bc:
           jsr         @drv_ir_finish_and_execute:16
           jmp         @LAB_182e:16
@@ -2520,9 +2520,9 @@ LAB_182e:
           mov.w       e6, r0
           jsr         @drv_lcd_set_start:16
           sub.b       r0l, r0l
-          mov.b       r0l, @commandPos
+          mov.b       r0l, @ir_commandPos
           mov.w       @TCNT, r0
-          mov.w       r0, @lastCommandTime
+          mov.w       r0, @ir_lastCommandTime
 sys_ir_comm_loop__finishIRComms:
           add.w       #H'A, r7
           jmp         @$spregld2$3:16
@@ -12811,7 +12811,7 @@ ui_render_step_history:
           mov.w       #LAB_1020, r0
           jsr         @drv_lcd_blit:16
           mov.w       #gfx_draw_text_box, r6
-          mov.b       @irResultCode, r0l
+          mov.b       @ir_resultCode, r0l
           add.b       #H'FF, r0l
           cmp.b       #H'7, r0l
           bhi         switchD_72ce__default:8
@@ -21377,7 +21377,7 @@ ui_dispatchTickCounter:
           .RES.B      1
 ui_animationTick:
           .RES.B      1
-irResultCode:
+ir_resultCode:
           .RES.B      1
 ped_sampleCount:
           .RES.B      1
@@ -21397,9 +21397,9 @@ sys_statusFlags:
           .RES.B      1
 sys_walkerFlags:
           .RES.B      2
-lastCommandTime:
+ir_lastCommandTime:
           .RES.B      2
-commandPos:
+ir_commandPos:
           .RES.B      1
 sys_wakeFlag:
           .RES.B      3

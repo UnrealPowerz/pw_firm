@@ -41,7 +41,7 @@
 /* 0xF7AA */ volatile uint8_t  ui_menuCursor;
 /* 0xF7AB */ volatile uint8_t  ui_dispatchTickCounter;               /* write-only dispatch tick */
 /* 0xF7AC */ volatile uint8_t  ui_animationTick;
-/* 0xF7AD */ volatile uint8_t  irResultCode;
+/* 0xF7AD */ volatile uint8_t  ir_resultCode;
 /* 0xF7AE */ volatile uint8_t  ped_sampleCount;
 /* 0xF7AF */ volatile uint8_t  ped_activityTimer;
 /* 0xF7B0 */ volatile uint8_t  ped_stepTimer;
@@ -56,8 +56,8 @@
 /* 0xF7B7 */ volatile uint8_t  _pad_f7b7;
 
 /* --- Command / wake / heap / RNG --- */
-/* 0xF7B8 */ volatile uint16_t lastCommandTime;
-/* 0xF7BA */ volatile uint8_t  commandPos;
+/* 0xF7B8 */ volatile uint16_t ir_lastCommandTime;
+/* 0xF7BA */ volatile uint8_t  ir_commandPos;
 /* 0xF7BB */ volatile uint8_t  sys_wakeFlag[3];     /* [0]=wake flag; rest pad */
 /* 0xF7BE */ volatile uint16_t sys_heapPointer;            /* sbrk break pointer */
 /* 0xF7C0 */ volatile uint32_t nextRandom;

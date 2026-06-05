@@ -216,7 +216,7 @@ show_menu_a7:
   goto finalize;
 
 default_handle_error:
-  if (g.irResultCode == 0)
+  if (g.ir_resultCode == 0)
     goto return_to_main_view;
   ui_set_view(VIEW_STEP_HISTORY);
 reset_substate_z:
@@ -324,19 +324,19 @@ void ir_comm_loop(void) {
     uint8_t ssr = SSR3 & 0xC4;
     SSR3 = ssr;
   }
-  cmdPos_local = g.commandPos;
+  cmdPos_local = g.ir_commandPos;
   if (SSR3_BIT.RDRF) {
     if (cmdPos_local >= 0x88) {
       rdr_data = RDR3;
-      g.irResultCode = 0x08;
+      g.ir_resultCode = 0x08;
       goto do_action;
     }
-    g.commandPos = cmdPos_local + 1;
+    g.ir_commandPos = cmdPos_local + 1;
     *((uint8_t *)&commandType + cmdPos_local) = RDR3 ^ 0xAA;
-    g.lastCommandTime = TCNT;
+    g.ir_lastCommandTime = TCNT;
     goto finish_no_action;
   }
-  timerDelta = (uint16_t)(TCNT - g.lastCommandTime);
+  timerDelta = (uint16_t)(TCNT - g.ir_lastCommandTime);
   if (timerDelta <= 4)
     goto finish_no_action;
   if (timerDelta > 0x0C80) {
@@ -352,14 +352,14 @@ void ir_comm_loop(void) {
       drv_ir_tx_u8(0xFC);
       goto LAB_182e;
     }
-    g.irResultCode = irPacketReceivedFlag_BIT.b0 ? 2 : 1;
+    g.ir_resultCode = irPacketReceivedFlag_BIT.b0 ? 2 : 1;
     goto do_action;
   }
   if (cmdPos_local == 0)
     goto finish_no_action;
   irPacketReceivedFlag_BIT.b0 = 1;
   if (cmdPos_local == 1) {
-    g.commandPos = 0;
+    g.ir_commandPos = 0;
     cmdByte = commandType;
     if (cmdByte != 0xFC)
       goto finish_no_action;
@@ -382,14 +382,14 @@ void ir_comm_loop(void) {
   crcExpected = ((uint16_t)pktBase[3] << 8) | pktBase[2];
   pktBase[2] = 0;
   pktBase[3] = 0;
-  g.commandPos = 0;
+  g.ir_commandPos = 0;
   crcCalc = ir_calc_packet_checksum(cmdLen, pktBase);
   if (crcCalc != crcExpected) {
     irCrcRetryCount++;
     if (irCrcRetryCount < 0x14) {
       goto finish_no_action;
     }
-    g.irResultCode = 2;
+    g.ir_resultCode = 2;
     goto do_action;
   }
   *(uint32_t *)((uint8_t *)&commandType + 2) = *(uint32_t *)(pktBase + 4);
@@ -440,14 +440,14 @@ void ir_comm_loop(void) {
             ;
           irHandshakeStep = 1;
           drv_ir_tx_u8(0xFC);
-          g.lastCommandTime = TCNT;
+          g.ir_lastCommandTime = TCNT;
           goto LAB_182e;
         }
         default:
           goto LAB_182e;
         }
       }
-      g.irResultCode = 3;
+      g.ir_resultCode = 3;
       goto LAB_14bc;
 
     case 0xF4:
@@ -455,7 +455,7 @@ void ir_comm_loop(void) {
 
     case 0xF8:
       if (subtype != 2) {
-        g.irResultCode = 3;
+        g.ir_resultCode = 3;
         goto LAB_14bc;
       }
       phase = irHandshakeStep;
@@ -476,37 +476,37 @@ void ir_comm_loop(void) {
       save_read_reliable(EEPROM_TRAINER_REC, EEPROM_TRAINER_REC_BACKUP, (void *)trainerRecBuf, 0x68);
       if (!((byte_bits_t *)&payload[0x5B])->BIT.b0) {
         drv_ir_send_packet(0x68, 0x12, 2);
-        g.irResultCode = 3;
+        g.ir_resultCode = 3;
         goto LAB_14bc;
       }
       if (!((byte_bits_t *)&DAT_f841)->BIT.b0) {
         drv_ir_send_packet(0x68, 0x12, 2);
-        g.irResultCode = 3;
+        g.ir_resultCode = 3;
         goto LAB_14bc;
       }
       if (!((byte_bits_t *)&DAT_f841)->BIT.b1) {
         drv_ir_send_packet(0x68, 0x12, 2);
-        g.irResultCode = 3;
+        g.ir_resultCode = 3;
         goto LAB_14bc;
       }
       if (*(uint8_t *)(payload + 0x5C) != DAT_f842) {
         drv_ir_send_packet(0x68, 0x12, 2);
-        g.irResultCode = 3;
+        g.ir_resultCode = 3;
         goto LAB_14bc;
       }
       if (DAT_f844 != 0) {
         drv_ir_send_packet(0x68, 0x12, 2);
-        g.irResultCode = 3;
+        g.ir_resultCode = 3;
         goto LAB_14bc;
       }
       if (!((byte_bits_t *)&payload[0x5B])->BIT.b1) {
         drv_ir_send_packet(0x68, 0x12, 2);
-        g.irResultCode = 4;
+        g.ir_resultCode = 4;
         goto LAB_14bc;
       }
       if (game_find_seen_peer((void *)(DAT_f7e6 + 0x10)) != 0) {
         drv_ir_send_packet(0x00, 0x1C, 2);
-        g.irResultCode = 5;
+        g.ir_resultCode = 5;
         goto LAB_14bc;
       }
       drv_ir_send_packet(0x68, 0x12, 2);
@@ -516,32 +516,32 @@ void ir_comm_loop(void) {
       memcpy(payload, (void *)DAT_f7e6, 0x68);
       save_read_reliable(EEPROM_TRAINER_REC, EEPROM_TRAINER_REC_BACKUP, (void *)trainerRecBuf, 0x68);
       if (!((byte_bits_t *)&payload[0x5B])->BIT.b0) {
-        g.irResultCode = 3;
+        g.ir_resultCode = 3;
         goto LAB_14bc;
       }
       if (!((byte_bits_t *)&DAT_f841)->BIT.b0) {
-        g.irResultCode = 3;
+        g.ir_resultCode = 3;
         goto LAB_14bc;
       }
       if (!((byte_bits_t *)&DAT_f841)->BIT.b1) {
-        g.irResultCode = 3;
+        g.ir_resultCode = 3;
         goto LAB_14bc;
       }
       if (*(uint8_t *)(payload + 0x5C) != DAT_f842) {
-        g.irResultCode = 3;
+        g.ir_resultCode = 3;
         goto LAB_14bc;
       }
       if (DAT_f844 != 0) {
-        g.irResultCode = 3;
+        g.ir_resultCode = 3;
         goto LAB_14bc;
       }
       if (!((byte_bits_t *)&payload[0x5B])->BIT.b1) {
-        g.irResultCode = 4;
+        g.ir_resultCode = 4;
         goto LAB_14bc;
       }
       if (game_find_seen_peer((void *)(DAT_f7e6 + 0x10)) != 0) {
         drv_ir_send_packet(0x00, 0x1C, 2);
-        g.irResultCode = 5;
+        g.ir_resultCode = 5;
         goto LAB_14bc;
       }
       irSessionPhase = 1;
@@ -590,7 +590,7 @@ void ir_comm_loop(void) {
       goto LAB_1252;
 
     case 0x1C:
-      g.irResultCode = 5;
+      g.ir_resultCode = 5;
       goto LAB_14bc;
 
     case 0x20:
@@ -609,7 +609,7 @@ void ir_comm_loop(void) {
       goto LAB_182e;
 
     case 0x36:
-      g.irResultCode = 3;
+      g.ir_resultCode = 3;
       goto LAB_14bc;
 
     case 0x38:
@@ -624,7 +624,7 @@ void ir_comm_loop(void) {
       goto LAB_182e;
 
     case 0x44:
-      g.irResultCode = 3;
+      g.ir_resultCode = 3;
       goto LAB_14bc;
 
     case 0x4E:
@@ -644,7 +644,7 @@ void ir_comm_loop(void) {
       goto LAB_1252;
 
     case 0x56:
-      g.irResultCode = 3;
+      g.ir_resultCode = 3;
       goto LAB_14bc;
 
     case 0x60:
@@ -659,7 +659,7 @@ void ir_comm_loop(void) {
       goto LAB_15e4;
 
     case 0x64:
-      g.irResultCode = 3;
+      g.ir_resultCode = 3;
       goto LAB_14bc;
 
     case 0xC0: {
@@ -747,7 +747,7 @@ void ir_comm_loop(void) {
       goto LAB_1252;
 
     case 0xD8:
-      g.irResultCode = 3;
+      g.ir_resultCode = 3;
       goto LAB_14bc;
 
     case 0x24:
@@ -829,7 +829,7 @@ void ir_comm_loop(void) {
       }
       if (save_check_event_bit((void *)trainerRecBuf, DAT_f840) != 0) {
         drv_ir_send_packet(0x11, 0x9E, 2);
-        g.irResultCode = 6;
+        g.ir_resultCode = 6;
         goto LAB_14bc;
       }
       drv_ir_send_packet(0x11, cmdByte, 2);
@@ -850,7 +850,7 @@ void ir_comm_loop(void) {
       }
       if (save_check_event_bit((void *)trainerRecBuf, DAT_f840) != 0) {
         drv_ir_send_packet(0x11, 0x9E, 2);
-        g.irResultCode = 6;
+        g.ir_resultCode = 6;
         goto LAB_14bc;
       }
       drv_ir_send_packet(0x11, cmdByte, 2);
@@ -875,12 +875,12 @@ void ir_comm_loop(void) {
 
     case 0x9E:
       drv_ir_send_packet(0x00, 0x9E, 2);
-      g.irResultCode = 7;
+      g.ir_resultCode = 7;
       goto LAB_14bc;
 
     case 0x9C:
       drv_ir_send_packet(0x00, 0x9C, 2);
-      g.irResultCode = 7;
+      g.ir_resultCode = 7;
       goto LAB_14bc;
 
     case 0xF0: {
@@ -1036,8 +1036,8 @@ LAB_182e: {
   t = (uint16_t)((t << 2) | (t >> 14));
   t &= 1;
   drv_lcd_set_start((uint8_t)t);
-  g.commandPos = 0;
-  g.lastCommandTime = TCNT;
+  g.ir_commandPos = 0;
+  g.ir_lastCommandTime = TCNT;
 }
 finish_no_action: ;
 }

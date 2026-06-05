@@ -14,7 +14,7 @@
  *   ui_render_step_history  - VIEW_STEP_HISTORY renderer for the post-IR-
  *                             exchange result screen. Always draws the
  *                             step-history background graphic; overlays an
- *                             error text-box based on g.irResultCode (set by
+ *                             error text-box based on g.ir_resultCode (set by
  *                             ir_protocol.c). See per-function comment.
  */
 
@@ -140,9 +140,9 @@ void ui_render_connecting_screen(uint8_t show_ir) {
  * Renders VIEW_STEP_HISTORY — the screen shown after a peer/IR exchange
  * completes (success or failure). The "step-history graph" background art
  * at EEPROM 0x2350 is always drawn; on top of that, an error text-box is
- * overlaid based on g.irResultCode (set by ir_protocol.c):
+ * overlaid based on g.ir_resultCode (set by ir_protocol.c):
  *
- *   g.irResultCode  day  text
+ *   g.ir_resultCode  day  text
  *   1             0    "No trainer found"
  *   2             1    "Cannot connect"
  *   3             2    "Cannot complete this connection"
@@ -166,7 +166,7 @@ void ui_render_step_history(void) {
   drv_eeprom_read_block(0x2350, buf, 0x100);
   drv_lcd_blit(0x20, 0x10, buf, 0x20, 0x20);
 
-  day = g.irResultCode - 1;
+  day = g.ir_resultCode - 1;
   if (day > 7) {
     gfx_draw_battery_low(0x58, 0);
     return;
