@@ -126,7 +126,7 @@ enum view_id {
 #define DAT_f7d8_BIT (((volatile byte_bits_t *)&g.viewstate.v.bytes.at_d8)->BIT)
 
 /* ir_packetReceivedFlag -- bit 0 used; ROM emits bset/bclr. */
-#define ir_packetReceivedFlag_BIT (((volatile byte_bits_t *)&ir_packetReceivedFlag)->BIT)
+#define ir_packetReceivedFlag_BIT (((volatile byte_bits_t *)&g_scratch2.s.ir_packetReceivedFlag)->BIT)
 
 #define DAT_f7d1_BIT (((volatile byte_bits_t *)&g.viewstate.v.bytes.at_d1)->BIT)
 /* 16-bit "accel physics" view: the accel driver and game_process_accel_data
@@ -161,74 +161,50 @@ union pw_scratch2 {
     uint8_t bytes[0xF0];
     struct {
         uint8_t  accel_y[32];        /* +0x00 accel_samplesYArr / accel_samplesY[0..31] */
-        uint8_t  at_f886[8];         /* +0x20 = accel_samplesY[32..39] (also L_F886) */
+        uint8_t  at_f886[8];         /* +0x20 = accel_samplesY[32..39] */
         uint8_t  at_f88e[8];         /* +0x28 = accel_samplesY[40..47] */
         uint8_t  at_f896;            /* +0x30 = accel_samplesY[48] */
         uint8_t  at_f897[15];        /* +0x31 = accel_samplesY[49..63] */
         uint8_t  accel_z[3];         /* +0x40 accel_samplesZArr / accel_samplesZ[0..2] */
         uint8_t  at_f8a9[13];        /* +0x43 = accel_samplesZ[3..15] */
-        volatile uint32_t next_session_key;     /* +0x50 */
-        volatile uint32_t session_key;          /* +0x54 */
-        volatile uint8_t  ir_handshake_step;    /* +0x58 */
-        volatile uint8_t  ir_timeout_retry;     /* +0x59 (ROM uses byte access only) */
-        volatile uint8_t  _pad_at_5a;           /* +0x5A */
-        volatile uint8_t  at_f8c1;              /* +0x5B */
-        volatile uint8_t  ir_crc_retry_count;   /* +0x5C */
-        volatile uint8_t  ir_packet_received_flag; /* +0x5D */
-        volatile uint8_t  requested_pkmn_action;/* +0x5E ir_requestedPokemonAction */
-        volatile uint8_t  ir_session_phase;     /* +0x5F */
-        volatile uint16_t ir_xfer_remaining;    /* +0x60 */
-        volatile uint16_t ir_xfer_src;          /* +0x62 */
-        volatile uint16_t ir_xfer_dst;          /* +0x64 */
-        volatile uint8_t  ir_xfer_chunk_count;  /* +0x66 */
-        volatile uint8_t  rdr_data_byte;        /* +0x67 */
-        volatile uint8_t  cmd;                  /* +0x68 ir_commandType */
-        volatile uint8_t  cmd_subtype;          /* +0x69 ir_commandSubtype */
-        volatile uint8_t  cmd_crc_lo;           /* +0x6A ir_commandCrcLo */
-        volatile uint8_t  cmd_crc_hi;           /* +0x6B ir_commandCrcHi */
-        volatile uint32_t cmd_session_token;    /* +0x6C ir_commandSessionToken */
-        volatile uint8_t  payload[0x80];        /* +0x70 IR payload (also overlaps step state when idle) */
-    } as_struct;
+        volatile uint32_t ir_sessionKeyNext;       /* +0x50 */
+        volatile uint32_t ir_sessionKey;           /* +0x54 */
+        volatile uint8_t  ir_handshakeStep;        /* +0x58 */
+        volatile uint8_t  ir_timeoutRetryCount;    /* +0x59 (ROM uses byte access only) */
+        volatile uint8_t  _pad_at_5a;              /* +0x5A */
+        volatile uint8_t  at_f8c1;                 /* +0x5B */
+        volatile uint8_t  ir_crcRetryCount;        /* +0x5C */
+        volatile uint8_t  ir_packetReceivedFlag;   /* +0x5D */
+        volatile uint8_t  ir_requestedPokemonAction; /* +0x5E */
+        volatile uint8_t  ir_sessionPhase;         /* +0x5F */
+        volatile uint16_t ir_xferRemaining;        /* +0x60 */
+        volatile uint16_t ir_xferSrc;              /* +0x62 */
+        volatile uint16_t ir_xferDst;              /* +0x64 */
+        volatile uint8_t  ir_xferChunkCount;       /* +0x66 */
+        volatile uint8_t  ir_rdrData;              /* +0x67 */
+        volatile uint8_t  ir_commandType;          /* +0x68 */
+        volatile uint8_t  ir_commandSubtype;       /* +0x69 (unused) */
+        volatile uint8_t  ir_commandCrcLo;         /* +0x6A */
+        volatile uint8_t  ir_commandCrcHi;         /* +0x6B */
+        volatile uint32_t ir_commandSessionToken;  /* +0x6C */
+        volatile uint8_t  payload[0x80];           /* +0x70 IR payload (also overlaps step state when idle) */
+    } s;
 };
 #define g_scratch2 (*(union pw_scratch2 *)0xF866u)
 
-/* Backward-compatible names */
-#define accel_samplesYArr                (g_scratch2.as_struct.accel_y)
-#define accel_samplesY                  ((volatile int8_t *)g_scratch2.as_struct.accel_y)
-#define DAT_f886                       (g_scratch2.as_struct.at_f886)
-#define DAT_f88e                       (g_scratch2.as_struct.at_f88e)
-#define DAT_f896                       (g_scratch2.as_struct.at_f896)
-#define DAT_f897                       (g_scratch2.as_struct.at_f897)
-#define accel_samplesZArr                (g_scratch2.as_struct.accel_z)
-#define accel_samplesZ                  ((volatile int8_t *)g_scratch2.as_struct.accel_z)
-#define DAT_f8a9                       (g_scratch2.as_struct.at_f8a9)
-#define ir_sessionKeyNext                 (g_scratch2.as_struct.next_session_key)
-#define ir_sessionKey                     (g_scratch2.as_struct.session_key)
-#define ir_handshakeStep                (g_scratch2.as_struct.ir_handshake_step)
-#define ir_timeoutRetryCount            (g_scratch2.as_struct.ir_timeout_retry)
-#define DAT_f8c1                       (g_scratch2.as_struct.at_f8c1)
-#define ir_crcRetryCount                (g_scratch2.as_struct.ir_crc_retry_count)
-#define ir_packetReceivedFlag           (g_scratch2.as_struct.ir_packet_received_flag)
-#define ir_requestedPokemonAction  (g_scratch2.as_struct.requested_pkmn_action)
-#define ir_sessionPhase                 (g_scratch2.as_struct.ir_session_phase)
-#define ir_xferRemaining                (g_scratch2.as_struct.ir_xfer_remaining)
-#define ir_xferSrc                      (g_scratch2.as_struct.ir_xfer_src)
-#define ir_xferDst                      (g_scratch2.as_struct.ir_xfer_dst)
-#define ir_xferChunkCount               (g_scratch2.as_struct.ir_xfer_chunk_count)
-#define ir_rdrData                       (g_scratch2.as_struct.rdr_data_byte)
-#define ir_commandType                    (g_scratch2.as_struct.cmd)
-#define ir_commandSubtype                 (g_scratch2.as_struct.cmd_subtype)
-#define ir_commandCrcLo                   (g_scratch2.as_struct.cmd_crc_lo)
-#define ir_commandCrcHi                   (g_scratch2.as_struct.cmd_crc_hi)
-#define ir_commandSessionToken            (g_scratch2.as_struct.cmd_session_token)
-#define ir_payload                (g_scratch2.as_struct.payload[0])
-#define DAT_f8d7                       (g_scratch2.as_struct.payload[1])
-#define DAT_f8d8                       (&g_scratch2.as_struct.payload[2])
-#define ped_stepDetectAccumulator                (*(volatile uint32_t *)&g_scratch2.as_struct.payload[0x10])
-#define ped_pendingStepDetect              (*(volatile uint32_t *)&g_scratch2.as_struct.payload[0x14])
-#define DAT_f8ee                       (g_scratch2.as_struct.payload[0x18])
-#define ped_isNotWalking                   (g_scratch2.as_struct.payload[0x19])
-#define L_F886                         DAT_f886
+/* Typed views that don't have a direct struct member equivalent. The struct
+ * fields (g_scratch2.s.X) are used directly at call sites for everything else. */
+#define accel_samplesY            ((volatile int8_t *)g_scratch2.s.accel_y)
+#define accel_samplesZ            ((volatile int8_t *)g_scratch2.s.accel_z)
+#define DAT_f886                  (g_scratch2.s.at_f886)
+#define DAT_f88e                  (g_scratch2.s.at_f88e)
+#define DAT_f896                  (g_scratch2.s.at_f896)
+#define DAT_f8c1                  (g_scratch2.s.at_f8c1)
+#define ir_payload                (g_scratch2.s.payload[0])
+#define ped_stepDetectAccumulator (*(volatile uint32_t *)&g_scratch2.s.payload[0x10])
+#define ped_pendingStepDetect     (*(volatile uint32_t *)&g_scratch2.s.payload[0x14])
+#define DAT_f8ee                  (g_scratch2.s.payload[0x18])
+#define ped_isNotWalking          (g_scratch2.s.payload[0x19])
 
 /* 0xF7E6..0xF865: 128-byte multi-purpose scratch region. The same bytes are
  * reused across three subsystems (mutually exclusive in time):
@@ -247,67 +223,43 @@ union pw_scratch {
     uint8_t bytes[0x80];
     int16_t fft[32];
     struct {
-        uint32_t at_00;       /* +00  DAT_f7e6 (uint32 view of first slot) */
-        uint32_t at_04;       /* +04  DAT_f7ea */
-        uint16_t at_08;       /* +08  DAT_f7ee */
-        uint16_t at_0a;       /* +0A  DAT_f7f0 */
-        uint32_t at_0c;       /* +0C  DAT_f7f2 (.s allocates 52 bytes here; rest is at_10) */
-        uint8_t  at_10[0x30]; /* +10..3F  IR payload tail */
-        uint8_t  at_40[8];    /* +40  ACCEL_SAMPLES_X */
-        uint8_t  at_48[18];   /* +48  DAT_f82e */
-        uint8_t  at_5a;       /* +5A  DAT_f840 */
-        uint8_t  at_5b;       /* +5B  DAT_f841 */
-        uint8_t  at_5c;       /* +5C  DAT_f842 */
-        uint8_t  at_5d;       /* +5D  DAT_f843 */
-        uint16_t at_5e;       /* +5E  DAT_f844 */
-        uint32_t at_60;       /* +60  peerRcvdRtcTime (uint32 prefix; .s allocates 8 bytes total) */
-        uint8_t  at_64[4];    /* +64  peerRcvdRtcTime unused tail */
-        uint8_t  at_68[8];    /* +68  trainerRecBuf */
-        uint16_t at_70;       /* +70  trainerRecBuf_loc (uint16 prefix; .s allocates 16 bytes total) */
-        uint8_t  at_72[14];   /* +72..7F  trainerRecBuf_loc tail */
-    } as_struct;
+        uint32_t at_00;              /* +00  DAT_f7e6 uint32 view of first slot */
+        uint32_t at_04;              /* +04  DAT_f7ea */
+        uint16_t at_08;              /* +08  DAT_f7ee */
+        uint16_t at_0a;              /* +0A  DAT_f7f0 */
+        uint32_t at_0c;              /* +0C  DAT_f7f2 (.s allocates 52 bytes here; rest is at_10) */
+        uint8_t  at_10[0x30];        /* +10..3F  IR payload tail */
+        uint8_t  accel_samplesXArr[8]; /* +40 */
+        uint8_t  at_48[18];          /* +48  DAT_f82e */
+        uint8_t  at_5a;              /* +5A  DAT_f840 */
+        uint8_t  at_5b;              /* +5B  DAT_f841 */
+        uint8_t  at_5c;              /* +5C  DAT_f842 */
+        uint8_t  at_5d;              /* +5D  DAT_f843 */
+        uint16_t at_5e;              /* +5E  DAT_f844 */
+        uint32_t peerRcvdRtcTime;    /* +60 .s allocates 8 bytes total */
+        uint8_t  at_64[4];           /* +64 peerRcvdRtcTime unused tail */
+        uint8_t  trainerRecBuf[8];   /* +68 start of 0x68-byte buffer (overflows union) */
+        uint16_t trainerRecBuf_loc;  /* +70 .s allocates 16 bytes total */
+        uint8_t  at_72[14];          /* +72..7F trainerRecBuf_loc tail */
+    } s;
 };
 #define g_scratch (*(union pw_scratch *)0xF7E6u)
 
-/* IR transfer buffer view (used during IR sync). */
+/* Typed view aliases (no plain struct equivalent). */
 #define DAT_f7e6        (g_scratch.bytes)              /* uint8_t[128] -- decays to (uint8_t *) */
-#define DAT_f7ea        (g_scratch.as_struct.at_04)
-#define DAT_f7ee        (g_scratch.as_struct.at_08)
-#define DAT_f7f0        (g_scratch.as_struct.at_0a)
-#define DAT_f7f2        (g_scratch.as_struct.at_0c)
-
-/* FFT view (used during step detection). */
+#define DAT_f7ea        (g_scratch.s.at_04)
+#define DAT_f7ee        (g_scratch.s.at_08)
+#define DAT_f7f0        (g_scratch.s.at_0a)
+#define DAT_f7f2        (g_scratch.s.at_0c)
 #define fft_results     (g_scratch.fft)
+#define accelXSamples   ((volatile int8_t *)g_scratch.s.accel_samplesXArr)
+#define DAT_f82e        (g_scratch.s.at_48)
+#define DAT_f840        (g_scratch.s.at_5a)
+#define DAT_f841        (g_scratch.s.at_5b)
+#define DAT_f842        (g_scratch.s.at_5c)
+#define DAT_f843        (g_scratch.s.at_5d)
+#define DAT_f844        (g_scratch.s.at_5e)
 
-/* Accel X view + the named globals it overlaps. ACCEL_SAMPLES_X is the
- * 8-byte "window" name; accelXSamples is a 64-byte int8 view extending
- * 0x40 bytes from the same start. */
-#define ACCEL_SAMPLES_X (g_scratch.as_struct.at_40)
-#define accelXSamples   ((volatile int8_t *)g_scratch.as_struct.at_40)
-#define DAT_f82e        (g_scratch.as_struct.at_48)
-#define DAT_f840        (g_scratch.as_struct.at_5a)
-#define DAT_f841        (g_scratch.as_struct.at_5b)
-#define DAT_f842        (g_scratch.as_struct.at_5c)
-#define DAT_f843        (g_scratch.as_struct.at_5d)
-#define DAT_f844        (g_scratch.as_struct.at_5e)
-/* peerRcvdRtcTime: uint32 at offset +0x60 of the IR transfer buffer
- * (g_scratch). When a peer-sync packet is received, this field holds the
- * peer's RTC time; ir_parse_rx_packet uses it to slave our g.save_rtcTime if
- * non-zero. (Same memory is the at_60 8-byte slot of g_scratch.) */
-#define peerRcvdRtcTime (g_scratch.as_struct.at_60)
-/* trainerRecBuf: 8-byte field that's the START of a 0x68-byte trainer-record
- * load buffer used by session.c (game_start_walk) and ir_protocol.c (peer
- * sync paths). The full 0x68 bytes overflow g_scratch into the next BSS
- * region -- known latent issue documented at the union site. */
-#define trainerRecBuf   (g_scratch.as_struct.at_68)
-/* trainerRecBuf_loc: uint16 at offset +8 from trainerRecBuf == trainer_record.loc
- * field of the loaded record (used in ROM as `mov.w @trainerRecBuf_loc` paired with
- * `mov.l @trainerRecBuf` to copy the id+loc pair to a packet header). */
-#define trainerRecBuf_loc (g_scratch.as_struct.at_70)
-
-#define accel_samplesY  ((volatile int8_t *)accel_samplesYArr)
-#define accel_samplesZ  ((volatile int8_t *)accel_samplesZArr)
-#define L_F886         DAT_f886
 
 /* --- Control Flow --- */
 /* Per-tick handler invoked from the main loop; type defined in types.h. */

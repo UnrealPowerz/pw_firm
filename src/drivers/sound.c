@@ -111,7 +111,7 @@ void drv_sound_play(uint8_t sound_idx) {
     goto end;
   }
 
-  g.sound_dataPointer = ACCEL_SAMPLES_X;
+  g.sound_dataPointer = g_scratch.s.accel_samplesXArr;
   drv_eeprom_read_block((uint16_t)(uintptr_t)src_ptr, g.sound_dataPointer, metadata.len);
 
   sum = 0;
@@ -180,7 +180,7 @@ void drv_sound_update(void) {
   }
 
   if ((g.sound_dataPointer[1] & 0x7F) == 0x7E) {
-    g.sound_dataPointer = ACCEL_SAMPLES_X;
+    g.sound_dataPointer = g_scratch.s.accel_samplesXArr;
     return;
   }
 
@@ -209,7 +209,7 @@ void drv_sound_update(void) {
     g.sound_isSeparateNote = 1;
   }
 
-  if (g.sound_dataPointer != ACCEL_SAMPLES_X) {
+  if (g.sound_dataPointer != g_scratch.s.accel_samplesXArr) {
     if ((g.sound_dataPointer[-1] & 0x80) != 0x80) {
       TMRW = 0x83;
       TCRW = 0xC2;
