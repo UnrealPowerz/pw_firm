@@ -152,7 +152,7 @@ enum view_id {
  *   - Accel-Z samples:   int8_t[64] from offset 0x40 (overlaps IR session-key state)
  *   - IR session state:  ir_sessionKeyNext/ir_sessionKey/handshake/retry counters/xfer (offsets 0x50..0x67)
  *   - IR packet buffer:  136 bytes from offset 0x68  (cmd/subtype/crc/session/payload)
- *   - Step detection state when IR idle: stepDetectAccum, pendingStepDetect, isNotWalking
+ *   - Step detection state when IR idle: ped_stepDetectAccumulator, ped_pendingStepDetect, ped_isNotWalking
  *     overlap with the IR packet payload tail.
  *
  * Field names use offset-based `at_NN` for slots whose semantic role across
@@ -224,10 +224,10 @@ union pw_scratch2 {
 #define ir_payload                (g_scratch2.as_struct.payload[0])
 #define DAT_f8d7                       (g_scratch2.as_struct.payload[1])
 #define DAT_f8d8                       (&g_scratch2.as_struct.payload[2])
-#define stepDetectAccum                (*(volatile uint32_t *)&g_scratch2.as_struct.payload[0x10])
-#define pendingStepDetect              (*(volatile uint32_t *)&g_scratch2.as_struct.payload[0x14])
+#define ped_stepDetectAccumulator                (*(volatile uint32_t *)&g_scratch2.as_struct.payload[0x10])
+#define ped_pendingStepDetect              (*(volatile uint32_t *)&g_scratch2.as_struct.payload[0x14])
 #define DAT_f8ee                       (g_scratch2.as_struct.payload[0x18])
-#define isNotWalking                   (g_scratch2.as_struct.payload[0x19])
+#define ped_isNotWalking                   (g_scratch2.as_struct.payload[0x19])
 #define L_F886                         DAT_f886
 
 /* 0xF7E6..0xF865: 128-byte multi-purpose scratch region. The same bytes are

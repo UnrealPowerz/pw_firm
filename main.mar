@@ -16632,9 +16632,9 @@ game_reset_pedometer_flags:
           sub.b       r0l, r0l
           mov.b       r0l, @DAT_f8ee
           sub.l       er1, er1
-          mov.l       er1, @pendingStepDetect
-          mov.l       er1, @stepDetectAccum
-          mov.b       r0l, @isNotWalking
+          mov.l       er1, @ped_pendingStepDetect
+          mov.l       er1, @ped_stepDetectAccumulator
+          mov.b       r0l, @ped_isNotWalking
           rts
 ; =============================================================================
 ; Function: game_pedometer_interpolate_batch
@@ -16874,24 +16874,24 @@ LAB_9560:
           mov.l       er6, er6
           bne         LAB_9570:8
           sub.l       er0, er0
-          mov.l       er0, @pendingStepDetect
+          mov.l       er0, @ped_pendingStepDetect
           jmp         @LAB_9682:16
 LAB_9570:
           mov.w       #sys_statusFlags, r0
           bset        #H'7, @r0
-          mov.l       @pendingStepDetect, er0
+          mov.l       @ped_pendingStepDetect, er0
           beq         LAB_9644:16
-          mov.l       @stepDetectAccum, er1
+          mov.l       @ped_stepDetectAccumulator, er1
           add.l       er0, er1
-          mov.l       er1, @stepDetectAccum
+          mov.l       er1, @ped_stepDetectAccumulator
           sub.l       er0, er0
-          mov.l       er0, @pendingStepDetect
+          mov.l       er0, @ped_pendingStepDetect
           mov.l       er1, er0
           shar.l      er0
           mov.b       r0h, @ped_batchSize
           mov.l       er1, er0
           and.l       #H'1FF, er0
-          mov.l       er0, @stepDetectAccum
+          mov.l       er0, @ped_stepDetectAccumulator
           mov.b       @ped_batchSize, r0l
           extu.w      r0
           mov.w       @session_recentSteps, e0
@@ -16937,14 +16937,14 @@ LAB_95fe:
 LAB_9640:
           mov.w       r0, @save_watts
 LAB_9644:
-          mov.l       @stepDetectAccum, er0
+          mov.l       @ped_stepDetectAccumulator, er0
           add.l       er6, er0
-          mov.l       er0, @stepDetectAccum
+          mov.l       er0, @ped_stepDetectAccumulator
           shar.l      er0
           mov.b       r0h, @ped_batchSize
-          mov.l       @stepDetectAccum, er0
+          mov.l       @ped_stepDetectAccumulator, er0
           and.l       #H'1FF, er0
-          mov.l       er0, @stepDetectAccum
+          mov.l       er0, @ped_stepDetectAccumulator
           mov.b       @ped_batchSize, r0l
           beq         LAB_9676:8
           mov.b       #H'1E, r0l
@@ -17017,7 +17017,7 @@ LAB_96f2:
           inc.b       r6l
           cmp.b       #H'A, r6l
           bcs         LAB_96c4:8
-          mov.b       @isNotWalking, r0l
+          mov.b       @ped_isNotWalking, r0l
           beq         LAB_9712:8
           shll.w      r5
           shll.w      r5
@@ -17039,13 +17039,13 @@ LAB_971a:
           bne         LAB_9732:8
           sub.l       er0, er0
           mov.b       r0l, @DAT_f8ee
-          mov.l       er0, @pendingStepDetect
+          mov.l       er0, @ped_pendingStepDetect
           mov.b       #H'1, r1l
-          mov.b       r1l, @isNotWalking
+          mov.b       r1l, @ped_isNotWalking
           bra         LAB_9748:8
 LAB_9732:
           sub.b       r0l, r0l
-          mov.b       r0l, @isNotWalking
+          mov.b       r0l, @ped_isNotWalking
           mov.w       e4, r2
           add.w       #H'A, r2
           mov.w       r2, e0
@@ -21537,13 +21537,13 @@ DAT_f8d7:
           .RES.B      1
 DAT_f8d8:
           .RES.B      14
-stepDetectAccum:
+ped_stepDetectAccumulator:
           .RES.B      4
-pendingStepDetect:
+ped_pendingStepDetect:
           .RES.B      4
 DAT_f8ee:
           .RES.B      1
-isNotWalking:
+ped_isNotWalking:
           .RES.B      103
 eepromPageScratch:
           .RES.B      1
