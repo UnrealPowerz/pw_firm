@@ -25,9 +25,9 @@ struct b_ram_section {
 extern volatile struct b_ram_section g;
 
 /* --- System Status Flags --- */
-#define statusFlags_BIT (((volatile status_flags_t *)&g.statusFlags)->BIT)
+#define sys_statusFlags_BIT (((volatile status_flags_t *)&g.sys_statusFlags)->BIT)
 extern volatile uint8_t status_flags_f7f1;   /* DAT_f7f1 */
-#define walker_status_flags_BIT (((volatile walker_status_t *)&g.walker_status_flags)->BIT)
+#define sys_walkerFlags_BIT (((volatile walker_status_t *)&g.sys_walkerFlags)->BIT)
 
 /* --- LCD & UI / Timers --- */
 

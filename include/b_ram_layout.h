@@ -51,15 +51,15 @@
 /* 0xF7B4 */ volatile uint8_t  ped_batchAccumulator;
 
 /* --- System status flags --- */
-/* 0xF7B5 */ volatile uint8_t  statusFlags;            /* bit-field via _BIT */
-/* 0xF7B6 */ volatile uint8_t  walker_status_flags;    /* bit-field via _BIT */
+/* 0xF7B5 */ volatile uint8_t  sys_statusFlags;            /* bit-field via _BIT */
+/* 0xF7B6 */ volatile uint8_t  sys_walkerFlags;    /* bit-field via _BIT */
 /* 0xF7B7 */ volatile uint8_t  _pad_f7b7;
 
 /* --- Command / wake / heap / RNG --- */
 /* 0xF7B8 */ volatile uint16_t lastCommandTime;
 /* 0xF7BA */ volatile uint8_t  commandPos;
-/* 0xF7BB */ volatile uint8_t  wakeupFlagMaybe[3];     /* [0]=wake flag; rest pad */
-/* 0xF7BE */ volatile uint16_t heapPointer;            /* sbrk break pointer */
+/* 0xF7BB */ volatile uint8_t  sys_wakeFlag[3];     /* [0]=wake flag; rest pad */
+/* 0xF7BE */ volatile uint16_t sys_heapPointer;            /* sbrk break pointer */
 /* 0xF7C0 */ volatile uint32_t nextRandom;
 
 /* --- Sound engine state --- */
@@ -88,8 +88,8 @@
 /* 0xF7DE */ volatile uint16_t ped_axisIdleThreshold;
 
 /* --- Event loop / LCD state --- */
-/* 0xF7E0 */ volatile event_loop_func_t currentEventLoopFunc;
-/* 0xF7E2 */ volatile event_loop_func_t savedEventLoopFunc;
+/* 0xF7E0 */ volatile event_loop_func_t sys_tickHandler;
+/* 0xF7E2 */ volatile event_loop_func_t sys_savedTickHandler;
 /* 0xF7E4 */ volatile uint8_t  lcdPageOffset;
 /* 0xF7E5 */ volatile uint8_t  _pad_f7e5;
 

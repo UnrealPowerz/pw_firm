@@ -23,7 +23,7 @@ enum main_menu_popup {
 
 // ROM: 0x694c  40.0%
 void ui_enter_ir_session(void) {
-  sys_begin_ir_session(g.currentEventLoopFunc, sys_main_loop_low_power);
+  sys_begin_ir_session(g.sys_tickHandler, sys_main_loop_low_power);
 }
 
 // ROM: 0x9756  74.7%
@@ -52,7 +52,7 @@ void ui_handle_main_menu(void) {
     } else {
       switch (g.menu_cursor) {
       case MENU_POKERADAR:
-        if (!(walker_status_flags_BIT.walking)) {
+        if (!(sys_walkerFlags_BIT.walking)) {
           g.gCurSubstateY = MENU_POPUP_NO_POKEMON;
           drv_sound_play(SND_CURSOR);
           return;

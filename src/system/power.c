@@ -10,7 +10,7 @@
  *
  * (Watchdog control lives in src/system/wdt.c.)
  *
- * `g.walker_status_flags` bits 3-4 are the 2-bit power-mode field (mask 0x18):
+ * `g.sys_walkerFlags` bits 3-4 are the 2-bit power-mode field (mask 0x18):
  *   0x00 = active
  *   0x08 = low power     (set by sys_enter_low_power)
  *   0x10 = deep sleep    (set by sys_enter_deep_sleep)
@@ -39,7 +39,7 @@ void sys_enter_standby(void) {
       DAT_f7d1_BIT.b2 = 0;
     }
   }
-  if (statusFlags_BIT.sleeping) {
+  if (sys_statusFlags_BIT.sleeping) {
     if (g.gCurSubstateA <= 0x20) {
       DAT_f7d1_BIT.b2 = 1;
       DAT_f7d1_BIT.b0 = 1;
@@ -71,7 +71,7 @@ LAB_6bd2:
   g.DAT_f7d1 ^= 0x04;  /* ROM emits `bnot #2,@r0`; ch38 doesn't pattern-match
                         either `^= 0x04` or `bN = !bN` to bnot */
 LAB_6bde:
-  if (!(statusFlags_BIT.sleeping)) {
+  if (!(sys_statusFlags_BIT.sleeping)) {
     g.gCurSubstateA = 0x68;
     DAT_f7d1_BIT.b1 = 0;
     DAT_f7d1_BIT.b2 = 0;
@@ -81,21 +81,21 @@ LAB_6bde:
 // ROM: 0xa180  98.5%
 void sys_enter_low_power(void) {
   CKSTPR1 |= 0x04;
-  g.walker_status_flags = (g.walker_status_flags & 0xE7) | WALKER_MODE_LOW_POWER;
+  g.sys_walkerFlags = (g.sys_walkerFlags & 0xE7) | WALKER_MODE_LOW_POWER;
   RTCCR2 |= 0x01;
   g.ped_stepTimer = 0x1E;
-  statusFlags_BIT.sleeping = 0;
+  sys_statusFlags_BIT.sleeping = 0;
 }
 
 // ROM: 0xa29c  99.0%
 void sys_enter_deep_sleep(void) {
   g.ped_activityTimer = 0x3C;
   g.ped_stepTimer = 0x5A;
-  if ((g.walker_status_flags & WALKER_MODE_MASK) != WALKER_MODE_DEEP_SLEEP) {
-    if ((g.walker_status_flags & WALKER_MODE_MASK) == WALKER_MODE_ACTIVE) {
+  if ((g.sys_walkerFlags & WALKER_MODE_MASK) != WALKER_MODE_DEEP_SLEEP) {
+    if ((g.sys_walkerFlags & WALKER_MODE_MASK) == WALKER_MODE_ACTIVE) {
       g.ped_sampleCount = 0;
     }
-    g.walker_status_flags = (g.walker_status_flags & 0xE7) | WALKER_MODE_DEEP_SLEEP;
+    g.sys_walkerFlags = (g.sys_walkerFlags & 0xE7) | WALKER_MODE_DEEP_SLEEP;
     RTCCR2 |= 0x01;
     drv_lcd_reset();
   }
@@ -106,7 +106,7 @@ void sys_wake_from_low_power(void) {
   drv_timerw_disable();
   CKSTPR1 &= ~0x04;
   RTCCR2 &= ~0x01;
-  g.walker_status_flags &= 0xE7;
+  g.sys_walkerFlags &= 0xE7;
 }
 
 // ROM: 0x256e  94.7%
@@ -114,12 +114,12 @@ void sys_enter_sleep(uint16_t mode) {
   if (mode == 0) {
     SYSCR1 = 0xA7;
     SYSCR2 = 0xE0;
-    statusFlags_BIT.lcd_dirty = 1;
+    sys_statusFlags_BIT.lcd_dirty = 1;
     sleep();
   } else if (mode == 1) {
     SYSCR1 = 0xAF;
     SYSCR2 = 0xE3;
-    statusFlags_BIT.lcd_dirty = 0;
+    sys_statusFlags_BIT.lcd_dirty = 0;
     sleep();
   }
 }

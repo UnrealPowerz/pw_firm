@@ -3,7 +3,7 @@
 // ROM: 0x25ac  99.2%
 void sys_delay_short(void) {
   uint16_t i;
-  if (statusFlags_BIT.lcd_dirty) {
+  if (sys_statusFlags_BIT.lcd_dirty) {
     i = 0x25;
     do {
       nop();

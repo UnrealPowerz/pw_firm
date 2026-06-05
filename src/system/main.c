@@ -27,42 +27,42 @@ void sys_main_loop_low_power(void) {
   IENR1 |= 0x80;
   drv_button_read();
 
-  if (!(g.walker_status_flags & WALKER_MODE_MASK)) {
+  if (!(g.sys_walkerFlags & WALKER_MODE_MASK)) {
     game_dispatch_pedometer_task();
     if (game_detect_activity()) {
       sys_enter_low_power();
-    } else if (statusFlags_BIT.button_event) {
+    } else if (sys_statusFlags_BIT.button_event) {
       sys_enter_low_power();
     }
-  } else if ((g.walker_status_flags & WALKER_MODE_MASK) == WALKER_MODE_DEEP_SLEEP) {
+  } else if ((g.sys_walkerFlags & WALKER_MODE_MASK) == WALKER_MODE_DEEP_SLEEP) {
     game_check_periodic_events();
     ui_dispatch_event();
-    if (g.currentEventLoopFunc == ir_comm_loop) {
+    if (g.sys_tickHandler == ir_comm_loop) {
       goto end;
     }
   }
 
-  if (walker_status_flags_BIT.session_active) {
+  if (sys_walkerFlags_BIT.session_active) {
     if (g.ped_sampleCount == 0x3F) {
       game_process_accel_data();
     }
   }
 
-  if (statusFlags_BIT.tick) {
-    if ((g.walker_status_flags & WALKER_MODE_MASK) == WALKER_MODE_DEEP_SLEEP) {
+  if (sys_statusFlags_BIT.tick) {
+    if ((g.sys_walkerFlags & WALKER_MODE_MASK) == WALKER_MODE_DEEP_SLEEP) {
       drv_lcd_clear_pages(0x40);
       ui_dispatch_draw();
       drv_lcd_flip();
       g.animTick++;
     }
-    statusFlags_BIT.tick = 0;
+    sys_statusFlags_BIT.tick = 0;
   } else {
     game_dispatch_pedometer_task();
-    if ((g.walker_status_flags & WALKER_MODE_MASK) == WALKER_MODE_DEEP_SLEEP) {
+    if ((g.sys_walkerFlags & WALKER_MODE_MASK) == WALKER_MODE_DEEP_SLEEP) {
       if (g.ped_activityTimer == 0) {
         drv_lcd_power_save();
-        g.walker_status_flags = (g.walker_status_flags & 0xE7) | WALKER_MODE_LOW_POWER;
-        g.wakeupFlagMaybe[0] = 0;
+        g.sys_walkerFlags = (g.sys_walkerFlags & 0xE7) | WALKER_MODE_LOW_POWER;
+        g.sys_wakeFlag[0] = 0;
         g.btn_holdDuration = 0;
       }
     } else {
@@ -88,7 +88,7 @@ end:
 void sys_main_loop_active(void) {
   SYSCR1 = 0x27;
   SYSCR2 = 0xE0;
-  statusFlags_BIT.lcd_dirty = 1;
+  sys_statusFlags_BIT.lcd_dirty = 1;
   if (GRA != 0) {
     sleep();
   }
@@ -96,14 +96,14 @@ void sys_main_loop_active(void) {
   drv_button_read();
   ui_dispatch_event();
 
-  if (statusFlags_BIT.tick) {
-    if ((g.walker_status_flags & WALKER_MODE_MASK) == WALKER_MODE_DEEP_SLEEP) {
+  if (sys_statusFlags_BIT.tick) {
+    if ((g.sys_walkerFlags & WALKER_MODE_MASK) == WALKER_MODE_DEEP_SLEEP) {
       drv_lcd_clear_pages(0x40);
       ui_dispatch_draw();
       drv_lcd_flip();
       g.animTick++;
     }
-    statusFlags_BIT.tick = 0;
+    sys_statusFlags_BIT.tick = 0;
   }
 
   if (!drv_sound_is_playing()) {

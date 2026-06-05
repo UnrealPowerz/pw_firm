@@ -63,7 +63,7 @@ typedef union {
     } BIT;
 } status_flags_t;
 
-/* walker_status_flags: bits 0,1,2 are independent flags;
+/* sys_walkerFlags: bits 0,1,2 are independent flags;
  * bits 3-4 are a 2-bit mode field (0x18 mask used as multi-bit compare in C).
  * Byte form is preserved for the multi-bit mask sites. */
 typedef union {
@@ -77,7 +77,7 @@ typedef union {
     } BIT;
 } walker_status_t;
 
-/* Power-mode field values for the 0x18 mask in walker_status_flags.
+/* Power-mode field values for the 0x18 mask in sys_walkerFlags.
  * Expressed in their shifted positions so they drop straight into the raw-
  * byte mask expressions the rest of the codebase uses (the bit-field form
  * via walker_status_t.mode regresses codegen — see notes in power.c). */
@@ -146,7 +146,7 @@ struct yx_pair {
     uint8_t x;
 };
 
-/* Per-tick handler installed in currentEventLoopFunc / passed to
+/* Per-tick handler installed in sys_tickHandler / passed to
  * sys_set_handler(). The main loop calls this from the foreground; both
  * sleep/active loops and the IR comm loop are installed via this pointer. */
 typedef void (*event_loop_func_t)(void);

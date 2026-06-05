@@ -482,12 +482,12 @@ LAB_02fa:
           cmp.w       #H'3E, e0
           bcs         LAB_02fa:8
           mov.b       r0l, @notif_scheduledHour
-          mov.w       #statusFlags, r0
+          mov.w       #sys_statusFlags, r0
           bset        #H'4, @r0
-          mov.b       @walker_status_flags, r0l
+          mov.b       @sys_walkerFlags, r0l
           and.b       #H'E7, r0l
           or.b        #H'10, r0l
-          mov.b       r0l, @walker_status_flags
+          mov.b       r0l, @sys_walkerFlags
           mov.b       #H'3C, r0l
           mov.b       r0l, @ped_activityTimer
           mov.b       #H'5A, r0l
@@ -532,7 +532,7 @@ LAB_034c:
           jsr         @drv_timer_b_init:16
           ldc.b       #H'0, ccr
 LAB_03ac:
-          mov.w       @currentEventLoopFunc, r0
+          mov.w       @sys_tickHandler, r0
           jsr         @r0
           bra         LAB_03ac:8
 ; =============================================================================
@@ -677,7 +677,7 @@ LAB_04da:
           mov.w       #save_totalSteps, r1
           mov.l       #H'2560156, er0
           jsr         @save_write_reliable:16
-          mov.w       #walker_status_flags, r0
+          mov.w       #sys_walkerFlags, r0
           bset        #H'2, @r0
           bset        #H'1, @r0
           mov.w       #trainerRecBuf, r6
@@ -770,7 +770,7 @@ game_end_walk:
           push.w      r3
           push.w      r6
           mov.w       #DAT_f7e6, r6
-          mov.w       #walker_status_flags, r0
+          mov.w       #sys_walkerFlags, r0
           bclr        #H'2, @r0
           mov.w       #RamCache_settingsByte, r0
           bclr        #H'0, @r0
@@ -3794,7 +3794,7 @@ gfx_draw_battery_low:
           push.w      r5
           mov.b       r0l, r5h
           mov.b       r0h, r5l
-          mov.b       @statusFlags, r1l
+          mov.b       @sys_statusFlags, r1l
           bld         #H'1, r1l
           bcc         LAB_2246:8
           mov.b       @animTick, r0l
@@ -4118,7 +4118,7 @@ sys_wdt_init:
 ; =============================================================================
 sys_init_heap:
           mov.w       #H'F8F0, r0
-          mov.w       r0, @heapPointer
+          mov.w       r0, @sys_heapPointer
           rts
 ; =============================================================================
 ; Function: sbrk
@@ -4130,7 +4130,7 @@ sys_init_heap:
 ; =============================================================================
 sbrk:
           push.w      e5
-          mov.w       #heapPointer, r1
+          mov.w       #sys_heapPointer, r1
           mov.w       @er1, e0
           mov.w       e0, e1
           add.w       r0, e0
@@ -4227,7 +4227,7 @@ sys_enter_sleep:
           mov.b       r1l, @SYSCR1:8
           mov.b       #H'E0, r1l
           mov.b       r1l, @SYSCR2:8
-          mov.w       #statusFlags, r1
+          mov.w       #sys_statusFlags, r1
           bset        #H'4, @r1
           INT_SLEEP
           bra         LAB_259c:8
@@ -4238,7 +4238,7 @@ LAB_2586:
           mov.b       r0l, @SYSCR1:8
           mov.b       #H'E3, r0l
           mov.b       r0l, @SYSCR2:8
-          mov.w       #statusFlags, r0
+          mov.w       #sys_statusFlags, r0
           bclr        #H'4, @r0
           INT_SLEEP
 LAB_259c:
@@ -4266,7 +4266,7 @@ sys_wdt_kick:
 ;            ... and 2 more
 ; =============================================================================
 sys_delay_short:
-          mov.b       @statusFlags, r0l
+          mov.b       @sys_statusFlags, r0l
           bld         #H'4, r0l
           bcc         LAB_25c6:8
           mov.w       #H'25, r0
@@ -4635,7 +4635,7 @@ LAB_2832:
           and.b       #H'F0, r0l
           or.b        #H'7, r0l
           mov.b       r0l, @AMR:8
-          mov.b       @statusFlags, r0l
+          mov.b       @sys_statusFlags, r0l
           bld         #H'4, r0l
           bcc         LAB_285e:8
           mov.b       @AMR:8, r0l
@@ -4728,21 +4728,21 @@ LAB_28fc:
 ; Called by: sys_main_loop_low_power
 ; =============================================================================
 drv_adc_check_battery:
-          mov.b       @statusFlags, r0l
+          mov.b       @sys_statusFlags, r0l
           bld         #H'2, r0l
           bcc         LAB_2936:8
           mov.w       #H'14, r0
           bsr         drv_adc_check_low_battery:8
           mov.b       r0l, r0l
           beq         LAB_2926:8
-          mov.w       #statusFlags, r0
+          mov.w       #sys_statusFlags, r0
           bset        #H'1, @r0
           bra         LAB_292e:8
 LAB_2926:
-          mov.w       #statusFlags, r0
+          mov.w       #sys_statusFlags, r0
           bclr        #H'1, @r0
 LAB_292e:
-          mov.w       #statusFlags, r0
+          mov.w       #sys_statusFlags, r0
           bclr        #H'2, @r0
 LAB_2936:
           rts
@@ -8189,7 +8189,7 @@ LAB_4900:
           mov.w       #H'2, r1
           mov.w       #DAT_f7d8, e0
           jsr         @drv_eeprom_write_block:16
-          mov.b       @walker_status_flags, r0l
+          mov.b       @sys_walkerFlags, r0l
           bld         #H'2, r0l
           bcc         LAB_4968:8
           mov.w       #H'BE, r0
@@ -8362,7 +8362,7 @@ LAB_4a5e:
           mov.b       r0l, r1l
           mov.w       #H'B800, r0
           jsr         @drv_eeprom_write_u8:16
-          mov.b       @walker_status_flags, r0l
+          mov.b       @sys_walkerFlags, r0l
           bld         #H'2, r0l
           bcc         LAB_4af0:8
           sub.b       r0l, r0l
@@ -8850,7 +8850,7 @@ drv_eeprom_spi_init:
           bset        #H'4, @CKSTPR2
           sub.b       r0l, r0l
           mov.b       r0l, @SSER
-          mov.b       @statusFlags, r0l
+          mov.b       @sys_statusFlags, r0l
           bld         #H'4, r0l
           bcc         LAB_4f8a:8
           mov.b       #H'86, r0l
@@ -8887,7 +8887,7 @@ drv_eeprom_spi_transfer:
           bcc         LAB_4fba:8
           mov.w       #SSSR, r0
           bclr        #H'6, @r0
-          mov.w       #statusFlags, r0
+          mov.w       #sys_statusFlags, r0
           bset        #H'6, @r0
           bra         LAB_4fc2:8
 LAB_4fba:
@@ -8911,7 +8911,7 @@ drv_eeprom_write_u8:
           mov.w       r0, e6
           mov.b       r1l, r5h
           mov.b       #H'3, r5l
-          mov.w       #statusFlags, r2
+          mov.w       #sys_statusFlags, r2
           bclr        #H'6, @r2
           mov.w       e6, r2
           mov.b       r2h, r2l
@@ -9003,7 +9003,7 @@ LAB_50b4:
           bcc         LAB_50b4:8
           bset        #H'2, @PDR1
           jsr         @drv_eeprom_spi_reset:16
-          mov.b       @statusFlags, r0l
+          mov.b       @sys_statusFlags, r0l
           bld         #H'6, r0l
           bcc         LAB_50d4:8
           dec.b       r5l
@@ -9231,7 +9231,7 @@ drv_eeprom_write_block:
           mov.w       e0, e3
           mov.w       r1, e5
           mov.b       #H'3, r3l
-          mov.w       #statusFlags, r2
+          mov.w       #sys_statusFlags, r2
           bclr        #H'6, @r2
           jmp         @LAB_537a:16
 LAB_5266:
@@ -9340,7 +9340,7 @@ LAB_5366:
           mov.w       e6, e6
           bne         LAB_5278:16
           jsr         @drv_eeprom_spi_reset:16
-          mov.b       @statusFlags, r0l
+          mov.b       @sys_statusFlags, r0l
           bld         #H'6, r0l
           bcc         LAB_5380:8
           dec.b       r3l
@@ -9363,7 +9363,7 @@ drv_eeprom_read_block:
           mov.w       e0, r3
           mov.w       r1, r4
           mov.b       #H'3, r5h
-          mov.w       #statusFlags, r2
+          mov.w       #sys_statusFlags, r2
           bclr        #H'6, @r2
           jmp         @LAB_5524:16
 LAB_539c:
@@ -9425,7 +9425,7 @@ LAB_542c:
           bcc         LAB_5446:8
           mov.w       #SSSR, r0
           bclr        #H'6, @r0
-          mov.w       #statusFlags, r0
+          mov.w       #sys_statusFlags, r0
           bset        #H'6, @r0
           bra         LAB_544e:8
 LAB_5446:
@@ -9450,7 +9450,7 @@ LAB_5468:
           bcc         LAB_5482:8
           mov.w       #SSSR, r0
           bclr        #H'6, @r0
-          mov.w       #statusFlags, r0
+          mov.w       #sys_statusFlags, r0
           bset        #H'6, @r0
           bra         LAB_548a:8
 LAB_5482:
@@ -9473,7 +9473,7 @@ LAB_54a0:
           bcc         LAB_54ba:8
           mov.w       #SSSR, r0
           bclr        #H'6, @r0
-          mov.w       #statusFlags, r0
+          mov.w       #sys_statusFlags, r0
           bset        #H'6, @r0
           bra         LAB_54c2:8
 LAB_54ba:
@@ -9496,7 +9496,7 @@ LAB_54d8:
           bcc         LAB_54f2:8
           mov.w       #SSSR, r0
           bclr        #H'6, @r0
-          mov.w       #statusFlags, r0
+          mov.w       #sys_statusFlags, r0
           bset        #H'6, @r0
           bra         LAB_54fa:8
 LAB_54f2:
@@ -9518,7 +9518,7 @@ LAB_550a:
           bcc         LAB_550a:8
           bset        #H'2, @PDR1
           jsr         @drv_eeprom_spi_reset:16
-          mov.b       @statusFlags, r0l
+          mov.b       @sys_statusFlags, r0l
           bld         #H'6, r0l
           bcc         LAB_552a:8
           dec.b       r5h
@@ -9538,7 +9538,7 @@ drv_eeprom_read_u8:
           jsr         @$sp_regsv$3:16
           mov.w       r0, e6
           mov.b       #H'3, r6h
-          mov.w       #statusFlags, r1
+          mov.w       #sys_statusFlags, r1
           bclr        #H'6, @r1
           mov.w       e6, r5
           mov.b       r5h, r5l
@@ -9623,7 +9623,7 @@ LAB_560e:
           bcc         LAB_560e:8
           bset        #H'2, @PDR1
           jsr         @drv_eeprom_spi_reset:16
-          mov.b       @statusFlags, r0l
+          mov.b       @sys_statusFlags, r0l
           bld         #H'6, r0l
           bcc         LAB_562e:8
           dec.b       r6h
@@ -9643,7 +9643,7 @@ drv_eeprom_write_u8_reliable:
           mov.w       r0, e3
           mov.b       r1l, r4l
           mov.b       #H'3, r5h
-          mov.w       #statusFlags, r2
+          mov.w       #sys_statusFlags, r2
           bclr        #H'6, @r2
           mov.w       e3, r2
           mov.b       r2h, r2l
@@ -9738,7 +9738,7 @@ LAB_5720:
           bcc         LAB_5720:8
           bset        #H'2, @PDR1
           jsr         @drv_eeprom_spi_reset:16
-          mov.b       @statusFlags, r0l
+          mov.b       @sys_statusFlags, r0l
           bld         #H'6, r0l
           bcc         LAB_5740:8
           dec.b       r5h
@@ -9761,7 +9761,7 @@ drv_eeprom_fill:
           mov.w       e0, e5
           mov.b       r1l, r4h
           mov.b       #H'3, r4l
-          mov.w       #statusFlags, r2
+          mov.w       #sys_statusFlags, r2
           bclr        #H'6, @r2
           jmp         @LAB_586a:16
 LAB_575a:
@@ -9868,7 +9868,7 @@ LAB_5856:
           mov.w       e6, e6
           bne         LAB_576a:16
           jsr         @drv_eeprom_spi_reset:16
-          mov.b       @statusFlags, r0l
+          mov.b       @sys_statusFlags, r0l
           bld         #H'6, r0l
           bcc         LAB_5870:8
           dec.b       r4l
@@ -9888,7 +9888,7 @@ drv_eeprom_write_page:
           mov.w       r0, e5
           mov.w       e0, r3
           mov.b       #H'3, r5l
-          mov.w       #statusFlags, r1
+          mov.w       #sys_statusFlags, r1
           bclr        #H'6, @r1
           jmp         @LAB_5986:16
 LAB_588a:
@@ -9986,7 +9986,7 @@ LAB_596c:
           bcc         LAB_596c:8
           bset        #H'2, @PDR1
           jsr         @drv_eeprom_spi_reset:16
-          mov.b       @statusFlags, r0l
+          mov.b       @sys_statusFlags, r0l
           bld         #H'6, r0l
           bcc         LAB_598c:8
           dec.b       r5l
@@ -10265,7 +10265,7 @@ game_init_peer_identity:
           mov.w       #H'BE, e5
           sub.w       r0, r0
           mov.w       r0, @session_recentSteps
-          mov.w       #walker_status_flags, r0
+          mov.w       #sys_walkerFlags, r0
           bset        #H'2, @r0
           jsr         @sys_init_heap:16
           mov.w       #H'68, e6
@@ -10644,16 +10644,16 @@ game_check_periodic_events:
           push.w      r5
           push.w      r6
           subs        #2, er7
-          mov.b       @walker_status_flags, r0l
+          mov.b       @sys_walkerFlags, r0l
           and.b       #H'18, r0l
           cmp.b       #H'10, r0l
           bne         LAB_60d4:16
           mov.b       @currentlyActiveView, r0l
           bne         LAB_60d4:16
-          mov.b       @walker_status_flags, r0l
+          mov.b       @sys_walkerFlags, r0l
           bld         #H'0, r0l
           bcc         LAB_60d4:16
-          mov.w       #walker_status_flags, r0
+          mov.w       #sys_walkerFlags, r0
           bclr        #H'0, @r0
           sub.b       r0l, r0l
           mov.b       r0l, @gCurSubstateY
@@ -10666,7 +10666,7 @@ game_check_periodic_events:
           jsr         @$DIVUL$3:16
           cmp.b       #H'28, r1l
           bcc         LAB_60d4:16
-          mov.b       @walker_status_flags, r0l
+          mov.b       @sys_walkerFlags, r0l
           bld         #H'2, r0l
           bcs         LAB_602c:8
           mov.w       @session_recentSteps, r0
@@ -11716,9 +11716,9 @@ LAB_6938:
 ; =============================================================================
 sys_set_handler:
           push.w      r6
-          mov.w       @currentEventLoopFunc, r6
-          mov.w       r6, @savedEventLoopFunc
-          mov.w       r0, @currentEventLoopFunc
+          mov.w       @sys_tickHandler, r6
+          mov.w       r6, @sys_savedTickHandler
+          mov.w       r0, @sys_tickHandler
           pop.w       r6
           rts
 ; =============================================================================
@@ -11728,7 +11728,7 @@ sys_set_handler:
 ; Called by: ui_handle_home, ui_handle_main_menu
 ; =============================================================================
 ui_enter_ir_session:
-          mov.w       @currentEventLoopFunc, r0
+          mov.w       @sys_tickHandler, r0
           mov.w       #sys_main_loop_low_power, r1
 ; =============================================================================
 ; Function: sys_begin_ir_session
@@ -11739,7 +11739,7 @@ ui_enter_ir_session:
 sys_begin_ir_session:
           cmp.w       r1, r0
           bne         LAB_69b6:8
-          mov.b       @walker_status_flags, r0l
+          mov.b       @sys_walkerFlags, r0l
           bld         #H'1, r0l
           bcs         LAB_697e:8
           mov.b       #H'40, r0l
@@ -11851,14 +11851,14 @@ ui_reset_substate:
 ; Called by: ui_dispatch_event
 ; =============================================================================
 ui_handle_home:
-          mov.b       @walker_status_flags, r0l
+          mov.b       @sys_walkerFlags, r0l
           bld         #H'1, r0l
           bcs         LAB_6a5e:8
           mov.b       #H'2, r0l
           jsr         @drv_button_is_triggered:16
           mov.b       r0l, r0l
           bne         LAB_6a58:8
-          mov.b       @statusFlags, r0l
+          mov.b       @sys_statusFlags, r0l
           bld         #H'5, r0l
           bcc         LAB_6ad6:8
 LAB_6a58:
@@ -11997,7 +11997,7 @@ LAB_6b6a:
           bset        #H'1, @r0
           bclr        #H'2, @r0
 LAB_6b84:
-          mov.b       @statusFlags, r0l
+          mov.b       @sys_statusFlags, r0l
           bpl         LAB_6b9e
           mov.b       @gCurSubstateA, r0l
           cmp.b       #H'20, r0l
@@ -12039,7 +12039,7 @@ LAB_6bd2:
           mov.w       #DAT_f7d1, r0
           bnot        #H'2, @r0
 LAB_6bde:
-          mov.b       @statusFlags, r0l
+          mov.b       @sys_statusFlags, r0l
           bmi         LAB_6bf6
           mov.b       #H'68, r0l
           mov.b       r0l, @gCurSubstateA
@@ -12064,7 +12064,7 @@ ui_render_home_route:
           jsr         @gfx_draw_small_route_icon:16
 LAB_6c0e:
           jsr         @ui_render_route_image:16
-          mov.b       @walker_status_flags, r0l
+          mov.b       @sys_walkerFlags, r0l
           bld         #H'2, r0l
           bcc         LAB_6c86:8
           mov.b       @gCurSubstateA, r6l
@@ -12922,7 +12922,7 @@ switchD_7364__caseD_b:
           jsr         @ui_handle_inventory_items:16
           bra         switchD_7364__caseD_5:8
 switchD_7364__caseD_e:
-          mov.b       @walker_status_flags, r0l
+          mov.b       @sys_walkerFlags, r0l
           bld         #H'1, r0l
           bcc         switchD_7364__caseD_5:8
           mov.b       #H'E, r0l
@@ -12971,7 +12971,7 @@ ui_dispatch_draw:
 switchD_741e__switchD:
           jmp         @r0
 switchD_741e__caseD_0:
-          mov.b       @walker_status_flags, r0l
+          mov.b       @sys_walkerFlags, r0l
           bld         #H'1, r0l
           bcs         LAB_7430:8
           jsr         @ui_render_empty_eeprom:16
@@ -13017,7 +13017,7 @@ switchD_741e__caseD_b:
           jsr         @ui_render_inventory_items:16
           bra         switchD_741e__caseD_5:8
 switchD_741e__caseD_e:
-          mov.b       @walker_status_flags, r0l
+          mov.b       @sys_walkerFlags, r0l
           bld         #H'1, r0l
           bcs         LAB_7490:8
           jsr         @ui_render_sad_walker:16
@@ -13286,7 +13286,7 @@ LAB_76ce:
           mov.b       r0h, @SYSCR1:8
           mov.b       #H'EB, r0h
           mov.b       r0h, @SYSCR2:8
-          mov.w       #statusFlags, r1
+          mov.w       #sys_statusFlags, r1
           bset        #H'4, @r1
           bset        #H'0, @PDR9
           mov.b       #H'86, r0h
@@ -13452,32 +13452,32 @@ sys_main_loop_low_power:
           jsr         @drv_accel_sample:16
           bset        #H'7, @IENR1
           jsr         @drv_button_read:16
-          mov.b       @walker_status_flags, r0l
+          mov.b       @sys_walkerFlags, r0l
           and.b       #H'18, r0l
           bne         LAB_78c8:8
           jsr         @game_dispatch_pedometer_task:16
           jsr         @game_detect_activity:16
           mov.b       r0l, r0l
           bne         LAB_78c0:8
-          mov.b       @statusFlags, r0l
+          mov.b       @sys_statusFlags, r0l
           bld         #H'3, r0l
           bcc         LAB_798a:16
 LAB_78c0:
           jsr         @sys_enter_low_power:16
           jmp         @LAB_798a:16
 LAB_78c8:
-          mov.b       @walker_status_flags, r0l
+          mov.b       @sys_walkerFlags, r0l
           and.b       #H'18, r0l
           cmp.b       #H'10, r0l
           bne         LAB_78e8:8
           jsr         @game_check_periodic_events:16
           jsr         @ui_dispatch_event:16
-          mov.w       @currentEventLoopFunc, r0
+          mov.w       @sys_tickHandler, r0
           mov.w       #ir_comm_loop, r1
           cmp.w       r1, r0
           beq         LAB_798a:16
 LAB_78e8:
-          mov.b       @walker_status_flags, r0l
+          mov.b       @sys_walkerFlags, r0l
           bld         #H'1, r0l
           bcc         LAB_78fe:8
           mov.b       @ped_sampleCount, r0l
@@ -13486,10 +13486,10 @@ LAB_78e8:
           jsr         @game_process_accel_data:16
           bra         LAB_796e:8
 LAB_78fe:
-          mov.b       @statusFlags, r0l
+          mov.b       @sys_statusFlags, r0l
           bld         #H'0, r0l
           bcc         LAB_7932:8
-          mov.b       @walker_status_flags, r0l
+          mov.b       @sys_walkerFlags, r0l
           and.b       #H'18, r0l
           cmp.b       #H'10, r0l
           bne         LAB_7928:8
@@ -13501,24 +13501,24 @@ LAB_78fe:
           inc.b       r0l
           mov.b       r0l, @animTick
 LAB_7928:
-          mov.w       #statusFlags, r0
+          mov.w       #sys_statusFlags, r0
           bclr        #H'0, @r0
           bra         LAB_796e:8
 LAB_7932:
           jsr         @game_dispatch_pedometer_task:16
-          mov.b       @walker_status_flags, r0l
+          mov.b       @sys_walkerFlags, r0l
           and.b       #H'18, r0l
           cmp.b       #H'10, r0l
           bne         LAB_7962:8
           mov.b       @ped_activityTimer, r0l
           bne         LAB_796e:8
           jsr         @drv_lcd_power_save:16
-          mov.b       @walker_status_flags, r0l
+          mov.b       @sys_walkerFlags, r0l
           and.b       #H'E7, r0l
           or.b        #H'8, r0l
-          mov.b       r0l, @walker_status_flags
+          mov.b       r0l, @sys_walkerFlags
           sub.b       r0l, r0l
-          mov.b       r0l, @wakeupFlagMaybe
+          mov.b       r0l, @sys_wakeFlag
           mov.b       r0l, @btn_holdDuration
           bra         LAB_796e:8
 LAB_7962:
@@ -13552,7 +13552,7 @@ sys_main_loop_active:
           mov.b       r0l, @SYSCR1:8
           mov.b       #H'E0, r0l
           mov.b       r0l, @SYSCR2:8
-          mov.w       #statusFlags, r0
+          mov.w       #sys_statusFlags, r0
           bset        #H'4, @r0
           mov.w       @GRA, r0
           beq         LAB_79b0:8
@@ -13561,10 +13561,10 @@ LAB_79b0:
           jsr         @sys_wdt_kick:16
           jsr         @drv_button_read:16
           jsr         @ui_dispatch_event:16
-          mov.b       @statusFlags, r0l
+          mov.b       @sys_statusFlags, r0l
           bld         #H'0, r0l
           bcc         LAB_79ee:8
-          mov.b       @walker_status_flags, r0l
+          mov.b       @sys_walkerFlags, r0l
           and.b       #H'18, r0l
           cmp.b       #H'10, r0l
           bne         LAB_79e6:8
@@ -13576,7 +13576,7 @@ LAB_79b0:
           inc.b       r0l
           mov.b       r0l, @animTick
 LAB_79e6:
-          mov.w       #statusFlags, r0
+          mov.w       #sys_statusFlags, r0
           bclr        #H'0, @r0
 LAB_79ee:
           jsr         @drv_sound_is_playing:16
@@ -15675,7 +15675,7 @@ LAB_8ae8:
           inc.b       r2l
           cmp.b       #H'2, r2l
           bcs         LAB_8ae8:8
-          mov.b       @walker_status_flags, r0l
+          mov.b       @sys_walkerFlags, r0l
           bld         #H'2, r0l
           bcc         LAB_8b06:8
           mov.w       @er5, r0
@@ -16783,7 +16783,7 @@ game_process_accel_data:
           push.l      er4
           push.l      er5
           push.l      er6
-          mov.w       #statusFlags, r0
+          mov.w       #sys_statusFlags, r0
           bclr        #H'7, @r0
           sub.w       r6, r6
           sub.w       r0, r0
@@ -16877,7 +16877,7 @@ LAB_9560:
           mov.l       er0, @pendingStepDetect
           jmp         @LAB_9682:16
 LAB_9570:
-          mov.w       #statusFlags, r0
+          mov.w       #sys_statusFlags, r0
           bset        #H'7, @r0
           mov.l       @pendingStepDetect, er0
           beq         LAB_9644:16
@@ -17108,7 +17108,7 @@ LAB_979e:
 switchD_97b0__switchD:
           jmp         @r0
 switchD_97b0__caseD_0:
-          mov.b       @walker_status_flags, r0l
+          mov.b       @sys_walkerFlags, r0l
           bld         #H'2, r0l
           bcs         LAB_97c0:8
           mov.b       #H'2, r0l
@@ -17507,7 +17507,7 @@ drv_button_read:
           bcc         LAB_9baa:8
           mov.w       #btn_inputRaw, r0
           bset        #H'1, @r0
-          mov.b       @wakeupFlagMaybe, r0l
+          mov.b       @sys_wakeFlag, r0l
           beq         LAB_9bae:8
           mov.b       @btn_holdDuration, r0l
           inc.b       r0l
@@ -17516,12 +17516,12 @@ drv_button_read:
 LAB_9baa:
           mov.b       r0l, @btn_holdDuration
 LAB_9bae:
-          mov.b       @statusFlags, r0l
+          mov.b       @sys_statusFlags, r0l
           bld         #H'3, r0l
           bcc         LAB_9bc6:8
           mov.w       #btn_inputRaw, r0
           bset        #H'1, @r0
-          mov.w       #statusFlags, r0
+          mov.w       #sys_statusFlags, r0
           bclr        #H'3, @r0
 LAB_9bc6:
           bld         #H'2, @PDRB
@@ -17548,7 +17548,7 @@ LAB_9be2:
           mov.b       r0l, @ped_activityTimer
           sub.b       r0l, r0l
           mov.b       r0l, @ped_sampleCount
-          mov.b       @walker_status_flags, r0l
+          mov.b       @sys_walkerFlags, r0l
           and.b       #H'18, r0l
           cmp.b       #H'10, r0l
           beq         LAB_9c20:8
@@ -17558,12 +17558,12 @@ LAB_9c20:
           mov.b       @btn_holdDuration, r0l
           cmp.b       #H'8, r0l
           bcs         LAB_9c3e:8
-          mov.b       @walker_status_flags, r0l
+          mov.b       @sys_walkerFlags, r0l
           and.b       #H'18, r0l
           cmp.b       #H'10, r0l
           beq         LAB_9c3e:8
           jsr         @sys_enter_deep_sleep:16
-          mov.w       #walker_status_flags, r0
+          mov.w       #sys_walkerFlags, r0
           bset        #H'0, @r0
 LAB_9c3e:
           rts
@@ -18141,15 +18141,15 @@ LAB_a14c:
 ; =============================================================================
 sys_enter_low_power:
           bset        #H'2, @CKSTPR1
-          mov.b       @walker_status_flags, r0l
+          mov.b       @sys_walkerFlags, r0l
           and.b       #H'E7, r0l
           or.b        #H'8, r0l
-          mov.b       r0l, @walker_status_flags
+          mov.b       r0l, @sys_walkerFlags
           mov.w       #RTCCR2, r0
           bset        #H'0, @r0
           mov.b       #H'1E, r0l
           mov.b       r0l, @ped_stepTimer
-          mov.w       #statusFlags, r0
+          mov.w       #sys_statusFlags, r0
           bclr        #H'7, @r0
           rts
 ; =============================================================================
@@ -18271,20 +18271,20 @@ sys_enter_deep_sleep:
           mov.b       r0l, @ped_activityTimer
           mov.b       #H'5A, r0l
           mov.b       r0l, @ped_stepTimer
-          mov.b       @walker_status_flags, r0l
+          mov.b       @sys_walkerFlags, r0l
           and.b       #H'18, r0l
           cmp.b       #H'10, r0l
           beq         LAB_a2d8:8
-          mov.b       @walker_status_flags, r0l
+          mov.b       @sys_walkerFlags, r0l
           and.b       #H'18, r0l
           bne         LAB_a2c0:8
           sub.b       r0l, r0l
           mov.b       r0l, @ped_sampleCount
 LAB_a2c0:
-          mov.b       @walker_status_flags, r0l
+          mov.b       @sys_walkerFlags, r0l
           and.b       #H'E7, r0l
           or.b        #H'10, r0l
-          mov.b       r0l, @walker_status_flags
+          mov.b       r0l, @sys_walkerFlags
           mov.w       #RTCCR2, r0
           bset        #H'0, @r0
           jsr         @drv_lcd_reset:16
@@ -18301,9 +18301,9 @@ sys_wake_from_low_power:
           bclr        #H'2, @CKSTPR1
           mov.w       #RTCCR2, r0
           bclr        #H'0, @r0
-          mov.b       @walker_status_flags, r0l
+          mov.b       @sys_walkerFlags, r0l
           and.b       #H'E7, r0l
-          mov.b       r0l, @walker_status_flags
+          mov.b       r0l, @sys_walkerFlags
           rts
 ; =============================================================================
 ; Function: game_check_pedometer_activity
@@ -18325,11 +18325,11 @@ LAB_a2fe:
 ; =============================================================================
 irq0:
           push.w      r0
-          mov.w       #statusFlags, r0
+          mov.w       #sys_statusFlags, r0
           bset        #H'3, @r0
           mov.b       #H'1, r0l
 irq0__wakeUpFlagMaybe:
-          mov.b       r0l, @wakeupFlagMaybe
+          mov.b       r0l, @sys_wakeFlag
           bset        #H'2, @CKSTPR1
           bclr        #H'0, @IRR1
           pop.w       r0
@@ -18386,7 +18386,7 @@ game_dispatch_pedometer_task:
           push.w      r3
           push.w      r5
           push.l      er6
-          mov.b       @statusFlags, r0l
+          mov.b       @sys_statusFlags, r0l
           bld         #H'5, r0l
           bcs         LAB_a388:8
           mov.b       @ped_taskFlags, r0l
@@ -18436,7 +18436,7 @@ LAB_a3a8:
 ; =============================================================================
 game_pedometer_increment_step:
           subs        #2, er7
-          mov.w       #statusFlags, r0
+          mov.w       #sys_statusFlags, r0
           bset        #H'2, @r0
           mov.l       @save_totalSteps, er0
           cmp.l       #H'98967F, er0
@@ -18452,7 +18452,7 @@ LAB_a3de:
           mov.w       #save_totalSteps, r1
           mov.l       #H'2560156, er0
           jsr         @save_write_reliable:16
-          mov.b       @walker_status_flags, r0l
+          mov.b       @sys_walkerFlags, r0l
           bld         #H'2, r0l
           bcc         LAB_a440:8
           jsr         @sys_init_heap:16
@@ -18704,7 +18704,7 @@ LAB_a60a:
 ; =============================================================================
 drv_rtc_handle_quarter_sec:
           push.w      r0
-          mov.w       #statusFlags, r0
+          mov.w       #sys_statusFlags, r0
           bset        #H'0, @r0
           mov.w       #RTCFLG, r0
           bclr        #H'0, @r0
@@ -19632,7 +19632,7 @@ sys_init_accel_debug:
           mov.w       #DAT_f7d8, e0
           mov.w       r1, r0
           jsr         @drv_eeprom_read_block:16
-          mov.w       #walker_status_flags, r0
+          mov.w       #sys_walkerFlags, r0
           bset        #H'1, @r0
           rts
 ; =============================================================================
@@ -19931,7 +19931,7 @@ game_sync_walk_status:
           mov.w       #H'68, e1
           mov.l       #H'1ED00ED, er0
           jsr         @save_read_reliable:16
-          mov.w       #walker_status_flags, r0
+          mov.w       #sys_walkerFlags, r0
           mov.b       @(H'5B,er6), r1l
           bld         #H'0, r1l
           bst         #H'1, @r0
@@ -19956,7 +19956,7 @@ sys_factory_reset_eeprom:
           mov.l       er5, @session_steps
           sub.w       e0, e0
           mov.w       e0, @session_recentSteps
-          mov.w       #walker_status_flags, r1
+          mov.w       #sys_walkerFlags, r1
           bclr        #H'1, @r1
           bclr        #H'2, @r1
           jsr         @drv_ir_get_rx_ptr:16
@@ -21393,17 +21393,17 @@ ped_subStepCount:
           .RES.B      1
 ped_batchAccumulator:
           .RES.B      1
-statusFlags:
+sys_statusFlags:
           .RES.B      1
-walker_status_flags:
+sys_walkerFlags:
           .RES.B      2
 lastCommandTime:
           .RES.B      2
 commandPos:
           .RES.B      1
-wakeupFlagMaybe:
+sys_wakeFlag:
           .RES.B      3
-heapPointer:
+sys_heapPointer:
           .RES.B      2
 nextRandom:
           .RES.B      4
@@ -21445,9 +21445,9 @@ ped_axisStepThresholdHi:
           .RES.B      2
 ped_axisIdleThreshold:
           .RES.B      2
-currentEventLoopFunc:
+sys_tickHandler:
           .RES.B      2
-savedEventLoopFunc:
+sys_savedTickHandler:
           .RES.B      2
 lcdPageOffset:
           .RES.B      2

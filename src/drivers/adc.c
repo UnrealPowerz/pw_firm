@@ -74,7 +74,7 @@ int16_t drv_adc_sample(void) {
     IENR2 &= 0xBF;
     AMR = (AMR & 0xF0) | 0x07;
 
-    if (statusFlags_BIT.lcd_dirty) {
+    if (sys_statusFlags_BIT.lcd_dirty) {
       AMR = (AMR & 0xCF) | 0x20;
     } else {
       AMR = (AMR & 0xCF) | 0x30;
@@ -123,13 +123,13 @@ uint8_t drv_adc_check_low_battery(uint16_t threshold) {
 
 // ROM: 0x290a  97.5%
 void drv_adc_check_battery(void) {
-  if (statusFlags_BIT.battery_check_request) {
+  if (sys_statusFlags_BIT.battery_check_request) {
     if (drv_adc_check_low_battery(20)) {
-      statusFlags_BIT.low_battery = 1;
+      sys_statusFlags_BIT.low_battery = 1;
     } else {
-      statusFlags_BIT.low_battery = 0;
+      sys_statusFlags_BIT.low_battery = 0;
     }
-    statusFlags_BIT.battery_check_request = 0;
+    sys_statusFlags_BIT.battery_check_request = 0;
   }
 }
 

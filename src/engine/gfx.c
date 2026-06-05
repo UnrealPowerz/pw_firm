@@ -796,7 +796,7 @@ void gfx_draw_value_with_icon(uint8_t x, uint8_t y, uint8_t subtype,
 void gfx_draw_battery_low(uint8_t x, uint8_t y) {
   uint8_t *buf;
 
-  if (!(statusFlags_BIT.low_battery)) {
+  if (!(sys_statusFlags_BIT.low_battery)) {
     return;
   }
 

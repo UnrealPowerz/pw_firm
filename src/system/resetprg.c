@@ -27,8 +27,8 @@ __entry(vect = 0) void PowerON_Reset(void) {
   }
 
   g.notif_scheduledHour = 0;
-  statusFlags_BIT.lcd_dirty = 1;
-  g.walker_status_flags = (g.walker_status_flags & 0xE7) | WALKER_MODE_DEEP_SLEEP;
+  sys_statusFlags_BIT.lcd_dirty = 1;
+  g.sys_walkerFlags = (g.sys_walkerFlags & 0xE7) | WALKER_MODE_DEEP_SLEEP;
 
   g.ped_activityTimer = 0x3C;
   g.ped_stepTimer = 0x5A;
@@ -71,6 +71,6 @@ __entry(vect = 0) void PowerON_Reset(void) {
 
   while (1) {
     set_ccr(0x00);
-    g.currentEventLoopFunc();
+    g.sys_tickHandler();
   }
 }

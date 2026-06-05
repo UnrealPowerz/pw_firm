@@ -188,13 +188,13 @@ void game_pedometer_set_total(uint32_t val) {
  * function regressed by -12.8% (67.9% -> 55.1%).  The ROM tests these
  * three bits with `btst #N, r0l; beq` (the original C used `& mask` in
  * if-conditions), not with `bld; bcc`.  Flat-mask form is what matches
- * here, even though for g.statusFlags the bit-field form is the one that
+ * here, even though for g.sys_statusFlags the bit-field form is the one that
  * matches.  Lesson: always check `bld` vs `btst` count for the global in
  * main.mar before sweeping it to bit-field form.
  * Class: do-not-bit-field */
 // ROM: 0xa34a  69.0%  saves: er2,r3,r5,er6
 void game_dispatch_pedometer_task(void) {
-  if (!statusFlags_BIT.pedometer_paused) {
+  if (!sys_statusFlags_BIT.pedometer_paused) {
     if ((g.ped_taskFlags & 0x01)) {
       game_pedometer_tick_session();
     }
@@ -219,7 +219,7 @@ void game_pedometer_tick_session(void) {
 
 // ROM: 0xa3aa  78.0%
 void game_pedometer_increment_step(void) {
-  statusFlags_BIT.battery_check_request = 1;
+  sys_statusFlags_BIT.battery_check_request = 1;
 
   if (g.save_totalSteps < 9999999 && g.save_walkStepCount < 9999999) {
     g.save_walkStepCount++;
@@ -227,7 +227,7 @@ void game_pedometer_increment_step(void) {
 
   save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (uint8_t *)&g.save_totalSteps, 0x18);
 
-  if ((walker_status_flags_BIT.walking) != 0) {
+  if ((sys_walkerFlags_BIT.walking) != 0) {
     void *buf;
     void *extra_buf;
     uint16_t val;
@@ -357,7 +357,7 @@ void game_process_accel_data(void) {
   uint8_t view, sub, limit;
   uint16_t threshold, tx, ty, tz;
 
-  statusFlags_BIT.sleeping = 0;
+  sys_statusFlags_BIT.sleeping = 0;
 
   i = 0;
   do {
@@ -412,7 +412,7 @@ void game_process_accel_data(void) {
   if (steps == 0) {
     pendingStepDetect = 0;
   } else {
-    statusFlags_BIT.sleeping = 1;
+    sys_statusFlags_BIT.sleeping = 1;
 
     if (pendingStepDetect != 0) {
       uint32_t accumulation = stepDetectAccum + pendingStepDetect;

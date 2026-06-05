@@ -4,7 +4,7 @@
 void drv_eeprom_spi_init(void) {
   CKSTPR2 |= 0x10;
   SSER = 0;
-  if (statusFlags_BIT.lcd_dirty) {
+  if (sys_statusFlags_BIT.lcd_dirty) {
     SSMR = 0x86;
   } else {
     SSMR = 0x87;
@@ -22,7 +22,7 @@ uint8_t drv_eeprom_spi_transfer(void) {
   while (1) {
     if (SSSR_BIT.ORER) {
       SSSR_BIT.ORER = 0;
-      statusFlags_BIT.eeprom_busy = 1;
+      sys_statusFlags_BIT.eeprom_busy = 1;
       break;
     }
     if (SSSR_BIT.RDRF) {
@@ -36,7 +36,7 @@ uint8_t drv_eeprom_spi_transfer(void) {
 uint8_t drv_eeprom_read_u8(uint16_t addr) {
   uint8_t status, val;
   uint8_t retries = 3;
-  statusFlags_BIT.eeprom_busy = 0;
+  sys_statusFlags_BIT.eeprom_busy = 0;
 
   while (retries--) {
     sys_wdt_kick();
@@ -86,7 +86,7 @@ uint8_t drv_eeprom_read_u8(uint16_t addr) {
       ;
     PDR1 |= 0x04;
     drv_eeprom_spi_reset();
-    if (!(statusFlags_BIT.eeprom_busy))
+    if (!(sys_statusFlags_BIT.eeprom_busy))
       return val;
   }
   return 0xFF;
@@ -96,7 +96,7 @@ uint8_t drv_eeprom_read_u8(uint16_t addr) {
 void drv_eeprom_write_u8(uint16_t addr, uint8_t val) {
   uint8_t status;
   uint8_t retries = 3;
-  statusFlags_BIT.eeprom_busy = 0;
+  sys_statusFlags_BIT.eeprom_busy = 0;
 
   while (retries--) {
     sys_wdt_kick();
@@ -148,7 +148,7 @@ void drv_eeprom_write_u8(uint16_t addr, uint8_t val) {
       ;
     PDR1 |= 0x04;
     drv_eeprom_spi_reset();
-    if (!(statusFlags_BIT.eeprom_busy))
+    if (!(sys_statusFlags_BIT.eeprom_busy))
       return;
   }
 }
@@ -158,7 +158,7 @@ void drv_eeprom_read_block(uint16_t addr, void *buf, uint16_t size) {
   uint8_t *p = (uint8_t *)buf;
   uint16_t s;
   uint8_t retries = 3;
-  statusFlags_BIT.eeprom_busy = 0;
+  sys_statusFlags_BIT.eeprom_busy = 0;
 
   while (retries--) {
     p = (uint8_t *)buf;
@@ -208,7 +208,7 @@ void drv_eeprom_read_block(uint16_t addr, void *buf, uint16_t size) {
       ;
     PDR1 |= 0x04;
     drv_eeprom_spi_reset();
-    if (!(statusFlags_BIT.eeprom_busy))
+    if (!(sys_statusFlags_BIT.eeprom_busy))
       return;
   }
 }
@@ -219,7 +219,7 @@ void drv_eeprom_write_block(uint16_t addr, const void *buf, uint16_t size) {
   uint16_t s;
   uint16_t cur_addr = addr;
   uint8_t retries = 3;
-  statusFlags_BIT.eeprom_busy = 0;
+  sys_statusFlags_BIT.eeprom_busy = 0;
 
   while (retries--) {
     p = (const uint8_t *)buf;
@@ -285,7 +285,7 @@ void drv_eeprom_write_block(uint16_t addr, const void *buf, uint16_t size) {
       PDR1 |= 0x04;
     }
     drv_eeprom_spi_reset();
-    if (!(statusFlags_BIT.eeprom_busy))
+    if (!(sys_statusFlags_BIT.eeprom_busy))
       return;
   }
 }
@@ -293,7 +293,7 @@ void drv_eeprom_write_block(uint16_t addr, const void *buf, uint16_t size) {
 // ROM: 0x5742  80.1%  saves: er3,er4,er5,er6
 void drv_eeprom_fill(uint16_t addr, uint16_t size, uint8_t val) {
   uint8_t retries = 3;
-  statusFlags_BIT.eeprom_busy = 0;
+  sys_statusFlags_BIT.eeprom_busy = 0;
 
   while (retries--) {
     uint16_t s = size;
@@ -358,7 +358,7 @@ void drv_eeprom_fill(uint16_t addr, uint16_t size, uint8_t val) {
       PDR1 |= 0x04;
     }
     drv_eeprom_spi_reset();
-    if (!(statusFlags_BIT.eeprom_busy))
+    if (!(sys_statusFlags_BIT.eeprom_busy))
       return;
   }
 }
@@ -369,7 +369,7 @@ void drv_eeprom_write_page(uint16_t addr, const void *buf) {
   uint8_t status;
   uint8_t retries = 3;
   uint8_t i;
-  statusFlags_BIT.eeprom_busy = 0;
+  sys_statusFlags_BIT.eeprom_busy = 0;
 
   while (retries--) {
     sys_wdt_kick();
@@ -423,7 +423,7 @@ void drv_eeprom_write_page(uint16_t addr, const void *buf) {
       ;
     PDR1 |= 0x04;
     drv_eeprom_spi_reset();
-    if (!(statusFlags_BIT.eeprom_busy))
+    if (!(sys_statusFlags_BIT.eeprom_busy))
       return;
   }
 }
@@ -432,7 +432,7 @@ void drv_eeprom_write_page(uint16_t addr, const void *buf) {
 void drv_eeprom_write_u8_reliable(uint16_t addr, uint8_t val) {
   uint8_t status;
   uint8_t retries = 3;
-  statusFlags_BIT.eeprom_busy = 0;
+  sys_statusFlags_BIT.eeprom_busy = 0;
 
   while (retries--) {
     drv_eeprom_spi_init();
@@ -483,7 +483,7 @@ void drv_eeprom_write_u8_reliable(uint16_t addr, uint8_t val) {
       ;
     PDR1 |= 0x04;
     drv_eeprom_spi_reset();
-    if (!(statusFlags_BIT.eeprom_busy))
+    if (!(sys_statusFlags_BIT.eeprom_busy))
       return;
   }
 }

@@ -14,8 +14,8 @@
 
 // ROM: 0x6a3e  93.4%
 void ui_handle_home(void) {
-  if (!(walker_status_flags_BIT.session_active)) {
-    if (drv_button_is_triggered(BTN_R) || (statusFlags_BIT.pedometer_paused)) {
+  if (!(sys_walkerFlags_BIT.session_active)) {
+    if (drv_button_is_triggered(BTN_R) || (sys_statusFlags_BIT.pedometer_paused)) {
       ui_enter_ir_session();
     }
   } else {
@@ -76,7 +76,7 @@ void ui_render_home_route(void) {
     gfx_draw_small_route_icon(idx);
   }
   ui_render_route_image();
-  if (!(walker_status_flags_BIT.walking)) {
+  if (!(sys_walkerFlags_BIT.walking)) {
     return;
   }
   subA = g.gCurSubstateA;

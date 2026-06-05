@@ -129,7 +129,7 @@ state_found:
     drv_eeprom_write_block((uint16_t)save_slot * 4 + EEPROM_LOG_ITEMS,
                            (void *)&DAT_f7d8_w, 0x2);
   }
-  if (walker_status_flags_BIT.walking) {
+  if (sys_walkerFlags_BIT.walking) {
     uint8_t *trainer_buf = (uint8_t *)sbrk(0xBE);
     uint8_t *gift_buf;
     drv_eeprom_read_block(EEPROM_TRAINER_PROFILE, trainer_buf, 0xBE);
@@ -248,7 +248,7 @@ encounter:
       drv_eeprom_write_u8(EEPROM_STEP_HIST_FLAGS, flags);
     }
 
-    if (walker_status_flags_BIT.walking) {
+    if (sys_walkerFlags_BIT.walking) {
       uint8_t *gift_buf = (uint8_t *)sbrk(0x88);
       game_log_interaction(trainer_buf, gift_buf, 0x0C, 0x01, DAT_f7d8_w, 0);
     }

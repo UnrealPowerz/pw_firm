@@ -22,7 +22,7 @@ void sys_init_accel_debug(void) {
   g.accelYPos = 0;
   g.accelZPos = 0;
   drv_eeprom_read_block(8, (void *)&g.DAT_f7d8, 8);
-  walker_status_flags_BIT.session_active = 1;
+  sys_walkerFlags_BIT.session_active = 1;
 }
 
 // ROM: 0xaef8  100.0%

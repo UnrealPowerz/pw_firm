@@ -4,7 +4,7 @@
  * Walk-session lifecycle.
  *
  *   game_sync_walk_status   Pull `flags_5b` bits 0/1 from the trainer record
- *                           into the g.walker_status_flags cache.
+ *                           into the g.sys_walkerFlags cache.
  *   game_start_walk         Begin a new walking session: stage the marker,
  *                           clear all peer-log slots, reset session counters,
  *                           pull staged peer-IR data into the trainer record,
@@ -34,9 +34,9 @@ void game_sync_walk_status(void) {
   rec = (struct trainer_record *)sbrk(sizeof(struct trainer_record));
   save_read_reliable(EEPROM_TRAINER_REC, EEPROM_TRAINER_REC_BACKUP, rec, sizeof(struct trainer_record));
 
-  walker_status_flags_BIT.session_active =
+  sys_walkerFlags_BIT.session_active =
       ((byte_bits_t *)&rec->flags_5b)->BIT.b0;
-  walker_status_flags_BIT.walking =
+  sys_walkerFlags_BIT.walking =
       ((byte_bits_t *)&rec->flags_5b)->BIT.b1;
 }
 
@@ -91,8 +91,8 @@ void game_start_walk(void) {
 
   save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (void *)&g.save_totalSteps, 0x18);
 
-  walker_status_flags_BIT.walking = 1;
-  walker_status_flags_BIT.session_active = 1;
+  sys_walkerFlags_BIT.walking = 1;
+  sys_walkerFlags_BIT.session_active = 1;
 
   /* Pull the IR-staged trainer record fields (DAT_f7e6..DAT_f843) into the
      persistent trainer record + commit. */
@@ -137,7 +137,7 @@ void game_start_walk(void) {
 void game_end_walk(void) {
   struct trainer_record *rec = (struct trainer_record *)DAT_f7e6;
 
-  walker_status_flags_BIT.walking = 0;
+  sys_walkerFlags_BIT.walking = 0;
   g.save_settings &= ~0x01;
 
   g.save_peerSlotIndex = 0;

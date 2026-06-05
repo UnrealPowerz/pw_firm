@@ -30,7 +30,7 @@ void game_init_peer_identity(void) {
   uint16_t i;
 
   g.session_recentSteps = 0;
-  walker_status_flags_BIT.walking = 1;
+  sys_walkerFlags_BIT.walking = 1;
 
   sys_init_heap();
   rec = (struct trainer_record *)sbrk(sizeof(*rec));
@@ -233,14 +233,14 @@ void game_check_periodic_events(void) {
   uint8_t prob;
   uint8_t *buf;
 
-  if ((g.walker_status_flags & WALKER_MODE_MASK) != WALKER_MODE_DEEP_SLEEP)
+  if ((g.sys_walkerFlags & WALKER_MODE_MASK) != WALKER_MODE_DEEP_SLEEP)
     return;
   if (g.currentlyActiveView != VIEW_HOME)
     return;
-  if (!(walker_status_flags_BIT.input_pending))
+  if (!(sys_walkerFlags_BIT.input_pending))
     return;
 
-  walker_status_flags_BIT.input_pending = 0;
+  sys_walkerFlags_BIT.input_pending = 0;
   g.gCurSubstateY = 0;
   g.gCurSubstateZ = 0;
 
@@ -251,7 +251,7 @@ void game_check_periodic_events(void) {
   if (prob >= 40)
     return;
 
-  if (!(walker_status_flags_BIT.walking)) {
+  if (!(sys_walkerFlags_BIT.walking)) {
     if (g.session_recentSteps < 300)
       return;
     g.gCurSubstateY = 0x07;

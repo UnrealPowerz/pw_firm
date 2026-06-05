@@ -6,7 +6,7 @@
  * b_ram_layout.h file. The instance lives in its own `#pragma section _RAM`
  * which the linker anchors at 0xF780 (see Makefile's link.sub generation).
  *
- * The existing globals.h macros (g.statusFlags, g.animTick, etc.) continue to
+ * The existing globals.h macros (g.sys_statusFlags, g.animTick, etc.) continue to
  * drive all RAM access via volatile-pointer casts — they bypass this
  * struct entirely. The struct's purpose right now is to give the linker a
  * single typed allocation it can place, so scripts/compare_data_layout.py

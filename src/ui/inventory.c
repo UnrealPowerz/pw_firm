@@ -473,7 +473,7 @@ void ui_load_inventory_mask(uint16_t *status_mask_ptr) {
     status_mask_ptr[i] = 0;
   }
 
-  if (walker_status_flags_BIT.walking) {
+  if (sys_walkerFlags_BIT.walking) {
     status_mask_ptr[0] |= 0x01;       /* bit 0: walking */
   }
 

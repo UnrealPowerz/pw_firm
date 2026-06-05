@@ -71,7 +71,7 @@ void sys_begin_ir_session(event_loop_func_t current_loop,
    * try to play that garbage as notes — producing a continuous screech.
    * Stop any in-progress sound up front. */
   g.soundData = NULL;
-  if (!(walker_status_flags_BIT.session_active)) {
+  if (!(sys_walkerFlags_BIT.session_active)) {
     drv_lcd_clear_pages(0x40);
     ui_render_happy_walker(0);
     drv_lcd_flip();

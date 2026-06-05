@@ -22,8 +22,8 @@
 
 // ROM: 0x693a  61.7%  saves: r6
 void sys_set_handler(event_loop_func_t func) {
-  g.savedEventLoopFunc = g.currentEventLoopFunc;
-  g.currentEventLoopFunc = func;
+  g.sys_savedTickHandler = g.sys_tickHandler;
+  g.sys_tickHandler = func;
 }
 
 // ROM: 0x69b8  100.0%
@@ -84,7 +84,7 @@ void ui_dispatch_event(void) {
     ui_handle_inventory_items();
     break;
   case VIEW_STEP_HISTORY:
-    if (walker_status_flags_BIT.session_active) {
+    if (sys_walkerFlags_BIT.session_active) {
       if (drv_button_is_triggered(BTN_ANY)) {
         ui_reset_substate();
         ui_set_view(VIEW_HOME);
@@ -122,7 +122,7 @@ void ui_dispatch_event(void) {
 void ui_dispatch_draw(void) {
   switch (g.currentlyActiveView) {
   case VIEW_HOME:
-    if (!(walker_status_flags_BIT.session_active)) {
+    if (!(sys_walkerFlags_BIT.session_active)) {
       ui_render_empty_eeprom();
     } else {
       ui_render_home_route();
@@ -166,7 +166,7 @@ void ui_dispatch_draw(void) {
     ui_render_inventory_items();
     break;
   case VIEW_STEP_HISTORY:
-    if (!(walker_status_flags_BIT.session_active)) {
+    if (!(sys_walkerFlags_BIT.session_active)) {
       ui_render_sad_walker();
     } else {
       ui_render_step_history();
