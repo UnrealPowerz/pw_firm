@@ -3,42 +3,53 @@
 
 #include "types.h"
 
-/* 0xF7E6..0xF865: 128-byte multi-purpose scratch region. The same bytes are
- * reused across three subsystems (mutually exclusive in time):
+/* 0xF7E6..0xF865: 128-byte multi-purpose scratch region. The bytes are
+ * time-multiplexed across several subsystems. Each view is exposed as a
+ * named union member describing that view's interpretation of the bytes.
  *
- *   - IR/peer transfer buffer: 0x68 bytes from offset 0; first 16 are typed
- *     fields (DAT_f7e6/ea/ee/f0/f2), the rest is the IR payload.
- *   - FFT magnitude bins:       int16_t[32] sharing offsets 0..0x3F.
- *   - X-axis accel samples:     int8_t[64] starting at offset 0x40 (overlaps
- *     accel_samplesXArr + DAT_f82e + DAT_f840..f846 + trainerRecBuf + trainerRecBuf_loc).
- *
- * Sound-buffer playback also reuses accel_samplesXArr (see drivers/sound.c).
- *
- * The struct member names are offset-based (`at_NN`) because higher-level
- * semantics differ per view; per-view names are exposed as macros below. */
+ *   - ir:            IR-staged trainer record (0x00..0x67); see types.h
+ *                    `struct trainer_record`. Mirrored layout with wider-typed
+ *                    fields where the ROM uses uint16/uint32 access.
+ *   - fft:           int16_t[32] step-detect magnitude bins (offsets 0..0x3F).
+ *   - accel:         X-axis accel sample buffer at +0x40 (also reused as the
+ *                    sound playback buffer, see drivers/sound.c).
+ *   - peerSync:      uint32 RTC time at +0x60 (received from peer during sync).
+ *   - secondTrainer: 8-byte start + uint16 loc of a SECOND trainer record at
+ *                    +0x68..+0x71. The full 0x68 bytes overflow the union
+ *                    into the next BSS region — known latent issue. */
 union pw_scratch {
     uint8_t bytes[0x80];
     int16_t fft[32];
     struct {
-        uint32_t at_00;              /* +00  DAT_f7e6 uint32 view of first slot */
-        uint32_t at_04;              /* +04  DAT_f7ea */
-        uint16_t at_08;              /* +08  DAT_f7ee */
-        uint16_t at_0a;              /* +0A  DAT_f7f0 */
-        uint32_t at_0c;              /* +0C  DAT_f7f2 (.s allocates 52 bytes here; rest is at_10) */
-        uint8_t  at_10[0x30];        /* +10..3F  IR payload tail */
-        uint8_t  accel_samplesXArr[8]; /* +40 */
-        uint8_t  at_48[18];          /* +48  DAT_f82e */
-        uint8_t  at_5a;              /* +5A  DAT_f840 */
-        uint8_t  at_5b;              /* +5B  DAT_f841 */
-        uint8_t  at_5c;              /* +5C  DAT_f842 */
-        uint8_t  at_5d;              /* +5D  DAT_f843 */
-        uint16_t at_5e;              /* +5E  DAT_f844 */
-        uint32_t peerRcvdRtcTime;    /* +60 .s allocates 8 bytes total */
-        uint8_t  at_64[4];           /* +64 peerRcvdRtcTime unused tail */
-        uint8_t  trainerRecBuf[8];   /* +68 start of 0x68-byte buffer (overflows union) */
-        uint16_t trainerRecBuf_loc;  /* +70 .s allocates 16 bytes total */
-        uint8_t  at_72[14];          /* +72..7F trainerRecBuf_loc tail */
-    } s;
+        uint32_t id;              /* +0x00 trainer id (DAT_f7e6 uint32 view) */
+        uint32_t id_backup;       /* +0x04 DAT_f7ea */
+        uint16_t loc;             /* +0x08 DAT_f7ee */
+        uint16_t loc_backup;      /* +0x0A DAT_f7f0 */
+        uint32_t at_0c_w;         /* +0x0C DAT_f7f2 (uint32 view; trainer_record.at_0c[4]) */
+        uint8_t  midBlock[0x30];  /* +0x10..0x3F nickname + marker_46 + at_27 + at_28 + flags_38[0..7] */
+        uint8_t  flags_38_tail[8];/* +0x40..0x47 last 8 bytes of trainer_record.flags_38 (overlays accel.samples) */
+        uint8_t  at_48[18];       /* +0x48..0x59 DAT_f82e block (matches trainer_record.at_48) */
+        uint8_t  eventBitIndex;   /* +0x5A DAT_f840 (event-bit index passed to save_set_event_bit) */
+        volatile uint8_t flags_5b;/* +0x5B DAT_f841 (b0/b1 used; bits 7..3 pack an hour value) */
+        uint8_t  at_5c;           /* +0x5C DAT_f842 (battle context?) */
+        uint8_t  at_5d;           /* +0x5D DAT_f843 */
+        uint16_t at_5e_w;         /* +0x5E DAT_f844 (uint16; checked != 0) */
+        uint8_t  at_60[8];        /* +0x60..0x67 trailing block (overlays peerSync.rcvdRtcTime) */
+    } ir;
+    struct {
+        uint8_t _pad0[0x40];      /* +0x00..0x3F unused by this view */
+        uint8_t samples[8];       /* +0x40..0x47 X-axis accel samples (also sound playback buffer) */
+    } accel;
+    struct {
+        uint8_t _pad0[0x60];      /* +0x00..0x5F unused by this view */
+        uint32_t rcvdRtcTime;     /* +0x60 peer-RTC during IR sync (overlays ir.at_60[0..3]) */
+    } peerSync;
+    struct {
+        uint8_t _pad0[0x68];      /* +0x00..0x67 unused by this view */
+        uint8_t  buf[8];          /* +0x68 start of 2nd trainer record (overflows union; see header) */
+        uint16_t loc;             /* +0x70 trainer_record.loc of the 2nd record */
+        uint8_t  tail[14];        /* +0x72..0x7F trailing bytes (full 2nd record overflows here) */
+    } secondTrainer;
 };
 
 /* 0xF866..0xF955: 240-byte multi-purpose scratch region (sibling of scratch1).
@@ -231,18 +242,18 @@ enum view_id {
 #define ped_isNotWalking          (g.scratch2.s.payload[0x19])
 
 #define DAT_f7e6        (g.scratch1.bytes)              /* uint8_t[128] -- decays to (uint8_t *) */
-#define DAT_f7ea        (g.scratch1.s.at_04)
-#define DAT_f7ee        (g.scratch1.s.at_08)
-#define DAT_f7f0        (g.scratch1.s.at_0a)
-#define DAT_f7f2        (g.scratch1.s.at_0c)
+#define DAT_f7ea        (g.scratch1.ir.id_backup)
+#define DAT_f7ee        (g.scratch1.ir.loc)
+#define DAT_f7f0        (g.scratch1.ir.loc_backup)
+#define DAT_f7f2        (g.scratch1.ir.at_0c_w)
 #define fft_results     (g.scratch1.fft)
-#define accelXSamples   ((volatile int8_t *)g.scratch1.s.accel_samplesXArr)
-#define DAT_f82e        (g.scratch1.s.at_48)
-#define DAT_f840        (g.scratch1.s.at_5a)
-#define DAT_f841        (g.scratch1.s.at_5b)
-#define DAT_f842        (g.scratch1.s.at_5c)
-#define DAT_f843        (g.scratch1.s.at_5d)
-#define DAT_f844        (g.scratch1.s.at_5e)
+#define accelXSamples   ((volatile int8_t *)g.scratch1.accel.samples)
+#define DAT_f82e        (g.scratch1.ir.at_48)
+#define DAT_f840        (g.scratch1.ir.eventBitIndex)
+#define DAT_f841        (g.scratch1.ir.flags_5b)
+#define DAT_f842        (g.scratch1.ir.at_5c)
+#define DAT_f843        (g.scratch1.ir.at_5d)
+#define DAT_f844        (g.scratch1.ir.at_5e_w)
 
 
 /* --- Control Flow --- */
