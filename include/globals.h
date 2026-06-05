@@ -174,6 +174,18 @@ struct viewstate {
             volatile byte_bits_t flags;             /* 0xF7D8 = at_d8 — packed flags (see battle.c header) */
             volatile uint8_t     wiggleSuccessCount;/* 0xF7D9 = at_d9 — 3 caps capture */
         } battle;
+        /* Pokeradar minigame's interpretation. Documented in radar.c header. */
+        struct {
+            volatile byte_bits_t roundsCompleted; /* 0xF7D1 = at_d1 */
+            volatile uint8_t     roundsRequired;  /* 0xF7D2 = at_d2 (rolled at init) */
+            volatile uint8_t     secretPatchIndex;/* 0xF7D3 = at_d3 (0..3, re-rolled each round) */
+            volatile uint8_t     timerSubTick;    /* 0xF7D4 = at_d4 */
+            volatile uint8_t     timeRemaining;   /* 0xF7D5 = at_d5 (countdown / fade-frame) */
+            volatile uint8_t     lockAnimTimer;   /* 0xF7D6 = at_d6 (RADAR_LOCK_ANIM) */
+            volatile uint8_t     _at_d7;          /* 0xF7D7 — unused by radar */
+            volatile byte_bits_t _at_d8;          /* 0xF7D8 — unused by radar */
+            volatile uint8_t     _at_d9;          /* 0xF7D9 — unused by radar */
+        } radar;
         /* Add more per-subsystem views here as each is audited. ch38 pads
          * uint16 members to even offsets within a struct; since this
          * union sits at an odd offset within viewstate (Y/Z/A take 3
