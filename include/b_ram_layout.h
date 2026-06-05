@@ -86,11 +86,11 @@
 /* 0xF7E4 */ volatile uint8_t  lcd_pageOffset;
 /* 0xF7E5 */ volatile uint8_t  _pad_f7e5;
 
-/* --- Multi-purpose overlay #1 (g_scratch, 128 B) --- */
-/* 0xF7E6 */ volatile uint8_t  scratch1[0x80];
+/* --- Multi-purpose overlay #1 (128 B) --- */
+/* 0xF7E6 */ union pw_scratch  scratch1;
 
-/* --- Multi-purpose overlay #2 (g_scratch2, 240 B) --- */
-/* 0xF866 */ volatile uint8_t  scratch2[0xF0];
+/* --- Multi-purpose overlay #2 (240 B) --- */
+/* 0xF866 */ union pw_scratch2 scratch2;
 
 /* --- EEPROM page scratch + sbrk heap region (1434 B) --- */
 /* 0xF956 */ volatile uint8_t  eepromPageScratch[0x59A];   /* through 0xFEEF */

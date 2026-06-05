@@ -96,7 +96,7 @@ void game_start_walk(void) {
 
   /* Pull the IR-staged trainer record fields (DAT_f7e6..DAT_f843) into the
      persistent trainer record + commit. */
-  rec = (struct trainer_record *)g_scratch.s.trainerRecBuf;
+  rec = (struct trainer_record *)g.scratch1.s.trainerRecBuf;
   save_read_reliable(EEPROM_TRAINER_REC, EEPROM_TRAINER_REC_BACKUP, rec, sizeof(*rec));
 
   rec->flags_5b |= 0x01;         /* session_active */
