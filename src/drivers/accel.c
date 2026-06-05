@@ -106,8 +106,8 @@ void drv_accel_sample(void) {
   PDR9 |= 0x01;
 
   accelXSamples[g.accel_sampleCount] = (int8_t)buf[1];
-  accelYSamples[g.accel_sampleCount] = (int8_t)buf[3];
-  accelZSamples[g.accel_sampleCount] = (int8_t)buf[5];
+  accel_samplesY[g.accel_sampleCount] = (int8_t)buf[3];
+  accel_samplesZ[g.accel_sampleCount] = (int8_t)buf[5];
 
   if ((uint8_t)g.ui_activeView == VIEW_ACCEL_DEBUG) {
     prev_count = (g.accel_sampleCount + 0x3F) & 0x3F;
@@ -127,24 +127,24 @@ void drv_accel_sample(void) {
                                accelXSamples[prev_count]);
     }
 
-    if ((int16_t)accelYSamples[g.accel_sampleCount] -
-            (int16_t)accelYSamples[prev_count] <
+    if ((int16_t)accel_samplesY[g.accel_sampleCount] -
+            (int16_t)accel_samplesY[prev_count] <
         0) {
-      accel_yPosition_word += (uint16_t)(-accelYSamples[g.accel_sampleCount] +
-                               accelYSamples[prev_count]);
+      accel_yPosition_word += (uint16_t)(-accel_samplesY[g.accel_sampleCount] +
+                               accel_samplesY[prev_count]);
     } else {
-      accel_yPosition_word += (uint16_t)(accelYSamples[g.accel_sampleCount] -
-                               accelYSamples[prev_count]);
+      accel_yPosition_word += (uint16_t)(accel_samplesY[g.accel_sampleCount] -
+                               accel_samplesY[prev_count]);
     }
 
-    if ((int16_t)accelZSamples[g.accel_sampleCount] -
-            (int16_t)accelZSamples[prev_count] <
+    if ((int16_t)accel_samplesZ[g.accel_sampleCount] -
+            (int16_t)accel_samplesZ[prev_count] <
         0) {
-      accel_zPosition_word += (uint16_t)(-accelZSamples[g.accel_sampleCount] +
-                              accelZSamples[prev_count]);
+      accel_zPosition_word += (uint16_t)(-accel_samplesZ[g.accel_sampleCount] +
+                              accel_samplesZ[prev_count]);
     } else {
-      accel_zPosition_word += (uint16_t)(accelZSamples[g.accel_sampleCount] -
-                              accelZSamples[prev_count]);
+      accel_zPosition_word += (uint16_t)(accel_samplesZ[g.accel_sampleCount] -
+                              accel_samplesZ[prev_count]);
     }
   }
 }

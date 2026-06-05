@@ -138,24 +138,24 @@ uint8_t game_detect_activity(void) {
                        (uint16_t)accelXSamples[p_copy]);
   }
 
-  if (((int16_t)accelYSamples[g.accel_sampleCount] -
-       (int16_t)accelYSamples[prev]) >= 0) {
-    total += (uint16_t)((int16_t)accelYSamples[g.accel_sampleCount] -
-                        (int16_t)accelYSamples[p_copy]);
+  if (((int16_t)accel_samplesY[g.accel_sampleCount] -
+       (int16_t)accel_samplesY[prev]) >= 0) {
+    total += (uint16_t)((int16_t)accel_samplesY[g.accel_sampleCount] -
+                        (int16_t)accel_samplesY[p_copy]);
   } else {
     total +=
-        (uint16_t)((uint16_t)(-((int16_t)accelYSamples[g.accel_sampleCount])) +
-                   (uint16_t)accelYSamples[p_copy]);
+        (uint16_t)((uint16_t)(-((int16_t)accel_samplesY[g.accel_sampleCount])) +
+                   (uint16_t)accel_samplesY[p_copy]);
   }
 
-  if (((int16_t)accelZSamples[g.accel_sampleCount] -
-       (int16_t)accelZSamples[prev]) >= 0) {
-    total += (uint16_t)((int16_t)accelZSamples[g.accel_sampleCount] -
-                        (int16_t)accelZSamples[p_copy]);
+  if (((int16_t)accel_samplesZ[g.accel_sampleCount] -
+       (int16_t)accel_samplesZ[prev]) >= 0) {
+    total += (uint16_t)((int16_t)accel_samplesZ[g.accel_sampleCount] -
+                        (int16_t)accel_samplesZ[p_copy]);
   } else {
     total +=
-        (uint16_t)((uint16_t)(-((int16_t)accelZSamples[g.accel_sampleCount])) +
-                   (uint16_t)accelZSamples[p_copy]);
+        (uint16_t)((uint16_t)(-((int16_t)accel_samplesZ[g.accel_sampleCount])) +
+                   (uint16_t)accel_samplesZ[p_copy]);
   }
 
   if (total > 30) {
@@ -367,8 +367,8 @@ void game_process_accel_data(void) {
   } while (i < 32);
 
   drv_accel_fft(ACCEL_SAMPLES_X);
-  drv_accel_fft(ACCEL_SAMPLES_Y);
-  drv_accel_fft(ACCEL_SAMPLES_Z);
+  drv_accel_fft(accel_samplesYArr);
+  drv_accel_fft(accel_samplesZArr);
 
   steps = game_detect_steps_fft(fft_results);
 

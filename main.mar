@@ -13321,11 +13321,11 @@ LAB_772c:
           mov.b       @accel_sampleCount, r0l
           extu.w      r0
           mov.b       @(H'3,er5), r1l
-          mov.b       r1l, @(ACCEL_SAMPLES_Y,er0)
+          mov.b       r1l, @(accel_samplesYArr,er0)
           mov.b       @accel_sampleCount, r0l
           extu.w      r0
           mov.b       @(H'5,er5), r1l
-          mov.b       r1l, @(ACCEL_SAMPLES_Z,er0)
+          mov.b       r1l, @(accel_samplesZArr,er0)
           mov.b       @ui_activeView, r0l
           cmp.b       #H'17, r0l
           bne         LAB_7876:16
@@ -13373,28 +13373,28 @@ LAB_77d0:
           mov.w       e0, @accel_xPosition
           mov.b       @accel_sampleCount, r0l
           extu.w      r0
-          mov.b       @(ACCEL_SAMPLES_Y,er0), r0l
+          mov.b       @(accel_samplesYArr,er0), r0l
           exts.w      r0
-          mov.b       @(ACCEL_SAMPLES_Y,er6), r1l
+          mov.b       @(accel_samplesYArr,er6), r1l
           exts.w      r1
           sub.w       r1, r0
           mov.w       r0, r0
           blt         LAB_7808:8
           mov.b       @accel_sampleCount, r0l
           extu.w      r0
-          mov.b       @(ACCEL_SAMPLES_Y,er0), r0l
+          mov.b       @(accel_samplesYArr,er0), r0l
           exts.w      r0
-          mov.b       @(ACCEL_SAMPLES_Y,er6), r1l
+          mov.b       @(accel_samplesYArr,er6), r1l
           exts.w      r1
           sub.w       r1, r0
           bra         LAB_781e:8
 LAB_7808:
           mov.b       @accel_sampleCount, r0l
           extu.w      r0
-          mov.b       @(ACCEL_SAMPLES_Y,er0), r0l
+          mov.b       @(accel_samplesYArr,er0), r0l
           exts.w      r0
           neg.w       r0
-          mov.b       @(ACCEL_SAMPLES_Y,er6), r1l
+          mov.b       @(accel_samplesYArr,er6), r1l
           exts.w      r1
           add.w       r1, r0
 LAB_781e:
@@ -13403,28 +13403,28 @@ LAB_781e:
           mov.w       e0, @accel_yPosition
           mov.b       @accel_sampleCount, r0l
           extu.w      r0
-          mov.b       @(ACCEL_SAMPLES_Z,er0), r0l
+          mov.b       @(accel_samplesZArr,er0), r0l
           exts.w      r0
-          mov.b       @(ACCEL_SAMPLES_Z,er6), r1l
+          mov.b       @(accel_samplesZArr,er6), r1l
           exts.w      r1
           sub.w       r1, r0
           mov.w       r0, r0
           blt         LAB_7856:8
           mov.b       @accel_sampleCount, r0l
           extu.w      r0
-          mov.b       @(ACCEL_SAMPLES_Z,er0), r0l
+          mov.b       @(accel_samplesZArr,er0), r0l
           exts.w      r0
-          mov.b       @(ACCEL_SAMPLES_Z,er6), r1l
+          mov.b       @(accel_samplesZArr,er6), r1l
           exts.w      r1
           sub.w       r1, r0
           bra         LAB_786c:8
 LAB_7856:
           mov.b       @accel_sampleCount, r0l
           extu.w      r0
-          mov.b       @(ACCEL_SAMPLES_Z,er0), r0l
+          mov.b       @(accel_samplesZArr,er0), r0l
           exts.w      r0
           neg.w       r0
-          mov.b       @(ACCEL_SAMPLES_Z,er6), r1l
+          mov.b       @(accel_samplesZArr,er6), r1l
           exts.w      r1
           add.w       r1, r0
 LAB_786c:
@@ -16796,9 +16796,9 @@ LAB_947a:
           bcs         LAB_947a:8
           mov.w       #ACCEL_SAMPLES_X, r0
           jsr         @drv_accel_fft:16
-          mov.w       #ACCEL_SAMPLES_Y, r0
+          mov.w       #accel_samplesYArr, r0
           jsr         @drv_accel_fft:16
-          mov.w       #ACCEL_SAMPLES_Z, r0
+          mov.w       #accel_samplesZArr, r0
           jsr         @drv_accel_fft:16
           mov.w       #DAT_f7e6, r0
           jsr         @game_detect_steps_fft:16
@@ -18196,56 +18196,56 @@ LAB_a1fc:
           mov.w       r0, e0
           mov.b       @accel_sampleCount, r0l
           extu.w      r0
-          mov.b       @(ACCEL_SAMPLES_Y,er0), r0l
+          mov.b       @(accel_samplesYArr,er0), r0l
           exts.w      r0
-          mov.b       @(ACCEL_SAMPLES_Y,er6), r1l
+          mov.b       @(accel_samplesYArr,er6), r1l
           exts.w      r1
           sub.w       r1, r0
           mov.w       r0, r0
           blt         LAB_a22c:8
           mov.b       @accel_sampleCount, r0l
           extu.w      r0
-          mov.b       @(ACCEL_SAMPLES_Y,er0), r0l
+          mov.b       @(accel_samplesYArr,er0), r0l
           exts.w      r0
-          mov.b       @(ACCEL_SAMPLES_Y,er6), r1l
+          mov.b       @(accel_samplesYArr,er6), r1l
           exts.w      r1
           sub.w       r1, r0
           bra         LAB_a242:8
 LAB_a22c:
           mov.b       @accel_sampleCount, r0l
           extu.w      r0
-          mov.b       @(ACCEL_SAMPLES_Y,er0), r0l
+          mov.b       @(accel_samplesYArr,er0), r0l
           exts.w      r0
           neg.w       r0
-          mov.b       @(ACCEL_SAMPLES_Y,er6), r1l
+          mov.b       @(accel_samplesYArr,er6), r1l
           exts.w      r1
           add.w       r1, r0
 LAB_a242:
           add.w       r0, e0
           mov.b       @accel_sampleCount, r0l
           extu.w      r0
-          mov.b       @(ACCEL_SAMPLES_Z,er0), r0l
+          mov.b       @(accel_samplesZArr,er0), r0l
           exts.w      r0
-          mov.b       @(ACCEL_SAMPLES_Z,er6), r1l
+          mov.b       @(accel_samplesZArr,er6), r1l
           exts.w      r1
           sub.w       r1, r0
           mov.w       r0, r0
           blt         LAB_a272:8
           mov.b       @accel_sampleCount, r0l
           extu.w      r0
-          mov.b       @(ACCEL_SAMPLES_Z,er0), r0l
+          mov.b       @(accel_samplesZArr,er0), r0l
           exts.w      r0
-          mov.b       @(ACCEL_SAMPLES_Z,er6), r1l
+          mov.b       @(accel_samplesZArr,er6), r1l
           exts.w      r1
           sub.w       r1, r0
           bra         LAB_a288:8
 LAB_a272:
           mov.b       @accel_sampleCount, r0l
           extu.w      r0
-          mov.b       @(ACCEL_SAMPLES_Z,er0), r0l
+          mov.b       @(accel_samplesZArr,er0), r0l
           exts.w      r0
           neg.w       r0
-          mov.b       @(ACCEL_SAMPLES_Z,er6), r1l
+          mov.b       @(accel_samplesZArr,er6), r1l
           exts.w      r1
           add.w       r1, r0
 LAB_a288:
@@ -21481,7 +21481,7 @@ trainerRecBuf:
           .RES.B      8
 trainerRecBuf_loc:
           .RES.B      16
-ACCEL_SAMPLES_Y:
+accel_samplesYArr:
           .RES.B      32
 L_F886:
           .RES.B      16
@@ -21489,7 +21489,7 @@ DAT_f896:
           .RES.B      1
 DAT_f897:
           .RES.B      15
-ACCEL_SAMPLES_Z:
+accel_samplesZArr:
           .RES.B      3
 DAT_f8a9:
           .RES.B      13

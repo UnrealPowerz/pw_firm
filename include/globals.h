@@ -148,7 +148,7 @@ enum view_id {
 /* 0xF866..0xF955: 240-byte multi-purpose scratch region (sibling of g_scratch).
  * Memory is reused across mutually-exclusive subsystems:
  *
- *   - Accel-Y samples:   int8_t[64] from offset 0   (covers ACCEL_SAMPLES_Y + at_f886/88e/896/897)
+ *   - Accel-Y samples:   int8_t[64] from offset 0   (covers accel_samplesYArr + at_f886/88e/896/897)
  *   - Accel-Z samples:   int8_t[64] from offset 0x40 (overlaps IR session-key state)
  *   - IR session state:  nextSessionKey/sessionKey/handshake/retry counters/xfer (offsets 0x50..0x67)
  *   - IR packet buffer:  136 bytes from offset 0x68  (cmd/subtype/crc/session/payload)
@@ -160,13 +160,13 @@ enum view_id {
 union pw_scratch2 {
     uint8_t bytes[0xF0];
     struct {
-        uint8_t  accel_y[32];        /* +0x00 ACCEL_SAMPLES_Y / accelYSamples[0..31] */
-        uint8_t  at_f886[8];         /* +0x20 = accelYSamples[32..39] (also L_F886) */
-        uint8_t  at_f88e[8];         /* +0x28 = accelYSamples[40..47] */
-        uint8_t  at_f896;            /* +0x30 = accelYSamples[48] */
-        uint8_t  at_f897[15];        /* +0x31 = accelYSamples[49..63] */
-        uint8_t  accel_z[3];         /* +0x40 ACCEL_SAMPLES_Z / accelZSamples[0..2] */
-        uint8_t  at_f8a9[13];        /* +0x43 = accelZSamples[3..15] */
+        uint8_t  accel_y[32];        /* +0x00 accel_samplesYArr / accel_samplesY[0..31] */
+        uint8_t  at_f886[8];         /* +0x20 = accel_samplesY[32..39] (also L_F886) */
+        uint8_t  at_f88e[8];         /* +0x28 = accel_samplesY[40..47] */
+        uint8_t  at_f896;            /* +0x30 = accel_samplesY[48] */
+        uint8_t  at_f897[15];        /* +0x31 = accel_samplesY[49..63] */
+        uint8_t  accel_z[3];         /* +0x40 accel_samplesZArr / accel_samplesZ[0..2] */
+        uint8_t  at_f8a9[13];        /* +0x43 = accel_samplesZ[3..15] */
         volatile uint32_t next_session_key;     /* +0x50 */
         volatile uint32_t session_key;          /* +0x54 */
         volatile uint8_t  ir_handshake_step;    /* +0x58 */
@@ -193,14 +193,14 @@ union pw_scratch2 {
 #define g_scratch2 (*(union pw_scratch2 *)0xF866u)
 
 /* Backward-compatible names */
-#define ACCEL_SAMPLES_Y                (g_scratch2.as_struct.accel_y)
-#define accelYSamples                  ((volatile int8_t *)g_scratch2.as_struct.accel_y)
+#define accel_samplesYArr                (g_scratch2.as_struct.accel_y)
+#define accel_samplesY                  ((volatile int8_t *)g_scratch2.as_struct.accel_y)
 #define DAT_f886                       (g_scratch2.as_struct.at_f886)
 #define DAT_f88e                       (g_scratch2.as_struct.at_f88e)
 #define DAT_f896                       (g_scratch2.as_struct.at_f896)
 #define DAT_f897                       (g_scratch2.as_struct.at_f897)
-#define ACCEL_SAMPLES_Z                (g_scratch2.as_struct.accel_z)
-#define accelZSamples                  ((volatile int8_t *)g_scratch2.as_struct.accel_z)
+#define accel_samplesZArr                (g_scratch2.as_struct.accel_z)
+#define accel_samplesZ                  ((volatile int8_t *)g_scratch2.as_struct.accel_z)
 #define DAT_f8a9                       (g_scratch2.as_struct.at_f8a9)
 #define nextSessionKey                 (g_scratch2.as_struct.next_session_key)
 #define sessionKey                     (g_scratch2.as_struct.session_key)
@@ -305,8 +305,8 @@ union pw_scratch {
  * `mov.l @trainerRecBuf` to copy the id+loc pair to a packet header). */
 #define trainerRecBuf_loc (g_scratch.as_struct.at_70)
 
-#define accelYSamples  ((volatile int8_t *)ACCEL_SAMPLES_Y)
-#define accelZSamples  ((volatile int8_t *)ACCEL_SAMPLES_Z)
+#define accel_samplesY  ((volatile int8_t *)accel_samplesYArr)
+#define accel_samplesZ  ((volatile int8_t *)accel_samplesZArr)
 #define L_F886         DAT_f886
 
 /* --- Control Flow --- */
