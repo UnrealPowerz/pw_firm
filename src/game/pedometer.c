@@ -246,7 +246,7 @@ void game_pedometer_increment_step(void) {
   }
 
   g.session_recentSteps = 0;
-  if (g.rtc_hours == g.scheduledNotifyHour) {
+  if (g.rtc_hours == g.notif_scheduledHour) {
     g.pedTaskFlags |= 0x04;
   }
 }

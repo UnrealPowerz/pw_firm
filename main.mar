@@ -481,7 +481,7 @@ LAB_02fa:
           inc.w       #1, e0
           cmp.w       #H'3E, e0
           bcs         LAB_02fa:8
-          mov.b       r0l, @scheduledNotifyHour
+          mov.b       r0l, @notif_scheduledHour
           mov.w       #statusFlags, r0
           bset        #H'4, @r0
           mov.b       @walker_status_flags, r0l
@@ -571,7 +571,7 @@ ir_parse_rx_packet:
           divxs.w     r1, er2
           mov.w       e2, r2
           or.b        r2l, r0l
-          mov.b       r0l, @scheduledNotifyHour
+          mov.b       r0l, @notif_scheduledHour
 LAB_040e:
           mov.l       @peerRcvdRtcTime, er6
           beq         LAB_0422:8
@@ -18482,7 +18482,7 @@ LAB_a3de:
 LAB_a440:
           sub.w       r0, r0
           mov.w       r0, @session_recentSteps
-          mov.b       @scheduledNotifyHour, r0l
+          mov.b       @notif_scheduledHour, r0l
           mov.b       @rtc_hours, r0h
           cmp.b       r0h, r0l
           bne         LAB_a45a:8
@@ -21367,7 +21367,7 @@ rtc_hours:
           .RES.B      1
 pedTaskFlags:
           .RES.B      1
-scheduledNotifyHour:
+notif_scheduledHour:
           .RES.B      1
 lcdShadeBase:
           .RES.B      1

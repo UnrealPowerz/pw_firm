@@ -36,7 +36,7 @@
 /* 0xF7A5 */ volatile uint8_t  rtc_minutes;
 /* 0xF7A6 */ volatile uint8_t  rtc_hours;
 /* 0xF7A7 */ volatile uint8_t  pedTaskFlags;           /* bit-field via _BIT */
-/* 0xF7A8 */ volatile uint8_t  scheduledNotifyHour;
+/* 0xF7A8 */ volatile uint8_t  notif_scheduledHour;
 /* 0xF7A9 */ volatile uint8_t  lcdShadeBase;
 /* 0xF7AA */ volatile uint8_t  menu_cursor;
 /* 0xF7AB */ volatile uint8_t  DAT_f7ab;               /* write-only dispatch tick */

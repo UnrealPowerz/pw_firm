@@ -26,7 +26,7 @@ __entry(vect = 0) void PowerON_Reset(void) {
     ((uint8_t *)&g.save_totalSteps)[i] = 0;
   }
 
-  g.scheduledNotifyHour = 0;
+  g.notif_scheduledHour = 0;
   statusFlags_BIT.lcd_dirty = 1;
   g.walker_status_flags = (g.walker_status_flags & 0xE7) | WALKER_MODE_DEEP_SLEEP;
 

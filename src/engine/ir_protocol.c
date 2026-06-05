@@ -255,7 +255,7 @@ void ir_parse_rx_packet(void) {
     bcd = (uint16_t)(hour_raw >> 3);
     tens = bcd / 10;
     units = bcd - (tens * 10);
-    g.scheduledNotifyHour = (uint8_t)((tens << 4) | units);
+    g.notif_scheduledHour = (uint8_t)((tens << 4) | units);
   }
 
   /* If the peer included a wall-clock time, adopt it. */
