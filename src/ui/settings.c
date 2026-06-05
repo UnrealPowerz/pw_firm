@@ -29,7 +29,7 @@ void ui_reset_settings_substate(void) {
 
 // ROM: 0x6c94  92.5%
 void ui_handle_settings_main_page(void) {
-  if (drv_button_is_triggered(BTN_M)) {
+  if (drv_button_is_triggered(BTN_R)) {
     if (g.viewstate.Z == 0) {
       drv_sound_play(SND_BACK);
       ui_clear_substate_y();
@@ -53,7 +53,7 @@ void ui_handle_settings_volume(void) {
   uint8_t vol;
   uint16_t val;
 
-  if (drv_button_is_triggered(BTN_M)) {
+  if (drv_button_is_triggered(BTN_R)) {
     vol = (g.save_settings.BYTE >> 1) & 0x03;
     val = (uint16_t)((int16_t)(int8_t)vol + 2);
     val = (uint16_t)((int16_t)val % 3);
@@ -79,7 +79,7 @@ void ui_handle_settings_volume(void) {
 void ui_handle_settings_shade(void) {
   uint8_t shade;
 
-  if (drv_button_is_triggered(BTN_M)) {
+  if (drv_button_is_triggered(BTN_R)) {
     if ((g.save_settings.BYTE & 0x78) != 0) {
       shade = ((g.save_settings.BYTE >> 3) & 0x0F) - 1;
       g.save_settings.BYTE = (uint8_t)((g.save_settings.BYTE & ~(0x0F << 3)) |
@@ -110,7 +110,7 @@ void ui_handle_settings(void) {
   } else if (g.viewstate.Y.BYTE == SETTINGS_SHADE) {
     ui_handle_settings_shade();
   }
-  if (drv_button_is_triggered(BTN_R)) {
+  if (drv_button_is_triggered(BTN_M)) {
     if (g.viewstate.Y.BYTE == SETTINGS_MENU) {
       /* R on the main settings menu enters the highlighted row. The within-
          page cursor (g.viewstate.Z) is 0 for g.sound_volume and 1 for shade; +1 maps

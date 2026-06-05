@@ -37,7 +37,7 @@ void drv_button_read(void) {
   g.btn_inputRaw.BYTE = 0;
 
   if (PDRB_BIT.B0) {
-    g.btn_inputRaw.BIT.btn_r = 1;
+    g.btn_inputRaw.BIT.btn_m = 1;
     if (g.sys_wakeFlag[0]) {
       g.btn_holdDuration++;
     }
@@ -46,12 +46,12 @@ void drv_button_read(void) {
   }
 
   if (g.sys_statusFlags.BIT.button_event) {
-    g.btn_inputRaw.BIT.btn_r = 1;
+    g.btn_inputRaw.BIT.btn_m = 1;
     g.sys_statusFlags.BIT.button_event = 0;
   }
 
   if (PDRB_BIT.B2) {
-    g.btn_inputRaw.BIT.btn_m = 1;
+    g.btn_inputRaw.BIT.btn_r = 1;
   }
 
   if (PDRB_BIT.B4) {

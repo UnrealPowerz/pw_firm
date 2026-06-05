@@ -34,7 +34,7 @@ void ui_init_discard_cursor(void) {
 
 // ROM: 0x3b94  94.6%
 void ui_handle_discard_picker(void) {
-  if (drv_button_is_triggered(BTN_M)) {
+  if (drv_button_is_triggered(BTN_R)) {
     {
       uint8_t cursor = g.viewstate.Z;
       if (cursor == 0) {
@@ -61,7 +61,7 @@ void ui_handle_discard_picker(void) {
     drv_sound_play(SND_CURSOR);
   }
 
-  if (drv_button_is_triggered(BTN_R)) {
+  if (drv_button_is_triggered(BTN_M)) {
     /* Commit the reward — branch on g.viewstate.A (set by the caller to
        distinguish a pokemon caught vs an item dowsed). */
     if (g.viewstate.A == 0) {

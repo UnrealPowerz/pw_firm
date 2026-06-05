@@ -116,8 +116,8 @@ typedef union {
     struct {
         uint8_t        : 4;  /* bits 7-4 unused */
         uint8_t btn_l  : 1;  /* bit 3 -- 0x08 */
-        uint8_t btn_m  : 1;  /* bit 2 -- 0x04 */
-        uint8_t btn_r  : 1;  /* bit 1 -- 0x02 */
+        uint8_t btn_r  : 1;  /* bit 2 -- 0x04 */
+        uint8_t btn_m  : 1;  /* bit 1 -- 0x02 */
         uint8_t        : 1;  /* bit 0 unused */
     } BIT;
 } button_input_t;

@@ -66,7 +66,7 @@ void ui_handle_dowsing(void) {
   return;
 
 state_idle:
-  if (drv_button_is_triggered(BTN_R)) {
+  if (drv_button_is_triggered(BTN_M)) {
     if (g.viewstate.v.dowsing.cursor == g.viewstate.v.dowsing.markedWrongSlot) {
       /* Already marked as wrong — beep but don't advance. */
       drv_sound_play(SND_BACK);
@@ -77,7 +77,7 @@ state_idle:
     g.viewstate.A = 4;
     return;
   }
-  if (drv_button_is_triggered(BTN_M)) {
+  if (drv_button_is_triggered(BTN_R)) {
     g.viewstate.v.dowsing.cursor = (uint8_t)(((int32_t)((uint16_t)g.viewstate.v.dowsing.cursor + 5)) % 6);
     drv_sound_play(SND_CURSOR);
   }

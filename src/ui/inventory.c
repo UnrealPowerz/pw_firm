@@ -69,7 +69,7 @@ void ui_inventory_jump_to_items(void) {
 // ROM: 0x8d02  77.9%
 void ui_handle_inventory_pokemon(void) {
   uint8_t sid;
-  if (drv_button_is_triggered(BTN_M) != 0) {
+  if (drv_button_is_triggered(BTN_R) != 0) {
     if (ui_inventory_cursor_prev(*(volatile uint16_t *)&g.viewstate.A) != 0) {
       /* Already at the first present slot — exit back to the main menu. */
       ui_clear_substate_y();
@@ -97,7 +97,7 @@ void ui_handle_inventory_pokemon(void) {
     goto do_play_sound;
   }
 
-  if (drv_button_is_triggered(BTN_R) != 0) {
+  if (drv_button_is_triggered(BTN_M) != 0) {
     if (accel_xPosition_word != 0) {
       ui_inventory_jump_to_items();
       ui_set_view(VIEW_GIFTS);
@@ -117,7 +117,7 @@ do_play_sound:
 // ROM: 0x9116  81.5%
 void ui_handle_inventory_items(void) {
   uint8_t sid;
-  if (drv_button_is_triggered(BTN_M) != 0) {
+  if (drv_button_is_triggered(BTN_R) != 0) {
     if (ui_inventory_cursor_prev(accel_xPosition_word) != 0) {
       /* At first gift — flip back into the pokemon view if any present,
          otherwise just play the boundary beep. */
@@ -144,7 +144,7 @@ void ui_handle_inventory_items(void) {
     goto do_play_sound;
   }
 
-  if (drv_button_is_triggered(BTN_R) != 0) {
+  if (drv_button_is_triggered(BTN_M) != 0) {
     ui_reset_substate();
     ui_set_view(VIEW_HOME);
     sid = SND_CONFIRM;

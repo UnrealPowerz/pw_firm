@@ -5,7 +5,7 @@
  *
  * Four grass patches are arranged in a 2x2 grid. One patch (rolled at init)
  * hides the encounter; the player gets a limited time per round to navigate
- * the cursor (BTN_M/L) over the patches and commit (BTN_R) on what they
+ * the cursor (BTN_R/L) over the patches and commit (BTN_M) on what they
  * think is the right one. Successful guesses progress toward an encounter;
  * the timer running out or any wrong commit ends the game in failure.
  *
@@ -102,7 +102,7 @@ void ui_render_pokeradar(void) {
 // ROM: 0x9dce  91.6%
 void ui_handle_radar_grass_menu(void) {
   /* Cursor moves: M = back (+3 mod 4 = -1), L = forward (+1 mod 4). */
-  if (drv_button_is_triggered(BTN_M) != 0) {
+  if (drv_button_is_triggered(BTN_R) != 0) {
     g.viewstate.A = (g.viewstate.A + 3) & 3;
     drv_sound_play(SND_CURSOR);
   }
@@ -111,7 +111,7 @@ void ui_handle_radar_grass_menu(void) {
     drv_sound_play(SND_CURSOR);
   }
 
-  if (drv_button_is_triggered(BTN_R) != 0) {
+  if (drv_button_is_triggered(BTN_M) != 0) {
     /* Commit on current patch — only valid while the round timer is alive. */
     if (g.viewstate.v.bytes.at_d5 != 0) {
       if (g.viewstate.A == g.viewstate.v.bytes.at_d3) {

@@ -8,19 +8,19 @@
  *   TC_PAGE_DEFAULT (z=0):
  *     y=0 ............... clock face          (ui_render_trainer_card_time)
  *     y=1..7 ............ daily step history  (ui_render_daily_step_history)
- *     BTN_M up    -> y--, or exit to MAIN_MENU if y==0
+ *     BTN_R up    -> y--, or exit to MAIN_MENU if y==0
  *     BTN_L down  -> y++ (capped at 7)
- *     BTN_R       -> if g.save_totalSteps >= 10_000_000 jump to TC_PAGE_GOAL_REACHED,
+ *     BTN_M       -> if g.save_totalSteps >= 10_000_000 jump to TC_PAGE_GOAL_REACHED,
  *                    else exit to home
  *
  *   TC_PAGE_GOAL_REACHED (z=1):
  *     "Good job!" 10-million-step milestone banner (ui_render_step_goal_reached).
- *     BTN_R       -> if reward-claimed bit at EEPROM 0xCE88 b0 unset, set it
+ *     BTN_M       -> if reward-claimed bit at EEPROM 0xCE88 b0 unset, set it
  *                    and advance to TC_PAGE_REWARD; else exit to home.
  *
  *   TC_PAGE_REWARD (z=2):
  *     "Reward / received!" banner (ui_render_step_goal_reward).
- *     BTN_R       -> exit to home.
+ *     BTN_M       -> exit to home.
  */
 
 enum trainer_card_page {
@@ -43,9 +43,9 @@ void ui_handle_trainer_card(void) {
   uint16_t reward_flag_addr;
   uint8_t reward_flags;
 
-  /* TC_PAGE_DEFAULT: navigate the 8 sub-views with BTN_M (up) / BTN_L (down). */
+  /* TC_PAGE_DEFAULT: navigate the 8 sub-views with BTN_R (up) / BTN_L (down). */
   if (g.viewstate.Z == TC_PAGE_DEFAULT) {
-    if (drv_button_is_triggered(BTN_M) != 0) {
+    if (drv_button_is_triggered(BTN_R) != 0) {
       uint8_t cursor = g.viewstate.Y.BYTE;
       if (cursor == 0) {
         /* Already on clock — leave the trainer card entirely. */
@@ -66,8 +66,8 @@ void ui_handle_trainer_card(void) {
     }
   }
 
-  /* BTN_R advances through the milestone sequence (or exits if at the end). */
-  if (drv_button_is_triggered(BTN_R) != 0) {
+  /* BTN_M advances through the milestone sequence (or exits if at the end). */
+  if (drv_button_is_triggered(BTN_M) != 0) {
     if (g.viewstate.Z == TC_PAGE_DEFAULT) {
       if (g.save_totalSteps >= STEP_GOAL) {
         g.viewstate.Z = TC_PAGE_GOAL_REACHED;

@@ -40,7 +40,7 @@ void ui_handle_main_menu(void) {
     return;
   }
 
-  if (drv_button_is_triggered(BTN_R)) {
+  if (drv_button_is_triggered(BTN_M)) {
     cost = costTable[g.ui_menuCursor];
     if (g.save_watts < cost) {
       g.viewstate.Y.BYTE = MENU_POPUP_NEED_WATTS;
@@ -117,7 +117,7 @@ void ui_handle_main_menu(void) {
 
   /* Cursor scroll (with wrap). M past MENU_POKERADAR and L past MENU_SETTINGS
      exit back to home. */
-  if (drv_button_is_triggered(BTN_M)) {
+  if (drv_button_is_triggered(BTN_R)) {
     if (g.ui_menuCursor == MENU_POKERADAR) {
       ui_reset_substate();
       ui_set_view(VIEW_HOME);

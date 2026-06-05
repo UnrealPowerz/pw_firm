@@ -15,7 +15,7 @@
 // ROM: 0x6a3e  93.4%
 void ui_handle_home(void) {
   if (!(g.sys_walkerFlags.BIT.session_active)) {
-    if (drv_button_is_triggered(BTN_R) || (g.sys_statusFlags.BIT.pedometer_paused)) {
+    if (drv_button_is_triggered(BTN_M) || (g.sys_statusFlags.BIT.pedometer_paused)) {
       ui_enter_ir_session();
     }
   } else {
@@ -30,12 +30,12 @@ void ui_handle_home(void) {
     }
     /* Home-screen button shortcuts: each jumps straight into a main-menu
        entry, bypassing the cursor. */
-    if (drv_button_is_triggered(BTN_R)) {
+    if (drv_button_is_triggered(BTN_M)) {
       drv_sound_play(SND_CONFIRM);
       ui_clear_substate_y();
       g.ui_menuCursor = MENU_CONNECTION;
       ui_set_view(VIEW_MAIN_MENU);
-    } else if (drv_button_is_triggered(BTN_M)) {
+    } else if (drv_button_is_triggered(BTN_R)) {
       g.ui_menuCursor = MENU_SETTINGS;
       drv_sound_play(SND_CONFIRM);
       ui_clear_substate_y();

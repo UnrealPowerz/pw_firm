@@ -9,12 +9,12 @@
  * ends with caught / fled / lost.
  *
  * Player input mapping (game_battle_process_turn, called from PICK_MOVE):
- *   BTN_M = Attack       -> ATTACK_ANIM
+ *   BTN_R = Attack       -> ATTACK_ANIM
  *   BTN_L = Defend/Flee  -> branches on g.viewstate.v.bytes.at_d8.BYTE bits 3-4:
  *                            m==0 -> COUNTER_ANIM
  *                            m==1 -> STARE_DOWN
  *                            m==2 -> FLED  (only path that leaves)
- *   BTN_R = Throw Ball   -> THROW_BALL
+ *   BTN_M = Throw Ball   -> THROW_BALL
  *
  * State enum: see `enum battle_state` below. Transitions documented per-case.
  *
@@ -383,8 +383,8 @@ void game_battle_process_turn(void) {
     g.viewstate.v.bytes.at_d8.BYTE = (g.viewstate.v.bytes.at_d8.BYTE & 0xE7);                   /* outcome = hit (0) */
   }
 
-  /* Attack (middle button). */
-  if (drv_button_is_triggered(BTN_M) != 0) {
+  /* Attack (right button). */
+  if (drv_button_is_triggered(BTN_R) != 0) {
     uint8_t outcome;
     g.viewstate.v.bytes.at_d8.BYTE &= 0xF9;
     outcome = (uint8_t)((g.viewstate.v.bytes.at_d8.BYTE >> 3) & 3);
@@ -422,8 +422,8 @@ void game_battle_process_turn(void) {
     }
   }
 
-  /* Throw ball (right button). */
-  if (drv_button_is_triggered(BTN_R) != 0) {
+  /* Throw ball (middle button). */
+  if (drv_button_is_triggered(BTN_M) != 0) {
     drv_sound_play(SND_BALL_THROW);
     g.viewstate.Z = BS_THROW_BALL;
     g.viewstate.v.bytes.at_d2 = 0;

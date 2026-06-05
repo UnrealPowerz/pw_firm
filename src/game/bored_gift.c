@@ -149,7 +149,7 @@ void game_process_interaction_reward(uint8_t type) {
 // ROM: 0x5e9e  71.2%
 void ui_handle_bored_gift(void) {
   uint8_t *dest;
-  if (drv_button_is_triggered(BTN_R)) {
+  if (drv_button_is_triggered(BTN_M)) {
     dest = (uint8_t *)(uintptr_t)accel_xPosition_word;
     if (*dest & 0x01) {
       ui_reset_substate();

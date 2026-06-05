@@ -265,19 +265,19 @@ void ui_handle_factory_test(void) {
     return;
 
   case 0x01:
-    /* Sound test. After a 4-frame settle, BTN_LM advances + plays the
+    /* Sound test. After a 4-frame settle, BTN_LR advances + plays the
        factory sound. The unreachable BTN_M-decrement branch below is
        dead code (g.viewstate.Y.BYTE == 1 always true in this case). */
     if (subA < 4) {
       return;
     }
-    if (drv_button_is_triggered(BTN_LM) != 0) {
+    if (drv_button_is_triggered(BTN_LR) != 0) {
       goto do_sound_and_inc;
     }
     if (g.viewstate.Y.BYTE == 1) {
       return;
     }
-    if (drv_button_is_triggered(BTN_M) == 0) {
+    if (drv_button_is_triggered(BTN_R) == 0) {
       return;
     }
     drv_sound_set_data((uint8_t *)FACTORY_TEST_SOUND);
@@ -290,14 +290,14 @@ void ui_handle_factory_test(void) {
 
   case 0x07:
     /* Middle-button test. */
-    if (drv_button_is_triggered(BTN_M) == 0) {
+    if (drv_button_is_triggered(BTN_R) == 0) {
       return;
     }
     goto do_sound_and_inc;
 
   case 0x08:
     /* Right-button test. */
-    if (drv_button_is_triggered(BTN_R) == 0) {
+    if (drv_button_is_triggered(BTN_M) == 0) {
       return;
     }
     goto do_sound_and_inc;

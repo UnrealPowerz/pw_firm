@@ -139,7 +139,7 @@ enum sound_id {
     SND_ATTACK_MISS  = 0x0C,  /* battle: defender evades (move_type 1)          — HIGH */
     SND_CRIT_HIT     = 0x0D,  /* battle: critical hit (move_type 2)             — HIGH */
     SND_FLED         = 0x0E,  /* battle/radar: ran out / escaped / lost state   — MED  (all sites transition into "lost" state 7 or radar-failure view) */
-    SND_BALL_THROW   = 0x0F   /* battle: BTN_R starts capture sequence (state 10→11→12→13) — MED */
+    SND_BALL_THROW   = 0x0F   /* battle: BTN_M starts capture sequence (state 10→11→12→13) — MED */
 };
 
 #endif /* GFX_CONSTS_H */
