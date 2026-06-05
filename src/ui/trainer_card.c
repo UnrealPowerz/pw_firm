@@ -10,7 +10,7 @@
  *     y=1..7 ............ daily step history  (ui_render_daily_step_history)
  *     BTN_M up    -> y--, or exit to MAIN_MENU if y==0
  *     BTN_L down  -> y++ (capped at 7)
- *     BTN_R       -> if g.totalSteps >= 10_000_000 jump to TC_PAGE_GOAL_REACHED,
+ *     BTN_R       -> if g.save_totalSteps >= 10_000_000 jump to TC_PAGE_GOAL_REACHED,
  *                    else exit to home
  *
  *   TC_PAGE_GOAL_REACHED (z=1):
@@ -69,7 +69,7 @@ void ui_handle_trainer_card(void) {
   /* BTN_R advances through the milestone sequence (or exits if at the end). */
   if (drv_button_is_triggered(BTN_R) != 0) {
     if (g.gCurSubstateZ == TC_PAGE_DEFAULT) {
-      if (g.totalSteps >= STEP_GOAL) {
+      if (g.save_totalSteps >= STEP_GOAL) {
         g.gCurSubstateZ = TC_PAGE_GOAL_REACHED;
         drv_sound_play(SND_CONFIRM);
         return;
@@ -127,7 +127,7 @@ void ui_render_trainer_card_time(void) {
   drv_lcd_blit(0, 0x20, buf, 0x10, 0x10);
 
   /* Date label — different art for co-op vs solo. */
-  if (g.settingsByte & 1) {
+  if (g.save_settings & 1) {
     drv_eeprom_read_block(0xC8FC, buf, 0x140);
   } else {
     drv_eeprom_read_block(0x907E, buf, 0x140);
@@ -210,8 +210,8 @@ void ui_render_daily_step_history(void) {
   drv_eeprom_read_block(day_addr, &day_steps, 4);
   gfx_draw_numeric_value(0x30, 0x10, (uint32_t)day_steps, 0);
 
-  gfx_draw_numeric_value(0x58, 0x20, (uint32_t)g.dayCounter, 0);
-  gfx_draw_numeric_value(0x30, 0x30, g.totalSteps, 0);
+  gfx_draw_numeric_value(0x58, 0x20, (uint32_t)g.save_dayCounter, 0);
+  gfx_draw_numeric_value(0x30, 0x30, g.save_totalSteps, 0);
 }
 
 // ROM: 0xb7ee  72.8%  saves: er2,r3,r4,er5,r6
@@ -238,7 +238,7 @@ void ui_render_step_goal_reached(void) {
   drv_eeprom_read_block(0x2210 + base, buf, 0xA0);
   drv_lcd_blit(0x38, 0x28, buf, 0x28, 0x10);
 
-  gfx_draw_numeric_value(0x30, 0x28, g.RamCache_STEP_COUNT_maybe, 0);
+  gfx_draw_numeric_value(0x30, 0x28, g.save_walkStepCount, 0);
   gfx_draw_text_box(0x18, TEXT_GOOD_JOB, TEXT_BOX_FULL, TEXT_BOX_BLINK);
 }
 

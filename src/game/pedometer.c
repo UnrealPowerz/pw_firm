@@ -1,7 +1,7 @@
 #include "all_headers.h"
 
 /*
- * Pedometer — step detection, step accounting, g.watts accrual.
+ * Pedometer — step detection, step accounting, g.save_watts accrual.
  *
  * Function clusters:
  *
@@ -17,19 +17,19 @@
  *                                     Parabolic interpolation around the peak
  *                                     bin to recover a sub-bin step rate.
  *
- *   --- Step / g.watts accounting ---
+ *   --- Step / g.save_watts accounting ---
  *     game_pedometer_set_total        Setter with 9,999,999 cap.
  *     game_pedometer_increment_step   +1 step + 1/20-watt + save commit; also
  *                                     logs the step interaction when walking.
  *     game_pedometer_tick_counters    Batched +1 (called many times per tick
  *                                     based on g.stepBatchSize).
- *     game_add_watts                  Clamped += into g.watts.
+ *     game_add_watts                  Clamped += into g.save_watts.
  *     game_reset_step_data            Full reset (optionally also totals).
  *     game_rotate_step_history        Daily roll-over: shift the 6-day history
  *                                     and start a fresh g.sessionSteps slot.
  *
  *   --- Pedometer task dispatch (g.pedTaskFlags) ---
- *     game_pedometer_tick_session     Per-second g.sessionTicksElapsed bump
+ *     game_pedometer_tick_session     Per-second g.save_sessionTicksElapsed bump
  *                                     (g.pedTaskFlags bit 0 dispatches to here).
  *     game_dispatch_pedometer_task    Pop bits off g.pedTaskFlags and run the
  *                                     corresponding task.
@@ -49,17 +49,17 @@
 // ROM: 0xb124  99.4%
 void game_reset_step_data(uint8_t a) {
   if (a != 0) {
-    g.totalSteps = 0;
-    g.dayCounter = 0;
+    g.save_totalSteps = 0;
+    g.save_dayCounter = 0;
     g.save_rtcTime = 0xD2B0B80;
-    g.RamCache_STEP_COUNT_maybe = 0;
+    g.save_walkStepCount = 0;
   }
-  g.sessionTicksElapsed = 0;
-  g.watts = 0;
-  g.stepWattCounter = 0;
-  g.settingsByte = (g.settingsByte & 0xA4) | 0x24;
-  g.peerSlotIndex = 0;
-  save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (uint8_t *)&g.totalSteps, 0x18);
+  g.save_sessionTicksElapsed = 0;
+  g.save_watts = 0;
+  g.save_stepWattCounter = 0;
+  g.save_settings = (g.save_settings & 0xA4) | 0x24;
+  g.save_peerSlotIndex = 0;
+  save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (uint8_t *)&g.save_totalSteps, 0x18);
 }
 
 // ROM: 0x9328  77.8%
@@ -176,11 +176,11 @@ void game_check_pedometer_activity(void) {
 
 // ROM: 0xa32e  90.0%
 void game_pedometer_set_total(uint32_t val) {
-  g.totalSteps;
+  g.save_totalSteps;
   if (val >= 9999999) {
     val = 9999999;
   }
-  g.totalSteps = val;
+  g.save_totalSteps = val;
 }
 
 /* Reason: do NOT bit-field-ize g.pedTaskFlags.
@@ -210,10 +210,10 @@ void game_dispatch_pedometer_task(void) {
 
 // ROM: 0xa396  99.3%
 void game_pedometer_tick_session(void) {
-  /* Increment with overflow guard — g.sessionTicksElapsed saturates at 0xFFFF
+  /* Increment with overflow guard — g.save_sessionTicksElapsed saturates at 0xFFFF
      rather than wrapping to 0. Driven by g.pedTaskFlags bit 0 (per-second). */
-  if (g.sessionTicksElapsed + 1 != 0) {
-    g.sessionTicksElapsed++;
+  if (g.save_sessionTicksElapsed + 1 != 0) {
+    g.save_sessionTicksElapsed++;
   }
 }
 
@@ -221,11 +221,11 @@ void game_pedometer_tick_session(void) {
 void game_pedometer_increment_step(void) {
   statusFlags_BIT.battery_check_request = 1;
 
-  if (g.totalSteps < 9999999 && g.RamCache_STEP_COUNT_maybe < 9999999) {
-    g.RamCache_STEP_COUNT_maybe++;
+  if (g.save_totalSteps < 9999999 && g.save_walkStepCount < 9999999) {
+    g.save_walkStepCount++;
   }
 
-  save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (uint8_t *)&g.totalSteps, 0x18);
+  save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (uint8_t *)&g.save_totalSteps, 0x18);
 
   if ((walker_status_flags_BIT.walking) != 0) {
     void *buf;
@@ -237,7 +237,7 @@ void game_pedometer_increment_step(void) {
     drv_eeprom_read_block(EEPROM_TRAINER_PROFILE, buf, 0xBE);
 
     val = 0;
-    if (((g.settingsByte & 1)) != 0) {
+    if (((g.save_settings & 1)) != 0) {
       val = 1;
     }
 
@@ -258,13 +258,13 @@ void game_rotate_step_history(void) {
   uint8_t j;
 
   {
-    uint16_t d = g.dayCounter;
+    uint16_t d = g.save_dayCounter;
     if (d < 9999) {
-      g.dayCounter = d + 1;
+      g.save_dayCounter = d + 1;
     }
   }
 
-  save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (uint8_t *)&g.totalSteps, 0x18);
+  save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (uint8_t *)&g.save_totalSteps, 0x18);
 
   sys_init_heap();
   buf = sbrk(0x1C);
@@ -432,16 +432,16 @@ void game_process_accel_data(void) {
         g.sessionSteps = 99999;
       }
 
-      game_pedometer_set_total(g.totalSteps + (uint32_t)g.stepBatchSize);
+      game_pedometer_set_total(g.save_totalSteps + (uint32_t)g.stepBatchSize);
 
-      g.stepWattCounter += g.stepBatchSize;
-      if (g.stepWattCounter >= 20) {
-        g.stepWattCounter -= 20;
-        i = g.watts + 1;
+      g.save_stepWattCounter += g.stepBatchSize;
+      if (g.save_stepWattCounter >= 20) {
+        g.save_stepWattCounter -= 20;
+        i = g.save_watts + 1;
         if (i > 9999) {
           i = 9999;
         }
-        g.watts = i;
+        g.save_watts = i;
       }
     }
 
@@ -495,17 +495,17 @@ void game_pedometer_tick_counters(void) {
     g.sessionSteps = 99999;
   }
 
-  game_pedometer_set_total(g.totalSteps + 1);
+  game_pedometer_set_total(g.save_totalSteps + 1);
 
-  g.stepWattCounter++;
-  if (g.stepWattCounter >= 20) {
+  g.save_stepWattCounter++;
+  if (g.save_stepWattCounter >= 20) {
     uint16_t w;
-    g.stepWattCounter -= 20;
-    w = g.watts + 1;
+    g.save_stepWattCounter -= 20;
+    w = g.save_watts + 1;
     if (w > 9999) {
       w = 9999;
     }
-    g.watts = w;
+    g.save_watts = w;
   }
 
   g.subStepCount++;
@@ -518,9 +518,9 @@ void game_pedometer_tick_counters(void) {
 
 // ROM: 0x1f3e  91.1%
 void game_add_watts(uint16_t amount) {
-  g.watts += amount;
-  if (g.watts > 9999) {
-    g.watts = 9999;
+  g.save_watts += amount;
+  if (g.save_watts > 9999) {
+    g.save_watts = 9999;
   }
-  save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (void *)&g.totalSteps, 0x18);
+  save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (void *)&g.save_totalSteps, 0x18);
 }

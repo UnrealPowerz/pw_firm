@@ -4,7 +4,7 @@
  * Peer interaction log — 23-slot circular log in EEPROM written when the
  * walker pokemon catches something, dowses an item, completes a peer-play
  * session, etc. Slots are 0x88 bytes each at EEPROM_PEER_SLOT_BASE +
- * g.peerSlotIndex * 0x88. g.peerSlotIndex wraps mod 23.
+ * g.save_peerSlotIndex * 0x88. g.save_peerSlotIndex wraps mod 23.
  *
  *   game_log_interaction        Low-level: writes one log slot.
  *   game_log_poke_interaction   Wraps log_interaction for a caught pokemon
@@ -57,7 +57,7 @@ void game_log_interaction(uint8_t *trainer, uint8_t *log_slot,
   uint8_t prev_type;
 
   /* Probe the existing slot for its interaction type. */
-  slot_off = (uint16_t)g.peerSlotIndex * 0x88 + 0xCF0C;
+  slot_off = (uint16_t)g.save_peerSlotIndex * 0x88 + 0xCF0C;
   prev_type = drv_eeprom_read_u8(slot_off + 0x84);
 
   /* Don't overwrite anything with a 0x1B-typed entry. */
@@ -69,8 +69,8 @@ void game_log_interaction(uint8_t *trainer, uint8_t *log_slot,
 
   /* If the prior slot was the special 0x19 marker, skip to the next one. */
   if (prev_type == 0x19) {
-    g.peerSlotIndex = (uint8_t)((int16_t)((uint16_t)g.peerSlotIndex + 1) % 23);
-    slot_off = (uint16_t)g.peerSlotIndex * 0x88 + 0xCF0C;
+    g.save_peerSlotIndex = (uint8_t)((int16_t)((uint16_t)g.save_peerSlotIndex + 1) % 23);
+    slot_off = (uint16_t)g.save_peerSlotIndex * 0x88 + 0xCF0C;
   }
 
   /* For "fresh" interaction types (>0x0A), zero out the buffer first. */
@@ -171,9 +171,9 @@ void game_log_interaction(uint8_t *trainer, uint8_t *log_slot,
 
   /* Commit the slot to EEPROM and advance the circular index. */
   drv_eeprom_write_block(slot_off, log_slot, 0x88);
-  g.peerSlotIndex = (uint8_t)((int16_t)((uint16_t)g.peerSlotIndex + 1) % 23);
+  g.save_peerSlotIndex = (uint8_t)((int16_t)((uint16_t)g.save_peerSlotIndex + 1) % 23);
 
-  save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (void *)&g.totalSteps, 0x18);
+  save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (void *)&g.save_totalSteps, 0x18);
 }
 
 // ROM: 0x3a70  82.4%
@@ -309,7 +309,7 @@ void game_rotate_interaction_log_record(void) {
        * (val_at_0e), push=0 (event_subtype). */
       game_log_interaction(
           trainer_buf, log_record, accel_val + 1,
-          (uint8_t)((g.settingsByte & 1)),
+          (uint8_t)((g.save_settings & 1)),
           *(uint16_t *)(trainer_buf + 0x8C + (uint16_t)accel_val * 2), 0);
     }
   }

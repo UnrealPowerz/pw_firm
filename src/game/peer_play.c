@@ -11,7 +11,7 @@
  *   ui_handle_peer_play             Empty per-tick handler — rendering does
  *                                   all the work (advances on its own).
  *   game_calculate_interaction_reward
- *                                   Compute the g.watts/item reward tier from
+ *                                   Compute the g.save_watts/item reward tier from
  *                                   step counts; populate the next free
  *                                   dowsing item slot if appropriate.
  *   ui_draw_music_note              Helper to blit a single music-note sprite

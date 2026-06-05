@@ -31,7 +31,7 @@
  *   g.gCurSubstateY      = pokemon kind (1..3 wild route slot, 4 peer)
  *   g.accelXPos          = per-state animation tick (counts up to g.dowsing_item_pos)
  *   g.accelYPos          = pokemon sprite y position (animation frame)
- *   g.accelZPos          = g.watts paid on loss (state 5)
+ *   g.accelZPos          = g.save_watts paid on loss (state 5)
  *   g.DAT_f7d1           = HP/wiggle bar segments left
  *   g.DAT_f7d5           = pokemon sprite x position / ball x position
  *   g.DAT_f7d8           = packed flags byte (see above)
@@ -46,7 +46,7 @@ enum battle_state {
     BS_ATTACK_ANIM    = 3,   /* hit / evade / crit by (g.DAT_f7d8>>3)&3            */
     BS_COUNTER_ANIM   = 4,   /* counter; loops to PICK_MOVE or chains ATTACK_ANIM */
     BS_DEFEATED       = 5,   /* "<pokemon> was too strong" -> LOST               */
-    BS_LOST           = 6,   /* "Lost!" + g.watts forfeit; button -> home          */
+    BS_LOST           = 6,   /* "Lost!" + g.save_watts forfeit; button -> home          */
     BS_FLED           = 7,   /* "fled..." screen; button -> home (SND_FAIL)      */
     BS_STARE_DOWN     = 8,   /* "Stare down!" -> PICK_MOVE                       */
     BS_ALMOST_HAD_IT  = 9,   /* "Almost had it!" -> FLED                         */
@@ -666,7 +666,7 @@ void ui_handle_battle(void) {
   } break;
 
   case BS_DEFEATED:
-    /* "was too strong" — record the loss and forfeit up to 10 g.watts. */
+    /* "was too strong" — record the loss and forfeit up to 10 g.save_watts. */
     if (tick < dwell)
       return;
     {
@@ -682,13 +682,13 @@ void ui_handle_battle(void) {
         log_buf = sbrk(0x110);
         game_log_interaction(log_buf, trainer_buf, 0x10, 0x01, 0, (uint8_t)g.gCurSubstateY);
       }
-      if (g.watts >= 10) {
+      if (g.save_watts >= 10) {
         g.accelZPos = 10;
       } else {
-        g.accelZPos = (uint8_t)g.watts;
+        g.accelZPos = (uint8_t)g.save_watts;
       }
-      g.watts -= g.accelZPos;
-      save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (void *)&g.totalSteps, 0x18);
+      g.save_watts -= g.accelZPos;
+      save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (void *)&g.save_totalSteps, 0x18);
     }
     g.gCurSubstateZ = BS_LOST;
     g.accelXPos = 0;

@@ -9,7 +9,7 @@
  *
  *   type 1   - dowsing-style item gift  (selects an item from the trainer's
  *              table based on g.recentSessionSteps; populates EEPROM_LOG_ITEMS).
- *   type 2-5 - g.watts reward (50/20/10/?? depending on type).
+ *   type 2-5 - g.save_watts reward (50/20/10/?? depending on type).
  *   type 7   - first-time peer-identity setup (copies sprite ROM regions to
  *              the peer-sprite EEPROM slots; resets nickname).
  *   default  - just shows a "social feeling" text-box.
@@ -70,9 +70,9 @@ void game_init_peer_identity(void) {
     }
 
     drv_eeprom_write_block(EEPROM_TRAINER_PROFILE, temp_buf, 0xBE);
-    g.sessionTicksElapsed = 0;
+    g.save_sessionTicksElapsed = 0;
 
-    save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (void *)&g.totalSteps, 0x18);
+    save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (void *)&g.save_totalSteps, 0x18);
     save_clear_peer_log_slots();
   }
 }
@@ -131,7 +131,7 @@ void game_process_interaction_reward(uint8_t type) {
   drv_eeprom_read_block(EEPROM_TRAINER_PROFILE, trainer_buf, 0xBE);
 
   {
-    uint8_t settings_bit = ((g.settingsByte & 1));
+    uint8_t settings_bit = ((g.save_settings & 1));
     slot_buf = sbrk(0x88);
     /* ROM: r1h=settings_bit (use_wild_data flag), e1=item_id (val_at_0e),
        push=0 (event_subtype). */
@@ -198,7 +198,7 @@ void ui_render_bored_gift(void) {
     gfx_draw_item_symbol(0x14, 0x14);
   }
 
-  /* g.gCurSubstateZ doubles as the prize count (g.watts amount or item index)
+  /* g.gCurSubstateZ doubles as the prize count (g.save_watts amount or item index)
      for the value/item displays. */
   prize_count = g.gCurSubstateZ;
   event_rec = (uint8_t *)(uintptr_t)accelPos_X;
@@ -278,7 +278,7 @@ void game_check_periodic_events(void) {
       g.gCurSubstateY = 0x03;
     } else if (daily_steps >= 100) {
       g.gCurSubstateY = 0x04;
-    } else if (g.sessionTicksElapsed >= 60 && daily_steps <= 50) {
+    } else if (g.save_sessionTicksElapsed >= 60 && daily_steps <= 50) {
       g.gCurSubstateY = 0x05;
     } else {
       return;

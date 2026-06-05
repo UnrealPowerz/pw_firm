@@ -6,7 +6,7 @@
  * The player picks one of 6 grid positions; the device reveals whether they
  * found the hidden item. The item slot is rolled at game start
  * (game_init_dowsing). If "co-op mode" (peer dowsing) is active —
- * g.settingsByte bit 0 set — encounter generation and selection follow
+ * g.save_settings bit 0 set — encounter generation and selection follow
  * the peer/special-event path; otherwise the solo path uses the trainer's
  * step-unlock table.
  *
@@ -24,7 +24,7 @@
  *   g.accelYPos          = "marked-wrong" slot
  *   accelZPos_b        = save-slot index for the awarded item
  *   g.DAT_f7d1           = cursor position (0..5)
- *   g.DAT_f7d5           = watt reward (nonzero => show g.watts on found screen)
+ *   g.DAT_f7d5           = watt reward (nonzero => show g.save_watts on found screen)
  *   DAT_f7d8_w         = item id awarded
  *   g.dowsing_item_pos   = hidden item slot (0..5), chosen at init
  */
@@ -114,7 +114,7 @@ state_found:
   if (!drv_button_is_triggered(BTN_ANY)) {
     return;
   }
-  if ((g.settingsByte & 1)) {
+  if ((g.save_settings & 1)) {
     goto exit_to_home;
   }
   {
@@ -267,7 +267,7 @@ void ui_handle_dowsing_selection(void) {
 
   accelZPos_b = save_find_empty_item_slot(item_table);
 
-  if ((g.settingsByte & 1)) {
+  if ((g.save_settings & 1)) {
     game_check_wild_encounter();
     return;
   }
@@ -324,7 +324,7 @@ void ui_render_dowsing_grass(void) {
   /* Grass background — different art in co-op vs solo. */
   {
     uint16_t bg_addr;
-    if ((g.settingsByte & 1)) {
+    if ((g.save_settings & 1)) {
       bg_addr = 0xC83C;
     } else {
       bg_addr = 0x8FBE;
@@ -410,7 +410,7 @@ void ui_render_dowsing(void) {
   /* Grass background. */
   {
     uint16_t bg_addr;
-    if ((g.settingsByte & 1)) {
+    if ((g.save_settings & 1)) {
       bg_addr = 0xC83C;
     } else {
       bg_addr = 0x8FBE;
@@ -454,7 +454,7 @@ void ui_render_dowsing(void) {
     gfx_draw_text_box(0x30, TEXT_DISCOVER_AN_ITEM, TEXT_BOX_FULL, TEXT_BOX_STATIC);
 
   } else if (g.gCurSubstateZ == 2) {
-    /* Found item: draw item icon and either g.watts or item name. */
+    /* Found item: draw item icon and either g.save_watts or item name. */
     uint8_t item_x;
     drv_eeprom_read_block(0x208 + sprites_base, buf, 0x10);
     item_x = (uint8_t)(g.DAT_f7d1 * 0x10 + 0x04);

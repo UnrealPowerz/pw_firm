@@ -13,7 +13,7 @@
  */
 
 /* Main-menu overlay popups (g.gCurSubstateY in ui_handle_main_menu /
-   ui_render_main_menu). NONE = normal cursor/g.watts display. */
+   ui_render_main_menu). NONE = normal cursor/g.save_watts display. */
 enum main_menu_popup {
     MENU_POPUP_NONE         = 0,
     MENU_POPUP_NEED_WATTS   = 1,
@@ -42,7 +42,7 @@ void ui_handle_main_menu(void) {
 
   if (drv_button_is_triggered(BTN_R)) {
     cost = costTable[g.menu_cursor];
-    if (g.watts < cost) {
+    if (g.save_watts < cost) {
       g.gCurSubstateY = MENU_POPUP_NEED_WATTS;
       drv_sound_play(SND_CURSOR);
       return;
@@ -58,23 +58,23 @@ void ui_handle_main_menu(void) {
           return;
         }
         cost = costTable[g.menu_cursor];
-        if (g.watts < cost) {
-          g.watts = 0;
+        if (g.save_watts < cost) {
+          g.save_watts = 0;
         } else {
-          g.watts -= cost;
+          g.save_watts -= cost;
         }
-        save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (uint8_t *)&g.totalSteps, 0x18);
+        save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (uint8_t *)&g.save_totalSteps, 0x18);
         ui_set_view(VIEW_POKERADAR);
         game_pokeradar_init();
         return;
       case MENU_DOWSING:
         cost = costTable[g.menu_cursor];
-        if (g.watts < cost) {
-          g.watts = 0;
+        if (g.save_watts < cost) {
+          g.save_watts = 0;
         } else {
-          g.watts -= cost;
+          g.save_watts -= cost;
         }
-        save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (uint8_t *)&g.totalSteps, 0x18);
+        save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (uint8_t *)&g.save_totalSteps, 0x18);
         game_init_dowsing();
         ui_set_view(VIEW_DOWSING);
         return;
@@ -198,7 +198,7 @@ void ui_render_main_menu(void) {
   }
 
   if (g.gCurSubstateY == MENU_POPUP_NONE) {
-    gfx_draw_numeric_value(0x48, 0x30, g.watts, 0);
+    gfx_draw_numeric_value(0x48, 0x30, g.save_watts, 0);
     /* Cost number: dowsing costs 10, radar costs 3. */
     if (g.menu_cursor == MENU_POKERADAR) {
       gfx_draw_numeric_value(0x08, 0x30, 10, 0);
@@ -206,7 +206,7 @@ void ui_render_main_menu(void) {
       gfx_draw_numeric_value(0x08, 0x30, 3, 0);
     }
 
-    /* "W" icon next to the current g.watts value (right side) — always drawn. */
+    /* "W" icon next to the current g.save_watts value (right side) — always drawn. */
     drv_eeprom_read_block(base + 0x1A0, sprite_buf, 0x40);
     drv_lcd_blit(0x50, 0x30, sprite_buf, 0x10, 0x10);
 

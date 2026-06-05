@@ -103,11 +103,11 @@ void ui_render_event_reward_info(void) {
   }
 }
 
-/* Reason: do NOT bit-field-ize g.settingsByte bit 0 reads here.
- * The expression `(uint8_t)(g.settingsByte & 1)` is passed as a
+/* Reason: do NOT bit-field-ize g.save_settings bit 0 reads here.
+ * The expression `(uint8_t)(g.save_settings & 1)` is passed as a
  * function argument; ch38 already compiles it to MOV+SUB+BLD+BST (the
  * byte-widening produces the bit-store-to-byte sequence the ROM also
- * uses).  Switching to RamCache_settingsByte_BIT.mute adds a redundant
+ * uses).  Switching to save_settings_BIT.mute adds a redundant
  * widen and regressed this function by -3.2%.  See note in include/types.h
  * about the multi-bit fields of settings_byte_t -- those are tabled and
  * may require shift-based access to match.
@@ -148,10 +148,10 @@ void ui_handle_event_reward_anim(void) {
     sbrk(0x10);
     drv_eeprom_read_block(0xBA44, ptr1,
                           0x10); /* reusing ptr1 to save register */
-    stackVar = ((g.settingsByte & 1)) << 8;
+    stackVar = ((g.save_settings & 1)) << 8;
     ptr3 = sbrk(0x88);
     game_log_interaction(ptr1, ptr3, 0x1D,
-                          (uint8_t)((g.settingsByte & 1)), 0, 4);
+                          (uint8_t)((g.save_settings & 1)), 0, 4);
   } else if (g.gCurSubstateA == 2) {
     void *ptr1;
     uint16_t *ptr2;
@@ -161,10 +161,10 @@ void ui_handle_event_reward_anim(void) {
     drv_eeprom_read_block(EEPROM_TRAINER_PROFILE, ptr1, 0xBE);
     ptr2 = (uint16_t *)sbrk(0x188);
     drv_eeprom_read_block(EEPROM_WILD_POKE, ptr2, 0x188);
-    stackVar = ((g.settingsByte & 1)) << 8;
+    stackVar = ((g.save_settings & 1)) << 8;
     ptr3 = sbrk(0x88);
     game_log_interaction(ptr1, ptr3, 0x1C,
-                          (uint8_t)((g.settingsByte & 1)), ptr2[3], 0);
+                          (uint8_t)((g.save_settings & 1)), ptr2[3], 0);
   } else {
     ui_reset_substate();
     ui_set_view(VIEW_HOME);

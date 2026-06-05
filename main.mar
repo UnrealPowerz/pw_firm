@@ -326,7 +326,7 @@ L_0170:
           jmp         @LAB_0296:16
 LAB_017a:
           sub.l       er0, er0
-          mov.l       er0, @RamCache_STEP_COUNT_maybe
+          mov.l       er0, @save_walkStepCount
           jsr         @game_start_walk:16
           bra         LAB_01a6:8
 LAB_0188:
@@ -472,7 +472,7 @@ PowerON_Reset:
           mov.w       #H'72, r0
           jsr         @drv_eeprom_write_u8:16
 LAB_02f2:
-          mov.w       #totalSteps, r6
+          mov.w       #save_totalSteps, r6
           sub.w       e0, e0
           sub.b       r0l, r0l
 LAB_02fa:
@@ -670,11 +670,11 @@ LAB_04da:
           jsr         @drv_eeprom_fill:16
           sub.w       r0, r0
           mov.w       r0, @recentSessionSteps
-          mov.w       r0, @sessionTicksElapsed
-          mov.b       r0l, @peerSlotIndex
-          mov.w       r0, @watts
+          mov.w       r0, @save_sessionTicksElapsed
+          mov.b       r0l, @save_peerSlotIndex
+          mov.w       r0, @save_watts
           mov.w       #H'18, e1
-          mov.w       #totalSteps, r1
+          mov.w       #save_totalSteps, r1
           mov.l       #H'2560156, er0
           jsr         @save_write_reliable:16
           mov.w       #walker_status_flags, r0
@@ -775,11 +775,11 @@ game_end_walk:
           mov.w       #RamCache_settingsByte, r0
           bclr        #H'0, @r0
           sub.b       r0l, r0l
-          mov.b       r0l, @peerSlotIndex
+          mov.b       r0l, @save_peerSlotIndex
           sub.w       e0, e0
-          mov.w       e0, @watts
+          mov.w       e0, @save_watts
           mov.w       #H'18, e1
-          mov.w       #totalSteps, r1
+          mov.w       #save_totalSteps, r1
           mov.l       #H'2560156, er0
           jsr         @save_write_reliable:16
           mov.w       #H'68, e1
@@ -822,9 +822,9 @@ game_end_walk:
 ; =============================================================================
 game_clear_stats:
           sub.w       r0, r0
-          mov.w       r0, @watts
+          mov.w       r0, @save_watts
           mov.w       #H'18, e1
-          mov.w       #totalSteps, r1
+          mov.w       #save_totalSteps, r1
           mov.l       #H'2560156, er0
           jsr         @save_write_reliable:16
           jmp         @save_clear_data:16
@@ -1753,15 +1753,15 @@ LAB_1020:
           mov.w       e6, e0
           mov.w       e3, r0
           jsr         @save_read_reliable:16
-          mov.l       @totalSteps, er0
+          mov.l       @save_totalSteps, er0
           mov.l       er0, @(H'64,er5)
           mov.w       #H'18, e1
-          mov.w       #totalSteps, r1
+          mov.w       #save_totalSteps, r1
           mov.l       #H'2560156, er0
           jsr         @save_write_reliable:16
           mov.w       #H'CE8A, r0
           mov.w       #H'2, r1
-          mov.w       #watts, e0
+          mov.w       #save_watts, e0
           jsr         @drv_eeprom_write_block:16
           mov.w       r5, r0
           mov.w       #trainerRecBuf, r1
@@ -1773,7 +1773,7 @@ LAB_1020:
 LAB_1072:
           jsr         @ir_parse_rx_packet:16
           mov.w       #H'18, e1
-          mov.w       #totalSteps, r1
+          mov.w       #save_totalSteps, r1
           mov.l       #H'2560156, er0
           jsr         @save_write_reliable:16
           mov.b       #H'2, r1l
@@ -1792,7 +1792,7 @@ LAB_109c:
 LAB_10ac:
           jsr         @ir_parse_rx_packet:16
           mov.w       #H'18, e1
-          mov.w       #totalSteps, r1
+          mov.w       #save_totalSteps, r1
           mov.l       #H'2560156, er0
           jsr         @save_write_reliable:16
           mov.b       #H'2, r1l
@@ -1811,7 +1811,7 @@ LAB_10d6:
 LAB_10e6:
           jsr         @ir_parse_rx_packet:16
           mov.w       #H'18, e1
-          mov.w       #totalSteps, r1
+          mov.w       #save_totalSteps, r1
           mov.l       #H'2560156, er0
           jsr         @save_write_reliable:16
           mov.b       #H'2, r1l
@@ -1937,7 +1937,7 @@ LAB_1218:
           mov.w       #RamCache_settingsByte, r0
           bset        #H'0, @r0
           mov.w       #H'18, e1
-          mov.w       #totalSteps, r1
+          mov.w       #save_totalSteps, r1
           mov.l       #H'2560156, er0
           jsr         @save_write_reliable:16
           mov.b       #H'2, r1l
@@ -3455,17 +3455,17 @@ LAB_1f3c:
 ; =============================================================================
 game_add_watts:
           extu.w      r0
-          mov.w       @watts, e0
+          mov.w       @save_watts, e0
           add.w       r0, e0
-          mov.w       e0, @watts
+          mov.w       e0, @save_watts
           mov.w       e0, r0
           cmp.w       #H'270F, r0
           bls         LAB_1f5a:8
           mov.w       #H'270F, r0
-          mov.w       r0, @watts
+          mov.w       r0, @save_watts
 LAB_1f5a:
           mov.w       #H'18, e1
-          mov.w       #totalSteps, r1
+          mov.w       #save_totalSteps, r1
           mov.l       #H'2560156, er0
           jmp         @save_write_reliable:16
 ; =============================================================================
@@ -4179,25 +4179,25 @@ LAB_24e6:
           mov.l       #H'1869F, er0
           mov.l       er0, @sessionSteps
 LAB_250e:
-          mov.l       @totalSteps, er0
+          mov.l       @save_totalSteps, er0
           inc.l       #1, er0
           jsr         @game_pedometer_set_total:16
-          mov.b       @stepWattCounter, r0l
+          mov.b       @save_stepWattCounter, r0l
           inc.b       r0l
-          mov.b       r0l, @stepWattCounter
-          mov.b       @stepWattCounter, r0l
+          mov.b       r0l, @save_stepWattCounter
+          mov.b       @save_stepWattCounter, r0l
           cmp.b       #H'14, r0l
           bcs         LAB_254a:8
-          mov.b       @stepWattCounter, r0l
+          mov.b       @save_stepWattCounter, r0l
           add.b       #H'EC, r0l
-          mov.b       r0l, @stepWattCounter
-          mov.w       @watts, r0
+          mov.b       r0l, @save_stepWattCounter
+          mov.w       @save_watts, r0
           inc.w       #1, r0
           cmp.w       #H'270F, r0
           bls         LAB_2546:8
           mov.w       #H'270F, r0
 LAB_2546:
-          mov.w       r0, @watts
+          mov.w       r0, @save_watts
 LAB_254a:
           mov.b       @subStepCount, r0l
           inc.b       r0l
@@ -5317,7 +5317,7 @@ LAB_2e82:
 LAB_2e94:
           jsr         @game_log_interaction:16
           adds        #2, er7
-          mov.w       @watts, r6
+          mov.w       @save_watts, r6
           cmp.w       #H'A, r6
           bcc         LAB_2eaa:8
           mov.w       r6, @accelZPos
@@ -5329,9 +5329,9 @@ LAB_2eb2:
           mov.w       @accelZPos, r0
           mov.w       r6, e0
           sub.w       r0, e0
-          mov.w       e0, @watts
+          mov.w       e0, @save_watts
           mov.w       #H'18, e1
-          mov.w       #totalSteps, r1
+          mov.w       #save_totalSteps, r1
           mov.l       #H'2560156, er0
           jsr         @save_write_reliable:16
           mov.b       #H'6, r0l
@@ -7824,7 +7824,7 @@ game_log_interaction:
           mov.b       r1l, r3l
           mov.b       r1h, @er7
           mov.w       e1, e5
-          mov.b       @peerSlotIndex, r4l
+          mov.b       @save_peerSlotIndex, r4l
           mov.b       #H'88, r4h
           mulxu.b     r4h, r4
           add.w       #H'CF0C, r4
@@ -7838,14 +7838,14 @@ game_log_interaction:
 LAB_457e:
           cmp.b       #H'19, r3h
           bne         LAB_45a4:8
-          mov.b       @peerSlotIndex, r0l
+          mov.b       @save_peerSlotIndex, r0l
           extu.w      r0
           inc.w       #1, r0
           exts.l      er0
           mov.w       #H'17, r1
           divxs.w     r1, er0
           mov.w       e0, r0
-          mov.b       r0l, @peerSlotIndex
+          mov.b       r0l, @save_peerSlotIndex
           mov.b       r0l, r4l
           mov.b       #H'88, r4h
           mulxu.b     r4h, r4
@@ -8021,16 +8021,16 @@ LAB_4756:
           mov.w       r4, r0
           mov.w       #H'88, r1
           jsr         @drv_eeprom_write_block:16
-          mov.b       @peerSlotIndex, r0l
+          mov.b       @save_peerSlotIndex, r0l
           extu.w      r0
           inc.w       #1, r0
           exts.l      er0
           mov.w       #H'17, r1
           divxs.w     r1, er0
           mov.w       e0, r0
-          mov.b       r0l, @peerSlotIndex
+          mov.b       r0l, @save_peerSlotIndex
           mov.w       #H'18, e1
-          mov.w       #totalSteps, r1
+          mov.w       #save_totalSteps, r1
           mov.l       #H'2560156, er0
           jsr         @save_write_reliable:16
 LAB_478c:
@@ -10355,9 +10355,9 @@ LAB_5d12:
           mov.w       e5, r1
           jsr         @drv_eeprom_write_block:16
           sub.w       r0, r0
-          mov.w       r0, @sessionTicksElapsed
+          mov.w       r0, @save_sessionTicksElapsed
           mov.w       #H'18, e1
-          mov.w       #totalSteps, r1
+          mov.w       #save_totalSteps, r1
           mov.l       #H'2560156, er0
           jsr         @save_write_reliable:16
           jsr         @save_clear_peer_log_slots:16
@@ -10727,7 +10727,7 @@ LAB_60aa:
           mov.b       #H'4, r0l
           bra         LAB_60ca:8
 LAB_60b6:
-          mov.w       @sessionTicksElapsed, r0
+          mov.w       @save_sessionTicksElapsed, r0
           cmp.w       #H'3C, r0
           bcs         LAB_60d4:8
           mov.w       @er7, r0
@@ -12326,7 +12326,7 @@ LAB_6e3e:
           sub.b       r0l, r0l
           jsr         @ui_set_view:16
           mov.w       #H'18, e1
-          mov.w       #totalSteps, r1
+          mov.w       #save_totalSteps, r1
           mov.l       #H'2560156, er0
           jsr         @save_write_reliable:16
 LAB_6e60:
@@ -16916,26 +16916,26 @@ LAB_95d0:
 LAB_95fe:
           sub.l       er0, er0
           mov.b       @stepBatchSize, r0l
-          mov.l       @totalSteps, er1
+          mov.l       @save_totalSteps, er1
           add.l       er1, er0
           jsr         @game_pedometer_set_total:16
           mov.b       @stepBatchSize, r0l
-          mov.b       @stepWattCounter, r0h
+          mov.b       @save_stepWattCounter, r0h
           add.b       r0l, r0h
-          mov.b       r0h, @stepWattCounter
-          mov.b       @stepWattCounter, r0l
+          mov.b       r0h, @save_stepWattCounter
+          mov.b       @save_stepWattCounter, r0l
           cmp.b       #H'14, r0l
           bcs         LAB_9644:8
-          mov.b       @stepWattCounter, r0l
+          mov.b       @save_stepWattCounter, r0l
           add.b       #H'EC, r0l
-          mov.b       r0l, @stepWattCounter
-          mov.w       @watts, r0
+          mov.b       r0l, @save_stepWattCounter
+          mov.w       @save_watts, r0
           inc.w       #1, r0
           cmp.w       #H'270F, r0
           bls         LAB_9640:8
           mov.w       #H'270F, r0
 LAB_9640:
-          mov.w       r0, @watts
+          mov.w       r0, @save_watts
 LAB_9644:
           mov.l       @stepDetectAccum, er0
           add.l       er6, er0
@@ -17087,7 +17087,7 @@ LAB_9774:
           jsr         @drv_button_is_triggered:16
           mov.b       r0l, r0l
           beq         LAB_98be:16
-          mov.w       @watts, r1
+          mov.w       @save_watts, r1
           mov.w       #MENU_ITEM_COSTS, r6
           mov.b       @menu_cursor, r0l
           extu.w      r0
@@ -17122,7 +17122,7 @@ LAB_97c0:
           cmp.w       r0, r1
           bcc         LAB_97d8:8
           sub.w       r0, r0
-          mov.w       r0, @watts
+          mov.w       r0, @save_watts
           bra         LAB_97ee:8
 LAB_97d8:
           mov.b       @menu_cursor, r0l
@@ -17130,12 +17130,12 @@ LAB_97d8:
           add.w       r0, r6
           mov.b       @er6, r0l
           extu.w      r0
-          mov.w       @watts, e0
+          mov.w       @save_watts, e0
           sub.w       r0, e0
-          mov.w       e0, @watts
+          mov.w       e0, @save_watts
 LAB_97ee:
           mov.w       #H'18, e1
-          mov.w       #totalSteps, r1
+          mov.w       #save_totalSteps, r1
           mov.l       #H'2560156, er0
           jsr         @save_write_reliable:16
           mov.b       #H'3, r0l
@@ -17151,7 +17151,7 @@ switchD_97b0__caseD_1:
           cmp.w       r0, r1
           bcc         LAB_9826:8
           sub.w       r0, r0
-          mov.w       r0, @watts
+          mov.w       r0, @save_watts
           bra         LAB_983c:8
 LAB_9826:
           mov.b       @menu_cursor, r0l
@@ -17159,12 +17159,12 @@ LAB_9826:
           add.w       r0, r6
           mov.b       @er6, r0l
           extu.w      r0
-          mov.w       @watts, e0
+          mov.w       @save_watts, e0
           sub.w       r0, e0
-          mov.w       e0, @watts
+          mov.w       e0, @save_watts
 LAB_983c:
           mov.w       #H'18, e1
-          mov.w       #totalSteps, r1
+          mov.w       #save_totalSteps, r1
           mov.l       #H'2560156, er0
           jsr         @save_write_reliable:16
           jsr         @game_init_dowsing:16
@@ -17377,7 +17377,7 @@ LAB_99dc:
 LAB_9a4a:
           sub.b       r0l, r0l
           push.w      r0
-          mov.w       @watts, r1
+          mov.w       @save_watts, r1
           extu.l      er1
           mov.w       #H'3048, r0
           jsr         @gfx_draw_numeric_value:16
@@ -18368,12 +18368,12 @@ vector_adc:
 ; Called by: game_process_accel_data, game_pedometer_tick_counters
 ; =============================================================================
 game_pedometer_set_total:
-          mov.l       @totalSteps, er1
+          mov.l       @save_totalSteps, er1
           cmp.l       #H'98967F, er0
           bcs         LAB_a342:8
           mov.l       #H'98967F, er0
 LAB_a342:
-          mov.l       er0, @totalSteps
+          mov.l       er0, @save_totalSteps
           rts
 ; =============================================================================
 ; Function: game_dispatch_pedometer_task
@@ -18420,12 +18420,12 @@ LAB_a388:
 ; Called by: game_dispatch_pedometer_task
 ; =============================================================================
 game_pedometer_tick_session:
-          mov.w       @sessionTicksElapsed, r0
+          mov.w       @save_sessionTicksElapsed, r0
           inc.w       #1, r0
           beq         LAB_a3a8:8
-          mov.w       @sessionTicksElapsed, r0
+          mov.w       @save_sessionTicksElapsed, r0
           inc.w       #1, r0
-          mov.w       r0, @sessionTicksElapsed
+          mov.w       r0, @save_sessionTicksElapsed
 LAB_a3a8:
           rts
 ; =============================================================================
@@ -18438,18 +18438,18 @@ game_pedometer_increment_step:
           subs        #2, er7
           mov.w       #statusFlags, r0
           bset        #H'2, @r0
-          mov.l       @totalSteps, er0
+          mov.l       @save_totalSteps, er0
           cmp.l       #H'98967F, er0
           bcc         LAB_a3de:8
-          mov.l       @RamCache_STEP_COUNT_maybe, er0
+          mov.l       @save_walkStepCount, er0
           cmp.l       #H'98967F, er0
           bcc         LAB_a3de:8
-          mov.l       @RamCache_STEP_COUNT_maybe, er0
+          mov.l       @save_walkStepCount, er0
           inc.l       #1, er0
-          mov.l       er0, @RamCache_STEP_COUNT_maybe
+          mov.l       er0, @save_walkStepCount
 LAB_a3de:
           mov.w       #H'18, e1
-          mov.w       #totalSteps, r1
+          mov.w       #save_totalSteps, r1
           mov.l       #H'2560156, er0
           jsr         @save_write_reliable:16
           mov.b       @walker_status_flags, r0l
@@ -18499,14 +18499,14 @@ LAB_a45a:
 ; =============================================================================
 game_rotate_step_history:
           mov.w       #H'1C, e6
-          mov.w       @dayCounter, r0
+          mov.w       @save_dayCounter, r0
           cmp.w       #H'270F, r0
           bcc         LAB_a472:8
           inc.w       #1, r0
-          mov.w       r0, @dayCounter
+          mov.w       r0, @save_dayCounter
 LAB_a472:
           mov.w       #H'18, e1
-          mov.w       #totalSteps, r1
+          mov.w       #save_totalSteps, r1
           mov.l       #H'2560156, er0
           jsr         @save_write_reliable:16
           jsr         @sys_init_heap:16
@@ -19897,23 +19897,23 @@ game_reset_step_data:
           mov.b       r0l, r0l
           beq         LAB_b146:8
           sub.l       er0, er0
-          mov.l       er0, @totalSteps
-          mov.w       r0, @dayCounter
+          mov.l       er0, @save_totalSteps
+          mov.w       r0, @save_dayCounter
           mov.l       #H'D2B0B80, er1
           mov.l       er1, @save_rtcTime
-          mov.l       er0, @RamCache_STEP_COUNT_maybe
+          mov.l       er0, @save_walkStepCount
 LAB_b146:
           sub.w       r0, r0
-          mov.w       r0, @sessionTicksElapsed
-          mov.w       r0, @watts
-          mov.b       r0l, @stepWattCounter
+          mov.w       r0, @save_sessionTicksElapsed
+          mov.w       r0, @save_watts
+          mov.b       r0l, @save_stepWattCounter
           mov.b       @RamCache_settingsByte, r1l
           and.b       #H'A4, r1l
           or.b        #H'24, r1l
           mov.b       r1l, @RamCache_settingsByte
-          mov.b       r0l, @peerSlotIndex
+          mov.b       r0l, @save_peerSlotIndex
           mov.w       #H'18, e1
-          mov.w       #totalSteps, r1
+          mov.w       #save_totalSteps, r1
           mov.l       #H'2560156, er0
           jmp         @save_write_reliable:16
 ; =============================================================================
@@ -20061,7 +20061,7 @@ sys_sync_eeprom_on_startup:
           mov.b       r0l, r0l
           beq         LAB_b326:8
           mov.w       #H'18, e1
-          mov.w       #totalSteps, r1
+          mov.w       #save_totalSteps, r1
           mov.l       #H'2560156, er0
           jsr         @save_read_reliable:16
           mov.b       @RamCache_settingsByte, r0l
@@ -20195,7 +20195,7 @@ LAB_b41c:
           bne         LAB_b48a:8
           bra         LAB_b47a:8
 LAB_b436:
-          mov.l       @totalSteps, er0
+          mov.l       @save_totalSteps, er0
           cmp.l       #H'98967F, er0
           bcs         LAB_b47a:8
           mov.b       #H'1, r0l
@@ -20537,14 +20537,14 @@ LAB_b6e2:
           adds        #2, er7
           sub.b       r0l, r0l
           push.w      r0
-          mov.w       @dayCounter, r1
+          mov.w       @save_dayCounter, r1
           extu.l      er1
           mov.w       #LAB_2058, r0
           jsr         @gfx_draw_numeric_value:16
           adds        #2, er7
           sub.b       r0l, r0l
           push.w      r0
-          mov.l       @totalSteps, er1
+          mov.l       @save_totalSteps, er1
           mov.w       #H'3030, r0
           jsr         @gfx_draw_numeric_value:16
           adds        #2, er7
@@ -20610,7 +20610,7 @@ LAB_b822:
           jsr         @drv_lcd_blit:16
           sub.b       r0l, r0l
           push.w      r0
-          mov.l       @RamCache_STEP_COUNT_maybe, er1
+          mov.l       @save_walkStepCount, er1
           mov.w       #H'2830, r0
           jsr         @gfx_draw_numeric_value:16
           adds        #2, er7
@@ -21206,7 +21206,7 @@ rom_data_end:
 ram_data_start:
           .DATA.W    DAT_fef0
 ram_bss_start:
-          .DATA.W    totalSteps
+          .DATA.W    save_totalSteps
 ram_bss_end:
           .DATA.W    DAT_fef0
 DAT_bfc4:
@@ -21325,23 +21325,23 @@ DAT_f724:
           .RES.B      92
 
           .SECTION    B_RAM, DATA, ALIGN=2
-totalSteps:
+save_totalSteps:
           .RES.B      1
 totalSteps_1:
           .RES.B      3
-RamCache_STEP_COUNT_maybe:
+save_walkStepCount:
           .RES.B      4
 save_rtcTime:
           .RES.B      4
-dayCounter:
+save_dayCounter:
           .RES.B      2
-watts:
+save_watts:
           .RES.B      2
-sessionTicksElapsed:
+save_sessionTicksElapsed:
           .RES.B      2
-stepWattCounter:
+save_stepWattCounter:
           .RES.B      1
-peerSlotIndex:
+save_peerSlotIndex:
           .RES.B      4
 RamCache_settingsByte:
           .RES.B      1

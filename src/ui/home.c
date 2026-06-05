@@ -56,7 +56,7 @@ void ui_render_route_image(void) {
 
   sys_init_heap();
   ptr = sbrk(0xC0);
-  if ((g.settingsByte & 1)) {
+  if ((g.save_settings & 1)) {
     addr = 0xC83C;
   } else {
     addr = 0x8FBE;

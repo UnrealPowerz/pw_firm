@@ -9,9 +9,9 @@
  *                           clear all peer-log slots, reset session counters,
  *                           pull staged peer-IR data into the trainer record,
  *                           log the session-start event.
- *   game_end_walk           End the session: clear flags, zero g.watts, wipe
+ *   game_end_walk           End the session: clear flags, zero g.save_watts, wipe
  *                           per-session EEPROM regions, re-init defaults.
- *   game_clear_stats        Lighter wipe: zero g.watts + commit save block.
+ *   game_clear_stats        Lighter wipe: zero g.save_watts + commit save block.
  *
  * `trainer_record.flags_5b` bit layout (set/cleared by these functions and
  * by game_init_peer_identity in bored_gift.c):
@@ -85,11 +85,11 @@ void game_start_walk(void) {
   drv_eeprom_fill(EEPROM_STEP_HIST, 0x1568, 0);
 
   g.recentSessionSteps = 0;
-  g.sessionTicksElapsed = 0;
-  g.peerSlotIndex = 0;
-  g.watts = 0;
+  g.save_sessionTicksElapsed = 0;
+  g.save_peerSlotIndex = 0;
+  g.save_watts = 0;
 
-  save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (void *)&g.totalSteps, 0x18);
+  save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (void *)&g.save_totalSteps, 0x18);
 
   walker_status_flags_BIT.walking = 1;
   walker_status_flags_BIT.session_active = 1;
@@ -126,7 +126,7 @@ void game_start_walk(void) {
   trainer_buf = (uint8_t *)sbrk(0xBE);
   drv_eeprom_read_block(EEPROM_TRAINER_PROFILE, trainer_buf, 0xBE);
 
-  settings_bit = ((g.settingsByte & 1)) ? 1 : 0;
+  settings_bit = ((g.save_settings & 1)) ? 1 : 0;
   extra_buf = (uint8_t *)sbrk(0x88);
   game_log_interaction(trainer_buf, extra_buf, 0x19, settings_bit, 0, 0);
 
@@ -138,12 +138,12 @@ void game_end_walk(void) {
   struct trainer_record *rec = (struct trainer_record *)DAT_f7e6;
 
   walker_status_flags_BIT.walking = 0;
-  g.settingsByte &= ~0x01;
+  g.save_settings &= ~0x01;
 
-  g.peerSlotIndex = 0;
-  g.watts = 0;
+  g.save_peerSlotIndex = 0;
+  g.save_watts = 0;
 
-  save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (void *)&g.totalSteps, 0x18);
+  save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (void *)&g.save_totalSteps, 0x18);
   save_read_reliable(EEPROM_TRAINER_REC, EEPROM_TRAINER_REC_BACKUP, rec, sizeof(*rec));
 
   rec->id_backup = 0;
@@ -163,7 +163,7 @@ void game_end_walk(void) {
 
 // ROM: 0x06de  98.4%
 void game_clear_stats(void) {
-  g.watts = 0;
-  save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (void *)&g.totalSteps, 0x18);
+  g.save_watts = 0;
+  save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (void *)&g.save_totalSteps, 0x18);
   save_clear_data();
 }

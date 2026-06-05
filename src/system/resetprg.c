@@ -21,9 +21,9 @@ __entry(vect = 0) void PowerON_Reset(void) {
     drv_eeprom_write_u8(EEPROM_BOOT_COUNTER, cnt);
   }
 
-  /* g.totalSteps is volatile uint32_t, cast to uint8_t* for zeroing */
+  /* g.save_totalSteps is volatile uint32_t, cast to uint8_t* for zeroing */
   for (i = 0; i < 0x3E; i++) {
-    ((uint8_t *)&g.totalSteps)[i] = 0;
+    ((uint8_t *)&g.save_totalSteps)[i] = 0;
   }
 
   g.scheduledNotifyHour = 0;
@@ -47,7 +47,7 @@ __entry(vect = 0) void PowerON_Reset(void) {
   drv_timerw_init();
 
   {
-    uint8_t vol = (g.settingsByte >> 1) & 0x3;
+    uint8_t vol = (g.save_settings >> 1) & 0x3;
     drv_sound_set_volume(vol);
   }
 

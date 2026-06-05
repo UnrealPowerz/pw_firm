@@ -233,7 +233,7 @@ void diag_init_test_mode(void) {
   g.gCurSubstateY = 0;
   g.gCurSubstateA = 0;
   g.accelYPos = 1;
-  g.settingsByte = (g.settingsByte & 0xF9) | 0x04;
+  g.save_settings = (g.save_settings & 0xF9) | 0x04;
   drv_sound_set_volume(2);
   drv_lcd_set_contrast(4);
 }

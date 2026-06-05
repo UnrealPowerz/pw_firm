@@ -142,15 +142,15 @@ void sys_sync_eeprom_on_startup(void) {
   uint8_t magic;
 
   if (save_verify_magic() != 0) {
-    save_read_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (void *)&g.totalSteps, 0x18);
-    if ((g.settingsByte & 0x78) > 0x48) {
-      g.settingsByte = (g.settingsByte & 0x87) | 0x20;
+    save_read_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (void *)&g.save_totalSteps, 0x18);
+    if ((g.save_settings & 0x78) > 0x48) {
+      g.save_settings = (g.save_settings & 0x87) | 0x20;
     }
     game_sync_walk_status();
   } else {
     sys_factory_reset_eeprom(1, 1);
-    drv_sound_set_volume((g.settingsByte >> 1) & 0x3);
-    drv_lcd_set_contrast((g.settingsByte >> 3) & 0xF);
+    drv_sound_set_volume((g.save_settings >> 1) & 0x3);
+    drv_lcd_set_contrast((g.save_settings >> 3) & 0xF);
     save_write_magic();
   }
 

@@ -138,11 +138,11 @@ factory_reset_minimal:
   g.idleSeconds = 0xE10;
   sys_factory_reset_eeprom(0, 0);
 apply_volume_and_contrast:
-  drv_sound_set_volume((g.settingsByte >> 1) & 0x3);
-  drv_lcd_set_contrast((g.settingsByte >> 3) & 0xF);
+  drv_sound_set_volume((g.save_settings >> 1) & 0x3);
+  drv_lcd_set_contrast((g.save_settings >> 3) & 0xF);
   goto return_to_main_view;
 start_new_walk:
-  g.RamCache_STEP_COUNT_maybe = 0;
+  g.save_walkStepCount = 0;
   game_start_walk();
   goto enter_walk_view;
 end_walk_show_report:
@@ -595,16 +595,16 @@ void ir_comm_loop(void) {
 
     case 0x20:
       save_read_reliable(EEPROM_TRAINER_REC, EEPROM_TRAINER_REC_BACKUP, payload, 0x68);
-      *(uint32_t *)(payload + 0x64) = g.totalSteps;
-      save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (void *)&g.totalSteps, 0x18);
-      drv_eeprom_write_block(0xCE8A, &g.watts, 2);
+      *(uint32_t *)(payload + 0x64) = g.save_totalSteps;
+      save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (void *)&g.save_totalSteps, 0x18);
+      drv_eeprom_write_block(0xCE8A, &g.save_watts, 2);
       memcpy(payload, (void *)trainerRecBuf, 0x68);
       drv_ir_send_packet(0x68, 0x22, 2);
       goto LAB_182e;
 
     case 0x32:
       ir_parse_rx_packet();
-      save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (void *)&g.totalSteps, 0x18);
+      save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (void *)&g.save_totalSteps, 0x18);
       drv_ir_send_packet(0x00, 0x34, 2);
       goto LAB_182e;
 
@@ -619,7 +619,7 @@ void ir_comm_loop(void) {
 
     case 0x40:
       ir_parse_rx_packet();
-      save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (void *)&g.totalSteps, 0x18);
+      save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (void *)&g.save_totalSteps, 0x18);
       drv_ir_send_packet(0x00, 0x42, 2);
       goto LAB_182e;
 
@@ -634,7 +634,7 @@ void ir_comm_loop(void) {
 
     case 0x52:
       ir_parse_rx_packet();
-      save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (void *)&g.totalSteps, 0x18);
+      save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (void *)&g.save_totalSteps, 0x18);
       drv_ir_send_packet(0x00, 0x54, 2);
       goto LAB_182e;
 
@@ -728,8 +728,8 @@ void ir_comm_loop(void) {
       drv_eeprom_write_u8(EEPROM_STEP_HIST_FLAGS, bf);
     }
       save_set_event_bit((void *)trainerRecBuf, DAT_f840);
-      g.settingsByte |= 0x01;
-      save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (void *)&g.totalSteps, 0x18);
+      g.save_settings |= 0x01;
+      save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (void *)&g.save_totalSteps, 0x18);
       drv_ir_send_packet(0x00, 0xC6, 2);
       cmdByte = 0xC6;
       goto LAB_1252;
@@ -740,8 +740,8 @@ void ir_comm_loop(void) {
       drv_eeprom_write_u8(EEPROM_STEP_HIST_FLAGS, bf);
     }
       save_set_event_bit((void *)trainerRecBuf, DAT_f840);
-      g.settingsByte |= 0x01;
-      save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (void *)&g.totalSteps, 0x18);
+      g.save_settings |= 0x01;
+      save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (void *)&g.save_totalSteps, 0x18);
       drv_ir_send_packet(0x00, 0xC6, 2);
       cmdByte = 0xC6;
       goto LAB_1252;
@@ -998,9 +998,9 @@ start_eeprom_tx:
 start_eeprom_tx_alt:
 LAB_17b0: {
   uint16_t chunk = (irXferRemaining > 0x80) ? 0x80 : irXferRemaining;
-  drv_eeprom_read_block(EEPROM_TRAINER_PROFILE, &g.watts, 2);
-  DAT_f88e[0] = (uint8_t)((g.watts / 20) & 0xFF);
-  drv_eeprom_write_block(EEPROM_TRAINER_PROFILE, &g.watts, 2);
+  drv_eeprom_read_block(EEPROM_TRAINER_PROFILE, &g.save_watts, 2);
+  DAT_f88e[0] = (uint8_t)((g.save_watts / 20) & 0xFF);
+  drv_eeprom_write_block(EEPROM_TRAINER_PROFILE, &g.save_watts, 2);
   {
     uint8_t *p = drv_ir_get_rx_ptr();
     p[0] = (uint8_t)(irXferSrc >> 8);
@@ -1012,7 +1012,7 @@ LAB_17b0: {
 }
 
 LAB_17ea:
-  drv_eeprom_write_block(EEPROM_TRAINER_PROFILE, &g.watts, 2);
+  drv_eeprom_write_block(EEPROM_TRAINER_PROFILE, &g.save_watts, 2);
 LAB_17ee:
   drv_ir_send_packet(0x00, 0x04, 2);
   goto LAB_182e;

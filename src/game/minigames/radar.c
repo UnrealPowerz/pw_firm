@@ -262,7 +262,7 @@ void game_roll_radar_encounter(void) {
   uint8_t *trainer_buf;
 
   g.gCurSubstateY = 0;
-  if (((g.settingsByte & 1)) != 0) {
+  if (((g.save_settings & 1)) != 0) {
     uint8_t peer_evt_seed = drv_eeprom_read_u8(EEPROM_EEP_STR);
     sys_init_heap();
     scratch = sbrk(0x68);

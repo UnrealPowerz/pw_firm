@@ -11,16 +11,16 @@
  */
 
 /* --- Persistent save block (24 B; mirrored to EEPROM via save_write_reliable) --- */
-/* 0xF780 */ volatile uint32_t totalSteps;
-/* 0xF784 */ volatile uint32_t RamCache_STEP_COUNT_maybe;  /* walk step count */
+/* 0xF780 */ volatile uint32_t save_totalSteps;
+/* 0xF784 */ volatile uint32_t save_walkStepCount;  /* walk step count */
 /* 0xF788 */ volatile uint32_t save_rtcTime;
-/* 0xF78C */ volatile uint16_t dayCounter;
-/* 0xF78E */ volatile uint16_t watts;
-/* 0xF790 */ volatile uint16_t sessionTicksElapsed;
-/* 0xF792 */ volatile uint8_t  stepWattCounter;
-/* 0xF793 */ volatile uint8_t  peerSlotIndex;
+/* 0xF78C */ volatile uint16_t save_dayCounter;
+/* 0xF78E */ volatile uint16_t save_watts;
+/* 0xF790 */ volatile uint16_t save_sessionTicksElapsed;
+/* 0xF792 */ volatile uint8_t  save_stepWattCounter;
+/* 0xF793 */ volatile uint8_t  save_peerSlotIndex;
 /* 0xF794 */ volatile uint8_t  _peer_slot_tail[3];     /* original alloc was uint32 */
-/* 0xF797 */ volatile uint8_t  settingsByte;           /* aka RamCache_settingsByte */
+/* 0xF797 */ volatile uint8_t  save_settings;           /* aka RamCache_settingsByte */
 
 /* --- Button input (4 B) --- */
 /* 0xF798 */ volatile uint8_t  btn_inputRaw;          /* bit-field via _BIT */

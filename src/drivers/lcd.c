@@ -214,7 +214,7 @@ void drv_lcd_init(void) {
   }
 
   drv_lcd_send_u8(0xA6);
-  drv_lcd_set_contrast((g.settingsByte >> 3) & 0xF);
+  drv_lcd_set_contrast((g.save_settings >> 3) & 0xF);
   g.lcdPageOffset = 1;
   drv_lcd_clear_pages(0x40);
   g.lcdPageOffset = 0;

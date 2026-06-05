@@ -267,7 +267,7 @@ union pw_scratch {
 
 /* --- LCD & EEPROM --- */
 #define _pad_f7e5 (*(volatile uint8_t *)0xF7E5u)
-#define RamCache_settingsByte_BIT (((volatile settings_byte_t *)&g.settingsByte)->BIT)
+#define save_settings_BIT (((volatile settings_byte_t *)&g.save_settings)->BIT)
 
 /* --- Step Processing & IR Comm: see g_scratch2 union above for the full
  * 240-byte scratch region; these symbols are macros. Only globals NOT

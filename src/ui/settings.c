@@ -54,22 +54,22 @@ void ui_handle_settings_volume(void) {
   uint16_t val;
 
   if (drv_button_is_triggered(BTN_M)) {
-    vol = (g.settingsByte >> 1) & 0x03;
+    vol = (g.save_settings >> 1) & 0x03;
     val = (uint16_t)((int16_t)(int8_t)vol + 2);
     val = (uint16_t)((int16_t)val % 3);
-    g.settingsByte = (uint8_t)((g.settingsByte & ~(0x03 << 1)) |
+    g.save_settings = (uint8_t)((g.save_settings & ~(0x03 << 1)) |
                                       (((uint8_t)val & 0x03) << 1));
-    vol = (g.settingsByte >> 1) & 0x03;
+    vol = (g.save_settings >> 1) & 0x03;
     drv_sound_set_volume(vol);
     drv_sound_play(SND_CURSOR);
   }
   if (drv_button_is_triggered(BTN_L)) {
-    vol = (g.settingsByte >> 1) & 0x03;
+    vol = (g.save_settings >> 1) & 0x03;
     val = (uint16_t)((int16_t)(int8_t)vol + 1);
     val = (uint16_t)((int16_t)val % 3);
-    g.settingsByte = (uint8_t)((g.settingsByte & ~(0x03 << 1)) |
+    g.save_settings = (uint8_t)((g.save_settings & ~(0x03 << 1)) |
                                       (((uint8_t)val & 0x03) << 1));
-    vol = (g.settingsByte >> 1) & 0x03;
+    vol = (g.save_settings >> 1) & 0x03;
     drv_sound_set_volume(vol);
     drv_sound_play(SND_CURSOR);
   }
@@ -80,23 +80,23 @@ void ui_handle_settings_shade(void) {
   uint8_t shade;
 
   if (drv_button_is_triggered(BTN_M)) {
-    if ((g.settingsByte & 0x78) != 0) {
-      shade = ((g.settingsByte >> 3) & 0x0F) - 1;
-      g.settingsByte = (uint8_t)((g.settingsByte & ~(0x0F << 3)) |
+    if ((g.save_settings & 0x78) != 0) {
+      shade = ((g.save_settings >> 3) & 0x0F) - 1;
+      g.save_settings = (uint8_t)((g.save_settings & ~(0x0F << 3)) |
                                         ((shade & 0x0F) << 3));
       drv_sound_play(SND_CURSOR);
     }
-    shade = (g.settingsByte >> 3) & 0x0F;
+    shade = (g.save_settings >> 3) & 0x0F;
     drv_lcd_set_contrast(shade);
   }
   if (drv_button_is_triggered(BTN_L)) {
-    if ((g.settingsByte & 0x78) < 0x48) {
-      shade = ((g.settingsByte >> 3) & 0x0F) + 1;
-      g.settingsByte = (uint8_t)((g.settingsByte & ~(0x0F << 3)) |
+    if ((g.save_settings & 0x78) < 0x48) {
+      shade = ((g.save_settings >> 3) & 0x0F) + 1;
+      g.save_settings = (uint8_t)((g.save_settings & ~(0x0F << 3)) |
                                         ((shade & 0x0F) << 3));
       drv_sound_play(SND_CURSOR);
     }
-    shade = (g.settingsByte >> 3) & 0x0F;
+    shade = (g.save_settings >> 3) & 0x0F;
     drv_lcd_set_contrast(shade);
   }
 }
@@ -122,7 +122,7 @@ void ui_handle_settings(void) {
       drv_sound_play(SND_CONFIRM);
       ui_reset_substate();
       ui_set_view(VIEW_HOME);
-      save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (void *)&g.totalSteps, 0x18);
+      save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (void *)&g.save_totalSteps, 0x18);
     }
   }
 }
@@ -164,7 +164,7 @@ void ui_render_settings(void) {
   } else if (g.gCurSubstateY == SETTINGS_VOLUME) {
     drv_lcd_blit(cursor_x, 0x14, buf + 0xB0, 8, 8);
 
-    volVal = (g.settingsByte >> 1) & 0x03;
+    volVal = (g.save_settings >> 1) & 0x03;
     animOff = ((g.animTick & 0x01) + 9) * 0x10;
     drv_lcd_blit((uint8_t)(volVal * 0x20), 0x2C, buf + animOff, 8, 8);
 
@@ -173,7 +173,7 @@ void ui_render_settings(void) {
     drv_lcd_blit(0x28, 0x28, buf + 0x60, 0x18, 0x10);
     drv_lcd_blit(0x48, 0x28, buf + 0xC0, 0x18, 0x10);
   } else if (g.gCurSubstateY == SETTINGS_SHADE) {
-    shVal = (g.settingsByte >> 3) & 0x0F;
+    shVal = (g.save_settings >> 3) & 0x0F;
     shadeOff = shVal * 8 + 8;
     animOff = ((g.animTick & 0x01) + 3) * 0x10;
 
