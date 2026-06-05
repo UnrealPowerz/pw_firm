@@ -14,7 +14,7 @@
 
 // ROM: 0xaebc  66.1%
 void sys_init_accel_debug(void) {
-  g.ped_sampleCount = 0;
+  g.accel_sampleCount = 0;
   g.viewstate.Y = 0x10;
   g.viewstate.A = 0;
   g.viewstate.v.bytes.at_d1 = 0;
@@ -30,7 +30,7 @@ void sys_noop(void) {}
 
 // Reason: ROM uses `$sp_regsv$3` prologue + `subs #6, r7`; ch38 emits a 12-byte
 //   subs after the helper. Body structure (gfx_draw_string hoisted to r4,
-//   g.ped_activityTimer/g.ped_stepTimer resets, digit-to-ASCII conversions via add #0x30,
+//   g.sys_activityTimer/g.ped_stepTimer resets, digit-to-ASCII conversions via add #0x30,
 //   buf writes via @r6) matches. ch38 stores str-buffer locals differently
 //   from ROM (different sp offsets) so every `@(N, sp)` access diverges.
 // Class: cannot-fix-without-compiler-change (sp_regsv$3 helper + stack
@@ -45,7 +45,7 @@ void ui_render_accel_debug(void) {
   uint8_t *q;
 
   draw_string = gfx_draw_string;
-  g.ped_activityTimer = 0x3C;
+  g.sys_activityTimer = 0x3C;
   g.ped_stepTimer = 0x1E;
 
   /* Use buf[0..1] for 2-char strings via stack pointer */

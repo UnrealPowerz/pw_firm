@@ -56,8 +56,8 @@ __interrupt(vect=25) void drv_rtc_handle_sec(void) {
     } else {
         g.session_idleSeconds = 0xE10;
     }
-    if (g.ped_activityTimer != 0) {
-        g.ped_activityTimer--;
+    if (g.sys_activityTimer != 0) {
+        g.sys_activityTimer--;
     }
     if (g.ped_stepTimer != 0) {
         g.ped_stepTimer--;

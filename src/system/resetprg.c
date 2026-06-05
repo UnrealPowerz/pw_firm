@@ -30,7 +30,7 @@ __entry(vect = 0) void PowerON_Reset(void) {
   sys_statusFlags_BIT.lcd_dirty = 1;
   g.sys_walkerFlags = (g.sys_walkerFlags & 0xE7) | WALKER_MODE_DEEP_SLEEP;
 
-  g.ped_activityTimer = 0x3C;
+  g.sys_activityTimer = 0x3C;
   g.ped_stepTimer = 0x5A;
   g.session_idleSeconds = 0xE10;
 

@@ -42,8 +42,8 @@
 /* 0xF7AB */ volatile uint8_t  ui_dispatchTickCounter;               /* write-only dispatch tick */
 /* 0xF7AC */ volatile uint8_t  ui_animationTick;
 /* 0xF7AD */ volatile uint8_t  ir_resultCode;
-/* 0xF7AE */ volatile uint8_t  ped_sampleCount;
-/* 0xF7AF */ volatile uint8_t  ped_activityTimer;
+/* 0xF7AE */ volatile uint8_t  accel_sampleCount;
+/* 0xF7AF */ volatile uint8_t  sys_activityTimer;
 /* 0xF7B0 */ volatile uint8_t  ped_stepTimer;
 /* 0xF7B1 */ volatile uint8_t  ui_activeView;
 /* 0xF7B2 */ volatile uint8_t  ped_batchSize;

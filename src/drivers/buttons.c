@@ -62,8 +62,8 @@ void drv_button_read(void) {
   g.btn_inputPrevious = g.btn_inputRaw;
 
   if (g.btn_trigger) {
-    g.ped_activityTimer = 0x5A;
-    g.ped_sampleCount = 0;
+    g.sys_activityTimer = 0x5A;
+    g.accel_sampleCount = 0;
     if ((g.sys_walkerFlags & WALKER_MODE_MASK) != WALKER_MODE_DEEP_SLEEP) {
       g.btn_trigger = 0;
     }

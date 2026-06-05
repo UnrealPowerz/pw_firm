@@ -243,7 +243,7 @@ void ui_handle_factory_test(void) {
   uint8_t subY;
   uint8_t subA;
 
-  g.ped_activityTimer = 0x3C;
+  g.sys_activityTimer = 0x3C;
   g.ped_stepTimer = 0x1E;
 
   subA = g.viewstate.A;

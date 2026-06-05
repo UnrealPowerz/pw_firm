@@ -89,11 +89,11 @@ void sys_enter_low_power(void) {
 
 // ROM: 0xa29c  99.0%
 void sys_enter_deep_sleep(void) {
-  g.ped_activityTimer = 0x3C;
+  g.sys_activityTimer = 0x3C;
   g.ped_stepTimer = 0x5A;
   if ((g.sys_walkerFlags & WALKER_MODE_MASK) != WALKER_MODE_DEEP_SLEEP) {
     if ((g.sys_walkerFlags & WALKER_MODE_MASK) == WALKER_MODE_ACTIVE) {
-      g.ped_sampleCount = 0;
+      g.accel_sampleCount = 0;
     }
     g.sys_walkerFlags = (g.sys_walkerFlags & 0xE7) | WALKER_MODE_DEEP_SLEEP;
     RTCCR2 |= 0x01;

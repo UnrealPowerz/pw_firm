@@ -124,37 +124,37 @@ uint8_t game_detect_activity(void) {
   uint16_t prev;
   volatile uint16_t p_copy;
 
-  prev = g.ped_sampleCount;
+  prev = g.accel_sampleCount;
   prev += 0x3F;
   prev &= 0x3F;
   p_copy = prev;
 
-  if (((int16_t)accelXSamples[g.ped_sampleCount] -
+  if (((int16_t)accelXSamples[g.accel_sampleCount] -
        (int16_t)accelXSamples[prev]) >= 0) {
-    total = (uint16_t)((int16_t)accelXSamples[g.ped_sampleCount] -
+    total = (uint16_t)((int16_t)accelXSamples[g.accel_sampleCount] -
                        (int16_t)accelXSamples[p_copy]);
   } else {
-    total = (uint16_t)((uint16_t)(-((int16_t)accelXSamples[g.ped_sampleCount])) +
+    total = (uint16_t)((uint16_t)(-((int16_t)accelXSamples[g.accel_sampleCount])) +
                        (uint16_t)accelXSamples[p_copy]);
   }
 
-  if (((int16_t)accelYSamples[g.ped_sampleCount] -
+  if (((int16_t)accelYSamples[g.accel_sampleCount] -
        (int16_t)accelYSamples[prev]) >= 0) {
-    total += (uint16_t)((int16_t)accelYSamples[g.ped_sampleCount] -
+    total += (uint16_t)((int16_t)accelYSamples[g.accel_sampleCount] -
                         (int16_t)accelYSamples[p_copy]);
   } else {
     total +=
-        (uint16_t)((uint16_t)(-((int16_t)accelYSamples[g.ped_sampleCount])) +
+        (uint16_t)((uint16_t)(-((int16_t)accelYSamples[g.accel_sampleCount])) +
                    (uint16_t)accelYSamples[p_copy]);
   }
 
-  if (((int16_t)accelZSamples[g.ped_sampleCount] -
+  if (((int16_t)accelZSamples[g.accel_sampleCount] -
        (int16_t)accelZSamples[prev]) >= 0) {
-    total += (uint16_t)((int16_t)accelZSamples[g.ped_sampleCount] -
+    total += (uint16_t)((int16_t)accelZSamples[g.accel_sampleCount] -
                         (int16_t)accelZSamples[p_copy]);
   } else {
     total +=
-        (uint16_t)((uint16_t)(-((int16_t)accelZSamples[g.ped_sampleCount])) +
+        (uint16_t)((uint16_t)(-((int16_t)accelZSamples[g.accel_sampleCount])) +
                    (uint16_t)accelZSamples[p_copy]);
   }
 
