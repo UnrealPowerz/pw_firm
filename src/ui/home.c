@@ -19,13 +19,13 @@ void ui_handle_home(void) {
       ui_enter_ir_session();
     }
   } else {
-    if (g.gCurSubstateZ != 0) {
+    if (g.ui_substateZ != 0) {
       if (drv_button_is_triggered(BTN_ANY)) {
-        g.gCurSubstateZ = 0;
-        game_process_interaction_reward(g.gCurSubstateY);
+        g.ui_substateZ = 0;
+        game_process_interaction_reward(g.ui_substateY);
         return;
       } else {
-        g.gCurSubstateZ--;
+        g.ui_substateZ--;
       }
     }
     /* Home-screen button shortcuts: each jumps straight into a main-menu
@@ -33,15 +33,15 @@ void ui_handle_home(void) {
     if (drv_button_is_triggered(BTN_R)) {
       drv_sound_play(SND_CONFIRM);
       ui_clear_substate_y();
-      g.menu_cursor = MENU_CONNECTION;
+      g.ui_menuCursor = MENU_CONNECTION;
       ui_set_view(VIEW_MAIN_MENU);
     } else if (drv_button_is_triggered(BTN_M)) {
-      g.menu_cursor = MENU_SETTINGS;
+      g.ui_menuCursor = MENU_SETTINGS;
       drv_sound_play(SND_CONFIRM);
       ui_clear_substate_y();
       ui_set_view(VIEW_MAIN_MENU);
     } else if (drv_button_is_triggered(BTN_L)) {
-      g.menu_cursor = MENU_POKERADAR;
+      g.ui_menuCursor = MENU_POKERADAR;
       drv_sound_play(SND_CONFIRM);
       ui_clear_substate_y();
       ui_set_view(VIEW_MAIN_MENU);
@@ -70,16 +70,16 @@ void ui_render_home_route(void) {
   uint8_t *buf;
   uint8_t subA;
 
-  if (g.gCurSubstateZ != 0) {
+  if (g.ui_substateZ != 0) {
     uint8_t idx;
-    idx = ROUTE_ICON_INDICES[g.gCurSubstateY - 1];
+    idx = ROUTE_ICON_INDICES[g.ui_substateY - 1];
     gfx_draw_small_route_icon(idx);
   }
   ui_render_route_image();
   if (!(sys_walkerFlags_BIT.walking)) {
     return;
   }
-  subA = g.gCurSubstateA;
+  subA = g.ui_substateA;
   if (!DAT_f7d1_BIT.b1) {
     gfx_draw_home_pokemon(subA, 0);
   } else if (!DAT_f7d1_BIT.b2) {

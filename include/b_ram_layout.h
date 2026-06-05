@@ -38,14 +38,14 @@
 /* 0xF7A7 */ volatile uint8_t  ped_taskFlags;           /* bit-field via _BIT */
 /* 0xF7A8 */ volatile uint8_t  notif_scheduledHour;
 /* 0xF7A9 */ volatile uint8_t  lcdShadeBase;
-/* 0xF7AA */ volatile uint8_t  menu_cursor;
-/* 0xF7AB */ volatile uint8_t  DAT_f7ab;               /* write-only dispatch tick */
-/* 0xF7AC */ volatile uint8_t  animTick;
+/* 0xF7AA */ volatile uint8_t  ui_menuCursor;
+/* 0xF7AB */ volatile uint8_t  ui_dispatchTickCounter;               /* write-only dispatch tick */
+/* 0xF7AC */ volatile uint8_t  ui_animationTick;
 /* 0xF7AD */ volatile uint8_t  irResultCode;
 /* 0xF7AE */ volatile uint8_t  ped_sampleCount;
 /* 0xF7AF */ volatile uint8_t  ped_activityTimer;
 /* 0xF7B0 */ volatile uint8_t  ped_stepTimer;
-/* 0xF7B1 */ volatile uint8_t  currentlyActiveView;
+/* 0xF7B1 */ volatile uint8_t  ui_activeView;
 /* 0xF7B2 */ volatile uint8_t  ped_batchSize;
 /* 0xF7B3 */ volatile uint8_t  ped_subStepCount;
 /* 0xF7B4 */ volatile uint8_t  ped_batchAccumulator;
@@ -72,9 +72,9 @@
 /* 0xF7CD */ volatile uint8_t  _pad_f7cd;
 
 /* --- View substate + accel positions --- */
-/* 0xF7CE */ volatile uint8_t  gCurSubstateY;
-/* 0xF7CF */ volatile uint8_t  gCurSubstateZ;
-/* 0xF7D0 */ volatile uint8_t  gCurSubstateA;
+/* 0xF7CE */ volatile uint8_t  ui_substateY;
+/* 0xF7CF */ volatile uint8_t  ui_substateZ;
+/* 0xF7D0 */ volatile uint8_t  ui_substateA;
 /* 0xF7D1 */ volatile uint8_t  DAT_f7d1;               /* MULTI-PURPOSE */
 /* 0xF7D2 */ volatile uint8_t  accelXPos;              /* accelPos_X = uint16 view */
 /* 0xF7D3 */ volatile uint8_t  dowsing_item_pos;

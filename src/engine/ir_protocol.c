@@ -118,11 +118,11 @@ void ir_handle_remote_cmd(void) {
 
 enter_test_mode:
   drv_lcd_init();
-  g.currentlyActiveView = VIEW_FACTORY_TEST;
+  g.ui_activeView = VIEW_FACTORY_TEST;
   diag_init_test_mode();
   goto finalize;
 enter_debug_mode:
-  g.currentlyActiveView = VIEW_ACCEL_DEBUG;
+  g.ui_activeView = VIEW_ACCEL_DEBUG;
   sys_init_accel_debug();
   goto finalize;
 factory_reset_full:
@@ -148,19 +148,19 @@ start_new_walk:
 end_walk_show_report:
   game_end_walk();
   ui_set_view(VIEW_WALK_DEPARTURE_ANIM);
-  g.gCurSubstateY = 5;
+  g.ui_substateY = 5;
   goto reset_substate_z;
 restart_walk_clear_history:
   game_start_walk();
   drv_eeprom_fill(EEPROM_STEP_HIST_FLAGS, 0x06C8, 0);
 enter_walk_view:
   ui_set_view(VIEW_WALK_ARRIVAL_ANIM);
-  g.gCurSubstateY = 0;
+  g.ui_substateY = 0;
   goto reset_substate_z;
 clear_walk_stats:
   game_clear_stats();
   ui_set_view(VIEW_WALK_DEPARTURE_ANIM);
-  g.gCurSubstateY = 6;
+  g.ui_substateY = 6;
   goto reset_substate_z;
 start_peer_play:
   ui_set_view(VIEW_PEER_PLAY);
@@ -168,51 +168,51 @@ start_peer_play:
   goto finalize;
 show_menu_a3:
   ui_set_view(VIEW_EVENT_REWARD_ANIM);
-  g.gCurSubstateY = 0;
-  g.gCurSubstateZ = 0;
-  g.gCurSubstateA = 3;
+  g.ui_substateY = 0;
+  g.ui_substateZ = 0;
+  g.ui_substateA = 3;
   goto finalize;
 show_menu_a0:
   ui_set_view(VIEW_EVENT_REWARD_ANIM);
-  g.gCurSubstateY = 0;
-  g.gCurSubstateZ = 0;
-  g.gCurSubstateA = 0;
+  g.ui_substateY = 0;
+  g.ui_substateZ = 0;
+  g.ui_substateA = 0;
   goto finalize;
 show_menu_a2:
   ui_set_view(VIEW_EVENT_REWARD_ANIM);
-  g.gCurSubstateY = 0;
-  g.gCurSubstateZ = 0;
-  g.gCurSubstateA = 2;
+  g.ui_substateY = 0;
+  g.ui_substateZ = 0;
+  g.ui_substateA = 2;
   goto finalize;
 show_menu_a1:
   ui_set_view(VIEW_EVENT_REWARD_ANIM);
-  g.gCurSubstateY = 0;
-  g.gCurSubstateZ = 0;
-  g.gCurSubstateA = 1;
+  g.ui_substateY = 0;
+  g.ui_substateZ = 0;
+  g.ui_substateA = 1;
   goto finalize;
 show_menu_a4:
   ui_set_view(VIEW_EVENT_REWARD_ANIM);
-  g.gCurSubstateY = 0;
-  g.gCurSubstateZ = 0;
-  g.gCurSubstateA = 4;
+  g.ui_substateY = 0;
+  g.ui_substateZ = 0;
+  g.ui_substateA = 4;
   goto finalize;
 show_menu_a5:
   ui_set_view(VIEW_EVENT_REWARD_ANIM);
-  g.gCurSubstateY = 0;
-  g.gCurSubstateZ = 0;
-  g.gCurSubstateA = 5;
+  g.ui_substateY = 0;
+  g.ui_substateZ = 0;
+  g.ui_substateA = 5;
   goto finalize;
 show_menu_a6:
   ui_set_view(VIEW_EVENT_REWARD_ANIM);
-  g.gCurSubstateY = 0;
-  g.gCurSubstateZ = 0;
-  g.gCurSubstateA = 6;
+  g.ui_substateY = 0;
+  g.ui_substateZ = 0;
+  g.ui_substateA = 6;
   goto finalize;
 show_menu_a7:
   ui_set_view(VIEW_EVENT_REWARD_ANIM);
-  g.gCurSubstateY = 0;
-  g.gCurSubstateZ = 0;
-  g.gCurSubstateA = 7;
+  g.ui_substateY = 0;
+  g.ui_substateZ = 0;
+  g.ui_substateA = 7;
   goto finalize;
 
 default_handle_error:
@@ -220,7 +220,7 @@ default_handle_error:
     goto return_to_main_view;
   ui_set_view(VIEW_STEP_HISTORY);
 reset_substate_z:
-  g.gCurSubstateZ = 0;
+  g.ui_substateZ = 0;
   goto finalize;
 
 return_to_main_view:
@@ -467,11 +467,11 @@ void ir_comm_loop(void) {
       irHandshakeStep = 4;
       save_read_reliable(EEPROM_TRAINER_REC, EEPROM_TRAINER_REC_BACKUP, (void *)trainerRecBuf, 0x68);
       drv_ir_send_packet(0x68, 0x10, 2);
-      gCurSubstateY_BIT.b0 = 0;
+      ui_substateY_BIT.b0 = 0;
       goto LAB_182e;
 
     case 0x10:
-      gCurSubstateY_BIT.b0 = 1;
+      ui_substateY_BIT.b0 = 1;
       memcpy(payload, (void *)DAT_f7e6, 0x68);
       save_read_reliable(EEPROM_TRAINER_REC, EEPROM_TRAINER_REC_BACKUP, (void *)trainerRecBuf, 0x68);
       if (!((byte_bits_t *)&payload[0x5B])->BIT.b0) {
@@ -552,7 +552,7 @@ void ir_comm_loop(void) {
       goto start_eeprom_tx;
 
     case 0x14:
-      if (gCurSubstateY_BIT.b0) {
+      if (ui_substateY_BIT.b0) {
         uint8_t *rxptr;
         uint8_t i;
         drv_eeprom_write_block(0xF6C0, payload, 0x38);
@@ -583,7 +583,7 @@ void ir_comm_loop(void) {
       goto LAB_182e;
 
     case 0x16:
-      if (gCurSubstateY_BIT.b0) {
+      if (ui_substateY_BIT.b0) {
         drv_ir_send_packet(0x00, 0x16, 2);
       }
       cmdByte = 0x16;
@@ -886,7 +886,7 @@ void ir_comm_loop(void) {
     case 0xF0: {
       save_write_reliable(EEPROM_RESV_0083, EEPROM_RESV_0083_BACKUP, payload, 0x28);
       drv_eeprom_write_block(0x0008, payload + 0x68, 0x08);
-      g.gCurSubstateZ = 1;
+      g.ui_substateZ = 1;
       REQUESTED_POKEMON_ACTION_TYPE = 0xF0;
       switch (payload[0x70]) {
       case 0:
@@ -899,7 +899,7 @@ void ir_comm_loop(void) {
                            eepromPageScratch, 0x40);
         do {
           if (payload[0x28 + i] != eepromPageScratch[i]) {
-            g.gCurSubstateZ = 0;
+            g.ui_substateZ = 0;
             break;
           }
           i++;

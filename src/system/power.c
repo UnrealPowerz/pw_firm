@@ -19,28 +19,28 @@
  *   sys_enter_standby /
  *   sys_update_standby_state  Two periodic ticks driving the standby (LCD
  *     fade-out / fade-in) state machine, both touching g.DAT_f7d1 bits 0/1/2
- *     and g.gCurSubstateA. Called alternately from ui_render_home_route based
+ *     and g.ui_substateA. Called alternately from ui_render_home_route based
  *     on g.DAT_f7d1.b1 — _standby runs while b1 is clear (entry/exit phase),
  *     _update_standby_state runs while b1 is set (active-standby tick at
- *     every 4th g.animTick, with a periodic b2 toggle for visual blink).
+ *     every 4th g.ui_animationTick, with a periodic b2 toggle for visual blink).
  */
 
 // ROM: 0x6b4c  88.6%
 void sys_enter_standby(void) {
   if (!DAT_f7d1_BIT.b2) {
-    g.gCurSubstateA += 0xFC;
-    if (g.gCurSubstateA <= 0x20) {
-      g.gCurSubstateA = 0x20;
+    g.ui_substateA += 0xFC;
+    if (g.ui_substateA <= 0x20) {
+      g.ui_substateA = 0x20;
     }
   } else {
-    g.gCurSubstateA += 0x04;
-    if (g.gCurSubstateA >= 0x60) {
+    g.ui_substateA += 0x04;
+    if (g.ui_substateA >= 0x60) {
       DAT_f7d1_BIT.b1 = 1;
       DAT_f7d1_BIT.b2 = 0;
     }
   }
   if (sys_statusFlags_BIT.sleeping) {
-    if (g.gCurSubstateA <= 0x20) {
+    if (g.ui_substateA <= 0x20) {
       DAT_f7d1_BIT.b2 = 1;
       DAT_f7d1_BIT.b0 = 1;
     }
@@ -50,29 +50,29 @@ void sys_enter_standby(void) {
 // ROM: 0x6ba0  91.1%
 void sys_update_standby_state(void) {
   uint8_t s;
-  if ((g.animTick & 0x03) != 0) {
+  if ((g.ui_animationTick & 0x03) != 0) {
     return;
   }
   if (!DAT_f7d1_BIT.b2) {
-    s = g.gCurSubstateA + 0xFC;
-    g.gCurSubstateA = s;
+    s = g.ui_substateA + 0xFC;
+    g.ui_substateA = s;
     if (s > 0x20)
       goto LAB_6bde;
     s = 0x20;
     goto LAB_6bd2;
   }
-  s = g.gCurSubstateA + 0x04;
-  g.gCurSubstateA = s;
+  s = g.ui_substateA + 0x04;
+  g.ui_substateA = s;
   if (s < 0x40)
     goto LAB_6bde;
   s = 0x40;
 LAB_6bd2:
-  g.gCurSubstateA = s;
+  g.ui_substateA = s;
   g.DAT_f7d1 ^= 0x04;  /* ROM emits `bnot #2,@r0`; ch38 doesn't pattern-match
                         either `^= 0x04` or `bN = !bN` to bnot */
 LAB_6bde:
   if (!(sys_statusFlags_BIT.sleeping)) {
-    g.gCurSubstateA = 0x68;
+    g.ui_substateA = 0x68;
     DAT_f7d1_BIT.b1 = 0;
     DAT_f7d1_BIT.b2 = 0;
   }

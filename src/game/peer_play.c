@@ -17,7 +17,7 @@
  *   ui_draw_music_note              Helper to blit a single music-note sprite
  *                                   with optional vertical shift.
  *   ui_render_peer_play             Main renderer — five-phase animation
- *                                   driven by g.gCurSubstateZ (0..4).
+ *                                   driven by g.ui_substateZ (0..4).
  *
  *   game_find_seen_peer             EEPROM scan called from ir_protocol.c
  *                                   during handshake to check if a peer's
@@ -114,13 +114,13 @@ void ui_start_peer_play_app(void) {
   sys_init_heap();
   buf = sbrk(0x38);
   drv_eeprom_read_block(0xF6C0, buf, 0x38);
-  /* Copy bit 0 of buf[0x37] into bit 1 of g.gCurSubstateY -- the ROM uses
+  /* Copy bit 0 of buf[0x37] into bit 1 of g.ui_substateY -- the ROM uses
    * bld+bst here, which means the destination bit is unconditionally set
    * to the source bit (not OR'd as the original C suggested). */
-  ((byte_bits_t *)&g.gCurSubstateY)->BIT.b1 =
+  ((byte_bits_t *)&g.ui_substateY)->BIT.b1 =
       ((byte_bits_t *)&buf[0x37])->BIT.b0;
-  g.gCurSubstateZ = 0;
-  g.gCurSubstateA = 0;
+  g.ui_substateZ = 0;
+  g.ui_substateA = 0;
   game_calculate_interaction_reward();
   game_rotate_interaction_log();
   game_rotate_interaction_log_record();
@@ -146,9 +146,9 @@ void ui_draw_music_note(uint8_t x, uint8_t y, uint8_t shift) {
 //   caller's r3/r4/r5/r6 freely, like ui_load_inventory_mask. ch38 emits
 //   `push.l er6; push.l er5; push.w r4; push.w r3` (12 bytes), breaking
 //   alignment from byte 0. ROM also uses the `bld/bst` bit-copy idiom
-//   (`bld #1, g.gCurSubstateY; bst #0, r6l`) for the `r6l = (g.gCurSubstateY >>
+//   (`bld #1, g.ui_substateY; bst #0, r6l`) for the `r6l = (g.ui_substateY >>
 //   1) & 1` pattern; ch38 emits the `btst/beq/mov #1` triple from the
-//   explicit `if (g.gCurSubstateY & 2) r6l = 1` form. Rewriting that one site
+//   explicit `if (g.ui_substateY & 2) r6l = 1` form. Rewriting that one site
 //   with byte_bits_t bit-copy might gain ~2pp but the prologue blocker caps
 //   the function regardless. Body's branch structure and call args look
 //   correct.
@@ -156,18 +156,18 @@ void ui_draw_music_note(uint8_t x, uint8_t y, uint8_t shift) {
 //   ABI blocker as ui_load_inventory_mask / gfx_draw_animated_grass)
 // ROM: 0x6574  23.1%
 void ui_render_peer_play(void) {
-  uint8_t z = g.gCurSubstateZ;
+  uint8_t z = g.ui_substateZ;
   uint8_t peer_facing = 0;     /* 0 = flipped, 1 = native (driven by Y bit 1) */
   uint8_t step, entry_x, r0h;
 
   if (z < 3) {
     gfx_draw_own_pokemon_small(0x38, 0x08);
-    if (g.gCurSubstateY & 0x02) {
+    if (g.ui_substateY & 0x02) {
       peer_facing = 1;
     }
     if (z == 0) {
       /* Phase 0: peer walks in from the left. x = 8 - 3*(7 - A). */
-      step = (uint8_t)(7 - g.gCurSubstateA);
+      step = (uint8_t)(7 - g.ui_substateA);
       r0h = 3;
       step *= r0h;
       entry_x = (uint8_t)(8 - step);
@@ -190,8 +190,8 @@ void ui_render_peer_play(void) {
     gfx_draw_peer_pokemon_name(0x02, 0x20, 1);
     gfx_draw_text_box(0x30, TEXT_WALKER_HAS_ARRIVED, TEXT_BOX_NO_LINES, TEXT_BOX_STATIC);
   } else if (z == 2) {
-    uint8_t count = g.gCurSubstateA + 1;
-    uint8_t limit = (g.gCurSubstateA >> 1) + 1;
+    uint8_t count = g.ui_substateA + 1;
+    uint8_t limit = (g.ui_substateA >> 1) + 1;
     uint8_t table_idx = 0;
     uint8_t i;
 
@@ -233,18 +233,18 @@ void ui_render_peer_play(void) {
     gfx_draw_text_box(0x30, TEXT_RECEIVED, TEXT_BOX_NO_LINES, TEXT_BOX_STATIC);
   }
 
-  g.gCurSubstateA++;
-  if (g.gCurSubstateA >= 8) {
-    g.gCurSubstateZ++;
-    g.gCurSubstateA = 0;
-    if (g.gCurSubstateZ == 2) {
+  g.ui_substateA++;
+  if (g.ui_substateA >= 8) {
+    g.ui_substateZ++;
+    g.ui_substateA = 0;
+    if (g.ui_substateZ == 2) {
       drv_sound_play(SND_GIFT);
-    } else if (g.gCurSubstateZ == 4) {
+    } else if (g.ui_substateZ == 4) {
       drv_sound_play(SND_ANIM_CUE);
     }
   }
 
-  if (g.gCurSubstateZ >= 5) {
+  if (g.ui_substateZ >= 5) {
     ui_reset_substate();
     ui_set_view(VIEW_HOME);
   }

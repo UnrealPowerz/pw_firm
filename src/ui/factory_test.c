@@ -5,7 +5,7 @@
  *
  *   diag_init_test_mode        reset state, set vol/contrast.
  *   ui_handle_factory_test     progress through the 0x13-stage test sequence
- *                              driven by g.gCurSubstateY.
+ *                              driven by g.ui_substateY.
  *   ui_render_factory_test     per-stage UI (LCD fills, button indicators,
  *                              NG/OK strings drawn via gfx_draw_string).
  *
@@ -18,8 +18,8 @@
  *   diag_eeprom_factory_test   the EEPROM-stress sub-test (write-all,
  *                              read-and-verify, then fill 0xFF).
  *
- * Factory-test stages (g.gCurSubstateY values 0..0x12) progress sequentially.
- * Each stage either auto-advances after a frame counter (g.gCurSubstateA >= 4)
+ * Factory-test stages (g.ui_substateY values 0..0x12) progress sequentially.
+ * Each stage either auto-advances after a frame counter (g.ui_substateA >= 4)
  * or waits for a specific button. The stage numbers are referenced both by
  * the handler (decide-when-to-advance) and the renderer (decide-what-to-show);
  * see per-case inline comments below for the role of each stage.
@@ -230,8 +230,8 @@ cleanup:
 
 // ROM: 0xaa42  98.4%
 void diag_init_test_mode(void) {
-  g.gCurSubstateY = 0;
-  g.gCurSubstateA = 0;
+  g.ui_substateY = 0;
+  g.ui_substateA = 0;
   g.accelYPos = 1;
   g.save_settings = (g.save_settings & 0xF9) | 0x04;
   drv_sound_set_volume(2);
@@ -246,8 +246,8 @@ void ui_handle_factory_test(void) {
   g.ped_activityTimer = 0x3C;
   g.ped_stepTimer = 0x1E;
 
-  subA = g.gCurSubstateA;
-  subY = g.gCurSubstateY;
+  subA = g.ui_substateA;
+  subY = g.ui_substateY;
 
   if (subY > 0x12) {
     return;
@@ -255,38 +255,38 @@ void ui_handle_factory_test(void) {
 
   switch (subY) {
   case 0x00:
-    /* Idle entry — wait for g.gCurSubstateZ to be poked non-zero by the IR
+    /* Idle entry — wait for g.ui_substateZ to be poked non-zero by the IR
        command path, then advance to sound test. */
-    if (g.gCurSubstateZ == 0) {
+    if (g.ui_substateZ == 0) {
       return;
     }
-    subY = g.gCurSubstateY + 1;
-    g.gCurSubstateY = subY;
+    subY = g.ui_substateY + 1;
+    g.ui_substateY = subY;
     return;
 
   case 0x01:
     /* Sound test. After a 4-frame settle, BTN_LM advances + plays the
        factory sound. The unreachable BTN_M-decrement branch below is
-       dead code (g.gCurSubstateY == 1 always true in this case). */
+       dead code (g.ui_substateY == 1 always true in this case). */
     if (subA < 4) {
       return;
     }
     if (drv_button_is_triggered(BTN_LM) != 0) {
       goto do_sound_and_inc;
     }
-    if (g.gCurSubstateY == 1) {
+    if (g.ui_substateY == 1) {
       return;
     }
     if (drv_button_is_triggered(BTN_M) == 0) {
       return;
     }
     drv_sound_set_data((uint8_t *)FACTORY_TEST_SOUND);
-    subY = g.gCurSubstateY - 1;
+    subY = g.ui_substateY - 1;
     goto set_substate_y_and_clear_a;
 
   /* Stages 0x02..0x06 (LCD fills + SPI/pixel tests) have no handler case —
      they fall to default and stick until something external advances
-     g.gCurSubstateY. The render path keeps showing the test pattern. */
+     g.ui_substateY. The render path keeps showing the test pattern. */
 
   case 0x07:
     /* Middle-button test. */
@@ -415,7 +415,7 @@ void ui_handle_factory_test(void) {
     while (!SSSR_BIT.TEND)
       ;
     PDR1 |= 0x01;
-    g.currentlyActiveView = VIEW_ACCEL_DEBUG;
+    g.ui_activeView = VIEW_ACCEL_DEBUG;
     sys_init_accel_debug();
     drv_sound_set_data((uint8_t *)FACTORY_TEST_SOUND);
     return;
@@ -427,10 +427,10 @@ void ui_handle_factory_test(void) {
 do_sound_and_inc:
   drv_sound_set_data((uint8_t *)FACTORY_TEST_SOUND);
 do_inc:
-  subY = g.gCurSubstateY + 1;
+  subY = g.ui_substateY + 1;
 set_substate_y_and_clear_a:
-  g.gCurSubstateY = subY;
-  g.gCurSubstateA = 0;
+  g.ui_substateY = subY;
+  g.ui_substateA = 0;
 }
 
 // ROM: 0xad06  50.3%
@@ -441,7 +441,7 @@ void ui_render_factory_test(void) {
   uint8_t subA;
 
   draw_string = gfx_draw_string;
-  subY = g.gCurSubstateY;
+  subY = g.ui_substateY;
 
   if (subY > 0x12) {
     goto case_d;
@@ -449,7 +449,7 @@ void ui_render_factory_test(void) {
 
   switch (subY) {
   case 0x00:
-    if (g.gCurSubstateZ != 0) {
+    if (g.ui_substateZ != 0) {
       goto case_d;
     }
     draw_string(0x20, 0x08, FACTORY_STR_NG1);
@@ -480,21 +480,21 @@ void ui_render_factory_test(void) {
     goto case_d;
 
   case 0x07:
-    if (((uint16_t)g.animTick >> 1) & 1) {
+    if (((uint16_t)g.ui_animationTick >> 1) & 1) {
       goto case_d;
     }
     draw_string(0x06, 0x38, FACTORY_STR_V);
     goto case_d;
 
   case 0x08:
-    if (((uint16_t)g.animTick >> 1) & 1) {
+    if (((uint16_t)g.ui_animationTick >> 1) & 1) {
       goto case_d;
     }
     draw_string(0x2D, 0x38, FACTORY_STR_V);
     goto case_d;
 
   case 0x09:
-    if (((uint16_t)g.animTick >> 1) & 1) {
+    if (((uint16_t)g.ui_animationTick >> 1) & 1) {
       goto case_d;
     }
     draw_string(0x55, 0x38, FACTORY_STR_V);
@@ -560,7 +560,7 @@ void ui_render_factory_test(void) {
       draw_string(0x20, 0x18, (const char *)buf);
     }
 
-    if (!(((uint16_t)g.animTick >> 1) & 1)) {
+    if (!(((uint16_t)g.ui_animationTick >> 1) & 1)) {
       draw_string(0x06, 0x38, FACTORY_STR_V);
       draw_string(0x2D, 0x38, FACTORY_STR_V);
       draw_string(0x55, 0x38, FACTORY_STR_V);
@@ -572,8 +572,8 @@ void ui_render_factory_test(void) {
   }
 
 case_d:
-  subA = g.gCurSubstateA;
+  subA = g.ui_substateA;
   if (subA < 4) {
-    g.gCurSubstateA = subA + 1;
+    g.ui_substateA = subA + 1;
   }
 }

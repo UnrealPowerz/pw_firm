@@ -183,23 +183,23 @@ void game_log_poke_interaction(void) {
   uint16_t sub_y;
   void *slot_buf;
 
-  if (g.gCurSubstateY == 0)
+  if (g.ui_substateY == 0)
     return;
 
   /* Copy the chosen pokemon slot into the log context at the discard cursor's
-     position (g.gCurSubstateZ * 0x10), then write the whole block back. */
+     position (g.ui_substateZ * 0x10), then write the whole block back. */
   sys_init_heap();
   log_block = sbrk(0x30);
   drv_eeprom_read_block(EEPROM_LOG_CONTEXT, log_block, 0x30);
 
-  drv_eeprom_read_block(EEPROM_POKEMON_SLOTS + ((g.gCurSubstateY - 1) * 0x10),
-                        log_block + (g.gCurSubstateZ * 0x10), 0x10);
+  drv_eeprom_read_block(EEPROM_POKEMON_SLOTS + ((g.ui_substateY - 1) * 0x10),
+                        log_block + (g.ui_substateZ * 0x10), 0x10);
   drv_eeprom_write_block(EEPROM_LOG_CONTEXT, log_block, 0x30);
 
   trainer_buf = sbrk(0xBE);
   drv_eeprom_read_block(EEPROM_TRAINER_PROFILE, trainer_buf, 0xBE);
 
-  sub_y = g.gCurSubstateY;
+  sub_y = g.ui_substateY;
   slot_buf = sbrk(0x88);
   /* ROM r0=trainer_buf, e0=slot_buf. sub_y is the event_subtype (6th arg,
      pushed); val_at_0e (e1) is 0. */
@@ -219,8 +219,8 @@ void game_log_item_interaction(void) {
   log_block = sbrk(0x0C);
   drv_eeprom_read_block(EEPROM_LOG_ITEMS, log_block, 0x0C);
 
-  drv_eeprom_read_block(EEPROM_SUBY_LOOKUP_TABLE + (g.gCurSubstateY * 2),
-                        log_block + (g.gCurSubstateZ * 4), 0x02);
+  drv_eeprom_read_block(EEPROM_SUBY_LOOKUP_TABLE + (g.ui_substateY * 2),
+                        log_block + (g.ui_substateZ * 4), 0x02);
   drv_eeprom_write_block(EEPROM_LOG_ITEMS, log_block, 0x0C);
 
   trainer_buf = sbrk(0xBE);
@@ -229,11 +229,11 @@ void game_log_item_interaction(void) {
   slot_buf = sbrk(0x88);
   /* `scratch_val` is unused locally but the assignment is preserved because
      ch38 allocates a stack slot to match the ROM's frame. */
-  scratch_val = ((uint32_t)(*(uint16_t *)(trainer_buf + (g.gCurSubstateY * 2) + 0x8C)) << 16) |
+  scratch_val = ((uint32_t)(*(uint16_t *)(trainer_buf + (g.ui_substateY * 2) + 0x8C)) << 16) |
                 0x0B;
   (void)scratch_val;
   game_log_interaction(trainer_buf, slot_buf, 0x0B, 0x00,
-                       *(uint16_t *)(trainer_buf + (g.gCurSubstateY * 2) + 0x8C), 0);
+                       *(uint16_t *)(trainer_buf + (g.ui_substateY * 2) + 0x8C), 0);
 }
 
 // ROM: 0x67de  85.9%

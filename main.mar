@@ -285,12 +285,12 @@ ir_handle_remote_cmd:
 LAB_0108:
           jsr         @drv_lcd_init:16
           mov.b       #H'16, r0l
-          mov.b       r0l, @currentlyActiveView
+          mov.b       r0l, @ui_activeView
           jsr         @diag_init_test_mode:16
           jmp         @LAB_02a0:16
 LAB_011a:
           mov.b       #H'17, r0l
-          mov.b       r0l, @currentlyActiveView
+          mov.b       r0l, @ui_activeView
           jsr         @sys_init_accel_debug:16
           jmp         @LAB_02a0:16
 LAB_0128:
@@ -344,7 +344,7 @@ LAB_01a6:
           mov.b       #H'F, r0l
           jsr         @ui_set_view:16
           sub.b       r0l, r0l
-          mov.b       r0l, @gCurSubstateY
+          mov.b       r0l, @ui_substateY
           jmp         @LAB_0290:16
 LAB_01b6:
           jsr         @game_clear_stats:16
@@ -352,7 +352,7 @@ LAB_01b6:
           jsr         @ui_set_view:16
           mov.b       #H'6, r0l
 LAB_01c2:
-          mov.b       r0l, @gCurSubstateY
+          mov.b       r0l, @ui_substateY
           jmp         @LAB_028e:16
 LAB_01ca:
           mov.b       #H'D, r0l
@@ -363,67 +363,67 @@ LAB_01d8:
           mov.b       #H'11, r0l
           jsr         @ui_set_view:16
           sub.b       r0l, r0l
-          mov.b       r0l, @gCurSubstateY
-          mov.b       r0l, @gCurSubstateZ
+          mov.b       r0l, @ui_substateY
+          mov.b       r0l, @ui_substateZ
           mov.b       #H'3, r0h
           jmp         @LAB_027c:16
 LAB_01ee:
           mov.b       #H'11, r0l
           jsr         @ui_set_view:16
           sub.b       r0l, r0l
-          mov.b       r0l, @gCurSubstateY
-          mov.b       r0l, @gCurSubstateZ
-          mov.b       r0l, @gCurSubstateA
+          mov.b       r0l, @ui_substateY
+          mov.b       r0l, @ui_substateZ
+          mov.b       r0l, @ui_substateA
           jmp         @LAB_02a0:16
 LAB_0206:
           mov.b       #H'11, r0l
           jsr         @ui_set_view:16
           sub.b       r0l, r0l
-          mov.b       r0l, @gCurSubstateY
-          mov.b       r0l, @gCurSubstateZ
+          mov.b       r0l, @ui_substateY
+          mov.b       r0l, @ui_substateZ
           mov.b       #H'2, r0h
           bra         LAB_027c:8
 LAB_021a:
           mov.b       #H'11, r0l
           jsr         @ui_set_view:16
           sub.b       r0l, r0l
-          mov.b       r0l, @gCurSubstateY
-          mov.b       r0l, @gCurSubstateZ
+          mov.b       r0l, @ui_substateY
+          mov.b       r0l, @ui_substateZ
           mov.b       #H'1, r0h
           bra         LAB_027c:8
 LAB_022e:
           mov.b       #H'11, r0l
           jsr         @ui_set_view:16
           sub.b       r0l, r0l
-          mov.b       r0l, @gCurSubstateY
-          mov.b       r0l, @gCurSubstateZ
+          mov.b       r0l, @ui_substateY
+          mov.b       r0l, @ui_substateZ
           mov.b       #H'4, r0h
           bra         LAB_027c:8
 LAB_0242:
           mov.b       #H'11, r0l
           jsr         @ui_set_view:16
           sub.b       r0l, r0l
-          mov.b       r0l, @gCurSubstateY
-          mov.b       r0l, @gCurSubstateZ
+          mov.b       r0l, @ui_substateY
+          mov.b       r0l, @ui_substateZ
           mov.b       #H'5, r0h
           bra         LAB_027c:8
 LAB_0256:
           mov.b       #H'11, r0l
           jsr         @ui_set_view:16
           sub.b       r0l, r0l
-          mov.b       r0l, @gCurSubstateY
-          mov.b       r0l, @gCurSubstateZ
+          mov.b       r0l, @ui_substateY
+          mov.b       r0l, @ui_substateZ
           mov.b       #H'6, r0h
           bra         LAB_027c:8
 LAB_026a:
           mov.b       #H'11, r0l
           jsr         @ui_set_view:16
           sub.b       r0l, r0l
-          mov.b       r0l, @gCurSubstateY
-          mov.b       r0l, @gCurSubstateZ
+          mov.b       r0l, @ui_substateY
+          mov.b       r0l, @ui_substateZ
           mov.b       #H'7, r0h
 LAB_027c:
-          mov.b       r0h, @gCurSubstateA
+          mov.b       r0h, @ui_substateA
           bra         LAB_02a0:8
 LAB_0282:
           mov.b       @irResultCode, r0l
@@ -433,7 +433,7 @@ LAB_0282:
 LAB_028e:
           sub.b       r0l, r0l
 LAB_0290:
-          mov.b       r0l, @gCurSubstateZ
+          mov.b       r0l, @ui_substateZ
           bra         LAB_02a0:8
 LAB_0296:
           jsr         @ui_reset_substate:16
@@ -528,7 +528,7 @@ LAB_034c:
           jsr         @sys_set_handler:16
           jsr         @ui_reset_substate:16
           sub.b       r0l, r0l
-          mov.b       r0l, @currentlyActiveView
+          mov.b       r0l, @ui_activeView
           jsr         @drv_timer_b_init:16
           ldc.b       #H'0, ccr
 LAB_03ac:
@@ -1276,7 +1276,7 @@ LAB_0ab4:
           mov.w       #H'68, e4
           mov.w       #H'1ED, e6
           sub.b       r3h, r3h
-          mov.b       @gCurSubstateY, r0l
+          mov.b       @ui_substateY, r0l
           bld         #H'0, r0l
           bst         #H'0, r3h
           mov.b       r4l, r0h
@@ -1486,11 +1486,11 @@ LAB_0ce6:
           mov.b       #H'2, r1l
           mov.w       #H'1068, r0
           jsr         @drv_ir_send_packet:16
-          mov.w       #gCurSubstateY, r0
+          mov.w       #ui_substateY, r0
           bclr        #H'0, @r0
           jmp         @LAB_182e:16
 LAB_0d32:
-          mov.w       #gCurSubstateY, r0
+          mov.w       #ui_substateY, r0
           bset        #H'0, @r0
           jsr         @drv_ir_get_rx_ptr:16
           mov.w       r0, r5
@@ -2202,7 +2202,7 @@ LAB_14c4:
           mov.w       e5, r0
           jsr         @drv_eeprom_write_block:16
           mov.b       #H'1, r0l
-          mov.b       r0l, @gCurSubstateZ
+          mov.b       r0l, @ui_substateZ
           mov.b       #H'F0, r0l
           mov.b       r0l, @REQUESTED_POKEMON_ACTION_TYPE
           mov.l       #H'4001AC, er4
@@ -2242,7 +2242,7 @@ LAB_1534:
           cmp.b       r0l, r1l
           beq         LAB_1552:8
           sub.b       r0l, r0l
-          mov.b       r0l, @gCurSubstateZ
+          mov.b       r0l, @ui_substateZ
           bra         LAB_1570:8
 LAB_1552:
           inc.b       r4l
@@ -2676,7 +2676,7 @@ gfx_draw_own_pokemon_small:
           mov.w       #H'C0, r0
           jsr         @sbrk:16
           mov.w       r0, r3
-          mov.b       @animTick, r2l
+          mov.b       @ui_animationTick, r2l
           and.b       #H'1, r2l
           mov.b       #H'C0, r2h
           mulxu.b     r2h, r2
@@ -2705,7 +2705,7 @@ gfx_draw_own_pokemon_small_flipped:
           mov.w       #H'C0, r0
           jsr         @sbrk:16
           mov.w       r0, r6
-          mov.b       @animTick, r5l
+          mov.b       @ui_animationTick, r5l
           and.b       #H'1, r5l
           mov.b       #H'C0, r5h
           mulxu.b     r5h, r5
@@ -2743,7 +2743,7 @@ gfx_draw_route_pokemon:
           extu.w      r1
           mov.w       #H'180, e1
           mulxu.w     e1, er1
-          mov.b       @animTick, r3l
+          mov.b       @ui_animationTick, r3l
           and.b       #H'1, r3l
           mov.b       r3l, r2l
           mov.b       #H'C0, r2h
@@ -2778,7 +2778,7 @@ gfx_draw_peer_pokemon:
           jsr         @sbrk:16
           mov.w       r0, r3
           mov.w       r0, e0
-          mov.b       @animTick, r0l
+          mov.b       @ui_animationTick, r0l
           and.b       #H'1, r0l
           mov.b       #H'C0, r0h
           mulxu.b     r0h, r0
@@ -3643,7 +3643,7 @@ gfx_draw_text_box:
           jsr         @gfx_add_borders_to_text:16
           mov.b       r3l, r3l
           beq         LAB_215e:8
-          mov.b       @animTick, r0l
+          mov.b       @ui_animationTick, r0l
           extu.w      r0
           shar.w      r0
           btst        #H'0, r0l
@@ -3797,7 +3797,7 @@ gfx_draw_battery_low:
           mov.b       @sys_statusFlags, r1l
           bld         #H'1, r1l
           bcc         LAB_2246:8
-          mov.b       @animTick, r0l
+          mov.b       @ui_animationTick, r0l
           extu.w      r0
           shar.w      r0
           shar.w      r0
@@ -4754,9 +4754,9 @@ LAB_2936:
 ; =============================================================================
 game_start_battle:
           sub.b       r0l, r0l
-          mov.b       r0l, @gCurSubstateZ
+          mov.b       r0l, @ui_substateZ
           mov.b       #H'4, r0h
-          mov.b       r0h, @gCurSubstateA
+          mov.b       r0h, @ui_substateA
           mov.b       r0h, @DAT_f7d1
           mov.b       r0l, @accelXPos
           mov.b       #H'6, r1l
@@ -4875,7 +4875,7 @@ LAB_2a42:
           mov.b       #H'E, r0l
           jsr         @drv_sound_play:16
           mov.b       #H'7, r0l
-          mov.b       r0l, @gCurSubstateZ
+          mov.b       r0l, @ui_substateZ
           sub.b       r0l, r0l
           mov.b       r0l, @accelXPos
           mov.b       #H'A, r0l
@@ -4888,7 +4888,7 @@ LAB_2a58:
 LAB_2a62:
           mov.b       #H'4, r0l
 LAB_2a64:
-          mov.b       r0l, @gCurSubstateZ
+          mov.b       r0l, @ui_substateZ
           sub.b       r0l, r0l
           mov.b       r0l, @accelXPos
           mov.b       #H'8, r0l
@@ -4902,7 +4902,7 @@ LAB_2a72:
           jsr         @drv_sound_play:16
           mov.b       #H'A, r0l
 LAB_2a84:
-          mov.b       r0l, @gCurSubstateZ
+          mov.b       r0l, @ui_substateZ
           sub.b       r0l, r0l
           mov.b       r0l, @accelXPos
           mov.b       #H'6, r0l
@@ -4919,7 +4919,7 @@ LAB_2a94:
 game_battle_handle_finish:
           push.l      er5
           push.w      e6
-          mov.b       @gCurSubstateY, r4l
+          mov.b       @ui_substateY, r4l
           add.b       #H'FF, r4l
           cmp.b       #H'3, r4l
           bhi         LAB_2c2a:16
@@ -4944,7 +4944,7 @@ game_battle_handle_finish:
           cmp.b       #H'3, r0l
           bcs         LAB_2af8:8
           sub.b       r0h, r0h
-          mov.b       r0h, @gCurSubstateA
+          mov.b       r0h, @ui_substateA
           jsr         @ui_init_discard_cursor:16
           mov.b       #H'7, r0l
           jsr         @ui_set_view:16
@@ -4973,7 +4973,7 @@ LAB_2af8:
           mov.w       r0, e0
           mov.w       #H'8F00, r0
           jsr         @r5
-          mov.b       @gCurSubstateY, r0l
+          mov.b       @ui_substateY, r0l
           push.w      r0
           mov.w       #H'88, r0
           jsr         @sbrk:16
@@ -5050,7 +5050,7 @@ LAB_2b4c:
           mov.w       r0, e0
           mov.w       #H'8F00, r0
           jsr         @r5
-          mov.b       @gCurSubstateY, r0l
+          mov.b       @ui_substateY, r0l
           push.w      r0
           mov.w       #H'88, r0
           jsr         @sbrk:16
@@ -5102,7 +5102,7 @@ LAB_2c60:
 ui_handle_battle:
           mov.l       #H'880000, er5
           mov.w       #H'BE, e6
-          mov.b       @gCurSubstateZ, r0l
+          mov.b       @ui_substateZ, r0l
           cmp.b       #H'2, r0l
           bne         LAB_2c7c:8
           jsr         @game_battle_process_turn:16
@@ -5188,7 +5188,7 @@ LAB_2d3c:
           cmp.b       #H'1, r0l
           bne         switchD_2c92__caseD_2:16
           mov.b       #H'2, r0l
-          mov.b       r0l, @gCurSubstateZ
+          mov.b       r0l, @ui_substateZ
           mov.b       @DAT_f7d8, r0l
           and.b       #H'1F, r0l
           or.b        #H'20, r0l
@@ -5208,7 +5208,7 @@ LAB_2d7c:
           mov.b       #H'E, r0l
           jsr         @drv_sound_play:16
           mov.b       #H'7, r0l
-          mov.b       r0l, @gCurSubstateZ
+          mov.b       r0l, @ui_substateZ
           sub.b       r0l, r0l
           mov.b       r0l, @accelXPos
           mov.b       #H'A, r0l
@@ -5243,9 +5243,9 @@ switchD_2c92__caseD_4:
           bne         switchD_2c92__caseD_2:16
           bra         LAB_2e42:8
 LAB_2dee:
-          mov.b       @gCurSubstateA, r0l
+          mov.b       @ui_substateA, r0l
           dec.b       r0l
-          mov.b       r0l, @gCurSubstateA
+          mov.b       r0l, @ui_substateA
           beq         LAB_2e3c:8
           mov.b       @DAT_f7d8, r0l
           shlr.b      r0l
@@ -5276,7 +5276,7 @@ LAB_2e2e:
           mov.b       r0l, @DAT_f7d8
 LAB_2e32:
           mov.b       #H'2, r0l
-          mov.b       r0l, @gCurSubstateZ
+          mov.b       r0l, @ui_substateZ
           jmp         @switchD_2c92__caseD_2:16
 LAB_2e3c:
           mov.b       #H'5, r0l
@@ -5295,7 +5295,7 @@ switchD_2c92__caseD_5:
           mov.w       e6, r1
           mov.w       #H'8F00, r0
           jsr         @drv_eeprom_read_block:16
-          mov.b       @gCurSubstateY, r0l
+          mov.b       @ui_substateY, r0l
           cmp.b       #H'4, r0l
           bcc         LAB_2e82:8
           push.w      r0
@@ -5336,7 +5336,7 @@ LAB_2eb2:
           jsr         @save_write_reliable:16
           mov.b       #H'6, r0l
 LAB_2ed2:
-          mov.b       r0l, @gCurSubstateZ
+          mov.b       r0l, @ui_substateZ
           sub.b       r0l, r0l
           mov.b       r0l, @accelXPos
           mov.b       #H'8, r0l
@@ -5351,7 +5351,7 @@ switchD_2c92__caseD_8:
           cmp.b       r6h, r6l
           bcs         switchD_2c92__caseD_2:16
           mov.b       #H'2, r0l
-          mov.b       r0l, @gCurSubstateZ
+          mov.b       r0l, @ui_substateZ
           mov.b       @DAT_f7d8, r0l
           and.b       #H'1F, r0l
           or.b        #H'80, r0l
@@ -5384,7 +5384,7 @@ LAB_2f26:
           mov.w       e6, r1
           mov.w       #H'8F00, r0
           jsr         @drv_eeprom_read_block:16
-          mov.b       @gCurSubstateY, r0l
+          mov.b       @ui_substateY, r0l
           cmp.b       #H'4, r0l
           bcc         LAB_2f6a:8
           push.w      r0
@@ -5415,7 +5415,7 @@ switchD_2c92__caseD_a:
           mov.w       #DAT_f7d8, r0
           bclr        #H'0, @r0
           mov.b       #H'B, r0l
-          mov.b       r0l, @gCurSubstateZ
+          mov.b       r0l, @ui_substateZ
           sub.b       r0l, r0l
           mov.b       r0l, @accelXPos
           mov.b       #H'2, r0l
@@ -5425,7 +5425,7 @@ switchD_2c92__caseD_b:
           bcs         switchD_2c92__caseD_2:16
           mov.b       #H'C, r0l
 LAB_2fb4:
-          mov.b       r0l, @gCurSubstateZ
+          mov.b       r0l, @ui_substateZ
           sub.b       r0l, r0l
           mov.b       r0l, @accelXPos
           mov.b       #H'3, r0l
@@ -5447,7 +5447,7 @@ switchD_2c92__caseD_d:
           bra         LAB_300a:8
 LAB_2fe8:
           mov.b       #H'11, r0l
-          mov.b       r0l, @gCurSubstateZ
+          mov.b       r0l, @ui_substateZ
           sub.b       r0l, r0l
           mov.b       r0l, @accelXPos
           mov.b       #H'1, r0l
@@ -5461,14 +5461,14 @@ switchD_2c92__caseD_e:
 LAB_3008:
           mov.b       #H'D, r0l
 LAB_300a:
-          mov.b       r0l, @gCurSubstateZ
+          mov.b       r0l, @ui_substateZ
           sub.b       r0l, r0l
           mov.b       r0l, @accelXPos
           mov.b       #H'4, r0l
           bra         LAB_3082:8
 LAB_3018:
           mov.b       #H'F, r0l
-          mov.b       r0l, @gCurSubstateZ
+          mov.b       r0l, @ui_substateZ
           sub.b       r0l, r0l
           mov.b       r0l, @accelXPos
           mov.b       #H'6, r0h
@@ -5478,7 +5478,7 @@ switchD_2c92__caseD_f:
           cmp.b       r6h, r6l
           bcs         switchD_2c92__caseD_2:8
           mov.b       #H'10, r0l
-          mov.b       r0l, @gCurSubstateZ
+          mov.b       r0l, @ui_substateZ
           sub.b       r0l, r0l
           mov.b       r0l, @accelXPos
           mov.b       #H'6, r0l
@@ -5495,7 +5495,7 @@ switchD_2c92__caseD_10:
           mov.b       r0l, r0l
           beq         switchD_2c92__caseD_2:8
           jsr         @game_battle_handle_finish:16
-          mov.b       @currentlyActiveView, r0l
+          mov.b       @ui_activeView, r0l
           cmp.b       #H'4, r0l
           bne         switchD_2c92__caseD_2:8
 LAB_3064:
@@ -5508,7 +5508,7 @@ switchD_2c92__caseD_11:
           bcs         switchD_2c92__caseD_2:8
           mov.b       #H'9, r0l
 LAB_3076:
-          mov.b       r0l, @gCurSubstateZ
+          mov.b       r0l, @ui_substateZ
           sub.b       r0l, r0l
           mov.b       r0l, @accelXPos
           mov.b       #H'6, r0l
@@ -5521,7 +5521,7 @@ switchD_2c92__caseD_9:
           mov.b       #H'E, r0l
           jsr         @drv_sound_play:16
           mov.b       #H'7, r0l
-          mov.b       r0l, @gCurSubstateZ
+          mov.b       r0l, @ui_substateZ
           sub.b       r0l, r0l
           mov.b       r0l, @accelXPos
           mov.b       #H'A, r0l
@@ -5550,7 +5550,7 @@ ui_render_battle:
           mov.w       #H'8, r0
           jsr         @sbrk:16
           mov.w       r0, e2
-          mov.b       @animTick, r0l
+          mov.b       @ui_animationTick, r0l
           and.b       #H'1, r0l
           mov.b       #H'C0, r0h
           mulxu.b     r0h, r0
@@ -5584,7 +5584,7 @@ LAB_3110:
           inc.b       r0l
 LAB_3124:
           mov.b       r0l, r2l
-          mov.b       @gCurSubstateA, r0h
+          mov.b       @ui_substateA, r0h
           cmp.b       r0h, r0l
           bcs         LAB_3110:8
           mov.b       @DAT_f7d8, r0l
@@ -5609,8 +5609,8 @@ LAB_314e:
           cmp.b       r0h, r0l
           bcs         LAB_313a:8
 LAB_3158:
-          mov.b       @gCurSubstateY, r2l
-          mov.b       @gCurSubstateZ, r0l
+          mov.b       @ui_substateY, r2l
+          mov.b       @ui_substateZ, r0l
           cmp.b       #H'A, r0l
           bhi         LAB_3280:16
           mov.b       r2l, r0l
@@ -5629,12 +5629,12 @@ LAB_3158:
           bld         #H'0, r0h
           bst         #H'0, r0l
           mov.b       r0l, r2l
-          mov.b       @gCurSubstateY, r0l
+          mov.b       @ui_substateY, r0l
           extu.w      r0
           dec.w       #1, r0
           mov.w       #H'180, e0
           mulxu.w     e0, er0
-          mov.b       @animTick, r1l
+          mov.b       @ui_animationTick, r1l
           and.b       #H'1, r1l
           mov.b       #H'C0, r1h
           mulxu.b     r1h, r1
@@ -5651,7 +5651,7 @@ LAB_31ac:
           bld         #H'0, r0h
           bst         #H'0, r0l
           mov.b       r0l, r2l
-          mov.b       @animTick, r0l
+          mov.b       @ui_animationTick, r0l
           and.b       #H'1, r0l
           mov.b       #H'C0, r0h
           mulxu.b     r0h, r0
@@ -5667,7 +5667,7 @@ LAB_31d0:
           mov.w       #H'1820, r0
           jsr         @gfx_flip_horiz:16
 LAB_31e8:
-          mov.b       @gCurSubstateZ, r0l
+          mov.b       @ui_substateZ, r0l
           cmp.b       #H'A, r0l
           beq         LAB_3206:8
           mov.w       r6, e1
@@ -5730,7 +5730,7 @@ LAB_3206:
           jsr         @r4
 LAB_3280:
           mov.w       #H'80, e4
-          mov.b       @gCurSubstateZ, r0l
+          mov.b       @ui_substateZ, r0l
           cmp.b       #H'11, r0l
           bhi         switchD_3296__default:16
           extu.w      r0
@@ -5773,7 +5773,7 @@ switchD_3296__caseD_1:
           jsr         @drv_sound_is_playing:16
           mov.b       r0l, r0l
           bne         switchD_3296__default:16
-          mov.b       @gCurSubstateY, r0l
+          mov.b       @ui_substateY, r0l
           cmp.b       #H'4, r0l
           bcc         LAB_3306:8
           mov.b       r0l, r1l
@@ -5846,7 +5846,7 @@ LAB_33a2:
           mov.b       @accelXPos, r0l
           cmp.b       #H'4, r0l
           bcs         switchD_3296__default:16
-          mov.b       @gCurSubstateY, r0l
+          mov.b       @ui_substateY, r0l
           cmp.b       #H'4, r0l
           bcc         LAB_33c6:8
           mov.b       r0l, r1l
@@ -5912,7 +5912,7 @@ LAB_3454:
           mov.b       @accelXPos, r0l
           cmp.b       #H'4, r0l
           bcs         switchD_3296__default:16
-          mov.b       @gCurSubstateY, r0l
+          mov.b       @ui_substateY, r0l
           cmp.b       #H'4, r0l
           bcc         LAB_3476:8
           mov.b       r0l, r1l
@@ -5947,7 +5947,7 @@ LAB_34ae:
           mov.w       #H'2430, r0
           jmp         @LAB_364e:16
 switchD_3296__caseD_5:
-          mov.b       @gCurSubstateY, r0l
+          mov.b       @ui_substateY, r0l
           cmp.b       #H'4, r0l
           bcc         LAB_34d2:8
           mov.b       r0l, r1l
@@ -5980,7 +5980,7 @@ switchD_3296__caseD_7:
           mov.b       @accelXPos, r0l
           cmp.b       #H'3, r0l
           bls         switchD_3296__default:16
-          mov.b       @gCurSubstateY, r0l
+          mov.b       @ui_substateY, r0l
           cmp.b       #H'4, r0l
           bcc         LAB_3530:8
           mov.b       r0l, r1l
@@ -6006,7 +6006,7 @@ switchD_3296__caseD_b:
 switchD_3296__caseD_c:
           bra         switchD_3296__caseD_e:8
 switchD_3296__caseD_d:
-          mov.b       @animTick, r0l
+          mov.b       @ui_animationTick, r0l
           and.b       #H'3, r0l
           beq         LAB_356e:8
           cmp.b       #H'1, r0l
@@ -6094,7 +6094,7 @@ switchD_3296__caseD_10:
           mov.w       #H'808, r1
           mov.w       #H'C14, r0
           jsr         @r4
-          mov.b       @gCurSubstateY, r0l
+          mov.b       @ui_substateY, r0l
           cmp.b       #H'4, r0l
           bcc         LAB_363c:8
           mov.b       r0l, r1l
@@ -6593,7 +6593,7 @@ drv_timerw_isr:
 ; =============================================================================
 ui_init_discard_cursor:
           mov.b       #H'1, r0l
-          mov.b       r0l, @gCurSubstateZ
+          mov.b       r0l, @ui_substateZ
           rts
 ; =============================================================================
 ; Function: game_log_poke_interaction
@@ -6602,7 +6602,7 @@ ui_init_discard_cursor:
 ; Called by: ui_handle_discard_picker
 ; =============================================================================
 game_log_poke_interaction:
-          mov.b       @gCurSubstateY, r0l
+          mov.b       @ui_substateY, r0l
           beq         LAB_3b00:16
           jsr         @sys_init_heap:16
           mov.w       #H'30, e6
@@ -6613,13 +6613,13 @@ game_log_poke_interaction:
           mov.w       #H'CE8C, r0
           mov.w       e6, r1
           jsr         @drv_eeprom_read_block:16
-          mov.b       @gCurSubstateZ, r0l
+          mov.b       @ui_substateZ, r0l
           exts.w      r0
           mov.w       #H'10, e0
           mulxu.w     e0, er0
           add.w       r6, r0
           mov.w       r0, e0
-          mov.b       @gCurSubstateY, r1l
+          mov.b       @ui_substateY, r1l
           extu.w      r1
           dec.w       #1, r1
           mov.w       #H'10, e1
@@ -6639,7 +6639,7 @@ game_log_poke_interaction:
           mov.w       #H'BE, r1
           mov.w       #H'8F00, r0
           jsr         @drv_eeprom_read_block:16
-          mov.b       @gCurSubstateY, r0l
+          mov.b       @ui_substateY, r0l
           push.w      r0
           mov.w       #H'88, r0
           jsr         @sbrk:16
@@ -6667,13 +6667,13 @@ game_log_item_interaction:
           mov.w       #H'CEBC, r0
           mov.w       e6, r1
           jsr         @drv_eeprom_read_block:16
-          mov.b       @gCurSubstateZ, r0l
+          mov.b       @ui_substateZ, r0l
           exts.w      r0
           shll.w      r0
           shll.w      r0
           add.w       r6, r0
           mov.w       r0, e0
-          mov.b       @gCurSubstateY, r1l
+          mov.b       @ui_substateY, r1l
           extu.w      r1
           shll.w      r1
           mov.w       #H'8F8C, r0
@@ -6696,7 +6696,7 @@ game_log_item_interaction:
           mov.w       #H'88, r0
           jsr         @sbrk:16
           mov.w       r0, e0
-          mov.b       @gCurSubstateY, r1l
+          mov.b       @ui_substateY, r1l
           extu.w      r1
           shll.w      r1
           mov.w       #H'8C, r0
@@ -6719,7 +6719,7 @@ ui_handle_discard_picker:
           jsr         @drv_button_is_triggered:16
           mov.b       r0l, r0l
           beq         LAB_3bbc:8
-          mov.b       @gCurSubstateZ, r0l
+          mov.b       @ui_substateZ, r0l
           bne         LAB_3bb0:8
           jsr         @ui_reset_substate:16
           sub.b       r0l, r0l
@@ -6727,7 +6727,7 @@ ui_handle_discard_picker:
           bra         LAB_3bce:8
 LAB_3bb0:
           dec.b       r0l
-          mov.b       r0l, @gCurSubstateZ
+          mov.b       r0l, @ui_substateZ
           mov.b       #H'2, r0l
           jsr         @drv_sound_play:16
 LAB_3bbc:
@@ -6735,7 +6735,7 @@ LAB_3bbc:
           jsr         @drv_button_is_triggered:16
           mov.b       r0l, r0l
           beq         LAB_3bde:8
-          mov.b       @gCurSubstateZ, r0l
+          mov.b       @ui_substateZ, r0l
           cmp.b       #H'2, r0l
           bne         LAB_3bd2:8
 LAB_3bce:
@@ -6743,7 +6743,7 @@ LAB_3bce:
           bra         LAB_3c04:8
 LAB_3bd2:
           inc.b       r0l
-          mov.b       r0l, @gCurSubstateZ
+          mov.b       r0l, @ui_substateZ
           mov.b       #H'2, r0l
           jsr         @drv_sound_play:16
 LAB_3bde:
@@ -6751,7 +6751,7 @@ LAB_3bde:
           jsr         @drv_button_is_triggered:16
           mov.b       r0l, r0l
           beq         LAB_3c08:8
-          mov.b       @gCurSubstateA, r0l
+          mov.b       @ui_substateA, r0l
           bne         LAB_3bf4:8
           jsr         @game_log_poke_interaction:16
           bra         LAB_3bf8:8
@@ -6784,7 +6784,7 @@ ui_render_discard_poke_slot:
           mov.w       r5, r0
           add.w       #H'30, r0
           mov.w       r0, e0
-          mov.b       @gCurSubstateZ, r1l
+          mov.b       @ui_substateZ, r1l
           exts.w      r1
           mov.w       #H'10, e1
           mulxu.w     e1, er1
@@ -6828,7 +6828,7 @@ ui_render_discard_item_slot:
           jsr         @sbrk:16
           mov.w       r0, r5
           mov.w       r7, e0
-          mov.b       @gCurSubstateZ, r1l
+          mov.b       @ui_substateZ, r1l
           exts.w      r1
           shll.w      r1
           shll.w      r1
@@ -6898,21 +6898,21 @@ ui_render_discard_picker:
           mov.w       #H'20, r1
           mov.w       r6, e0
           jsr         @drv_eeprom_read_block:16
-          mov.b       @animTick, r0l
+          mov.b       @ui_animationTick, r0l
           and.b       #H'1, r0l
           extu.w      r0
           mov.w       #H'10, e0
           mulxu.w     e0, er0
           add.w       r6, r0
           mov.w       r0, e0
-          mov.b       @gCurSubstateZ, r0l
+          mov.b       @ui_substateZ, r0l
           mov.b       #H'14, r0h
           mulxu.b     r0h, r0
           add.b       #H'18, r0l
           mov.w       #H'808, r1
           mov.b       #H'18, r0h
           jsr         @r4
-          mov.b       @gCurSubstateA, r0l
+          mov.b       @ui_substateA, r0l
           bne         LAB_3d64:8
           mov.w       #H'1E0, r0
           bra         LAB_3d68:8
@@ -6935,11 +6935,11 @@ LAB_3d68:
           mov.w       #H'808, r1
           mov.w       #H'2040, r0
           jsr         @r4
-          mov.b       @gCurSubstateZ, r0l
+          mov.b       @ui_substateZ, r0l
           blt         LAB_3dba:8
           cmp.b       #H'2, r0l
           bgt         LAB_3dba:8
-          mov.b       @gCurSubstateA, r0l
+          mov.b       @ui_substateA, r0l
           bne         LAB_3dae:8
           jsr         @ui_render_discard_poke_slot:16
           bra         LAB_3db2:8
@@ -6964,7 +6964,7 @@ ui_draw_ball_drop_anim:
           mov.w       #H'180, r0
           jsr         @sbrk:16
           mov.w       r0, r6
-          mov.b       @currentlyActiveView, r0l
+          mov.b       @ui_activeView, r0l
           cmp.b       #H'11, r0l
           bne         LAB_3dde:8
           mov.w       #H'460, r5
@@ -6977,7 +6977,7 @@ LAB_3de2:
           mov.w       r6, e0
           jsr         @drv_eeprom_read_block:16
           mov.w       r6, e0
-          mov.b       @gCurSubstateZ, r1l
+          mov.b       @ui_substateZ, r1l
           extu.w      r1
           mov.b       @(ANIM_BALL_DROP_Y,er1), r0h
           mov.w       #H'808, r1
@@ -6995,9 +6995,9 @@ LAB_3de2:
           mov.w       #H'3800, r0
           jsr         @gfx_fill_rect:16
           adds        #2, er7
-          mov.b       @gCurSubstateZ, r0l
+          mov.b       @ui_substateZ, r0l
           inc.b       r0l
-          mov.b       r0l, @gCurSubstateZ
+          mov.b       r0l, @ui_substateZ
           jmp         @sys_epilogue_r2_r5_r6:16
 ; =============================================================================
 ; Function: ui_draw_ball_sparkles_anim
@@ -7027,7 +7027,7 @@ ui_draw_ball_sparkles_anim:
           mov.w       #H'10, r1
           mov.w       r6, e0
           jsr         @drv_eeprom_read_block:16
-          mov.b       @gCurSubstateZ, r5l
+          mov.b       @ui_substateZ, r5l
           extu.w      r5
           shll.w      r5
           add.w       #ANIM_SPARKLES_XY, r5
@@ -7048,15 +7048,15 @@ ui_draw_ball_sparkles_anim:
           mov.w       #H'3800, r0
           jsr         @gfx_fill_rect:16
           adds        #2, er7
-          mov.b       @gCurSubstateZ, r0l
+          mov.b       @ui_substateZ, r0l
           inc.b       r0l
           cmp.b       #H'2, r0l
           bls         LAB_3ec6:8
           mov.b       #H'1, r0l
-          mov.b       r0l, @gCurSubstateY
+          mov.b       r0l, @ui_substateY
           sub.b       r0l, r0l
 LAB_3ec6:
-          mov.b       r0l, @gCurSubstateZ
+          mov.b       r0l, @ui_substateZ
           jmp         @sys_epilogue_r2_r5_r6:16
 ; =============================================================================
 ; Function: ui_draw_arrival_cloud_anim
@@ -7093,10 +7093,10 @@ ui_draw_arrival_cloud_anim:
           mov.w       #H'3800, r0
           jsr         @gfx_fill_rect:16
           adds        #2, er7
-          mov.b       @gCurSubstateZ, r0l
+          mov.b       @ui_substateZ, r0l
           bne         LAB_3f2e:8
           inc.b       r0l
-          mov.b       r0l, @gCurSubstateZ
+          mov.b       r0l, @ui_substateZ
 LAB_3f2e:
           jmp         @sys_epilogue_r2_r5_r6:16
 ; =============================================================================
@@ -7123,9 +7123,9 @@ ui_draw_arrival_poke_anim:
           mov.w       #H'3800, r0
           jsr         @gfx_fill_rect:16
           adds        #2, er7
-          mov.b       @gCurSubstateZ, r0l
+          mov.b       @ui_substateZ, r0l
           inc.b       r0l
-          mov.b       r0l, @gCurSubstateZ
+          mov.b       r0l, @ui_substateZ
           jmp         @sys_epilogue_6:16
 ; =============================================================================
 ; Function: ui_render_arrival_success
@@ -7145,16 +7145,16 @@ ui_render_arrival_success:
           mov.w       #H'E, r1
           mov.w       #H'D30, r0
           jsr         @gfx_draw_text_box:16
-          mov.b       @gCurSubstateZ, r0l
+          mov.b       @ui_substateZ, r0l
           cmp.b       #H'10, r0l
           bcc         LAB_3fa4:8
           inc.b       r0l
-          mov.b       r0l, @gCurSubstateZ
+          mov.b       r0l, @ui_substateZ
 LAB_3fa4:
           jsr         @drv_sound_is_playing:16
           mov.b       r0l, r0l
           bne         LAB_3fbe:8
-          mov.b       @gCurSubstateZ, r0l
+          mov.b       @ui_substateZ, r0l
           cmp.b       #H'8, r0l
           bls         LAB_3fbe:8
           jsr         @ui_reset_substate:16
@@ -7183,7 +7183,7 @@ ui_render_event_reward_info:
           mov.w       r0, r6
           mov.w       #H'280, r5
           mov.w       #H'10, e6
-          mov.b       @gCurSubstateA, r0l
+          mov.b       @ui_substateA, r0l
           cmp.b       #H'7, r0l
           bhi         switchD_3ffa__default:16
           extu.w      r0
@@ -7205,7 +7205,7 @@ switchD_3ffa__caseD_3:
           mov.w       #LAB_1120, r0
           jmp         @LAB_40cc:16
 switchD_3ffa__caseD_0:
-          mov.b       @animTick, r0l
+          mov.b       @ui_animationTick, r0l
           and.b       #H'1, r0l
           mov.b       #H'C0, r0h
           mulxu.b     r0h, r0
@@ -7271,11 +7271,11 @@ switchD_3ffa__default:
           mov.w       #H'E, r1
           mov.w       #H'F30, r0
           jsr         @gfx_draw_text_box:16
-          mov.b       @gCurSubstateZ, r0l
+          mov.b       @ui_substateZ, r0l
           cmp.b       #H'10, r0l
           bcc         LAB_40ea:8
           inc.b       r0l
-          mov.b       r0l, @gCurSubstateZ
+          mov.b       r0l, @ui_substateZ
 LAB_40ea:
           pop.l       er6
           pop.w       r5
@@ -7290,8 +7290,8 @@ LAB_40ea:
 ; Called by: ui_dispatch_event
 ; =============================================================================
 ui_handle_walk_arrival_anim:
-          mov.b       @gCurSubstateZ, r1l
-          mov.b       @gCurSubstateY, r0l
+          mov.b       @ui_substateZ, r1l
+          mov.b       @ui_substateY, r0l
           beq         LAB_410c:8
           cmp.b       #H'1, r0l
           beq         LAB_411e:8
@@ -7302,25 +7302,25 @@ LAB_410c:
           cmp.b       #H'4, r1l
           bls         LAB_4146:8
           mov.b       #H'1, r0l
-          mov.b       r0l, @gCurSubstateY
+          mov.b       r0l, @ui_substateY
           sub.b       r0l, r0l
-          mov.b       r0l, @gCurSubstateZ
+          mov.b       r0l, @ui_substateZ
           bra         LAB_4146:8
 LAB_411e:
           mov.b       r1l, r1l
           beq         LAB_4146:8
           mov.b       #H'2, r0l
-          mov.b       r0l, @gCurSubstateY
+          mov.b       r0l, @ui_substateY
           sub.b       r0l, r0l
-          mov.b       r0l, @gCurSubstateZ
+          mov.b       r0l, @ui_substateZ
           bra         LAB_4142:8
 LAB_4130:
           cmp.b       #H'8, r1l
           bls         LAB_4146:8
           sub.b       r0l, r0l
-          mov.b       r0l, @gCurSubstateZ
+          mov.b       r0l, @ui_substateZ
           mov.b       #H'3, r0l
-          mov.b       r0l, @gCurSubstateY
+          mov.b       r0l, @ui_substateY
           mov.b       #H'6, r0l
 LAB_4142:
           jsr         @drv_sound_play:16
@@ -7333,7 +7333,7 @@ LAB_4146:
 ; Called by: ui_dispatch_draw
 ; =============================================================================
 ui_render_walk_arrival_anim:
-          mov.b       @gCurSubstateY, r0l
+          mov.b       @ui_substateY, r0l
           beq         LAB_415c:8
           cmp.b       #H'1, r0l
           beq         LAB_4162:8
@@ -7364,8 +7364,8 @@ LAB_4172:
 ; =============================================================================
 ui_handle_event_reward_anim:
           subs        #2, er7
-          mov.b       @gCurSubstateZ, r6l
-          mov.b       @gCurSubstateY, r0l
+          mov.b       @ui_substateZ, r6l
+          mov.b       @ui_substateY, r0l
           beq         LAB_4190:8
           cmp.b       #H'1, r0l
           beq         LAB_41a4:8
@@ -7376,17 +7376,17 @@ LAB_4190:
           cmp.b       #H'4, r6l
           bls         LAB_429c:16
           mov.b       #H'4, r0l
-          mov.b       r0l, @gCurSubstateY
+          mov.b       r0l, @ui_substateY
           sub.b       r0l, r0l
-          mov.b       r0l, @gCurSubstateZ
+          mov.b       r0l, @ui_substateZ
           bra         LAB_41b8:8
 LAB_41a4:
           mov.b       r6l, r6l
           beq         LAB_429c:16
           mov.b       #H'3, r0l
-          mov.b       r0l, @gCurSubstateY
+          mov.b       r0l, @ui_substateY
           sub.b       r0l, r0l
-          mov.b       r0l, @gCurSubstateZ
+          mov.b       r0l, @ui_substateZ
           mov.b       #H'6, r0l
 LAB_41b8:
           jsr         @drv_sound_play:16
@@ -7395,12 +7395,12 @@ LAB_41c0:
           jsr         @drv_sound_is_playing:16
           mov.b       r0l, r0l
           bne         LAB_429c:16
-          mov.b       @gCurSubstateZ, r0l
+          mov.b       @ui_substateZ, r0l
           cmp.b       #H'8, r0l
           bls         LAB_429c:16
           mov.w       #H'BE, e6
           mov.w       #sbrk, r6
-          mov.b       @gCurSubstateA, r0l
+          mov.b       @ui_substateA, r0l
           beq         LAB_41ea:8
           cmp.b       #H'2, r0l
           bne         LAB_4292:16
@@ -7482,7 +7482,7 @@ LAB_429c:
 ; Called by: ui_dispatch_draw
 ; =============================================================================
 ui_render_event_reward_anim:
-          mov.b       @gCurSubstateY, r0l
+          mov.b       @ui_substateY, r0l
           beq         LAB_42b4:8
           cmp.b       #H'4, r0l
           beq         LAB_42ba:8
@@ -7529,9 +7529,9 @@ ui_draw_poke_departure_anim:
           mov.w       #H'3800, r0
           jsr         @gfx_fill_rect:16
           adds        #2, er7
-          mov.b       @gCurSubstateZ, r0l
+          mov.b       @ui_substateZ, r0l
           inc.b       r0l
-          mov.b       r0l, @gCurSubstateZ
+          mov.b       r0l, @ui_substateZ
           jmp         @sys_epilogue_6:16
 ; =============================================================================
 ; Function: ui_draw_departure_cloud_anim
@@ -7569,8 +7569,8 @@ ui_draw_departure_cloud_anim:
           jsr         @gfx_fill_rect:16
           adds        #2, er7
           sub.b       r0l, r0l
-          mov.b       r0l, @gCurSubstateY
-          mov.b       r0l, @gCurSubstateZ
+          mov.b       r0l, @ui_substateY
+          mov.b       r0l, @ui_substateZ
           jmp         @sys_epilogue_r2_r5_r6:16
 ; =============================================================================
 ; Function: ui_draw_cloud_rise_anim
@@ -7587,7 +7587,7 @@ ui_draw_cloud_rise_anim:
           jsr         @sbrk:16
           mov.w       r0, r6
           mov.w       #H'2480, r5
-          mov.b       @gCurSubstateZ, r0l
+          mov.b       @ui_substateZ, r0l
           cmp.b       #H'4, r0l
           bhi         LAB_43b4:8
           mov.w       r5, r0
@@ -7595,7 +7595,7 @@ ui_draw_cloud_rise_anim:
           mov.w       r6, e0
           jsr         @drv_eeprom_read_block:16
           mov.w       r6, e0
-          mov.b       @gCurSubstateZ, r1l
+          mov.b       @ui_substateZ, r1l
           extu.w      r1
           mov.b       @(ANIM_CLOUD_Y,er1), r0h
           mov.b       #H'8, r1h
@@ -7615,9 +7615,9 @@ LAB_43b4:
           mov.w       #H'3800, r0
           jsr         @gfx_fill_rect:16
           adds        #2, er7
-          mov.b       @gCurSubstateZ, r0l
+          mov.b       @ui_substateZ, r0l
           inc.b       r0l
-          mov.b       r0l, @gCurSubstateZ
+          mov.b       r0l, @ui_substateZ
           jmp         @sys_epilogue_r2_r5_r6:16
 ; =============================================================================
 ; Function: ui_render_departure_success
@@ -7636,16 +7636,16 @@ ui_render_departure_success:
           mov.w       #H'E, r1
           mov.w       #H'E30, r0
           jsr         @gfx_draw_text_box:16
-          mov.b       @gCurSubstateZ, r0l
+          mov.b       @ui_substateZ, r0l
           cmp.b       #H'10, r0l
           bcc         LAB_4416:8
           inc.b       r0l
-          mov.b       r0l, @gCurSubstateZ
+          mov.b       r0l, @ui_substateZ
 LAB_4416:
           jsr         @drv_sound_is_playing:16
           mov.b       r0l, r0l
           bne         LAB_4430:8
-          mov.b       @gCurSubstateZ, r0l
+          mov.b       @ui_substateZ, r0l
           cmp.b       #H'8, r0l
           bls         LAB_4430:8
           jsr         @ui_reset_substate:16
@@ -7680,16 +7680,16 @@ ui_render_operation_completed:
           mov.w       #H'F, r1
           mov.w       #H'1030, r0
           jsr         @gfx_draw_text_box:16
-          mov.b       @gCurSubstateZ, r0l
+          mov.b       @ui_substateZ, r0l
           cmp.b       #H'10, r0l
           bcc         LAB_4480:8
           inc.b       r0l
-          mov.b       r0l, @gCurSubstateZ
+          mov.b       r0l, @ui_substateZ
 LAB_4480:
           jsr         @drv_sound_is_playing:16
           mov.b       r0l, r0l
           bne         LAB_449a:8
-          mov.b       @gCurSubstateZ, r0l
+          mov.b       @ui_substateZ, r0l
           cmp.b       #H'8, r0l
           bls         LAB_449a:8
           jsr         @ui_reset_substate:16
@@ -7704,8 +7704,8 @@ LAB_449a:
 ; Called by: ui_dispatch_event
 ; =============================================================================
 ui_handle_walk_departure_anim:
-          mov.b       @gCurSubstateZ, r1l
-          mov.b       @gCurSubstateY, r0l
+          mov.b       @ui_substateZ, r1l
+          mov.b       @ui_substateY, r0l
           cmp.b       #H'5, r0l
           beq         LAB_44b8:8
           cmp.b       #H'2, r0l
@@ -7717,17 +7717,17 @@ ui_handle_walk_departure_anim:
           bra         LAB_44e0:8
 LAB_44b8:
           sub.b       r0l, r0l
-          mov.b       r0l, @gCurSubstateZ
+          mov.b       r0l, @ui_substateZ
           mov.b       #H'2, r0h
-          mov.b       r0h, @gCurSubstateY
+          mov.b       r0h, @ui_substateY
           bra         LAB_44ee:8
 LAB_44c6:
           cmp.b       #H'8, r1l
           bls         LAB_44f2:8
           sub.b       r0l, r0l
-          mov.b       r0l, @gCurSubstateZ
+          mov.b       r0l, @ui_substateZ
           mov.b       #H'1, r0l
-          mov.b       r0l, @gCurSubstateY
+          mov.b       r0l, @ui_substateY
           bra         LAB_44f2:8
 LAB_44d8:
           cmp.b       #H'9, r1l
@@ -7737,9 +7737,9 @@ LAB_44d8:
 LAB_44e0:
           mov.b       #H'7, r0l
 LAB_44e2:
-          mov.b       r0l, @gCurSubstateY
+          mov.b       r0l, @ui_substateY
           sub.b       r0l, r0l
-          mov.b       r0l, @gCurSubstateZ
+          mov.b       r0l, @ui_substateZ
           mov.b       #H'6, r0l
 LAB_44ee:
           jsr         @drv_sound_play:16
@@ -7752,7 +7752,7 @@ LAB_44f2:
 ; Called by: ui_dispatch_draw
 ; =============================================================================
 ui_render_walk_departure_anim:
-          mov.b       @gCurSubstateY, r0l
+          mov.b       @ui_substateY, r0l
           cmp.b       #H'2, r0l
           beq         LAB_4512:8
           cmp.b       #H'1, r0l
@@ -8044,7 +8044,7 @@ LAB_478c:
 ; =============================================================================
 game_init_dowsing:
           sub.b       r0l, r0l
-          mov.b       r0l, @gCurSubstateZ
+          mov.b       r0l, @ui_substateZ
           mov.b       r0l, @DAT_f7d1
           mov.b       #H'2, r0h
           mov.b       r0h, @accelXPos
@@ -8071,7 +8071,7 @@ game_init_dowsing:
 ; Called by: ui_dispatch_event
 ; =============================================================================
 ui_handle_dowsing:
-          mov.b       @gCurSubstateZ, r0l
+          mov.b       @ui_substateZ, r0l
           beq         LAB_47f0:8
           cmp.b       #H'1, r0l
           beq         LAB_4874:16
@@ -8097,9 +8097,9 @@ LAB_480c:
           sub.b       r0l, r0l
           jsr         @drv_sound_play:16
           mov.b       #H'1, r0l
-          mov.b       r0l, @gCurSubstateZ
+          mov.b       r0l, @ui_substateZ
           mov.b       #H'4, r0l
-          mov.b       r0l, @gCurSubstateA
+          mov.b       r0l, @ui_substateA
           jmp         @LAB_499a:16
 LAB_4822:
           mov.b       #H'4, r0l
@@ -8132,7 +8132,7 @@ LAB_484c:
           mov.b       #H'2, r0l
           bra         LAB_489e:8
 LAB_4874:
-          mov.b       @gCurSubstateA, r0l
+          mov.b       @ui_substateA, r0l
           bne         LAB_499a:16
           jsr         @drv_sound_is_playing:16
           mov.b       r0l, r0l
@@ -8142,7 +8142,7 @@ LAB_4874:
           cmp.b       r0h, r0l
           bne         LAB_48a6:8
           mov.b       #H'2, r0l
-          mov.b       r0l, @gCurSubstateZ
+          mov.b       r0l, @ui_substateZ
           jsr         @ui_handle_dowsing_selection:16
           mov.b       #H'5, r0l
 LAB_489e:
@@ -8150,7 +8150,7 @@ LAB_489e:
           jmp         @LAB_499a:16
 LAB_48a6:
           mov.b       #H'3, r0l
-          mov.b       r0l, @gCurSubstateZ
+          mov.b       r0l, @ui_substateZ
           mov.b       #H'4, r0l
           jsr         @drv_sound_play:16
           mov.b       @accelXPos, r0l
@@ -8175,8 +8175,8 @@ LAB_48d0:
           cmp.b       #H'3, r6l
           bne         LAB_4900:8
           mov.b       #H'1, r0l
-          mov.b       r0l, @gCurSubstateA
-          mov.b       @gCurSubstateY, r0l
+          mov.b       r0l, @ui_substateA
+          mov.b       @ui_substateY, r0l
           jsr         @ui_init_discard_cursor:16
           mov.b       #H'7, r0l
           bra         LAB_4974:8
@@ -8239,7 +8239,7 @@ LAB_4984:
           jsr         @drv_sound_play:16
           sub.b       r0l, r0l
 LAB_4996:
-          mov.b       r0l, @gCurSubstateZ
+          mov.b       r0l, @ui_substateZ
 LAB_499a:
           rts
 ; =============================================================================
@@ -8342,7 +8342,7 @@ LAB_4a5e:
           mov.w       #H'8F00, r0
           jsr         @drv_eeprom_read_block:16
           mov.b       #H'A, r0l
-          mov.b       r0l, @gCurSubstateY
+          mov.b       r0l, @ui_substateY
           mov.l       @er5, er0
           mov.l       er0, @er6
           mov.w       @(H'4,er5), r0
@@ -8441,7 +8441,7 @@ LAB_4b7e:
           bls         LAB_4b84:8
           mov.b       #H'9, r6l
 LAB_4b84:
-          mov.b       r6l, @gCurSubstateY
+          mov.b       r6l, @ui_substateY
           mov.b       r6l, r0l
           extu.w      r0
           shll.w      r0
@@ -8511,10 +8511,10 @@ LAB_4c26:
           mov.w       #H'1820, r1
           sub.w       r0, r0
           jsr         @drv_lcd_blit:16
-          mov.b       @gCurSubstateA, r0l
+          mov.b       @ui_substateA, r0l
           beq         LAB_4c4a:8
           dec.b       r0l
-          mov.b       r0l, @gCurSubstateA
+          mov.b       r0l, @ui_substateA
 LAB_4c4a:
           mov.w       #H'18D0, r0
           add.w       r4, r0
@@ -8552,7 +8552,7 @@ LAB_4c94:
           inc.w       #1, e6
           cmp.w       #H'6, e6
           blt         LAB_4c62:8
-          mov.b       @animTick, r1l
+          mov.b       @ui_animationTick, r1l
           and.b       #H'3, r1l
           extu.w      r1
           mov.b       @(DOWSING_GRASS_BOB,er1), r1l
@@ -8579,7 +8579,7 @@ LAB_4c94:
 ; =============================================================================
 ui_render_dowsing:
           mov.w       #H'280, r5
-          mov.b       @gCurSubstateZ, r0l
+          mov.b       @ui_substateZ, r0l
           cmp.b       #H'1, r0l
           bne         LAB_4cea:8
           jsr         @ui_render_dowsing_grass:16
@@ -8642,10 +8642,10 @@ LAB_4d7e:
           mov.w       #H'1820, r1
           sub.w       r0, r0
           jsr         @drv_lcd_blit:16
-          mov.b       @gCurSubstateA, r0l
+          mov.b       @ui_substateA, r0l
           beq         LAB_4da2:8
           dec.b       r0l
-          mov.b       r0l, @gCurSubstateA
+          mov.b       r0l, @ui_substateA
 LAB_4da2:
           mov.w       #H'18D0, r4
           add.w       r5, r4
@@ -8657,7 +8657,7 @@ LAB_4da2:
           mov.w       r6, r3
           add.w       #H'40, r3
 LAB_4dbc:
-          mov.b       @gCurSubstateZ, r0l
+          mov.b       @ui_substateZ, r0l
           cmp.b       #H'2, r0l
           bne         LAB_4dce:8
           mov.b       @DAT_f7d1, r0l
@@ -8690,7 +8690,7 @@ LAB_4df8:
           cmp.w       #H'6, e6
           blt         LAB_4dbc:8
           mov.w       #H'10, e6
-          mov.b       @gCurSubstateZ, r0l
+          mov.b       @ui_substateZ, r0l
           beq         LAB_4e1e:8
           cmp.b       #H'2, r0l
           beq         LAB_4e5e:8
@@ -8700,7 +8700,7 @@ LAB_4df8:
           bne         LAB_4f48:16
           jmp         @LAB_4f10:16
 LAB_4e1e:
-          mov.b       @animTick, r4l
+          mov.b       @ui_animationTick, r4l
           and.b       #H'1, r4l
           extu.w      r4
           mov.w       e6, e4
@@ -8749,7 +8749,7 @@ LAB_4e5e:
           mov.w       #H'F30, r0
           jmp         @LAB_4f44:16
 LAB_4ea4:
-          mov.b       @gCurSubstateY, r6l
+          mov.b       @ui_substateY, r6l
           cmp.b       #H'A, r6l
           bcs         LAB_4eb8:8
           mov.b       #H'D, r1l
@@ -10375,7 +10375,7 @@ game_process_interaction_reward:
           subs        #2, er7
           mov.b       r0l, r6l
           sub.w       e6, e6
-          mov.b       r6l, @gCurSubstateY
+          mov.b       r6l, @ui_substateY
           mov.b       r6l, r1l
           extu.w      r1
           shll.w      r1
@@ -10407,13 +10407,13 @@ LAB_5d98:
           divxu.w     r1, er0
           mov.b       #H'9, r0h
           sub.b       r0l, r0h
-          mov.b       r0h, @gCurSubstateZ
+          mov.b       r0h, @ui_substateZ
           bra         LAB_5dbe:8
 LAB_5db8:
           sub.b       r0l, r0l
-          mov.b       r0l, @gCurSubstateZ
+          mov.b       r0l, @ui_substateZ
 LAB_5dbe:
-          mov.b       @gCurSubstateZ, r0l
+          mov.b       @ui_substateZ, r0l
           jsr         @save_get_dowsing_item_id:16
           mov.w       r0, e6
           jsr         @sys_init_heap:16
@@ -10449,7 +10449,7 @@ LAB_5e0c:
 LAB_5e10:
           mov.b       #H'A, r0l
 LAB_5e12:
-          mov.b       r0l, @gCurSubstateZ
+          mov.b       r0l, @ui_substateZ
           jsr         @game_add_watts:16
           bra         LAB_5e28:8
 LAB_5e1c:
@@ -10457,7 +10457,7 @@ LAB_5e1c:
           bra         LAB_5e28:8
 LAB_5e22:
           sub.b       r0l, r0l
-          mov.b       r0l, @gCurSubstateZ
+          mov.b       r0l, @ui_substateZ
 LAB_5e28:
           jsr         @sys_init_heap:16
           mov.w       #H'BE, r0
@@ -10496,11 +10496,11 @@ LAB_5e28:
           sub.l       er1, er1
           mov.b       #H'3, r1l
           jsr         @$DIVUL$3:16
-          mov.b       r1l, @gCurSubstateA
+          mov.b       r1l, @ui_substateA
           bra         LAB_5e9a:8
 LAB_5e94:
           sub.b       r0l, r0l
-          mov.b       r0l, @gCurSubstateA
+          mov.b       r0l, @ui_substateA
 LAB_5e9a:
           adds        #2, er7
           rts
@@ -10568,7 +10568,7 @@ LAB_5f14:
           mov.b       r0h, r0l
           jsr         @gfx_draw_item_symbol:16
 LAB_5f26:
-          mov.b       @gCurSubstateZ, r6l
+          mov.b       @ui_substateZ, r6l
           mov.w       @accelXPos, r0
           mov.b       @(H'2,er0), r1l
           cmp.b       #H'FC, r1l
@@ -10610,7 +10610,7 @@ LAB_5f7a:
           cmp.b       #H'8, r1l
           bls         LAB_5f92:8
           mov.b       @(H'3,er0), r0h
-          mov.b       @gCurSubstateA, r0l
+          mov.b       @ui_substateA, r0l
           add.b       r0l, r0h
           bra         LAB_5fb0:8
 LAB_5f92:
@@ -10648,7 +10648,7 @@ game_check_periodic_events:
           and.b       #H'18, r0l
           cmp.b       #H'10, r0l
           bne         LAB_60d4:16
-          mov.b       @currentlyActiveView, r0l
+          mov.b       @ui_activeView, r0l
           bne         LAB_60d4:16
           mov.b       @sys_walkerFlags, r0l
           bld         #H'0, r0l
@@ -10656,8 +10656,8 @@ game_check_periodic_events:
           mov.w       #sys_walkerFlags, r0
           bclr        #H'0, @r0
           sub.b       r0l, r0l
-          mov.b       r0l, @gCurSubstateY
-          mov.b       r0l, @gCurSubstateZ
+          mov.b       r0l, @ui_substateY
+          mov.b       r0l, @ui_substateZ
           mov.w       @session_recentSteps, r0
           mov.w       r0, @er7
           jsr         @sys_get_rng:16
@@ -10735,9 +10735,9 @@ LAB_60b6:
           bhi         LAB_60d4:8
           mov.b       #H'5, r0l
 LAB_60ca:
-          mov.b       r0l, @gCurSubstateY
+          mov.b       r0l, @ui_substateY
           mov.b       #H'30, r0l
-          mov.b       r0l, @gCurSubstateZ
+          mov.b       r0l, @ui_substateZ
 LAB_60d4:
           adds        #2, er7
           jmp         @sys_epilogue_r2_r5_r6:16
@@ -11051,13 +11051,13 @@ ui_start_peer_play_app:
           mov.w       #H'38, r1
           mov.w       #H'F6C0, r0
           jsr         @drv_eeprom_read_block:16
-          mov.w       #gCurSubstateY, r0
+          mov.w       #ui_substateY, r0
           mov.b       @(H'37,er6), r6l
           bld         #H'0, r6l
           bst         #H'1, @r0
           sub.b       r0l, r0l
-          mov.b       r0l, @gCurSubstateZ
-          mov.b       r0l, @gCurSubstateA
+          mov.b       r0l, @ui_substateZ
+          mov.b       r0l, @ui_substateA
           bsr         game_calculate_interaction_reward:8
           jsr         @game_rotate_interaction_log:16
           jsr         @game_rotate_interaction_log_record:16
@@ -11279,19 +11279,19 @@ LAB_6550:
 ; Called by: ui_dispatch_draw
 ; =============================================================================
 ui_render_peer_play:
-          mov.b       @gCurSubstateZ, r0l
+          mov.b       @ui_substateZ, r0l
           cmp.b       #H'3, r0l
           bcc         LAB_65cc:8
           mov.w       #H'838, r0
           jsr         @gfx_draw_own_pokemon_small:16
           sub.b       r6l, r6l
-          mov.b       @gCurSubstateY, r0l
+          mov.b       @ui_substateY, r0l
           bld         #H'1, r0l
           bst         #H'0, r6l
-          mov.b       @gCurSubstateZ, r0l
+          mov.b       @ui_substateZ, r0l
           bne         LAB_65b6:8
           mov.b       #H'7, r0l
-          mov.b       @gCurSubstateA, r0h
+          mov.b       @ui_substateA, r0h
           sub.b       r0h, r0l
           mov.b       #H'3, r0h
           mulxu.b     r0h, r0
@@ -11321,7 +11321,7 @@ LAB_65c2:
 LAB_65c8:
           jsr         @gfx_draw_peer_pokemon:16
 LAB_65cc:
-          mov.b       @gCurSubstateZ, r0l
+          mov.b       @ui_substateZ, r0l
           cmp.b       #H'1, r0l
           beq         LAB_65e8:8
           cmp.b       #H'2, r0l
@@ -11339,9 +11339,9 @@ LAB_65e8:
           mov.w       #H'2B30, r0
           jmp         @LAB_6730:16
 LAB_65fe:
-          mov.b       @gCurSubstateA, r6l
+          mov.b       @ui_substateA, r6l
           add.b       #H'1, r6l
-          mov.b       @gCurSubstateA, r6h
+          mov.b       @ui_substateA, r6h
           shlr.b      r6h
           add.b       #H'1, r6h
           mov.b       @DAT_f7d1, r0l
@@ -11483,17 +11483,17 @@ LAB_6728:
 LAB_6730:
           jsr         @gfx_draw_text_box:16
 LAB_6734:
-          mov.b       @gCurSubstateA, r0l
+          mov.b       @ui_substateA, r0l
           inc.b       r0l
-          mov.b       r0l, @gCurSubstateA
+          mov.b       r0l, @ui_substateA
           cmp.b       #H'8, r0l
           bcs         LAB_676a:8
-          mov.b       @gCurSubstateZ, r0l
+          mov.b       @ui_substateZ, r0l
           inc.b       r0l
-          mov.b       r0l, @gCurSubstateZ
+          mov.b       r0l, @ui_substateZ
           sub.b       r0l, r0l
-          mov.b       r0l, @gCurSubstateA
-          mov.b       @gCurSubstateZ, r0l
+          mov.b       r0l, @ui_substateA
+          mov.b       @ui_substateZ, r0l
           cmp.b       #H'2, r0l
           beq         LAB_6760:8
           cmp.b       #H'4, r0l
@@ -11507,7 +11507,7 @@ LAB_6764:
 LAB_6766:
           jsr         @drv_sound_play:16
 LAB_676a:
-          mov.b       @gCurSubstateZ, r0l
+          mov.b       @ui_substateZ, r0l
           cmp.b       #H'5, r0l
           bcs         LAB_677c:8
           jsr         @ui_reset_substate:16
@@ -11782,7 +11782,7 @@ LAB_69b6:
 ;            ... and 19 more
 ; =============================================================================
 ui_set_view:
-          mov.b       r0l, @currentlyActiveView
+          mov.b       r0l, @ui_activeView
           rts
 ; =============================================================================
 ; Function: gfx_draw_home_pokemon
@@ -11803,14 +11803,14 @@ gfx_draw_home_pokemon:
           mov.w       #H'8F00, r0
           mov.w       #H'10, r1
           jsr         @drv_eeprom_read_block:16
-          mov.b       @gCurSubstateZ, r0l
+          mov.b       @ui_substateZ, r0l
           beq         LAB_69ee:8
           mov.w       e3, r1
           mov.w       #H'933E, r0
           bra         LAB_6a06:8
 LAB_69ee:
           mov.w       e3, r1
-          mov.b       @animTick, r0l
+          mov.b       @ui_animationTick, r0l
           extu.w      r0
           shar.w      r0
           and.w       #H'1, r0
@@ -11835,10 +11835,10 @@ LAB_6a06:
 ; =============================================================================
 ui_reset_substate:
           sub.b       r0l, r0l
-          mov.b       r0l, @gCurSubstateY
-          mov.b       r0l, @gCurSubstateZ
+          mov.b       r0l, @ui_substateY
+          mov.b       r0l, @ui_substateZ
           mov.b       #H'20, r0h
-          mov.b       r0h, @gCurSubstateA
+          mov.b       r0h, @ui_substateA
           mov.w       #DAT_f7d1, r1
           bclr        #H'0, @r1
           bclr        #H'1, @r1
@@ -11865,21 +11865,21 @@ LAB_6a58:
           jsr         @ui_enter_ir_session:16
           bra         LAB_6ad6:8
 LAB_6a5e:
-          mov.b       @gCurSubstateZ, r0l
+          mov.b       @ui_substateZ, r0l
           beq         LAB_6a88:8
           mov.b       #H'E, r0l
           jsr         @drv_button_is_triggered:16
           mov.b       r0l, r0l
           beq         LAB_6a7e:8
           sub.b       r0l, r0l
-          mov.b       r0l, @gCurSubstateZ
-          mov.b       @gCurSubstateY, r0l
+          mov.b       r0l, @ui_substateZ
+          mov.b       @ui_substateY, r0l
           jsr         @game_process_interaction_reward:16
           bra         LAB_6ad6:8
 LAB_6a7e:
-          mov.b       @gCurSubstateZ, r0l
+          mov.b       @ui_substateZ, r0l
           dec.b       r0l
-          mov.b       r0l, @gCurSubstateZ
+          mov.b       r0l, @ui_substateZ
 LAB_6a88:
           mov.b       #H'2, r0l
           jsr         @drv_button_is_triggered:16
@@ -11889,7 +11889,7 @@ LAB_6a88:
           jsr         @drv_sound_play:16
           jsr         @ui_clear_substate_y:16
           mov.b       #H'2, r0l
-          mov.b       r0l, @menu_cursor
+          mov.b       r0l, @ui_menuCursor
           bra         LAB_6ad0:8
 LAB_6aa4:
           mov.b       #H'4, r0l
@@ -11897,7 +11897,7 @@ LAB_6aa4:
           mov.b       r0l, r0l
           beq         LAB_6ab8:8
           mov.b       #H'5, r0l
-          mov.b       r0l, @menu_cursor
+          mov.b       r0l, @ui_menuCursor
           sub.b       r0l, r0l
           bra         LAB_6ac8:8
 LAB_6ab8:
@@ -11906,7 +11906,7 @@ LAB_6ab8:
           mov.b       r0l, r0l
           beq         LAB_6ad6:8
           sub.b       r0l, r0l
-          mov.b       r0l, @menu_cursor
+          mov.b       r0l, @ui_menuCursor
 LAB_6ac8:
           jsr         @drv_sound_play:16
           jsr         @ui_clear_substate_y:16
@@ -11979,18 +11979,18 @@ sys_enter_standby:
           mov.b       @DAT_f7d1, r0l
           bld         #H'2, r0l
           bcs         LAB_6b6a:8
-          mov.b       @gCurSubstateA, r0l
+          mov.b       @ui_substateA, r0l
           add.b       #H'FC, r0l
-          mov.b       r0l, @gCurSubstateA
+          mov.b       r0l, @ui_substateA
           cmp.b       #H'20, r0l
           bhi         LAB_6b84:8
           mov.b       #H'20, r0l
-          mov.b       r0l, @gCurSubstateA
+          mov.b       r0l, @ui_substateA
           bra         LAB_6b84:8
 LAB_6b6a:
-          mov.b       @gCurSubstateA, r0l
+          mov.b       @ui_substateA, r0l
           add.b       #H'4, r0l
-          mov.b       r0l, @gCurSubstateA
+          mov.b       r0l, @ui_substateA
           cmp.b       #H'60, r0l
           bcs         LAB_6b84:8
           mov.w       #DAT_f7d1, r0
@@ -11999,7 +11999,7 @@ LAB_6b6a:
 LAB_6b84:
           mov.b       @sys_statusFlags, r0l
           bpl         LAB_6b9e
-          mov.b       @gCurSubstateA, r0l
+          mov.b       @ui_substateA, r0l
           cmp.b       #H'20, r0l
           bhi         LAB_6b9e:8
           mov.w       #DAT_f7d1, r0
@@ -12014,35 +12014,35 @@ LAB_6b9e:
 ; Called by: ui_render_home_route
 ; =============================================================================
 sys_update_standby_state:
-          mov.b       @animTick, r0l
+          mov.b       @ui_animationTick, r0l
           and.b       #H'3, r0l
           bne         LAB_6bf6:8
           mov.b       @DAT_f7d1, r0l
           bld         #H'2, r0l
           bcs         LAB_6bc2:8
-          mov.b       @gCurSubstateA, r0l
+          mov.b       @ui_substateA, r0l
           add.b       #H'FC, r0l
-          mov.b       r0l, @gCurSubstateA
+          mov.b       r0l, @ui_substateA
           cmp.b       #H'20, r0l
           bhi         LAB_6bde:8
           mov.b       #H'20, r0l
           bra         LAB_6bd2:8
 LAB_6bc2:
-          mov.b       @gCurSubstateA, r0l
+          mov.b       @ui_substateA, r0l
           add.b       #H'4, r0l
-          mov.b       r0l, @gCurSubstateA
+          mov.b       r0l, @ui_substateA
           cmp.b       #H'40, r0l
           bcs         LAB_6bde:8
           mov.b       #H'40, r0l
 LAB_6bd2:
-          mov.b       r0l, @gCurSubstateA
+          mov.b       r0l, @ui_substateA
           mov.w       #DAT_f7d1, r0
           bnot        #H'2, @r0
 LAB_6bde:
           mov.b       @sys_statusFlags, r0l
           bmi         LAB_6bf6
           mov.b       #H'68, r0l
-          mov.b       r0l, @gCurSubstateA
+          mov.b       r0l, @ui_substateA
           mov.w       #DAT_f7d1, r0
           bclr        #H'1, @r0
           bclr        #H'2, @r0
@@ -12055,9 +12055,9 @@ LAB_6bf6:
 ; Called by: ui_dispatch_draw
 ; =============================================================================
 ui_render_home_route:
-          mov.b       @gCurSubstateZ, r0l
+          mov.b       @ui_substateZ, r0l
           beq         LAB_6c0e:8
-          mov.b       @gCurSubstateY, r0l
+          mov.b       @ui_substateY, r0l
           extu.w      r0
           dec.w       #1, r0
           mov.b       @(ROUTE_ICON_INDICES,er0), r0l
@@ -12067,7 +12067,7 @@ LAB_6c0e:
           mov.b       @sys_walkerFlags, r0l
           bld         #H'2, r0l
           bcc         LAB_6c86:8
-          mov.b       @gCurSubstateA, r6l
+          mov.b       @ui_substateA, r6l
           mov.b       @DAT_f7d1, r0l
           bld         #H'1, r0l
           bcs         LAB_6c30:8
@@ -12094,12 +12094,12 @@ LAB_6c3a:
           bld         #H'0, r0l
           bcs         LAB_6c6a:8
           mov.b       #H'18, r0h
-          mov.b       @gCurSubstateA, r0l
+          mov.b       @ui_substateA, r0l
           jsr         @gfx_draw_own_pokemon_small_flipped:16
           bra         LAB_6c74:8
 LAB_6c6a:
           mov.b       #H'18, r0h
-          mov.b       @gCurSubstateA, r0l
+          mov.b       @ui_substateA, r0l
 LAB_6c70:
           jsr         @gfx_draw_own_pokemon_small:16
 LAB_6c74:
@@ -12120,8 +12120,8 @@ LAB_6c86:
 ; =============================================================================
 ui_reset_settings_substate:
           sub.b       r0l, r0l
-          mov.b       r0l, @gCurSubstateY
-          mov.b       r0l, @gCurSubstateZ
+          mov.b       r0l, @ui_substateY
+          mov.b       r0l, @ui_substateZ
           rts
 ; =============================================================================
 ; Function: ui_handle_settings_main_page
@@ -12134,7 +12134,7 @@ ui_handle_settings_main_page:
           jsr         @drv_button_is_triggered:16
           mov.b       r0l, r0l
           beq         LAB_6cc2:8
-          mov.b       @gCurSubstateZ, r0l
+          mov.b       @ui_substateZ, r0l
           bne         LAB_6cb6:8
           mov.b       #H'1, r0l
           jsr         @drv_sound_play:16
@@ -12144,7 +12144,7 @@ ui_handle_settings_main_page:
           bra         LAB_6ce0:8
 LAB_6cb6:
           sub.b       r0l, r0l
-          mov.b       r0l, @gCurSubstateZ
+          mov.b       r0l, @ui_substateZ
           mov.b       #H'2, r0l
           jsr         @drv_sound_play:16
 LAB_6cc2:
@@ -12152,11 +12152,11 @@ LAB_6cc2:
           jsr         @drv_button_is_triggered:16
           mov.b       r0l, r0l
           beq         LAB_6ce0:8
-          mov.b       @gCurSubstateZ, r0l
+          mov.b       @ui_substateZ, r0l
           cmp.b       #H'1, r0l
           beq         LAB_6ce0:8
           mov.b       #H'1, r0l
-          mov.b       r0l, @gCurSubstateZ
+          mov.b       r0l, @ui_substateZ
           mov.b       #H'2, r0l
           jsr         @drv_sound_play:16
 LAB_6ce0:
@@ -12291,7 +12291,7 @@ LAB_6dfa:
 ; Called by: ui_dispatch_event
 ; =============================================================================
 ui_handle_settings:
-          mov.b       @gCurSubstateY, r0l
+          mov.b       @ui_substateY, r0l
           beq         LAB_6e0c:8
           cmp.b       #H'1, r0l
           beq         LAB_6e12:8
@@ -12311,13 +12311,13 @@ LAB_6e1c:
           jsr         @drv_button_is_triggered:16
           mov.b       r0l, r0l
           beq         LAB_6e60:8
-          mov.b       @gCurSubstateY, r0l
+          mov.b       @ui_substateY, r0l
           bne         LAB_6e3e:8
           sub.b       r0l, r0l
           jsr         @drv_sound_play:16
-          mov.b       @gCurSubstateZ, r0l
+          mov.b       @ui_substateZ, r0l
           add.b       #H'1, r0l
-          mov.b       r0l, @gCurSubstateY
+          mov.b       r0l, @ui_substateY
           bra         LAB_6e60:8
 LAB_6e3e:
           sub.b       r0l, r0l
@@ -12381,11 +12381,11 @@ ui_render_settings:
           mov.w       #H'C0, r1
           mov.w       r6, e0
           jsr         @r3
-          mov.b       @gCurSubstateZ, r0l
+          mov.b       @ui_substateZ, r0l
           mov.b       #H'30, r0h
           mulxu.b     r0h, r0
           mov.b       r0l, r2l
-          mov.b       @gCurSubstateY, r0l
+          mov.b       @ui_substateY, r0l
           beq         LAB_6efe:8
           cmp.b       #H'1, r0l
           beq         LAB_6f1e:8
@@ -12393,7 +12393,7 @@ ui_render_settings:
           bne         LAB_7018:16
           jmp         @LAB_6fa0:16
 LAB_6efe:
-          mov.b       @animTick, r0l
+          mov.b       @ui_animationTick, r0l
           and.b       #H'1, r0l
           extu.w      r0
           add.w       #H'9, r0
@@ -12419,7 +12419,7 @@ LAB_6f1e:
           mov.b       r0h, r0l
           mov.b       #H'20, r0h
           mulxu.b     r0h, r0
-          mov.b       @animTick, r0h
+          mov.b       @ui_animationTick, r0h
           and.b       #H'1, r0h
           mov.b       r0h, r1l
           extu.w      r1
@@ -12465,7 +12465,7 @@ LAB_6fa0:
           mov.b       #H'8, r0h
           mulxu.b     r0h, r0
           add.b       #H'8, r0l
-          mov.b       @animTick, r0h
+          mov.b       @ui_animationTick, r0h
           and.b       #H'1, r0h
           mov.b       r0h, r1l
           extu.w      r1
@@ -12481,7 +12481,7 @@ LAB_6fa0:
           mov.w       r6, r0
           add.w       #H'B0, r0
           mov.w       r0, e0
-          mov.b       @gCurSubstateZ, r0l
+          mov.b       @ui_substateZ, r0l
           mov.b       #H'30, r0h
           mulxu.b     r0h, r0
           mov.b       #H'8, r1h
@@ -12569,7 +12569,7 @@ LAB_7072:
           inc.w       #1, e0
           cmp.w       #H'20, e0
           bcs         LAB_7072:8
-          mov.b       @animTick, r0l
+          mov.b       @ui_animationTick, r0l
           extu.w      r0
           shar.w      r0
           shar.w      r0
@@ -12679,9 +12679,9 @@ LAB_7152:
           mov.b       r1l, r1h
           mov.w       #LAB_1020, r0
           jsr         @drv_lcd_blit:16
-          mov.b       @gCurSubstateZ, r0l
+          mov.b       @ui_substateZ, r0l
           inc.b       r0l
-          mov.b       r0l, @gCurSubstateZ
+          mov.b       r0l, @ui_substateZ
           cmp.b       #H'8, r0l
           bls         LAB_71a2:8
           jsr         @ui_reset_substate:16
@@ -12874,7 +12874,7 @@ switchD_72ce__default:
 ui_dispatch_event:
           jsr         @sys_prologue_er2_er3_er4_er5_er6:16
           jsr         @sys_get_rng:16
-          mov.b       @currentlyActiveView, r0l
+          mov.b       @ui_activeView, r0l
           cmp.b       #H'17, r0l
           bhi         switchD_7364__caseD_5:16
           extu.w      r0
@@ -12950,9 +12950,9 @@ switchD_7364__caseD_16:
 switchD_7364__caseD_17:
           jsr         @sys_noop:16
 switchD_7364__caseD_5:
-          mov.b       @DAT_f7ab, r0l
+          mov.b       @ui_dispatchTickCounter, r0l
           inc.b       r0l
-          mov.b       r0l, @DAT_f7ab
+          mov.b       r0l, @ui_dispatchTickCounter
           jmp         @sys_epilogue_er2_er3_er4_er5_er6:16
 ; =============================================================================
 ; Function: ui_dispatch_draw
@@ -12962,7 +12962,7 @@ switchD_7364__caseD_5:
 ; =============================================================================
 ui_dispatch_draw:
           jsr         @sys_prologue_er2_er3_er4_er5_er6:16
-          mov.b       @currentlyActiveView, r0l
+          mov.b       @ui_activeView, r0l
           cmp.b       #H'18, r0l
           bhi         switchD_741e__caseD_5:16
           extu.w      r0
@@ -13326,7 +13326,7 @@ LAB_772c:
           extu.w      r0
           mov.b       @(H'5,er5), r1l
           mov.b       r1l, @(ACCEL_SAMPLES_Z,er0)
-          mov.b       @currentlyActiveView, r0l
+          mov.b       @ui_activeView, r0l
           cmp.b       #H'17, r0l
           bne         LAB_7876:16
           mov.b       @ped_sampleCount, r4l
@@ -13497,9 +13497,9 @@ LAB_78fe:
           jsr         @drv_lcd_clear_pages:16
           jsr         @ui_dispatch_draw:16
           jsr         @drv_lcd_flip:16
-          mov.b       @animTick, r0l
+          mov.b       @ui_animationTick, r0l
           inc.b       r0l
-          mov.b       r0l, @animTick
+          mov.b       r0l, @ui_animationTick
 LAB_7928:
           mov.w       #sys_statusFlags, r0
           bclr        #H'0, @r0
@@ -13572,9 +13572,9 @@ LAB_79b0:
           jsr         @drv_lcd_clear_pages:16
           jsr         @ui_dispatch_draw:16
           jsr         @drv_lcd_flip:16
-          mov.b       @animTick, r0l
+          mov.b       @ui_animationTick, r0l
           inc.b       r0l
-          mov.b       r0l, @animTick
+          mov.b       r0l, @ui_animationTick
 LAB_79e6:
           mov.w       #sys_statusFlags, r0
           bclr        #H'0, @r0
@@ -15791,7 +15791,7 @@ LAB_8bd0:
 ; =============================================================================
 ui_inventory_cursor_next:
           mov.w       r0, e1
-          mov.b       @gCurSubstateY, r1l
+          mov.b       @ui_substateY, r1l
           cmp.b       #H'9, r1l
           beq         LAB_8bfe:8
           inc.b       r1l
@@ -15808,7 +15808,7 @@ LAB_8be8:
 LAB_8bf0:
           and.w       e1, e0
           beq         LAB_8bfa:8
-          mov.b       r1l, @gCurSubstateY
+          mov.b       r1l, @ui_substateY
           bra         LAB_8c0a:8
 LAB_8bfa:
           cmp.b       #H'9, r1l
@@ -15837,16 +15837,16 @@ ui_inventory_cursor_find_present:
           push.w      r5
           mov.w       #H'A, e6
           mov.w       r0, r5
-          mov.b       @gCurSubstateY, r1l
+          mov.b       @ui_substateY, r1l
           extu.w      r1
           inc.w       #1, r1
           exts.l      er1
           divxs.w     e6, er1
           mov.w       e1, r1
-          mov.b       r1l, @gCurSubstateY
+          mov.b       r1l, @ui_substateY
           sub.b       r1l, r1l
 LAB_8c2e:
-          mov.b       @gCurSubstateY, r0l
+          mov.b       @ui_substateY, r0l
           mov.w       #H'1, e0
 LAB_8c36:
           dec.b       r0l
@@ -15856,13 +15856,13 @@ LAB_8c36:
 LAB_8c3e:
           and.w       r5, e0
           bne         LAB_8c5c:8
-          mov.b       @gCurSubstateY, r0l
+          mov.b       @ui_substateY, r0l
           extu.w      r0
           inc.w       #1, r0
           exts.l      er0
           divxs.w     e6, er0
           mov.w       e0, r0
-          mov.b       r0l, @gCurSubstateY
+          mov.b       r0l, @ui_substateY
           inc.b       r1l
           cmp.b       #H'A, r1l
           bcs         LAB_8c2e:8
@@ -15878,15 +15878,15 @@ LAB_8c5c:
 ; =============================================================================
 ui_inventory_cursor_prev:
           mov.w       r0, e1
-          mov.b       @gCurSubstateY, r1l
+          mov.b       @ui_substateY, r1l
           beq         LAB_8c90:8
           mov.b       r1l, r0l
           dec.b       r0l
-          mov.b       r0l, @gCurSubstateY
+          mov.b       r0l, @ui_substateY
           sub.b       r1l, r1l
           bra         LAB_8c9c:8
 LAB_8c76:
-          mov.b       @gCurSubstateY, r0l
+          mov.b       @ui_substateY, r0l
           mov.w       #H'1, e0
 LAB_8c7e:
           dec.b       r0l
@@ -15896,14 +15896,14 @@ LAB_8c7e:
 LAB_8c86:
           and.w       e1, e0
           bne         LAB_8ca0:8
-          mov.b       @gCurSubstateY, r0l
+          mov.b       @ui_substateY, r0l
           bne         LAB_8c94:8
 LAB_8c90:
           mov.b       #H'1, r0l
           bra         LAB_8ca2:8
 LAB_8c94:
           dec.b       r0l
-          mov.b       r0l, @gCurSubstateY
+          mov.b       r0l, @ui_substateY
           inc.b       r1l
 LAB_8c9c:
           cmp.b       #H'A, r1l
@@ -15921,16 +15921,16 @@ LAB_8ca2:
 ui_inventory_cursor_back_wrap:
           mov.w       #H'A, e6
           mov.w       r0, r5
-          mov.b       @gCurSubstateY, r1l
+          mov.b       @ui_substateY, r1l
           extu.w      r1
           add.w       #H'9, r1
           exts.l      er1
           divxs.w     e6, er1
           mov.w       e1, r1
-          mov.b       r1l, @gCurSubstateY
+          mov.b       r1l, @ui_substateY
           sub.b       r1l, r1l
 LAB_8cc2:
-          mov.b       @gCurSubstateY, r0l
+          mov.b       @ui_substateY, r0l
           mov.w       #H'1, e0
 LAB_8cca:
           dec.b       r0l
@@ -15940,13 +15940,13 @@ LAB_8cca:
 LAB_8cd2:
           and.w       r5, e0
           bne         LAB_8cf2:8
-          mov.b       @gCurSubstateY, r0l
+          mov.b       @ui_substateY, r0l
           extu.w      r0
           add.w       #H'9, r0
           exts.l      er0
           divxs.w     e6, er0
           mov.w       e0, r0
-          mov.b       r0l, @gCurSubstateY
+          mov.b       r0l, @ui_substateY
           inc.b       r1l
           cmp.b       #H'A, r1l
           bcs         LAB_8cc2:8
@@ -15960,8 +15960,8 @@ LAB_8cf2:
 ; =============================================================================
 ui_inventory_cursor_reset:
           mov.b       #H'9, r0l
-          mov.b       r0l, @gCurSubstateY
-          mov.w       @gCurSubstateA, r0
+          mov.b       r0l, @ui_substateY
+          mov.w       @ui_substateA, r0
           jmp         @ui_inventory_cursor_find_present:16
 ; =============================================================================
 ; Function: ui_handle_inventory_pokemon
@@ -15974,7 +15974,7 @@ ui_handle_inventory_pokemon:
           jsr         @drv_button_is_triggered:16
           mov.b       r0l, r0l
           beq         LAB_8d2a:8
-          mov.w       @gCurSubstateA, r0
+          mov.w       @ui_substateA, r0
           jsr         @ui_inventory_cursor_prev:16
           mov.b       r0l, r0l
           beq         LAB_8d24:8
@@ -15990,7 +15990,7 @@ LAB_8d2a:
           jsr         @drv_button_is_triggered:16
           mov.b       r0l, r0l
           beq         LAB_8d5e:8
-          mov.w       @gCurSubstateA, r0
+          mov.w       @ui_substateA, r0
           jsr         @ui_inventory_cursor_next:16
           mov.b       r0l, r0l
           beq         LAB_8d58:8
@@ -16050,7 +16050,7 @@ ui_render_inventory_pokemon:
           mov.w       #H'1050, r1
           mov.w       #H'8, r0
           jsr         @drv_lcd_blit:16
-          mov.b       @gCurSubstateY, r4l
+          mov.b       @ui_substateY, r4l
           mov.b       r4l, r0l
           cmp.b       #H'9, r0l
           bhi         switchD_8dd2__default:16
@@ -16111,7 +16111,7 @@ LAB_8e4e:
           blt         LAB_8e20:8
           jmp         @switchD_8dd2__default:16
 switchD_8dd2__caseD_4:
-          mov.b       @animTick, r0l
+          mov.b       @ui_animationTick, r0l
           and.b       #H'1, r0l
           mov.b       #H'C0, r0h
           mulxu.b     r0h, r0
@@ -16146,7 +16146,7 @@ switchD_8dd2__caseD_6:
           mov.w       #H'183C, r0
           jsr         @gfx_draw_treasure_chest_icon:16
           mov.w       r7, e0
-          mov.b       @gCurSubstateY, r1l
+          mov.b       @ui_substateY, r1l
           extu.w      r1
           sub.w       #H'6, r1
           shll.w      r1
@@ -16196,7 +16196,7 @@ switchD_8dd2__caseD_9:
           mov.w       #H'3000, r0
           jsr         @gfx_draw_event_item_name:16
 switchD_8dd2__default:
-          mov.b       @animTick, r4l
+          mov.b       @ui_animationTick, r4l
           and.b       #H'1, r4l
           extu.w      r4
           add.w       #H'3, r4
@@ -16209,7 +16209,7 @@ switchD_8dd2__default:
           mov.w       e5, r1
           mov.w       r6, e0
           jsr         @drv_eeprom_read_block:16
-          mov.b       @gCurSubstateY, r4h
+          mov.b       @ui_substateY, r4h
           mov.b       r4h, r0l
           extu.w      r0
           exts.l      er0
@@ -16224,7 +16224,7 @@ switchD_8dd2__default:
           bne         LAB_8f94:8
           add.b       #H'F8, r4l
 LAB_8f94:
-          mov.b       @gCurSubstateY, r0l
+          mov.b       @ui_substateY, r0l
           extu.w      r0
           exts.l      er0
           divxs.w     r1, er0
@@ -16261,7 +16261,7 @@ LAB_8fec:
           mov.w       e5, r1
           mov.w       r6, e0
           jsr         @drv_eeprom_read_block:16
-          mov.w       @gCurSubstateA, r0
+          mov.w       @ui_substateA, r0
           btst        #H'0, r0l
           beq         LAB_9012:8
           mov.w       r6, e0
@@ -16281,7 +16281,7 @@ LAB_901a:
           shll.w      r0
           bra         LAB_901a:8
 LAB_9022:
-          mov.w       @gCurSubstateA, e0
+          mov.w       @ui_substateA, e0
           and.w       r0, e0
           beq         LAB_903e:8
           mov.w       e6, r0
@@ -16313,7 +16313,7 @@ LAB_905e:
           shll.w      r0
           bra         LAB_905e:8
 LAB_9066:
-          mov.w       @gCurSubstateA, e0
+          mov.w       @ui_substateA, e0
           and.w       r0, e0
           beq         LAB_9082:8
           mov.w       e6, r0
@@ -16329,7 +16329,7 @@ LAB_9082:
           inc.w       #1, e6
           cmp.w       #H'3, e6
           blt         LAB_9058:8
-          mov.w       @gCurSubstateA, r0
+          mov.w       @ui_substateA, r0
           btst        #H'4, r0l
           beq         LAB_90b0:8
           mov.w       #H'1F0, r4
@@ -16344,7 +16344,7 @@ LAB_9082:
           mov.w       #H'1830, r0
           jsr         @drv_lcd_blit:16
 LAB_90b0:
-          mov.w       @gCurSubstateA, r0
+          mov.w       @ui_substateA, r0
           btst        #H'1, r0h
           beq         LAB_90d6:8
           mov.w       #H'218, r4
@@ -16359,7 +16359,7 @@ LAB_90b0:
           mov.w       #H'2830, r0
           jsr         @drv_lcd_blit:16
 LAB_90d6:
-          mov.w       @gCurSubstateA, r0
+          mov.w       @ui_substateA, r0
           btst        #H'5, r0l
           beq         LAB_90fc:8
           mov.w       #H'228, r4
@@ -16386,7 +16386,7 @@ LAB_90fc:
 ; =============================================================================
 ui_inventory_jump_to_items:
           mov.b       #H'9, r0l
-          mov.b       r0l, @gCurSubstateY
+          mov.b       r0l, @ui_substateY
           mov.w       @accelXPos, r0
           jmp         @ui_inventory_cursor_find_present:16
 ; =============================================================================
@@ -16404,11 +16404,11 @@ ui_handle_inventory_items:
           jsr         @ui_inventory_cursor_prev:16
           mov.b       r0l, r0l
           beq         LAB_914a:8
-          mov.w       @gCurSubstateA, r0
+          mov.w       @ui_substateA, r0
           beq         LAB_9166:8
           sub.b       r0l, r0l
-          mov.b       r0l, @gCurSubstateY
-          mov.w       @gCurSubstateA, r0
+          mov.b       r0l, @ui_substateY
+          mov.w       @ui_substateA, r0
           jsr         @ui_inventory_cursor_back_wrap:16
           mov.b       #H'A, r0l
           jsr         @ui_set_view:16
@@ -16490,7 +16490,7 @@ ui_render_inventory_items:
           mov.b       r1h, r0h
           mov.b       #H'3C, r0l
           jsr         @r3
-          mov.b       @animTick, r0l
+          mov.b       @ui_animationTick, r0l
           and.b       #H'1, r0l
           extu.w      r0
           add.w       #H'3, r0
@@ -16503,7 +16503,7 @@ ui_render_inventory_items:
           mov.w       #H'10, r1
           mov.w       r5, e0
           jsr         @r4
-          mov.b       @gCurSubstateY, r0l
+          mov.b       @ui_substateY, r0l
           extu.w      r0
           mov.w       r0, e6
           exts.l      er0
@@ -16584,7 +16584,7 @@ LAB_92be:
           cmp.w       #H'5, r6
           blt         LAB_9296:8
           mov.w       r7, e0
-          mov.b       @gCurSubstateY, r1l
+          mov.b       @ui_substateY, r1l
           extu.w      r1
           shll.w      r1
           shll.w      r1
@@ -16803,54 +16803,54 @@ LAB_947a:
           mov.w       #DAT_f7e6, r0
           jsr         @game_detect_steps_fft:16
           mov.l       er0, er6
-          mov.b       @currentlyActiveView, r1l
+          mov.b       @ui_activeView, r1l
           cmp.b       #H'17, r1l
           bne         LAB_9560:16
-          mov.b       @gCurSubstateA, r0l
+          mov.b       @ui_substateA, r0l
           mov.b       @DAT_f7d8, r0h
           cmp.b       r0h, r0l
           bcc         LAB_952e:8
           mov.l       er6, er6
           beq         LAB_9560:16
           inc.b       r0l
-          mov.b       r0l, @gCurSubstateA
+          mov.b       r0l, @ui_substateA
           mov.w       @accelXPos, r0
           mov.w       @ped_axisStepThresholdLo, e0
           cmp.w       e0, r0
           bcc         LAB_94e2:8
           mov.b       #H'18, r0l
-          mov.b       r0l, @currentlyActiveView
+          mov.b       r0l, @ui_activeView
 LAB_94e2:
           mov.w       @accelYPos, r0
           cmp.w       e0, r0
           bcc         LAB_94f0:8
           mov.b       #H'18, r0l
-          mov.b       r0l, @currentlyActiveView
+          mov.b       r0l, @ui_activeView
 LAB_94f0:
           mov.w       @accelZPos, r0
           cmp.w       e0, r0
           bcc         LAB_94fe:8
           mov.b       #H'18, r0l
-          mov.b       r0l, @currentlyActiveView
+          mov.b       r0l, @ui_activeView
 LAB_94fe:
           mov.w       @accelXPos, r0
           mov.w       @ped_axisStepThresholdHi, e0
           cmp.w       e0, r0
           bls         LAB_9510:8
           mov.b       #H'18, r0l
-          mov.b       r0l, @currentlyActiveView
+          mov.b       r0l, @ui_activeView
 LAB_9510:
           mov.w       @accelYPos, r0
           cmp.w       e0, r0
           bls         LAB_951e:8
           mov.b       #H'18, r0l
-          mov.b       r0l, @currentlyActiveView
+          mov.b       r0l, @ui_activeView
 LAB_951e:
           mov.w       @accelZPos, r0
           cmp.w       e0, r0
           bls         LAB_9560:8
           mov.b       #H'18, r0l
-          mov.b       r0l, @currentlyActiveView
+          mov.b       r0l, @ui_activeView
           bra         LAB_9560:8
 LAB_952e:
           mov.b       @DAT_f7d1, r0l
@@ -17063,7 +17063,7 @@ LAB_9748:
 ; =============================================================================
 ui_clear_substate_y:
           sub.b       r0l, r0l
-          mov.b       r0l, @gCurSubstateY
+          mov.b       r0l, @ui_substateY
           rts
 ; =============================================================================
 ; Function: ui_handle_main_menu
@@ -17073,14 +17073,14 @@ ui_clear_substate_y:
 ; =============================================================================
 ui_handle_main_menu:
           subs        #4, er7
-          mov.b       @gCurSubstateY, r0l
+          mov.b       @ui_substateY, r0l
           beq         LAB_9774:8
           mov.b       #H'E, r0l
           jsr         @drv_button_is_triggered:16
           mov.b       r0l, r0l
           beq         LAB_992c:16
           sub.b       r0l, r0l
-          mov.b       r0l, @gCurSubstateY
+          mov.b       r0l, @ui_substateY
           jmp         @LAB_9928:16
 LAB_9774:
           mov.b       #H'2, r0l
@@ -17089,7 +17089,7 @@ LAB_9774:
           beq         LAB_98be:16
           mov.w       @save_watts, r1
           mov.w       #MENU_ITEM_COSTS, r6
-          mov.b       @menu_cursor, r0l
+          mov.b       @ui_menuCursor, r0l
           extu.w      r0
           add.w       r6, r0
           mov.b       @er0, r0l
@@ -17099,7 +17099,7 @@ LAB_9774:
           mov.b       #H'1, r0l
           jmp         @LAB_98a8:16
 LAB_979e:
-          mov.b       @menu_cursor, r0l
+          mov.b       @ui_menuCursor, r0l
           cmp.b       #H'5, r0l
           bhi         LAB_98be:16
           extu.w      r0
@@ -17114,7 +17114,7 @@ switchD_97b0__caseD_0:
           mov.b       #H'2, r0l
           jmp         @LAB_98a8:16
 LAB_97c0:
-          mov.b       @menu_cursor, r0l
+          mov.b       @ui_menuCursor, r0l
           extu.w      r0
           add.w       r6, r0
           mov.b       @er0, r0l
@@ -17125,7 +17125,7 @@ LAB_97c0:
           mov.w       r0, @save_watts
           bra         LAB_97ee:8
 LAB_97d8:
-          mov.b       @menu_cursor, r0l
+          mov.b       @ui_menuCursor, r0l
           extu.w      r0
           add.w       r0, r6
           mov.b       @er6, r0l
@@ -17143,7 +17143,7 @@ LAB_97ee:
           jsr         @game_pokeradar_init:16
           jmp         @LAB_98ba:16
 switchD_97b0__caseD_1:
-          mov.b       @menu_cursor, r0l
+          mov.b       @ui_menuCursor, r0l
           extu.w      r0
           add.w       r6, r0
           mov.b       @er0, r0l
@@ -17154,7 +17154,7 @@ switchD_97b0__caseD_1:
           mov.w       r0, @save_watts
           bra         LAB_983c:8
 LAB_9826:
-          mov.b       @menu_cursor, r0l
+          mov.b       @ui_menuCursor, r0l
           extu.w      r0
           add.w       r0, r6
           mov.b       @er6, r0l
@@ -17184,7 +17184,7 @@ switchD_97b0__caseD_4:
           jsr         @ui_load_inventory_mask:16
           mov.w       @er6, r0
           beq         LAB_988a:8
-          mov.w       r0, @gCurSubstateA
+          mov.w       r0, @ui_substateA
           mov.w       @(H'2,er6), r6
           mov.w       r6, @accelXPos
           jsr         @ui_inventory_cursor_reset:16
@@ -17194,7 +17194,7 @@ LAB_988a:
           mov.w       @(H'2,er6), r0
           beq         LAB_98a6:8
           mov.w       @er6, r0
-          mov.w       r0, @gCurSubstateA
+          mov.w       r0, @ui_substateA
           mov.w       @(H'2,er6), r6
           mov.w       r6, @accelXPos
           jsr         @ui_inventory_jump_to_items:16
@@ -17203,7 +17203,7 @@ LAB_988a:
 LAB_98a6:
           mov.b       #H'3, r0l
 LAB_98a8:
-          mov.b       r0l, @gCurSubstateY
+          mov.b       r0l, @ui_substateY
           mov.b       #H'4, r0l
           bra         LAB_9928:8
 switchD_97b0__caseD_5:
@@ -17219,16 +17219,16 @@ LAB_98be:
           jsr         @drv_button_is_triggered:16
           mov.b       r0l, r0l
           beq         LAB_98ee:8
-          mov.b       @menu_cursor, r0l
+          mov.b       @ui_menuCursor, r0l
           beq         LAB_9900:8
-          mov.b       @menu_cursor, r0l
+          mov.b       @ui_menuCursor, r0l
           extu.w      r0
           add.w       #H'5, r0
           exts.l      er0
           mov.w       #H'6, r1
           divxs.w     r1, er0
           mov.w       e0, r0
-          mov.b       r0l, @menu_cursor
+          mov.b       r0l, @ui_menuCursor
           mov.b       #H'2, r0l
           jsr         @drv_sound_play:16
 LAB_98ee:
@@ -17236,7 +17236,7 @@ LAB_98ee:
           jsr         @drv_button_is_triggered:16
           mov.b       r0l, r0l
           beq         LAB_992c:8
-          mov.b       @menu_cursor, r0l
+          mov.b       @ui_menuCursor, r0l
           cmp.b       #H'5, r0l
           bne         LAB_990e:8
 LAB_9900:
@@ -17246,14 +17246,14 @@ LAB_9900:
           mov.b       #H'1, r0l
           bra         LAB_9928:8
 LAB_990e:
-          mov.b       @menu_cursor, r0l
+          mov.b       @ui_menuCursor, r0l
           extu.w      r0
           inc.w       #1, r0
           exts.l      er0
           mov.w       #H'6, r1
           divxs.w     r1, er0
           mov.w       e0, r0
-          mov.b       r0l, @menu_cursor
+          mov.b       r0l, @ui_menuCursor
           mov.b       #H'2, r0l
 LAB_9928:
           jsr         @drv_sound_play:16
@@ -17276,7 +17276,7 @@ ui_render_main_menu:
           mov.w       #H'80, r0
           jsr         @sbrk:16
           mov.w       r0, r5
-          mov.b       @menu_cursor, r3l
+          mov.b       @ui_menuCursor, r3l
           extu.w      r3
           mulxu.w     e6, er3
           mov.w       #H'690, r0
@@ -17301,11 +17301,11 @@ LAB_997e:
           inc.w       #1, e0
           cmp.w       #H'80, e0
           bcs         LAB_997e:8
-          mov.b       @menu_cursor, r0l
+          mov.b       @ui_menuCursor, r0l
           extu.w      r0
           cmp.w       r0, e6
           bne         LAB_99dc:8
-          mov.b       @animTick, r3l
+          mov.b       @ui_animationTick, r3l
           and.b       #H'1, r3l
           extu.w      r3
           add.w       #H'3, r3
@@ -17365,7 +17365,7 @@ LAB_99dc:
           inc.w       #1, e6
           cmp.w       #H'6, e6
           blt         LAB_997a:16
-          mov.b       @gCurSubstateY, r0l
+          mov.b       @ui_substateY, r0l
           beq         LAB_9a4a:8
           cmp.b       #H'1, r0l
           beq         LAB_9adc:16
@@ -17382,7 +17382,7 @@ LAB_9a4a:
           mov.w       #H'3048, r0
           jsr         @gfx_draw_numeric_value:16
           adds        #2, er7
-          mov.b       @menu_cursor, r0l
+          mov.b       @ui_menuCursor, r0l
           beq         LAB_9a6a:8
           cmp.b       #H'1, r0l
           bne         LAB_9a86:8
@@ -17413,7 +17413,7 @@ LAB_9a86:
           mov.w       #H'1010, r1
           mov.w       #H'3050, r0
           jsr         @drv_lcd_blit:16
-          mov.b       @menu_cursor, r0l
+          mov.b       @ui_menuCursor, r0l
           cmp.b       #H'2, r0l
           bcc         LAB_9afc:8
           mov.w       r6, e0
@@ -17587,7 +17587,7 @@ drv_button_is_triggered:
 ; =============================================================================
 game_roll_radar_encounter:
           sub.b       r0l, r0l
-          mov.b       r0l, @gCurSubstateY
+          mov.b       r0l, @ui_substateY
           mov.b       @RamCache_settingsByte, r0l
           bld         #H'0, r0l
           bcc         LAB_9cea:16
@@ -17634,7 +17634,7 @@ game_roll_radar_encounter:
           cmp.l       er1, er0
           bls         LAB_9cea:8
           mov.b       #H'4, r0l
-          mov.b       r0l, @gCurSubstateY
+          mov.b       r0l, @ui_substateY
           jsr         @sys_get_rng:16
           shlr.w      r0
           shlr.w      r0
@@ -17681,7 +17681,7 @@ LAB_9d32:
           bcc         LAB_9d72:8
           mov.b       r6l, r0l
           add.b       #H'1, r0l
-          mov.b       r0l, @gCurSubstateY
+          mov.b       r0l, @ui_substateY
           jsr         @sys_get_rng:16
           shlr.w      r0
           shlr.w      r0
@@ -17698,7 +17698,7 @@ LAB_9d74:
           cmp.b       #H'3, r6l
           bcs         LAB_9d32:8
           mov.b       #H'3, r0l
-          mov.b       r0l, @gCurSubstateY
+          mov.b       r0l, @ui_substateY
           jsr         @sys_get_rng:16
           shlr.w      r0
           shlr.w      r0
@@ -17718,8 +17718,8 @@ LAB_9d90:
 game_pokeradar_init:
           jsr         @game_roll_radar_encounter:16
           sub.b       r0l, r0l
-          mov.b       r0l, @gCurSubstateZ
-          mov.b       r0l, @gCurSubstateA
+          mov.b       r0l, @ui_substateZ
+          mov.b       r0l, @ui_substateA
           mov.b       r0l, @DAT_f7d1
           mov.b       #H'5, r0h
           mov.b       r0h, @accelYPos
@@ -17747,10 +17747,10 @@ ui_handle_radar_grass_menu:
           jsr         @drv_button_is_triggered:16
           mov.b       r0l, r0l
           beq         LAB_9dea:8
-          mov.b       @gCurSubstateA, r0l
+          mov.b       @ui_substateA, r0l
           add.b       #H'3, r0l
           and.b       #H'3, r0l
-          mov.b       r0l, @gCurSubstateA
+          mov.b       r0l, @ui_substateA
           mov.b       #H'2, r0l
           jsr         @drv_sound_play:16
 LAB_9dea:
@@ -17758,10 +17758,10 @@ LAB_9dea:
           jsr         @drv_button_is_triggered:16
           mov.b       r0l, r0l
           beq         LAB_9e06:8
-          mov.b       @gCurSubstateA, r0l
+          mov.b       @ui_substateA, r0l
           add.b       #H'1, r0l
           and.b       #H'3, r0l
-          mov.b       r0l, @gCurSubstateA
+          mov.b       r0l, @ui_substateA
           mov.b       #H'2, r0l
           jsr         @drv_sound_play:16
 LAB_9e06:
@@ -17771,14 +17771,14 @@ LAB_9e06:
           beq         LAB_9e44:8
           mov.b       @DAT_f7d5, r0l
           beq         LAB_9e44:8
-          mov.b       @gCurSubstateA, r0l
+          mov.b       @ui_substateA, r0l
           mov.b       @dowsing_item_pos, r0h
           cmp.b       r0h, r0l
           bne         LAB_9e36:8
           mov.b       #H'3, r0l
           jsr         @drv_sound_play:16
           mov.b       #H'3, r0l
-          mov.b       r0l, @gCurSubstateZ
+          mov.b       r0l, @ui_substateZ
           mov.b       #H'10, r0l
           mov.b       r0l, @accelZPos
           bra         LAB_9e70:8
@@ -17819,7 +17819,7 @@ ui_handle_pokeradar:
           jsr         @drv_sound_is_playing:16
           mov.b       r0l, r0l
           bne         LAB_9f42:16
-          mov.b       @gCurSubstateZ, r0l
+          mov.b       @ui_substateZ, r0l
           beq         LAB_9e92:8
           cmp.b       #H'1, r0l
           beq         LAB_9e9a:8
@@ -17864,14 +17864,14 @@ LAB_9eca:
           cmp.w       r0, r1
           blt         LAB_9efc:8
           mov.b       #H'1, r0l
-          mov.b       r0l, @gCurSubstateZ
+          mov.b       r0l, @ui_substateZ
           mov.b       r0l, @accelZPos
           sub.b       r0h, r0h
           mov.b       r0h, @DAT_f7d5
           bra         LAB_9f42:8
 LAB_9efc:
           sub.b       r0l, r0l
-          mov.b       r0l, @gCurSubstateZ
+          mov.b       r0l, @ui_substateZ
           jsr         @sys_get_rng:16
           shlr.w      r0
           shlr.w      r0
@@ -17909,7 +17909,7 @@ ui_render_pokeradar:
           mov.w       e5, r0
           jsr         @sbrk:16
           mov.w       r0, r6
-          mov.b       @animTick, r4l
+          mov.b       @ui_animationTick, r4l
           and.b       #H'1, r4l
           extu.w      r4
           add.w       #H'9, r4
@@ -17922,7 +17922,7 @@ ui_render_pokeradar:
           mov.w       r4, r0
           mov.w       #H'10, r1
           jsr         @drv_eeprom_read_block:16
-          mov.b       @gCurSubstateA, r4l
+          mov.b       @ui_substateA, r4l
           mov.b       r4l, r0h
           and.b       #H'1, r0h
           mov.b       #H'18, r0l
@@ -17985,7 +17985,7 @@ LAB_9fbc:
           mov.b       r0l, r0h
           mov.b       @(H'1,er7), r0l
           jsr         @drv_lcd_blit:16
-          mov.b       @gCurSubstateZ, r0l
+          mov.b       @ui_substateZ, r0l
           cmp.b       #H'3, r0l
           beq         LAB_a036:8
           cmp.b       #H'1, r0l
@@ -18026,7 +18026,7 @@ LAB_a040:
           mov.b       r0l, @DAT_f7d5
           bra         LAB_a100:8
 LAB_a082:
-          mov.b       @gCurSubstateY, r0l
+          mov.b       @ui_substateY, r0l
           extu.w      r0
           mov.w       r0, e0
           mov.b       #H'D, r1l
@@ -18089,7 +18089,7 @@ ui_handle_radar_failure:
           mov.b       r0l, r0l
           beq         LAB_a12a:8
           sub.b       r0l, r0l
-          mov.b       r0l, @gCurSubstateA
+          mov.b       r0l, @ui_substateA
           mov.b       #H'4, r0l
           jsr         @drv_sound_play:16
           jsr         @ui_reset_substate:16
@@ -19162,8 +19162,8 @@ LAB_aa34:
 ; =============================================================================
 diag_init_test_mode:
           sub.b       r0l, r0l
-          mov.b       r0l, @gCurSubstateY
-          mov.b       r0l, @gCurSubstateA
+          mov.b       r0l, @ui_substateY
+          mov.b       r0l, @ui_substateA
           mov.w       #H'1, e0
           mov.w       e0, @accelYPos
           mov.b       @RamCache_settingsByte, r0h
@@ -19185,8 +19185,8 @@ ui_handle_factory_test:
           mov.b       r0l, @ped_activityTimer
           mov.b       #H'1E, r0l
           mov.b       r0l, @ped_stepTimer
-          mov.b       @gCurSubstateA, r1l
-          mov.b       @gCurSubstateY, r0l
+          mov.b       @ui_substateA, r1l
+          mov.b       @ui_substateY, r0l
           cmp.b       #H'12, r0l
           bhi         switchD_aa8e__default:16
           extu.w      r0
@@ -19195,11 +19195,11 @@ ui_handle_factory_test:
 switchD_aa8e__switchD:
           jmp         @r0
 switchD_aa8e__caseD_0:
-          mov.b       @gCurSubstateZ, r0l
+          mov.b       @ui_substateZ, r0l
           beq         switchD_aa8e__default:16
-          mov.b       @gCurSubstateY, r0l
+          mov.b       @ui_substateY, r0l
           inc.b       r0l
-          mov.b       r0l, @gCurSubstateY
+          mov.b       r0l, @ui_substateY
           jmp         @switchD_aa8e__default:16
 switchD_aa8e__caseD_1:
           cmp.b       #H'4, r1l
@@ -19208,7 +19208,7 @@ switchD_aa8e__caseD_1:
           jsr         @drv_button_is_triggered:16
           mov.b       r0l, r0l
           bne         LAB_abc0:16
-          mov.b       @gCurSubstateY, r0l
+          mov.b       @ui_substateY, r0l
           cmp.b       #H'1, r0l
           beq         switchD_aa8e__default:16
           mov.b       #H'4, r0l
@@ -19217,7 +19217,7 @@ switchD_aa8e__caseD_1:
           beq         switchD_aa8e__default:16
           mov.w       #FACTORY_TEST_SOUND, r0
           jsr         @drv_sound_set_data:16
-          mov.b       @gCurSubstateY, r0l
+          mov.b       @ui_substateY, r0l
           dec.b       r0l
           jmp         @LAB_abce:16
 switchD_aa8e__caseD_7:
@@ -19306,12 +19306,12 @@ LAB_abc0:
           mov.w       #FACTORY_TEST_SOUND, r0
           jsr         @drv_sound_set_data:16
 LAB_abc8:
-          mov.b       @gCurSubstateY, r0l
+          mov.b       @ui_substateY, r0l
           inc.b       r0l
 LAB_abce:
-          mov.b       r0l, @gCurSubstateY
+          mov.b       r0l, @ui_substateY
           sub.b       r0l, r0l
-          mov.b       r0l, @gCurSubstateA
+          mov.b       r0l, @ui_substateA
           bra         switchD_aa8e__default:8
 switchD_aa8e__caseD_12:
           cmp.b       #H'4, r1l
@@ -19334,7 +19334,7 @@ LAB_abfe:
           bcc         LAB_abfe:8
           bset        #H'0, @PDR1
           mov.b       #H'17, r0l
-          mov.b       r0l, @currentlyActiveView
+          mov.b       r0l, @ui_activeView
           jsr         @sys_init_accel_debug:16
           mov.w       #FACTORY_TEST_SOUND, r0
           jsr         @drv_sound_set_data:16
@@ -19453,7 +19453,7 @@ LAB_acf8:
 ui_render_factory_test:
           sub.w       #H'6, r7
           mov.w       #gfx_draw_string, r5
-          mov.b       @gCurSubstateY, r0l
+          mov.b       @ui_substateY, r0l
           cmp.b       #H'12, r0l
           bhi         switchD_ad20__caseD_d:16
           extu.w      r0
@@ -19462,7 +19462,7 @@ ui_render_factory_test:
 switchD_ad20__switchD:
           jmp         @r0
 switchD_ad20__caseD_0:
-          mov.b       @gCurSubstateZ, r0l
+          mov.b       @ui_substateZ, r0l
           bne         switchD_ad20__caseD_d:16
           mov.w       #FACTORY_STR_NG1, e0
           jmp         @LAB_adea:16
@@ -19507,7 +19507,7 @@ switchD_ad20__caseD_6:
           jsr         @drv_lcd_test_pixels:16
           jmp         @switchD_ad20__caseD_d:16
 switchD_ad20__caseD_7:
-          mov.b       @animTick, r0l
+          mov.b       @ui_animationTick, r0l
           extu.w      r0
           shar.w      r0
           btst        #H'0, r0l
@@ -19516,7 +19516,7 @@ switchD_ad20__caseD_7:
           mov.w       #H'3806, r0
           jmp         @LAB_aea6:16
 switchD_ad20__caseD_8:
-          mov.b       @animTick, r0l
+          mov.b       @ui_animationTick, r0l
           extu.w      r0
           shar.w      r0
           btst        #H'0, r0l
@@ -19525,7 +19525,7 @@ switchD_ad20__caseD_8:
           mov.w       #H'382D, r0
           jmp         @LAB_aea6:16
 switchD_ad20__caseD_9:
-          mov.b       @animTick, r0l
+          mov.b       @ui_animationTick, r0l
           extu.w      r0
           shar.w      r0
           btst        #H'0, r0l
@@ -19586,7 +19586,7 @@ LAB_ae08:
           mov.w       r6, e0
           mov.w       #H'1820, r0
           jsr         @r5
-          mov.b       @animTick, r0l
+          mov.b       @ui_animationTick, r0l
           extu.w      r0
           shar.w      r0
           btst        #H'0, r0l
@@ -19603,11 +19603,11 @@ LAB_aea2:
 LAB_aea6:
           jsr         @r5
 switchD_ad20__caseD_d:
-          mov.b       @gCurSubstateA, r0l
+          mov.b       @ui_substateA, r0l
           cmp.b       #H'4, r0l
           bcc         LAB_aeb6:8
           inc.b       r0l
-          mov.b       r0l, @gCurSubstateA
+          mov.b       r0l, @ui_substateA
 LAB_aeb6:
           add.w       #H'6, r7
           rts
@@ -19621,8 +19621,8 @@ sys_init_accel_debug:
           sub.b       r0l, r0l
           mov.b       r0l, @ped_sampleCount
           mov.w       #H'10, e0
-          mov.w       e0, @gCurSubstateY
-          mov.b       r0l, @gCurSubstateA
+          mov.w       e0, @ui_substateY
+          mov.b       r0l, @ui_substateA
           mov.b       r0l, @DAT_f7d1
           sub.w       e0, e0
           mov.w       e0, @accelXPos
@@ -19657,7 +19657,7 @@ ui_render_accel_debug:
           mov.b       #H'1E, r0l
           mov.b       r0l, @ped_stepTimer
           mov.w       r7, r6
-          mov.b       @gCurSubstateA, r0l
+          mov.b       @ui_substateA, r0l
           add.b       #H'30, r0l
           mov.b       r0l, @er6
           mov.w       r6, r5
@@ -20142,8 +20142,8 @@ LAB_b3a6:
 ; =============================================================================
 ui_reset_trainer_card_state:
           sub.b       r0l, r0l
-          mov.b       r0l, @gCurSubstateZ
-          mov.b       r0l, @gCurSubstateY
+          mov.b       r0l, @ui_substateZ
+          mov.b       r0l, @ui_substateY
           rts
 ; =============================================================================
 ; Function: ui_handle_trainer_card
@@ -20152,13 +20152,13 @@ ui_reset_trainer_card_state:
 ; Called by: ui_dispatch_event
 ; =============================================================================
 ui_handle_trainer_card:
-          mov.b       @gCurSubstateZ, r0l
+          mov.b       @ui_substateZ, r0l
           bne         LAB_b41c:8
           mov.b       #H'4, r0l
           jsr         @drv_button_is_triggered:16
           mov.b       r0l, r0l
           beq         LAB_b3fe:8
-          mov.b       @gCurSubstateY, r0l
+          mov.b       @ui_substateY, r0l
           bne         LAB_b3f2:8
           mov.b       #H'1, r0l
           jsr         @drv_sound_play:16
@@ -20167,7 +20167,7 @@ ui_handle_trainer_card:
           jmp         @ui_handle_trainer_card__setMenuAndReturn:16
 LAB_b3f2:
           dec.b       r0l
-          mov.b       r0l, @gCurSubstateY
+          mov.b       r0l, @ui_substateY
           mov.b       #H'2, r0l
           jsr         @drv_sound_play:16
 LAB_b3fe:
@@ -20175,11 +20175,11 @@ LAB_b3fe:
           jsr         @drv_button_is_triggered:16
           mov.b       r0l, r0l
           beq         LAB_b41c:8
-          mov.b       @gCurSubstateY, r0l
+          mov.b       @ui_substateY, r0l
           cmp.b       #H'7, r0l
           bcc         LAB_b41c:8
           inc.b       r0l
-          mov.b       r0l, @gCurSubstateY
+          mov.b       r0l, @ui_substateY
           mov.b       #H'2, r0l
           jsr         @drv_sound_play:16
 LAB_b41c:
@@ -20187,7 +20187,7 @@ LAB_b41c:
           jsr         @drv_button_is_triggered:16
           mov.b       r0l, r0l
           beq         LAB_b48a:8
-          mov.b       @gCurSubstateZ, r0l
+          mov.b       @ui_substateZ, r0l
           beq         LAB_b436:8
           cmp.b       #H'1, r0l
           beq         LAB_b44e:8
@@ -20199,7 +20199,7 @@ LAB_b436:
           cmp.l       #H'98967F, er0
           bcs         LAB_b47a:8
           mov.b       #H'1, r0l
-          mov.b       r0l, @gCurSubstateZ
+          mov.b       r0l, @ui_substateZ
           sub.b       r0l, r0l
           bra         ui_handle_trainer_card__playSoundAndReturn:8
 LAB_b44e:
@@ -20215,7 +20215,7 @@ LAB_b44e:
           mov.w       e6, r0
           jsr         @drv_eeprom_write_u8:16
           mov.b       #H'2, r0l
-          mov.b       r0l, @gCurSubstateZ
+          mov.b       r0l, @ui_substateZ
           mov.b       #H'7, r0l
 ui_handle_trainer_card__playSoundAndReturn:
           jsr         @drv_sound_play:16
@@ -20451,7 +20451,7 @@ ui_render_daily_step_history:
           mov.w       #H'1008, r1
           sub.w       r0, r0
           jsr         @r4
-          mov.b       @gCurSubstateY, r0l
+          mov.b       @ui_substateY, r0l
           cmp.b       #H'7, r0l
           bcc         LAB_b6e2:8
           mov.w       r6, r0
@@ -20510,7 +20510,7 @@ LAB_b6e2:
           mov.w       #H'140, r1
           mov.w       r6, e0
           jsr         @r3
-          mov.b       @gCurSubstateY, r0l
+          mov.b       @ui_substateY, r0l
           extu.w      r0
           mov.w       #H'20, e0
           mulxu.w     e0, er0
@@ -20520,7 +20520,7 @@ LAB_b6e2:
           mov.w       #H'20, r0
           jsr         @r4
           mov.w       r7, e0
-          mov.b       @gCurSubstateY, r1l
+          mov.b       @ui_substateY, r1l
           extu.w      r1
           dec.w       #1, r1
           shll.w      r1
@@ -20660,7 +20660,7 @@ ui_render_step_goal_reward:
 ; Called by: ui_dispatch_draw
 ; =============================================================================
 ui_render_trainer_card:
-          mov.b       @gCurSubstateZ, r0l
+          mov.b       @ui_substateZ, r0l
           beq         LAB_b902:8
           cmp.b       #H'1, r0l
           beq         LAB_b914:8
@@ -20668,7 +20668,7 @@ ui_render_trainer_card:
           bne         LAB_b91c:8
           bra         LAB_b91a:8
 LAB_b902:
-          mov.b       @gCurSubstateY, r0l
+          mov.b       @ui_substateY, r0l
           bne         LAB_b90e:8
           jsr         @ui_render_trainer_card_time:16
           bra         LAB_b91c:8
@@ -21371,11 +21371,11 @@ notif_scheduledHour:
           .RES.B      1
 lcdShadeBase:
           .RES.B      1
-menu_cursor:
+ui_menuCursor:
           .RES.B      1
-DAT_f7ab:
+ui_dispatchTickCounter:
           .RES.B      1
-animTick:
+ui_animationTick:
           .RES.B      1
 irResultCode:
           .RES.B      1
@@ -21385,7 +21385,7 @@ ped_activityTimer:
           .RES.B      1
 ped_stepTimer:
           .RES.B      1
-currentlyActiveView:
+ui_activeView:
           .RES.B      1
 ped_batchSize:
           .RES.B      1
@@ -21417,11 +21417,11 @@ isSeparateNote:
           .RES.B      2
 soundHeader:
           .RES.B      2
-gCurSubstateY:
+ui_substateY:
           .RES.B      1
-gCurSubstateZ:
+ui_substateZ:
           .RES.B      1
-gCurSubstateA:
+ui_substateA:
           .RES.B      1
 DAT_f7d1:
           .RES.B      1

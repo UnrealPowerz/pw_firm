@@ -372,33 +372,33 @@ void game_process_accel_data(void) {
 
   steps = game_detect_steps_fft(fft_results);
 
-  view = g.currentlyActiveView;
+  view = g.ui_activeView;
   if (view == VIEW_ACCEL_DEBUG) {
-    sub = g.gCurSubstateA;
+    sub = g.ui_substateA;
     limit = g.DAT_f7d8;
     if (sub < limit) {
       if (steps != 0) {
-        g.gCurSubstateA = sub + 1;
+        g.ui_substateA = sub + 1;
         threshold = g.ped_axisStepThresholdLo;
         tx = accelPos_X;
         if (tx < threshold)
-          g.currentlyActiveView = VIEW_TEXT;
+          g.ui_activeView = VIEW_TEXT;
         ty = accelPos_Y;
         if (ty < threshold)
-          g.currentlyActiveView = VIEW_TEXT;
+          g.ui_activeView = VIEW_TEXT;
         tz = g.accelZPos;
         if (tz < threshold)
-          g.currentlyActiveView = VIEW_TEXT;
+          g.ui_activeView = VIEW_TEXT;
         threshold = g.ped_axisStepThresholdHi;
         tx = accelPos_X;
         if (tx > threshold)
-          g.currentlyActiveView = VIEW_TEXT;
+          g.ui_activeView = VIEW_TEXT;
         ty = accelPos_Y;
         if (ty > threshold)
-          g.currentlyActiveView = VIEW_TEXT;
+          g.ui_activeView = VIEW_TEXT;
         tz = g.accelZPos;
         if (tz > threshold)
-          g.currentlyActiveView = VIEW_TEXT;
+          g.ui_activeView = VIEW_TEXT;
       }
     } else if (g.DAT_f7d1 < g.DAT_f7d8_1) {
       threshold = g.ped_axisIdleThreshold;

@@ -53,7 +53,7 @@ void sys_main_loop_low_power(void) {
       drv_lcd_clear_pages(0x40);
       ui_dispatch_draw();
       drv_lcd_flip();
-      g.animTick++;
+      g.ui_animationTick++;
     }
     sys_statusFlags_BIT.tick = 0;
   } else {
@@ -101,7 +101,7 @@ void sys_main_loop_active(void) {
       drv_lcd_clear_pages(0x40);
       ui_dispatch_draw();
       drv_lcd_flip();
-      g.animTick++;
+      g.ui_animationTick++;
     }
     sys_statusFlags_BIT.tick = 0;
   }

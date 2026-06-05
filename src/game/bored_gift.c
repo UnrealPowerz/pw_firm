@@ -5,7 +5,7 @@
  *
  * Triggered from system/main.c (via game_check_periodic_events) when the
  * walker has been idle for long enough and the RNG rolls a hit. The reward
- * type is stored in g.gCurSubstateY and dispatched in game_process_interaction_reward:
+ * type is stored in g.ui_substateY and dispatched in game_process_interaction_reward:
  *
  *   type 1   - dowsing-style item gift  (selects an item from the trainer's
  *              table based on g.session_recentSteps; populates EEPROM_LOG_ITEMS).
@@ -85,7 +85,7 @@ void game_process_interaction_reward(uint8_t type) {
   uint16_t item_id = 0;       /* passed as val_at_0e to game_log_interaction;
                                  only set on type 1 (item gift) */
 
-  g.gCurSubstateY = type;
+  g.ui_substateY = type;
   accelPos_X = ((const uint16_t *)INTERACTION_REWARD_PTRS)[type];
   ui_set_view(VIEW_BORED_GIFT);
   g.session_idleSeconds = 0;
@@ -93,11 +93,11 @@ void game_process_interaction_reward(uint8_t type) {
   switch (type) {
   case 1:
     if (g.session_recentSteps < 4500) {
-      g.gCurSubstateZ = (int8_t)(9 - (g.session_recentSteps / 500));
+      g.ui_substateZ = (int8_t)(9 - (g.session_recentSteps / 500));
     } else {
-      g.gCurSubstateZ = 0;
+      g.ui_substateZ = 0;
     }
-    item_id = save_get_dowsing_item_id((uint8_t)g.gCurSubstateZ);
+    item_id = save_get_dowsing_item_id((uint8_t)g.ui_substateZ);
     sys_init_heap();
     slot_buf = sbrk(0x0C);
     drv_eeprom_read_block(EEPROM_LOG_ITEMS, slot_buf, 0x0C);
@@ -107,22 +107,22 @@ void game_process_interaction_reward(uint8_t type) {
     }
     break;
   case 2:
-    g.gCurSubstateZ = 50;
+    g.ui_substateZ = 50;
     game_add_watts(50);
     break;
   case 3:
-    g.gCurSubstateZ = 20;
+    g.ui_substateZ = 20;
     game_add_watts(20);
     break;
   case 4:
-    g.gCurSubstateZ = 10;
+    g.ui_substateZ = 10;
     game_add_watts(10);
     break;
   case 7:
     game_init_peer_identity();
     break;
   default:
-    g.gCurSubstateZ = 0;
+    g.ui_substateZ = 0;
     break;
   }
 
@@ -140,9 +140,9 @@ void game_process_interaction_reward(uint8_t type) {
   }
 
   if (type >= 2 && type <= 5) {
-    g.gCurSubstateA = (uint8_t)(sys_get_rng() % 3);
+    g.ui_substateA = (uint8_t)(sys_get_rng() % 3);
   } else {
-    g.gCurSubstateA = 0;
+    g.ui_substateA = 0;
   }
 }
 
@@ -198,9 +198,9 @@ void ui_render_bored_gift(void) {
     gfx_draw_item_symbol(0x14, 0x14);
   }
 
-  /* g.gCurSubstateZ doubles as the prize count (g.save_watts amount or item index)
+  /* g.ui_substateZ doubles as the prize count (g.save_watts amount or item index)
      for the value/item displays. */
-  prize_count = g.gCurSubstateZ;
+  prize_count = g.ui_substateZ;
   event_rec = (uint8_t *)(uintptr_t)accelPos_X;
   flags = event_rec[2];
   if (flags == 0xFC) {
@@ -218,7 +218,7 @@ void ui_render_bored_gift(void) {
   event_rec = (uint8_t *)(uintptr_t)accelPos_X;
   flags = *event_rec;
   if ((flags & 0x18) > 8) {
-    gfx_draw_text_box(0x30, (uint8_t)(event_rec[3] + g.gCurSubstateA), TEXT_BOX_NO_LINES, TEXT_BOX_BLINK);
+    gfx_draw_text_box(0x30, (uint8_t)(event_rec[3] + g.ui_substateA), TEXT_BOX_NO_LINES, TEXT_BOX_BLINK);
   } else if (event_rec[2] == 0xFF) {
     gfx_draw_text_box(0x30, event_rec[3], TEXT_BOX_FULL, TEXT_BOX_BLINK);
   } else {
@@ -235,14 +235,14 @@ void game_check_periodic_events(void) {
 
   if ((g.sys_walkerFlags & WALKER_MODE_MASK) != WALKER_MODE_DEEP_SLEEP)
     return;
-  if (g.currentlyActiveView != VIEW_HOME)
+  if (g.ui_activeView != VIEW_HOME)
     return;
   if (!(sys_walkerFlags_BIT.input_pending))
     return;
 
   sys_walkerFlags_BIT.input_pending = 0;
-  g.gCurSubstateY = 0;
-  g.gCurSubstateZ = 0;
+  g.ui_substateY = 0;
+  g.ui_substateZ = 0;
 
   daily_steps = g.session_recentSteps;
   (void)daily_steps;
@@ -254,7 +254,7 @@ void game_check_periodic_events(void) {
   if (!(sys_walkerFlags_BIT.walking)) {
     if (g.session_recentSteps < 300)
       return;
-    g.gCurSubstateY = 0x07;
+    g.ui_substateY = 0x07;
   } else {
     if (g.session_idleSeconds < 3600)
       return;
@@ -271,18 +271,18 @@ void game_check_periodic_events(void) {
     daily_steps = g.session_recentSteps;
     if (save_find_empty_item_slot(buf) < 3 && prob >= 90 &&
         daily_steps >= 500) {
-      g.gCurSubstateY = 0x01;
+      g.ui_substateY = 0x01;
     } else if (prob >= 80 && daily_steps >= 250) {
-      g.gCurSubstateY = 0x02;
+      g.ui_substateY = 0x02;
     } else if (daily_steps >= 200) {
-      g.gCurSubstateY = 0x03;
+      g.ui_substateY = 0x03;
     } else if (daily_steps >= 100) {
-      g.gCurSubstateY = 0x04;
+      g.ui_substateY = 0x04;
     } else if (g.save_sessionTicksElapsed >= 60 && daily_steps <= 50) {
-      g.gCurSubstateY = 0x05;
+      g.ui_substateY = 0x05;
     } else {
       return;
     }
   }
-  g.gCurSubstateZ = 0x30;
+  g.ui_substateZ = 0x30;
 }

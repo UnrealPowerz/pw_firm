@@ -3,18 +3,18 @@
 /*
  * Settings view (VIEW_SETTINGS).
  *
- * Three-page state machine driven by g.gCurSubstateY:
+ * Three-page state machine driven by g.ui_substateY:
  *   SETTINGS_MENU    = 0   main settings list (g.volume / shade rows)
  *   SETTINGS_VOLUME  = 1   g.volume adjustment sub-page
  *   SETTINGS_SHADE   = 2   contrast/shade adjustment sub-page
  *
- * On the main page, g.gCurSubstateZ is the within-page cursor: 0 = g.volume row,
+ * On the main page, g.ui_substateZ is the within-page cursor: 0 = g.volume row,
  * 1 = shade row. Pressing R from the main page enters the highlighted row
- * (g.gCurSubstateY = g.gCurSubstateZ + 1). Pressing R from a sub-page commits
+ * (g.ui_substateY = g.ui_substateZ + 1). Pressing R from a sub-page commits
  * the new setting and exits to home.
  */
 
-/* Settings dispatcher pages (g.gCurSubstateY in ui_handle_settings). */
+/* Settings dispatcher pages (g.ui_substateY in ui_handle_settings). */
 enum settings_page {
     SETTINGS_MENU   = 0,
     SETTINGS_VOLUME = 1,
@@ -23,26 +23,26 @@ enum settings_page {
 
 // ROM: 0x6c88  100.0%
 void ui_reset_settings_substate(void) {
-  g.gCurSubstateY = 0;
-  g.gCurSubstateZ = 0;
+  g.ui_substateY = 0;
+  g.ui_substateZ = 0;
 }
 
 // ROM: 0x6c94  92.5%
 void ui_handle_settings_main_page(void) {
   if (drv_button_is_triggered(BTN_M)) {
-    if (g.gCurSubstateZ == 0) {
+    if (g.ui_substateZ == 0) {
       drv_sound_play(SND_BACK);
       ui_clear_substate_y();
       ui_set_view(VIEW_MAIN_MENU);
       return;
     } else {
-      g.gCurSubstateZ = 0;
+      g.ui_substateZ = 0;
       drv_sound_play(SND_CURSOR);
     }
   }
   if (drv_button_is_triggered(BTN_L)) {
-    if (g.gCurSubstateZ != 1) {
-      g.gCurSubstateZ = 1;
+    if (g.ui_substateZ != 1) {
+      g.ui_substateZ = 1;
       drv_sound_play(SND_CURSOR);
     }
   }
@@ -103,20 +103,20 @@ void ui_handle_settings_shade(void) {
 
 // ROM: 0x6dfc  78.8%
 void ui_handle_settings(void) {
-  if (g.gCurSubstateY == SETTINGS_MENU) {
+  if (g.ui_substateY == SETTINGS_MENU) {
     ui_handle_settings_main_page();
-  } else if (g.gCurSubstateY == SETTINGS_VOLUME) {
+  } else if (g.ui_substateY == SETTINGS_VOLUME) {
     ui_handle_settings_volume();
-  } else if (g.gCurSubstateY == SETTINGS_SHADE) {
+  } else if (g.ui_substateY == SETTINGS_SHADE) {
     ui_handle_settings_shade();
   }
   if (drv_button_is_triggered(BTN_R)) {
-    if (g.gCurSubstateY == SETTINGS_MENU) {
+    if (g.ui_substateY == SETTINGS_MENU) {
       /* R on the main settings menu enters the highlighted row. The within-
-         page cursor (g.gCurSubstateZ) is 0 for g.volume and 1 for shade; +1 maps
+         page cursor (g.ui_substateZ) is 0 for g.volume and 1 for shade; +1 maps
          to SETTINGS_VOLUME / SETTINGS_SHADE. */
       drv_sound_play(SND_CONFIRM);
-      g.gCurSubstateY = g.gCurSubstateZ + 1;
+      g.ui_substateY = g.ui_substateZ + 1;
     } else {
       /* R inside a sub-page commits the new setting and exits to home. */
       drv_sound_play(SND_CONFIRM);
@@ -156,29 +156,29 @@ void ui_render_settings(void) {
   drv_eeprom_read_block(0x4F8, buf, 0xC0);
 
   /* Within-page cursor x: 0 = g.volume row, 0x30 = shade row. */
-  cursor_x = g.gCurSubstateZ * 0x30;
+  cursor_x = g.ui_substateZ * 0x30;
 
-  if (g.gCurSubstateY == SETTINGS_MENU) {
-    animOff = ((g.animTick & 0x01) + 9) * 0x10;
+  if (g.ui_substateY == SETTINGS_MENU) {
+    animOff = ((g.ui_animationTick & 0x01) + 9) * 0x10;
     drv_lcd_blit(cursor_x, 0x14, buf + animOff, 8, 8);
-  } else if (g.gCurSubstateY == SETTINGS_VOLUME) {
+  } else if (g.ui_substateY == SETTINGS_VOLUME) {
     drv_lcd_blit(cursor_x, 0x14, buf + 0xB0, 8, 8);
 
     volVal = (g.save_settings >> 1) & 0x03;
-    animOff = ((g.animTick & 0x01) + 9) * 0x10;
+    animOff = ((g.ui_animationTick & 0x01) + 9) * 0x10;
     drv_lcd_blit((uint8_t)(volVal * 0x20), 0x2C, buf + animOff, 8, 8);
 
     drv_eeprom_read_block(0x17D0, buf, 0x120);
     drv_lcd_blit(0x08, 0x28, buf, 0x18, 0x10);
     drv_lcd_blit(0x28, 0x28, buf + 0x60, 0x18, 0x10);
     drv_lcd_blit(0x48, 0x28, buf + 0xC0, 0x18, 0x10);
-  } else if (g.gCurSubstateY == SETTINGS_SHADE) {
+  } else if (g.ui_substateY == SETTINGS_SHADE) {
     shVal = (g.save_settings >> 3) & 0x0F;
     shadeOff = shVal * 8 + 8;
-    animOff = ((g.animTick & 0x01) + 3) * 0x10;
+    animOff = ((g.ui_animationTick & 0x01) + 3) * 0x10;
 
     drv_lcd_blit((uint8_t)shadeOff, 0x20, buf + animOff, 8, 8);
-    drv_lcd_blit((uint8_t)(g.gCurSubstateZ * 0x30), 0x14, buf + 0xB0, 8, 8);
+    drv_lcd_blit((uint8_t)(g.ui_substateZ * 0x30), 0x14, buf + 0xB0, 8, 8);
 
     drv_eeprom_read_block(0x18F0, buf, 0x20);
     for (i = 0; i < 0x0A; i++) {

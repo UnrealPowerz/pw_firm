@@ -109,7 +109,7 @@ void drv_accel_sample(void) {
   accelYSamples[g.ped_sampleCount] = (int8_t)buf[3];
   accelZSamples[g.ped_sampleCount] = (int8_t)buf[5];
 
-  if ((uint8_t)g.currentlyActiveView == VIEW_ACCEL_DEBUG) {
+  if ((uint8_t)g.ui_activeView == VIEW_ACCEL_DEBUG) {
     prev_count = (g.ped_sampleCount + 0x3F) & 0x3F;
     if (g.ped_sampleCount == 0) {
       accelPos_X = 0;

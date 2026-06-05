@@ -2,7 +2,7 @@
 
 /*
  * VIEW_WALK_ARRIVAL_ANIM — animation played when the walker pokemon arrives
- * (returns from a session). Sub-animation index in g.gCurSubstateY drives the
+ * (returns from a session). Sub-animation index in g.ui_substateY drives the
  * phase dispatch.
  *
  * Also hosts two shared drawers — ui_draw_ball_drop_anim and
@@ -15,7 +15,7 @@
  * reads; removing them shifts ch38's stack layout and tanks the match.
  */
 
-/* Sub-animation index in g.gCurSubstateY for VIEW_WALK_ARRIVAL_ANIM. */
+/* Sub-animation index in g.ui_substateY for VIEW_WALK_ARRIVAL_ANIM. */
 enum walk_arrival_phase {
     ARRIVAL_BALL_DROP = 0,
     ARRIVAL_CLOUD     = 1,
@@ -32,7 +32,7 @@ void ui_draw_ball_drop_anim(void) {
   sys_init_heap();
   ptr = sbrk(0x180);
 
-  if (g.currentlyActiveView != VIEW_EVENT_REWARD_ANIM) {
+  if (g.ui_activeView != VIEW_EVENT_REWARD_ANIM) {
     offset = 0x2480;
   } else {
     offset = 0x460;
@@ -40,13 +40,13 @@ void ui_draw_ball_drop_anim(void) {
 
   drv_eeprom_read_block(offset, ptr, 0x10);
   drv_lcd_blit(
-      0x2c, ANIM_BALL_DROP_Y[g.gCurSubstateZ],
+      0x2c, ANIM_BALL_DROP_Y[g.ui_substateZ],
       (void *)ptr, 8, 8);
 
   gfx_fill_rect(0, 0, 0x60, 8, 3);
   gfx_fill_rect(0, 0x38, 0x60, 8, 3);
 
-  g.gCurSubstateZ++;
+  g.ui_substateZ++;
 }
 
 // ROM: 0x3ece  74.7%  saves: r2,r5,r6 -> sys_epilogue_r2_r5_r6
@@ -64,9 +64,9 @@ void ui_draw_arrival_cloud_anim(void) {
   gfx_fill_rect(0, 0x38, 0x60, 8, 3);
 
   {
-    uint8_t z = g.gCurSubstateZ;
+    uint8_t z = g.ui_substateZ;
     if (z != 0) {
-      g.gCurSubstateZ = z + 1;
+      g.ui_substateZ = z + 1;
     }
   }
 }
@@ -79,7 +79,7 @@ void ui_draw_arrival_poke_anim(void) {
   gfx_fill_rect(0, 0, 0x60, 8, 3);
   gfx_fill_rect(0, 0x38, 0x60, 8, 3);
 
-  g.gCurSubstateZ++;
+  g.ui_substateZ++;
 }
 
 // ROM: 0x3f72  73.8%  saves: r2,r3,r4
@@ -90,14 +90,14 @@ void ui_render_arrival_success(void) {
   gfx_draw_text_box(0x30, TEXT_PEER_HAS_ARRIVED, TEXT_BOX_NO_LINES, TEXT_BOX_STATIC);
 
   {
-    uint8_t z = g.gCurSubstateZ;
+    uint8_t z = g.ui_substateZ;
     if (z < 0x10) {
-      g.gCurSubstateZ = z + 1;
+      g.ui_substateZ = z + 1;
     }
   }
 
   if (drv_sound_is_playing() == 0) {
-    if (g.gCurSubstateZ > 8) {
+    if (g.ui_substateZ > 8) {
       ui_reset_substate();
       ui_set_view(VIEW_HOME);
     }
@@ -108,8 +108,8 @@ void ui_render_arrival_success(void) {
 void ui_handle_walk_arrival_anim(void) {
   uint8_t z;
   uint8_t y;
-  z = g.gCurSubstateZ;
-  y = g.gCurSubstateY;
+  z = g.ui_substateZ;
+  y = g.ui_substateY;
   if (y == ARRIVAL_BALL_DROP) goto phase_ball_drop;
   if (y == ARRIVAL_CLOUD)     goto phase_cloud;
   if (y != ARRIVAL_POKE)      goto done;
@@ -117,21 +117,21 @@ void ui_handle_walk_arrival_anim(void) {
 phase_ball_drop:
   /* Ball-drop runs 5 frames (z 0..4), then advance to cloud. */
   if (z > 4) {
-    g.gCurSubstateY = ARRIVAL_CLOUD;
-    g.gCurSubstateZ = 0;
+    g.ui_substateY = ARRIVAL_CLOUD;
+    g.ui_substateZ = 0;
   }
   goto done;
 phase_cloud:
   /* Cloud renderer self-increments z (so it stays at 0 here until
      externally bumped); when it has ticked, advance to poke + cue. */
   if (z == 0) goto done;
-  g.gCurSubstateY = ARRIVAL_POKE;
-  g.gCurSubstateZ = 0;
+  g.ui_substateY = ARRIVAL_POKE;
+  g.ui_substateZ = 0;
   goto play;
 phase_poke:
   if (z <= 8) goto done;
-  g.gCurSubstateZ = 0;
-  g.gCurSubstateY = ARRIVAL_SUCCESS;
+  g.ui_substateZ = 0;
+  g.ui_substateY = ARRIVAL_SUCCESS;
 play:
   drv_sound_play(SND_ANIM_CUE);
 done:;
@@ -139,7 +139,7 @@ done:;
 
 // ROM: 0x4148  96.4%
 void ui_render_walk_arrival_anim(void) {
-  uint8_t y = g.gCurSubstateY;
+  uint8_t y = g.ui_substateY;
   if (y == ARRIVAL_BALL_DROP) goto phase_ball_drop;
   if (y == ARRIVAL_CLOUD)     goto phase_cloud;
   if (y == ARRIVAL_POKE)      goto phase_poke;

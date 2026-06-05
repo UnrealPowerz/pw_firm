@@ -124,7 +124,7 @@ typedef union {
 
 /* Generic LSB-named bit accessor: declared so b0..b2 map to byte bits 0..2.
  * Useful for casting RAM bytes that the ROM treats as a value AND as flags
- * (e.g. gCurSubstateY where bits 0/1 are bit-copied to/from other places). */
+ * (e.g. ui_substateY where bits 0/1 are bit-copied to/from other places). */
 typedef union {
     uint8_t BYTE;
     struct {

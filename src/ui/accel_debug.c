@@ -15,8 +15,8 @@
 // ROM: 0xaebc  66.1%
 void sys_init_accel_debug(void) {
   g.ped_sampleCount = 0;
-  g.gCurSubstateY = 0x10;
-  g.gCurSubstateA = 0;
+  g.ui_substateY = 0x10;
+  g.ui_substateA = 0;
   g.DAT_f7d1 = 0;
   g.accelXPos = 0;
   g.accelYPos = 0;
@@ -52,8 +52,8 @@ void ui_render_accel_debug(void) {
   p = buf;
   q = p + 1;
 
-  /* Draw g.gCurSubstateA as ASCII digit at position 0x4C */
-  *p = (uint8_t)(g.gCurSubstateA + 0x30);
+  /* Draw g.ui_substateA as ASCII digit at position 0x4C */
+  *p = (uint8_t)(g.ui_substateA + 0x30);
   *q = 0;
   draw_string(0x4C, 0x00, (const char *)p);
 

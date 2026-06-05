@@ -71,8 +71,8 @@ enum view_id {
 #define ped_taskFlags_BIT (((volatile ped_task_flags_t *)&g.ped_taskFlags)->BIT)
 
 /* --- Substate Management & Sensor Data --- */
-/* g.gCurSubstateY -- bits 0/1 used as flags via bset/bclr/bst in ROM. */
-#define gCurSubstateY_BIT (((volatile byte_bits_t *)&g.gCurSubstateY)->BIT)
+/* g.ui_substateY -- bits 0/1 used as flags via bset/bclr/bst in ROM. */
+#define ui_substateY_BIT (((volatile byte_bits_t *)&g.ui_substateY)->BIT)
 
 /* g.DAT_f7d8 -- bit 0 used as a flag in battle.c via bset/bclr in ROM. */
 #define DAT_f7d8_BIT (((volatile byte_bits_t *)&g.DAT_f7d8)->BIT)

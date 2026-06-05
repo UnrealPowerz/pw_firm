@@ -10,7 +10,7 @@
  * new reward and logs the interaction via game/social.
  *
  * Entry points (both call ui_init_discard_cursor right before activating
- * the view, which preps g.gCurSubstateZ = 1 — the cursor starts on slot 1):
+ * the view, which preps g.ui_substateZ = 1 — the cursor starts on slot 1):
  *   game_battle_handle_finish      -> when save_find_empty_poke_slot >= 3
  *   ui_handle_dowsing (state_found) -> when accelZPos_b == 3
  *
@@ -18,8 +18,8 @@
  * silently into the first empty position.
  *
  * Cursor state:
- *   g.gCurSubstateZ = 0..2   index of the existing slot to discard
- *   g.gCurSubstateA = 0      replacing a caught pokemon
+ *   g.ui_substateZ = 0..2   index of the existing slot to discard
+ *   g.ui_substateA = 0      replacing a caught pokemon
  *                  != 0    replacing a dowsed item
  *
  * ROM cluster: 0x3B94..0x3DBC, immediately after game_log_item_interaction.
@@ -28,7 +28,7 @@
 
 // ROM: 0x3a68  100.0%
 void ui_init_discard_cursor(void) {
-  g.gCurSubstateZ = 1;
+  g.ui_substateZ = 1;
   (void)0;
 }
 
@@ -36,35 +36,35 @@ void ui_init_discard_cursor(void) {
 void ui_handle_discard_picker(void) {
   if (drv_button_is_triggered(BTN_M)) {
     {
-      uint8_t cursor = g.gCurSubstateZ;
+      uint8_t cursor = g.ui_substateZ;
       if (cursor == 0) {
         ui_reset_substate();
         ui_set_view(VIEW_HOME);
         drv_sound_play(SND_BACK);
         return;
       }
-      g.gCurSubstateZ = cursor - 1;
+      g.ui_substateZ = cursor - 1;
     }
     drv_sound_play(SND_CURSOR);
   }
 
   if (drv_button_is_triggered(BTN_L)) {
     {
-      uint8_t cursor = g.gCurSubstateZ;
+      uint8_t cursor = g.ui_substateZ;
       if (cursor == 2) {
         /* Already on the last reward slot. */
         drv_sound_play(SND_BACK);
         return;
       }
-      g.gCurSubstateZ = cursor + 1;
+      g.ui_substateZ = cursor + 1;
     }
     drv_sound_play(SND_CURSOR);
   }
 
   if (drv_button_is_triggered(BTN_R)) {
-    /* Commit the reward — branch on g.gCurSubstateA (set by the caller to
+    /* Commit the reward — branch on g.ui_substateA (set by the caller to
        distinguish a pokemon caught vs an item dowsed). */
-    if (g.gCurSubstateA == 0) {
+    if (g.ui_substateA == 0) {
       game_log_poke_interaction();
     } else {
       game_log_item_interaction();
@@ -87,7 +87,7 @@ void ui_render_discard_poke_slot(void) {
   /* Routes table (3 entries x 0x10 bytes) followed by the just-caught
      record at +0x30. */
   drv_eeprom_read_block(routes_addr, buf, routes_len);
-  drv_eeprom_read_block(EEPROM_LOG_CONTEXT + ((int8_t)g.gCurSubstateZ * 0x10),
+  drv_eeprom_read_block(EEPROM_LOG_CONTEXT + ((int8_t)g.ui_substateZ * 0x10),
                         (uint8_t *)buf + 0x30, 0x10);
 
   /* Find the matching route slot and draw its name. */
@@ -107,7 +107,7 @@ void ui_render_discard_item_slot(void) {
 
   sys_init_heap();
   lookup = sbrk(0x14);
-  drv_eeprom_read_block(EEPROM_LOG_ITEMS + ((int8_t)g.gCurSubstateZ * 4),
+  drv_eeprom_read_block(EEPROM_LOG_ITEMS + ((int8_t)g.ui_substateZ * 4),
                         &caught_item, 4);
   drv_eeprom_read_block(EEPROM_SUBY_LOOKUP_TABLE, lookup, 0x14);
 
@@ -140,12 +140,12 @@ void ui_render_discard_picker(void) {
 
   /* Cursor sprite (2-frame blink) over the currently-selected reward slot. */
   drv_eeprom_read_block(base + 0x2a8, buf, 0x20);
-  blit((uint8_t)(0x18 + (g.gCurSubstateZ * 0x14)), 0x18,
-       (uint8_t *)buf + ((g.animTick & 1) * 0x10), 8, 8);
+  blit((uint8_t)(0x18 + (g.ui_substateZ * 0x14)), 0x18,
+       (uint8_t *)buf + ((g.ui_animationTick & 1) * 0x10), 8, 8);
 
   /* Three reward-slot icons. Use the pokemon icon set (A==0) or the
      item icon set (A!=0). */
-  if (g.gCurSubstateA == 0) {
+  if (g.ui_substateA == 0) {
     drv_eeprom_read_block(base + 0x1e0, buf, 0x10);
   } else {
     drv_eeprom_read_block(base + 0x208, buf, 0x10);
@@ -156,8 +156,8 @@ void ui_render_discard_picker(void) {
   blit(0x40, 0x20, buf, 8, 8);
 
   /* Detail panel — pokemon name or item name for the selected slot. */
-  if (g.gCurSubstateZ <= 2) {
-    if (g.gCurSubstateA == 0) {
+  if (g.ui_substateZ <= 2) {
+    if (g.ui_substateA == 0) {
       ui_render_discard_poke_slot();
     } else {
       ui_render_discard_item_slot();

@@ -9,22 +9,22 @@
  *   VIEW_POKE_ITEMS    - inventory grid: own / caught / event pokemon + items.
  *     Handler:  ui_handle_inventory_pokemon
  *     Render:   ui_render_inventory_pokemon
- *     Cursor:   g.gCurSubstateY = 0..9 (see enum inventory_slot below)
+ *     Cursor:   g.ui_substateY = 0..9 (see enum inventory_slot below)
  *
  *   VIEW_GIFTS         - dowsed-items list.
  *     Handler:  ui_handle_inventory_items
  *     Render:   ui_render_inventory_items
- *     Cursor:   g.gCurSubstateY = 0..9 (gift slot)
+ *     Cursor:   g.ui_substateY = 0..9 (gift slot)
  *
  * The storage-full discard picker (VIEW_DISCARD_PICKER) lives in
  * src/ui/discard_picker.c.
  *
  * "Presence mask" — when the inventory views are entered from the main menu,
  *   ui_load_inventory_mask builds a 2-word bitmask of what's available to
- *   show. The two words are stashed in (g.gCurSubstateA:uint16) and
+ *   show. The two words are stashed in (g.ui_substateA:uint16) and
  *   accelPos_X:uint16, then read back by the render functions.
  *
- *   mask[0]  (held in *(uint16_t *)&g.gCurSubstateA, the pokemon/event word):
+ *   mask[0]  (held in *(uint16_t *)&g.ui_substateA, the pokemon/event word):
  *     bit 0  (0x001) - walker is currently walking
  *     bit 1  (0x002) - caught pokemon slot 0 present, OR step-hist 0x40 set
  *     bit 2  (0x004) - caught pokemon slot 1 present
@@ -42,11 +42,11 @@
  *     bits 0..9       - dowsed item entries 0..9 present
  *
  * Cursor helpers (ui_inventory_cursor_next / _prev / _find_present /
- * _back_wrap / _reset) advance g.gCurSubstateY through the 10-bit presence
+ * _back_wrap / _reset) advance g.ui_substateY through the 10-bit presence
  * mask, skipping empty slots.
  */
 
-/* Inventory grid slot indices for g.gCurSubstateY. */
+/* Inventory grid slot indices for g.ui_substateY. */
 enum inventory_slot {
     INV_SLOT_OWN_POKE       = 0,   /* own pokemon */
     INV_SLOT_CAUGHT_POKE_1  = 1,
@@ -62,7 +62,7 @@ enum inventory_slot {
 
 // ROM: 0x9108  98.8%
 void ui_inventory_jump_to_items(void) {
-  g.gCurSubstateY = INV_SLOT_EVENT_ITEM;
+  g.ui_substateY = INV_SLOT_EVENT_ITEM;
   ui_inventory_cursor_find_present(accelPos_X);
 }
 
@@ -70,7 +70,7 @@ void ui_inventory_jump_to_items(void) {
 void ui_handle_inventory_pokemon(void) {
   uint8_t sid;
   if (drv_button_is_triggered(BTN_M) != 0) {
-    if (ui_inventory_cursor_prev(*(volatile uint16_t *)&g.gCurSubstateA) != 0) {
+    if (ui_inventory_cursor_prev(*(volatile uint16_t *)&g.ui_substateA) != 0) {
       /* Already at the first present slot — exit back to the main menu. */
       ui_clear_substate_y();
       ui_set_view(VIEW_MAIN_MENU);
@@ -82,7 +82,7 @@ void ui_handle_inventory_pokemon(void) {
   }
 
   if (drv_button_is_triggered(BTN_L) != 0) {
-    if (ui_inventory_cursor_next(*(volatile uint16_t *)&g.gCurSubstateA) != 0) {
+    if (ui_inventory_cursor_next(*(volatile uint16_t *)&g.ui_substateA) != 0) {
       /* Walked off the end of pokemon — fall through to gifts list if any. */
       if (accelPos_X != 0) {
         ui_inventory_jump_to_items();
@@ -121,9 +121,9 @@ void ui_handle_inventory_items(void) {
     if (ui_inventory_cursor_prev(accelPos_X) != 0) {
       /* At first gift — flip back into the pokemon view if any present,
          otherwise just play the boundary beep. */
-      if (g.gCurSubstateA != 0) {
-        g.gCurSubstateY = 0;
-        ui_inventory_cursor_back_wrap(*(volatile uint16_t *)&g.gCurSubstateA);
+      if (g.ui_substateA != 0) {
+        g.ui_substateY = 0;
+        ui_inventory_cursor_back_wrap(*(volatile uint16_t *)&g.ui_substateA);
         ui_set_view(VIEW_POKE_ITEMS);
         sid = SND_CURSOR;
         goto do_play_sound;
@@ -172,7 +172,7 @@ void ui_render_inventory_pokemon(void) {
   drv_lcd_blit(0x08, 0x00, buf180, 0x50, 0x10);
 
   /* Per-slot detail panel. */
-  switch (g.gCurSubstateY) {
+  switch (g.ui_substateY) {
   case INV_SLOT_OWN_POKE:
     gfx_draw_own_pokemon_small(0x3C, 0x18);
     gfx_draw_own_pokemon_name(0x00, 0x30, 7);
@@ -183,7 +183,7 @@ void ui_render_inventory_pokemon(void) {
     /* Match the caught species ID at 0xCE8C+(slot-1)*0x10 against the route
        table at EEPROM_POKEMON_SLOTS, then draw the matching sprite + name. */
     drv_eeprom_read_block(EEPROM_POKEMON_SLOTS, buf180, 0x30);
-    addr = 0xCE8C + (uint32_t)(g.gCurSubstateY - 1) * 0x10;
+    addr = 0xCE8C + (uint32_t)(g.ui_substateY - 1) * 0x10;
     drv_eeprom_read_block((uint16_t)addr, (uint8_t *)buf180 + 0x30, 0x10);
 
     for (i = 0; i < 3; i++) {
@@ -199,7 +199,7 @@ void ui_render_inventory_pokemon(void) {
   }
   case INV_SLOT_EVENT_POKE:
     /* Peer-event pokemon — sprite cached at EEPROM 0xBA80, two-frame anim. */
-    addr = romBase + 0xBA80 + (uint32_t)(g.animTick & 1) * 0xC0;
+    addr = romBase + 0xBA80 + (uint32_t)(g.ui_animationTick & 1) * 0xC0;
     drv_eeprom_read_block((uint16_t)addr, buf180, 0x180);
     drv_lcd_blit(0x3C, 0x18, buf180, 0x20, 0x18);
     gfx_draw_event_pokemon_name(0x00, 0x30, 7);
@@ -216,7 +216,7 @@ void ui_render_inventory_pokemon(void) {
        and draw its name. */
     void *itemBuf;
     gfx_draw_treasure_chest_icon(0x3C, 0x18);
-    addr = 0xCEBC + (uint32_t)(g.gCurSubstateY - 6) * 4;
+    addr = 0xCEBC + (uint32_t)(g.ui_substateY - 6) * 4;
     drv_eeprom_read_block((uint16_t)addr, buf180, 4);
 
     itemBuf = sbrk(0x14);
@@ -238,23 +238,23 @@ void ui_render_inventory_pokemon(void) {
   }
 
   /* Cursor sprite (blinking, 2-frame) over the current slot in the 5x2 grid. */
-  addr = romBase + 0x278 + (uint32_t)((g.animTick & 1) + 3) * 0x10;
+  addr = romBase + 0x278 + (uint32_t)((g.ui_animationTick & 1) + 3) * 0x10;
   drv_eeprom_read_block((uint16_t)addr, buf180, 0x10);
 
-  x = (uint8_t)((g.gCurSubstateY % 5) * 8 + 0x10);
-  if (g.gCurSubstateY == INV_SLOT_OWN_POKE)
+  x = (uint8_t)((g.ui_substateY % 5) * 8 + 0x10);
+  if (g.ui_substateY == INV_SLOT_OWN_POKE)
     x -= 8;
-  y = (uint8_t)((g.gCurSubstateY / 5) * 0x10 + 0x10);
+  y = (uint8_t)((g.ui_substateY / 5) * 0x10 + 0x10);
 
   drv_lcd_blit(x, y, buf180, 8, 8);
 
   /* Status icons across the grid, driven by the mask in
-     g.gCurSubstateA (lo word) + accelPos_X (hi word). */
+     g.ui_substateA (lo word) + accelPos_X (hi word). */
   drv_eeprom_read_block((uint16_t)(romBase + 0x358), buf180, 0x40);
   drv_lcd_blit(0, 0, (uint8_t *)buf180 + 0x20, 8, 0x10);
 
   {
-  uint16_t maskA = *(volatile uint16_t *)&g.gCurSubstateA;
+  uint16_t maskA = *(volatile uint16_t *)&g.ui_substateA;
   uint16_t maskX = accelPos_X;
 
   /* Right-side dowsed-items "available" tab. */
@@ -339,10 +339,10 @@ void ui_render_inventory_items(void) {
   blit(0x3C, 0x18, buf, 0x20, 0x18);
 
   /* Cursor sprite over the current slot in the 5x2 grid. */
-  anim = (uint16_t)((uint16_t)(g.animTick & 1) + 3) * 0x10;
+  anim = (uint16_t)((uint16_t)(g.ui_animationTick & 1) + 3) * 0x10;
   eread(0x0278 + base + anim, buf, 0x10);
 
-  cursor = g.gCurSubstateY;
+  cursor = g.ui_substateY;
   col_x = (uint8_t)((cursor % 5) * 8 + 0x10);
   row_y = (uint8_t)((cursor / 5) * 0x10 + 0x10);
   blit(col_x, row_y, buf, 8, 8);
@@ -364,7 +364,7 @@ void ui_render_inventory_items(void) {
   }
 
   /* Lookup the item name for the currently-selected slot. */
-  eread(0xCEC8 + (uint16_t)((uint16_t)g.gCurSubstateY << 2), (void *)item_id, 4);
+  eread(0xCEC8 + (uint16_t)((uint16_t)g.ui_substateY << 2), (void *)item_id, 4);
   namebuf = sbrk(0x14);
   eread(0x8F8C, namebuf, 0x14);
   for (i = 0; i < 10; i++) {
@@ -379,7 +379,7 @@ void ui_render_inventory_items(void) {
 
 // ROM: 0x8bd2  79.1%
 uint8_t ui_inventory_cursor_next(uint16_t mask) {
-  uint8_t y = g.gCurSubstateY;
+  uint8_t y = g.ui_substateY;
   uint8_t tries;
 
   if (y == INV_SLOT_EVENT_ITEM)
@@ -388,7 +388,7 @@ uint8_t ui_inventory_cursor_next(uint16_t mask) {
 
   for (tries = 0; tries < 10; tries++) {
     if (mask & (1 << y)) {
-      g.gCurSubstateY = y;
+      g.ui_substateY = y;
       return 0;
     }
     if (y == INV_SLOT_EVENT_ITEM)
@@ -401,15 +401,15 @@ uint8_t ui_inventory_cursor_next(uint16_t mask) {
 // ROM: 0x8c0e  74.8%  saves: e6,r5
 uint8_t ui_inventory_cursor_find_present(uint16_t mask) {
   uint8_t tries;
-  uint8_t y = (uint8_t)((g.gCurSubstateY + 1) % 10);
-  g.gCurSubstateY = y;
+  uint8_t y = (uint8_t)((g.ui_substateY + 1) % 10);
+  g.ui_substateY = y;
 
   for (tries = 0; tries < 10; tries++) {
-    if (mask & (1 << g.gCurSubstateY)) {
+    if (mask & (1 << g.ui_substateY)) {
       return 1;
     }
-    y = (uint8_t)((g.gCurSubstateY + 1) % 10);
-    g.gCurSubstateY = y;
+    y = (uint8_t)((g.ui_substateY + 1) % 10);
+    g.ui_substateY = y;
   }
   return 0;
 }
@@ -417,16 +417,16 @@ uint8_t ui_inventory_cursor_find_present(uint16_t mask) {
 // ROM: 0x8c62  90.6%
 uint8_t ui_inventory_cursor_prev(uint16_t mask) {
   uint8_t tries;
-  if (g.gCurSubstateY == 0)
+  if (g.ui_substateY == 0)
     return 1;
-  g.gCurSubstateY--;
+  g.ui_substateY--;
 
   for (tries = 0; tries < 10; tries++) {
-    if (mask & (1 << g.gCurSubstateY))
+    if (mask & (1 << g.ui_substateY))
       return 0;
-    if (g.gCurSubstateY == 0)
+    if (g.ui_substateY == 0)
       return 1;
-    g.gCurSubstateY--;
+    g.ui_substateY--;
   }
   return 0;
 }
@@ -434,18 +434,18 @@ uint8_t ui_inventory_cursor_prev(uint16_t mask) {
 // ROM: 0x8ca4  80.2%
 void ui_inventory_cursor_back_wrap(uint16_t mask) {
   uint8_t tries;
-  g.gCurSubstateY = (uint8_t)((g.gCurSubstateY + 9) % 10);
+  g.ui_substateY = (uint8_t)((g.ui_substateY + 9) % 10);
   for (tries = 0; tries < 10; tries++) {
-    if (mask & (1 << g.gCurSubstateY))
+    if (mask & (1 << g.ui_substateY))
       return;
-    g.gCurSubstateY = (uint8_t)((g.gCurSubstateY + 9) % 10);
+    g.ui_substateY = (uint8_t)((g.ui_substateY + 9) % 10);
   }
 }
 
 // ROM: 0x8cf4  98.8%
 void ui_inventory_cursor_reset(void) {
-  g.gCurSubstateY = INV_SLOT_EVENT_ITEM;
-  ui_inventory_cursor_find_present(*(uint16_t *)&g.gCurSubstateA);
+  g.ui_substateY = INV_SLOT_EVENT_ITEM;
+  ui_inventory_cursor_find_present(*(uint16_t *)&g.ui_substateA);
 }
 
 // Reason: ROM emits no register-save prologue and trashes r3/r4/r5 freely

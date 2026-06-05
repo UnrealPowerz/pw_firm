@@ -130,7 +130,7 @@ const uint8_t ANIM_CLOUD_Y[5] = {
 const uint8_t PAD_BD81[1] = { 0x00, };
 
 /* 0xBD82..0xBD83 (2 B) — DOWSING_GRASS_BOB:
- * +2/-2 wobble offsets. dowsing.c reads `[g.animTick & 0x03]` which
+ * +2/-2 wobble offsets. dowsing.c reads `[g.ui_animationTick & 0x03]` which
  * over-reads 2 bytes into INTERACTION_REWARD_PTRS, whose first 2
  * bytes are also +2/-2 by design — saves 2 ROM bytes. */
 const int8_t DOWSING_GRASS_BOB[2] = {

@@ -18,7 +18,7 @@
  *   bit 2 (0x04) — left/right edge fill words (force 0xFFFF)
  *   bit 3 (0x08) — middle column dividers     (force 0xFFFF)
  *
- * `flags` bit 0 enables the g.animTick-driven blink overlay.
+ * `flags` bit 0 enables the g.ui_animationTick-driven blink overlay.
  * --------------------------------------------------------------------- */
 
 #define TEXT_BOX_LINES    0x01u   /* horizontal top/bottom border */

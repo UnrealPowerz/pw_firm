@@ -10,7 +10,7 @@
  * the peer/special-event path; otherwise the solo path uses the trainer's
  * step-unlock table.
  *
- * State machine driven by g.gCurSubstateZ:
+ * State machine driven by g.ui_substateZ:
  *   0 = idle (player picking slot)
  *   1 = digging animation (after OK pressed)
  *   2 = item found
@@ -18,8 +18,8 @@
  *   4 = reveal screen (after all attempts exhausted)
  *
  * Globals repurposed for dowsing state:
- *   g.gCurSubstateY      = result slot index / item kind
- *   g.gCurSubstateA      = animation tick countdown
+ *   g.ui_substateY      = result slot index / item kind
+ *   g.ui_substateA      = animation tick countdown
  *   g.accelXPos          = attempts remaining (counts down)
  *   g.accelYPos          = "marked-wrong" slot
  *   accelZPos_b        = save-slot index for the awarded item
@@ -33,7 +33,7 @@
 void game_init_dowsing(void) {
   uint16_t rnd;
 
-  g.gCurSubstateZ = 0;
+  g.ui_substateZ = 0;
   g.DAT_f7d1 = 0;
   g.accelXPos = 2;
 
@@ -50,7 +50,7 @@ void game_init_dowsing(void) {
 void ui_handle_dowsing(void) {
   uint8_t state;
 
-  state = g.gCurSubstateZ;
+  state = g.ui_substateZ;
 
   if (state == 0) {
     goto state_idle;
@@ -73,8 +73,8 @@ state_idle:
       return;
     }
     drv_sound_play(SND_CONFIRM);
-    g.gCurSubstateZ = 1;
-    g.gCurSubstateA = 4;
+    g.ui_substateZ = 1;
+    g.ui_substateA = 4;
     return;
   }
   if (drv_button_is_triggered(BTN_M)) {
@@ -89,20 +89,20 @@ state_idle:
   return;
 
 state_digging:
-  if (g.gCurSubstateA != 0) {
+  if (g.ui_substateA != 0) {
     return;
   }
   if (drv_sound_is_playing()) {
     return;
   }
   if (g.DAT_f7d1 == g.dowsing_item_pos) {
-    g.gCurSubstateZ = 2;
+    g.ui_substateZ = 2;
     ui_handle_dowsing_selection();
     drv_sound_play(SND_DOWSE_HIT);
     return;
   }
   /* Wrong slot. */
-  g.gCurSubstateZ = 3;
+  g.ui_substateZ = 3;
   drv_sound_play(SND_FAIL);
   if (g.accelXPos == 2) {
     g.accelYPos = g.DAT_f7d1;
@@ -121,7 +121,7 @@ state_found:
     uint8_t save_slot = accelZPos_b;
     if (save_slot == 3) {
       /* No room left — kick into peer-session caught-stats view. */
-      g.gCurSubstateA = 1;
+      g.ui_substateA = 1;
       ui_init_discard_cursor();
       ui_set_view(VIEW_DISCARD_PICKER);
       return;
@@ -150,7 +150,7 @@ state_miss:
   if (g.accelXPos != 0) {
     /* Still have attempts left — bounce back to idle. */
     drv_sound_play(SND_CONFIRM);
-    g.gCurSubstateZ = 4;
+    g.ui_substateZ = 4;
     return;
   }
   drv_sound_play(SND_CONFIRM);
@@ -163,7 +163,7 @@ state_reveal:
     return;
   }
   drv_sound_play(SND_CONFIRM);
-  g.gCurSubstateZ = 0;
+  g.ui_substateZ = 0;
   return;
 }
 
@@ -233,7 +233,7 @@ encounter:
     uint8_t *trainer_buf = (uint8_t *)sbrk(0xBE);
     drv_eeprom_read_block(EEPROM_TRAINER_PROFILE, trainer_buf, 0xBE);
 
-    g.gCurSubstateY = 0x0A;
+    g.ui_substateY = 0x0A;
 
     *((uint32_t *)encounter_data) = *((uint32_t *)route_data);
     *((uint16_t *)(encounter_data + 0x4)) = *((uint16_t *)(route_data + 0x4));
@@ -296,7 +296,7 @@ void ui_handle_dowsing_selection(void) {
     slot = 9;
   }
 
-  g.gCurSubstateY = slot;
+  g.ui_substateY = slot;
   DAT_f7d8_w = *((uint16_t *)(trainer_buf + 0x8C + (uint16_t)slot * 2));
 }
 
@@ -335,9 +335,9 @@ void ui_render_dowsing_grass(void) {
 
   /* Tick down dig animation. */
   {
-    uint8_t a = g.gCurSubstateA;
+    uint8_t a = g.ui_substateA;
     if (a != 0) {
-      g.gCurSubstateA = a - 1;
+      g.ui_substateA = a - 1;
     }
   }
 
@@ -353,9 +353,9 @@ void ui_render_dowsing_grass(void) {
     }
   }
 
-  /* Bobbing grass overlay — g.animTick selects one of 4 wobble offsets. */
+  /* Bobbing grass overlay — g.ui_animationTick selects one of 4 wobble offsets. */
   {
-    uint8_t anim = g.animTick & 0x03;
+    uint8_t anim = g.ui_animationTick & 0x03;
     gfx_draw_animated_grass(
         0x10, 0x10, (int8_t)*((volatile uint8_t *)(0xBD82 + anim)), buf);
   }
@@ -386,7 +386,7 @@ void ui_render_dowsing(void) {
 
   sprites_base = 0x280;
 
-  if (g.gCurSubstateZ == 1) {
+  if (g.ui_substateZ == 1) {
     ui_render_dowsing_grass();
     goto end;
   }
@@ -420,9 +420,9 @@ void ui_render_dowsing(void) {
   drv_lcd_blit(0, 0, buf, 0x20, 0x18);
 
   {
-    uint8_t a = g.gCurSubstateA;
+    uint8_t a = g.ui_substateA;
     if (a != 0) {
-      g.gCurSubstateA = a - 1;
+      g.ui_substateA = a - 1;
     }
   }
 
@@ -431,7 +431,7 @@ void ui_render_dowsing(void) {
   for (i = 0; i < 6; i++) {
     uint8_t x = (uint8_t)(i * 0x10);
 
-    if (g.gCurSubstateZ == 2 && (uint8_t)i == g.DAT_f7d1) {
+    if (g.ui_substateZ == 2 && (uint8_t)i == g.DAT_f7d1) {
       /* Found state hides the cursor slot — item sprite drawn below. */
       continue;
     }
@@ -443,9 +443,9 @@ void ui_render_dowsing(void) {
   }
 
   /* Per-substate overlay. */
-  if (g.gCurSubstateZ == 0) {
+  if (g.ui_substateZ == 0) {
     /* Idle: dowsing rod, two-frame bob. */
-    uint8_t frame = g.animTick & 0x01;
+    uint8_t frame = g.ui_animationTick & 0x01;
     uint8_t rod_x;
     drv_eeprom_read_block(0x278 + sprites_base + (uint16_t)frame * 0x10, buf,
                           0x10);
@@ -453,7 +453,7 @@ void ui_render_dowsing(void) {
     drv_lcd_blit(rod_x, 0x28, buf, 8, 8);
     gfx_draw_text_box(0x30, TEXT_DISCOVER_AN_ITEM, TEXT_BOX_FULL, TEXT_BOX_STATIC);
 
-  } else if (g.gCurSubstateZ == 2) {
+  } else if (g.ui_substateZ == 2) {
     /* Found item: draw item icon and either g.save_watts or item name. */
     uint8_t item_x;
     drv_eeprom_read_block(0x208 + sprites_base, buf, 0x10);
@@ -464,7 +464,7 @@ void ui_render_dowsing(void) {
       gfx_draw_value_with_icon(0x02, 0x20, 0x0D, (uint16_t)g.DAT_f7d5);
       gfx_draw_text_box(0x30, TEXT_RECEIVED, TEXT_BOX_NO_LINES, TEXT_BOX_BLINK);
     } else {
-      uint8_t result_kind = g.gCurSubstateY;
+      uint8_t result_kind = g.ui_substateY;
       if (result_kind >= 0x0A) {
         gfx_draw_event_item_name(0x00, 0x20, 0, 0x0D);
       } else {
@@ -473,7 +473,7 @@ void ui_render_dowsing(void) {
       gfx_draw_text_box(0x30, TEXT_FOUND, TEXT_BOX_NO_LINES, TEXT_BOX_BLINK);
     }
 
-  } else if (g.gCurSubstateZ == 3) {
+  } else if (g.ui_substateZ == 3) {
     gfx_draw_text_box(0x30, TEXT_NOTHING_FOUND, TEXT_BOX_FULL, TEXT_BOX_BLINK);
 
     /* Reveal the hidden item only after all attempts are spent. The loop
@@ -487,7 +487,7 @@ void ui_render_dowsing(void) {
       }
     }
 
-  } else if (g.gCurSubstateZ == 4) {
+  } else if (g.ui_substateZ == 4) {
     /* Proximity indicator: |cursor - hidden| < 2 ⇒ "close", else "far". */
     int16_t diff = (int16_t)(uint16_t)g.DAT_f7d1 -
                    (int16_t)(uint16_t)g.dowsing_item_pos;

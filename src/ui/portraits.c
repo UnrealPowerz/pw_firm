@@ -39,7 +39,7 @@ void ui_render_empty_eeprom(void) {
 
   {
     uint8_t frame;
-    frame = (g.animTick >> 2) & 1;
+    frame = (g.ui_animationTick >> 2) & 1;
     if (frame) {
       for (i = 0; i < 0x10; i++) {
         uint8_t pix;
@@ -82,8 +82,8 @@ void ui_render_sad_walker(void) {
   drv_lcd_blit(0x20, 0x10, buf, 0x20, 0x20);
 
   {
-    uint8_t tmp = g.gCurSubstateZ + 1;
-    g.gCurSubstateZ = tmp;
+    uint8_t tmp = g.ui_substateZ + 1;
+    g.ui_substateZ = tmp;
     if (tmp > 0x08) {
       ui_reset_substate();
       ui_set_view(VIEW_HOME);

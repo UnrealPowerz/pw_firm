@@ -66,7 +66,7 @@ __entry(vect = 0) void PowerON_Reset(void) {
 
   sys_set_handler(sys_main_loop_low_power);
   ui_reset_substate();
-  g.currentlyActiveView = VIEW_HOME;
+  g.ui_activeView = VIEW_HOME;
   drv_timer_b_init();
 
   while (1) {
