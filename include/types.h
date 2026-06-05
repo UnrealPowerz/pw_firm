@@ -110,7 +110,7 @@ typedef union {
     } BIT;
 } ped_task_flags_t;
 
-/* buttonInputRaw: bits 1,2,3 are the three buttons (set by ISR). */
+/* btn_inputRaw: bits 1,2,3 are the three buttons (set by ISR). */
 typedef union {
     uint8_t BYTE;
     struct {

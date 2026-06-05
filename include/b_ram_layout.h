@@ -23,10 +23,10 @@
 /* 0xF797 */ volatile uint8_t  settingsByte;           /* aka RamCache_settingsByte */
 
 /* --- Button input (4 B) --- */
-/* 0xF798 */ volatile uint8_t  buttonInputRaw;          /* bit-field via _BIT */
-/* 0xF799 */ volatile uint8_t  prevButtonInputRaw;
-/* 0xF79A */ volatile uint8_t  buttonTrigger;
-/* 0xF79B */ volatile uint8_t  buttonHoldDuration;
+/* 0xF798 */ volatile uint8_t  btn_inputRaw;          /* bit-field via _BIT */
+/* 0xF799 */ volatile uint8_t  btn_inputPrevious;
+/* 0xF79A */ volatile uint8_t  btn_trigger;
+/* 0xF79B */ volatile uint8_t  btn_holdDuration;
 
 /* --- Activity / timing --- */
 /* 0xF79C */ volatile uint32_t sessionSteps;

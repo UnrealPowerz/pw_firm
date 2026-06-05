@@ -4,10 +4,10 @@
 void drv_buttons_init_irqs(void) {
   uint8_t tmp;
 
-  g.buttonInputRaw = 0;
-  g.prevButtonInputRaw = 0;
-  g.buttonTrigger = 0;
-  g.buttonHoldDuration = 0;
+  g.btn_inputRaw = 0;
+  g.btn_inputPrevious = 0;
+  g.btn_trigger = 0;
+  g.btn_holdDuration = 0;
 
   set_ccr(0x80);
 
@@ -34,42 +34,42 @@ void drv_buttons_init_irqs(void) {
 
 // ROM: 0x9b84  96.9%
 void drv_button_read(void) {
-  g.buttonInputRaw = 0;
+  g.btn_inputRaw = 0;
 
   if (PDRB_BIT.B0) {
-    buttonInputRaw_BIT.btn_r = 1;
+    btn_inputRaw_BIT.btn_r = 1;
     if (g.wakeupFlagMaybe[0]) {
-      g.buttonHoldDuration++;
+      g.btn_holdDuration++;
     }
   } else {
-    g.buttonHoldDuration = 0;
+    g.btn_holdDuration = 0;
   }
 
   if (statusFlags_BIT.button_event) {
-    buttonInputRaw_BIT.btn_r = 1;
+    btn_inputRaw_BIT.btn_r = 1;
     statusFlags_BIT.button_event = 0;
   }
 
   if (PDRB_BIT.B2) {
-    buttonInputRaw_BIT.btn_m = 1;
+    btn_inputRaw_BIT.btn_m = 1;
   }
 
   if (PDRB_BIT.B4) {
-    buttonInputRaw_BIT.btn_l = 1;
+    btn_inputRaw_BIT.btn_l = 1;
   }
 
-  g.buttonTrigger = (g.buttonInputRaw ^ g.prevButtonInputRaw) & g.buttonInputRaw;
-  g.prevButtonInputRaw = g.buttonInputRaw;
+  g.btn_trigger = (g.btn_inputRaw ^ g.btn_inputPrevious) & g.btn_inputRaw;
+  g.btn_inputPrevious = g.btn_inputRaw;
 
-  if (g.buttonTrigger) {
+  if (g.btn_trigger) {
     g.activityTimer = 0x5A;
     g.accelSampleCount = 0;
     if ((g.walker_status_flags & WALKER_MODE_MASK) != WALKER_MODE_DEEP_SLEEP) {
-      g.buttonTrigger = 0;
+      g.btn_trigger = 0;
     }
   }
 
-  if (g.buttonHoldDuration >= 8) {
+  if (g.btn_holdDuration >= 8) {
     if ((g.walker_status_flags & WALKER_MODE_MASK) != WALKER_MODE_DEEP_SLEEP) {
       sys_enter_deep_sleep();
       walker_status_flags_BIT.input_pending = 1;
@@ -79,5 +79,5 @@ void drv_button_read(void) {
 
 // ROM: 0x9c40  100.0%
 uint8_t drv_button_is_triggered(uint8_t mask) {
-  return g.buttonTrigger & mask;
+  return g.btn_trigger & mask;
 }

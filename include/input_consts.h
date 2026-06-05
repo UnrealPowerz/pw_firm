@@ -2,7 +2,7 @@
  * input_consts.h - Named masks for the button driver.
  *
  * Bit positions match button_input_t in types.h, which is the layout used
- * by buttonInputRaw_BIT / buttonTrigger_BIT:
+ * by btn_inputRaw_BIT / buttonTrigger_BIT:
  *   bit 1 (0x02) — btn_r  (PDRB.B0)
  *   bit 2 (0x04) — btn_m  (PDRB.B2)
  *   bit 3 (0x08) — btn_l  (PDRB.B4)

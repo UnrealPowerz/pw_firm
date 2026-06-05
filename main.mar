@@ -13519,7 +13519,7 @@ LAB_7932:
           mov.b       r0l, @walker_status_flags
           sub.b       r0l, r0l
           mov.b       r0l, @wakeupFlagMaybe
-          mov.b       r0l, @buttonHoldDuration
+          mov.b       r0l, @btn_holdDuration
           bra         LAB_796e:8
 LAB_7962:
           ldc.b       #H'80, ccr
@@ -17472,10 +17472,10 @@ LAB_9afc:
 ; =============================================================================
 drv_buttons_init_irqs:
           sub.b       r0l, r0l
-          mov.b       r0l, @buttonInputRaw
-          mov.b       r0l, @prevButtonInputRaw
-          mov.b       r0l, @buttonTrigger
-          mov.b       r0l, @buttonHoldDuration
+          mov.b       r0l, @btn_inputRaw
+          mov.b       r0l, @btn_inputPrevious
+          mov.b       r0l, @btn_trigger
+          mov.b       r0l, @btn_holdDuration
           ldc.b       #H'80, ccr
           mov.b       @PFCR, r0l
           and.b       #H'FC, r0l
@@ -17502,47 +17502,47 @@ drv_buttons_init_irqs:
 ; =============================================================================
 drv_button_read:
           sub.b       r0l, r0l
-          mov.b       r0l, @buttonInputRaw
+          mov.b       r0l, @btn_inputRaw
           bld         #H'0, @PDRB
           bcc         LAB_9baa:8
-          mov.w       #buttonInputRaw, r0
+          mov.w       #btn_inputRaw, r0
           bset        #H'1, @r0
           mov.b       @wakeupFlagMaybe, r0l
           beq         LAB_9bae:8
-          mov.b       @buttonHoldDuration, r0l
+          mov.b       @btn_holdDuration, r0l
           inc.b       r0l
-          mov.b       r0l, @buttonHoldDuration
+          mov.b       r0l, @btn_holdDuration
           bra         LAB_9bae:8
 LAB_9baa:
-          mov.b       r0l, @buttonHoldDuration
+          mov.b       r0l, @btn_holdDuration
 LAB_9bae:
           mov.b       @statusFlags, r0l
           bld         #H'3, r0l
           bcc         LAB_9bc6:8
-          mov.w       #buttonInputRaw, r0
+          mov.w       #btn_inputRaw, r0
           bset        #H'1, @r0
           mov.w       #statusFlags, r0
           bclr        #H'3, @r0
 LAB_9bc6:
           bld         #H'2, @PDRB
           bcc         LAB_9bd4:8
-          mov.w       #buttonInputRaw, r0
+          mov.w       #btn_inputRaw, r0
           bset        #H'2, @r0
 LAB_9bd4:
           bld         #H'4, @PDRB
           bcc         LAB_9be2:8
-          mov.w       #buttonInputRaw, r0
+          mov.w       #btn_inputRaw, r0
           bset        #H'3, @r0
 LAB_9be2:
-          mov.b       @buttonInputRaw, r0l
-          mov.b       @prevButtonInputRaw, r0h
+          mov.b       @btn_inputRaw, r0l
+          mov.b       @btn_inputPrevious, r0h
           xor.b       r0h, r0l
-          mov.b       @buttonInputRaw, r0h
+          mov.b       @btn_inputRaw, r0h
           and.b       r0l, r0h
-          mov.b       r0h, @buttonTrigger
-          mov.b       @buttonInputRaw, r0l
-          mov.b       r0l, @prevButtonInputRaw
-          mov.b       @buttonTrigger, r0l
+          mov.b       r0h, @btn_trigger
+          mov.b       @btn_inputRaw, r0l
+          mov.b       r0l, @btn_inputPrevious
+          mov.b       @btn_trigger, r0l
           beq         LAB_9c20:8
           mov.b       #H'5A, r0l
           mov.b       r0l, @activityTimer
@@ -17553,9 +17553,9 @@ LAB_9be2:
           cmp.b       #H'10, r0l
           beq         LAB_9c20:8
           sub.b       r0l, r0l
-          mov.b       r0l, @buttonTrigger
+          mov.b       r0l, @btn_trigger
 LAB_9c20:
-          mov.b       @buttonHoldDuration, r0l
+          mov.b       @btn_holdDuration, r0l
           cmp.b       #H'8, r0l
           bcs         LAB_9c3e:8
           mov.b       @walker_status_flags, r0l
@@ -17576,7 +17576,7 @@ LAB_9c3e:
 ; Parameters: 1
 ; =============================================================================
 drv_button_is_triggered:
-          mov.b       @buttonTrigger, r0h
+          mov.b       @btn_trigger, r0h
           and.b       r0h, r0l
           rts
 ; =============================================================================
@@ -21345,13 +21345,13 @@ peerSlotIndex:
           .RES.B      4
 RamCache_settingsByte:
           .RES.B      1
-buttonInputRaw:
+btn_inputRaw:
           .RES.B      1
-prevButtonInputRaw:
+btn_inputPrevious:
           .RES.B      1
-buttonTrigger:
+btn_trigger:
           .RES.B      1
-buttonHoldDuration:
+btn_holdDuration:
           .RES.B      1
 sessionSteps:
           .RES.B      4

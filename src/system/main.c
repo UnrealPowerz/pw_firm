@@ -63,7 +63,7 @@ void sys_main_loop_low_power(void) {
         drv_lcd_power_save();
         g.walker_status_flags = (g.walker_status_flags & 0xE7) | WALKER_MODE_LOW_POWER;
         g.wakeupFlagMaybe[0] = 0;
-        g.buttonHoldDuration = 0;
+        g.btn_holdDuration = 0;
       }
     } else {
       set_ccr(0x80);
