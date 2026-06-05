@@ -162,6 +162,18 @@ struct viewstate {
             volatile uint8_t awardedItemHi;     /* 0xF7D8 = at_d8 — uint16 item-id hi byte */
             volatile uint8_t awardedItemLo;     /* 0xF7D9 = at_d9 — uint16 item-id lo byte */
         } dowsing;
+        /* Battle minigame's interpretation. Documented in battle.c header. */
+        struct {
+            volatile byte_bits_t hpRemaining;       /* 0xF7D1 = at_d1 — HP/wiggle bar segments */
+            volatile uint8_t     animTick;          /* 0xF7D2 = at_d2 — per-state animation tick */
+            volatile uint8_t     stateDwellLen;     /* 0xF7D3 = at_d3 — frames to wait before advancing */
+            volatile uint8_t     spriteY;           /* 0xF7D4 = at_d4 — pokemon sprite y position */
+            volatile uint8_t     spriteX;           /* 0xF7D5 = at_d5 — pokemon/ball sprite x position */
+            volatile uint8_t     wattsToForfeitHi;  /* 0xF7D6 = at_d6 — uint16 hi byte (g.save_watts paid on loss) */
+            volatile uint8_t     wattsToForfeitLo;  /* 0xF7D7 = at_d7 — uint16 lo byte */
+            volatile byte_bits_t flags;             /* 0xF7D8 = at_d8 — packed flags (see battle.c header) */
+            volatile uint8_t     wiggleSuccessCount;/* 0xF7D9 = at_d9 — 3 caps capture */
+        } battle;
         /* Add more per-subsystem views here as each is audited. ch38 pads
          * uint16 members to even offsets within a struct; since this
          * union sits at an odd offset within viewstate (Y/Z/A take 3
