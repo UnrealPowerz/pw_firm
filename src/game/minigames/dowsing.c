@@ -6,7 +6,7 @@
  * The player picks one of 6 grid positions; the device reveals whether they
  * found the hidden item. The item slot is rolled at game start
  * (game_init_dowsing). If "co-op mode" (peer dowsing) is active —
- * g.save_settings bit 0 set — encounter generation and selection follow
+ * g.save_settings.BYTE bit 0 set — encounter generation and selection follow
  * the peer/special-event path; otherwise the solo path uses the trainer's
  * step-unlock table.
  *
@@ -18,7 +18,7 @@
  *   4 = reveal screen (after all attempts exhausted)
  *
  * Globals repurposed for dowsing state:
- *   g.viewstate.Y      = result slot index / item kind
+ *   g.viewstate.Y.BYTE      = result slot index / item kind
  *   g.viewstate.A      = animation tick countdown
  *   g.viewstate.v.dowsing.attemptsRemaining          = attempts remaining (counts down)
  *   g.viewstate.v.dowsing.markedWrongSlot          = "marked-wrong" slot
@@ -114,7 +114,7 @@ state_found:
   if (!drv_button_is_triggered(BTN_ANY)) {
     return;
   }
-  if ((g.save_settings & 1)) {
+  if ((g.save_settings.BYTE & 1)) {
     goto exit_to_home;
   }
   {
@@ -129,7 +129,7 @@ state_found:
     drv_eeprom_write_block((uint16_t)save_slot * 4 + EEPROM_LOG_ITEMS,
                            (void *)&DAT_f7d8_w, 0x2);
   }
-  if (sys_walkerFlags_BIT.walking) {
+  if (g.sys_walkerFlags.BIT.walking) {
     uint8_t *trainer_buf = (uint8_t *)sbrk(0xBE);
     uint8_t *gift_buf;
     drv_eeprom_read_block(EEPROM_TRAINER_PROFILE, trainer_buf, 0xBE);
@@ -233,7 +233,7 @@ encounter:
     uint8_t *trainer_buf = (uint8_t *)sbrk(0xBE);
     drv_eeprom_read_block(EEPROM_TRAINER_PROFILE, trainer_buf, 0xBE);
 
-    g.viewstate.Y = 0x0A;
+    g.viewstate.Y.BYTE = 0x0A;
 
     *((uint32_t *)encounter_data) = *((uint32_t *)route_data);
     *((uint16_t *)(encounter_data + 0x4)) = *((uint16_t *)(route_data + 0x4));
@@ -248,7 +248,7 @@ encounter:
       drv_eeprom_write_u8(EEPROM_STEP_HIST_FLAGS, flags);
     }
 
-    if (sys_walkerFlags_BIT.walking) {
+    if (g.sys_walkerFlags.BIT.walking) {
       uint8_t *gift_buf = (uint8_t *)sbrk(0x88);
       game_log_interaction(trainer_buf, gift_buf, 0x0C, 0x01, DAT_f7d8_w, 0);
     }
@@ -267,7 +267,7 @@ void ui_handle_dowsing_selection(void) {
 
   g.viewstate.v.dowsing.saveSlot = save_find_empty_item_slot(item_table);
 
-  if ((g.save_settings & 1)) {
+  if ((g.save_settings.BYTE & 1)) {
     game_check_wild_encounter();
     return;
   }
@@ -296,7 +296,7 @@ void ui_handle_dowsing_selection(void) {
     slot = 9;
   }
 
-  g.viewstate.Y = slot;
+  g.viewstate.Y.BYTE = slot;
   DAT_f7d8_w = *((uint16_t *)(trainer_buf + 0x8C + (uint16_t)slot * 2));
 }
 
@@ -324,7 +324,7 @@ void ui_render_dowsing_grass(void) {
   /* Grass background — different art in co-op vs solo. */
   {
     uint16_t bg_addr;
-    if ((g.save_settings & 1)) {
+    if ((g.save_settings.BYTE & 1)) {
       bg_addr = 0xC83C;
     } else {
       bg_addr = 0x8FBE;
@@ -410,7 +410,7 @@ void ui_render_dowsing(void) {
   /* Grass background. */
   {
     uint16_t bg_addr;
-    if ((g.save_settings & 1)) {
+    if ((g.save_settings.BYTE & 1)) {
       bg_addr = 0xC83C;
     } else {
       bg_addr = 0x8FBE;
@@ -464,7 +464,7 @@ void ui_render_dowsing(void) {
       gfx_draw_value_with_icon(0x02, 0x20, 0x0D, (uint16_t)g.viewstate.v.dowsing.wattReward);
       gfx_draw_text_box(0x30, TEXT_RECEIVED, TEXT_BOX_NO_LINES, TEXT_BOX_BLINK);
     } else {
-      uint8_t result_kind = g.viewstate.Y;
+      uint8_t result_kind = g.viewstate.Y.BYTE;
       if (result_kind >= 0x0A) {
         gfx_draw_event_item_name(0x00, 0x20, 0, 0x0D);
       } else {

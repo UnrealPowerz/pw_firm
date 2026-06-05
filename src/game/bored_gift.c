@@ -5,7 +5,7 @@
  *
  * Triggered from system/main.c (via game_check_periodic_events) when the
  * walker has been idle for long enough and the RNG rolls a hit. The reward
- * type is stored in g.viewstate.Y and dispatched in game_process_interaction_reward:
+ * type is stored in g.viewstate.Y.BYTE and dispatched in game_process_interaction_reward:
  *
  *   type 1   - dowsing-style item gift  (selects an item from the trainer's
  *              table based on g.session_recentSteps; populates EEPROM_LOG_ITEMS).
@@ -30,7 +30,7 @@ void game_init_peer_identity(void) {
   uint16_t i;
 
   g.session_recentSteps = 0;
-  sys_walkerFlags_BIT.walking = 1;
+  g.sys_walkerFlags.BIT.walking = 1;
 
   sys_init_heap();
   rec = (struct trainer_record *)sbrk(sizeof(*rec));
@@ -85,7 +85,7 @@ void game_process_interaction_reward(uint8_t type) {
   uint16_t item_id = 0;       /* passed as val_at_0e to game_log_interaction;
                                  only set on type 1 (item gift) */
 
-  g.viewstate.Y = type;
+  g.viewstate.Y.BYTE = type;
   accel_xPosition_word = ((const uint16_t *)INTERACTION_REWARD_PTRS)[type];
   ui_set_view(VIEW_BORED_GIFT);
   g.session_idleSeconds = 0;
@@ -131,7 +131,7 @@ void game_process_interaction_reward(uint8_t type) {
   drv_eeprom_read_block(EEPROM_TRAINER_PROFILE, trainer_buf, 0xBE);
 
   {
-    uint8_t settings_bit = ((g.save_settings & 1));
+    uint8_t settings_bit = ((g.save_settings.BYTE & 1));
     slot_buf = sbrk(0x88);
     /* ROM: r1h=settings_bit (use_wild_data flag), e1=item_id (val_at_0e),
        push=0 (event_subtype). */
@@ -233,15 +233,15 @@ void game_check_periodic_events(void) {
   uint8_t prob;
   uint8_t *buf;
 
-  if ((g.sys_walkerFlags & WALKER_MODE_MASK) != WALKER_MODE_DEEP_SLEEP)
+  if ((g.sys_walkerFlags.BYTE & WALKER_MODE_MASK) != WALKER_MODE_DEEP_SLEEP)
     return;
   if (g.ui_activeView != VIEW_HOME)
     return;
-  if (!(sys_walkerFlags_BIT.input_pending))
+  if (!(g.sys_walkerFlags.BIT.input_pending))
     return;
 
-  sys_walkerFlags_BIT.input_pending = 0;
-  g.viewstate.Y = 0;
+  g.sys_walkerFlags.BIT.input_pending = 0;
+  g.viewstate.Y.BYTE = 0;
   g.viewstate.Z = 0;
 
   daily_steps = g.session_recentSteps;
@@ -251,10 +251,10 @@ void game_check_periodic_events(void) {
   if (prob >= 40)
     return;
 
-  if (!(sys_walkerFlags_BIT.walking)) {
+  if (!(g.sys_walkerFlags.BIT.walking)) {
     if (g.session_recentSteps < 300)
       return;
-    g.viewstate.Y = 0x07;
+    g.viewstate.Y.BYTE = 0x07;
   } else {
     if (g.session_idleSeconds < 3600)
       return;
@@ -271,15 +271,15 @@ void game_check_periodic_events(void) {
     daily_steps = g.session_recentSteps;
     if (save_find_empty_item_slot(buf) < 3 && prob >= 90 &&
         daily_steps >= 500) {
-      g.viewstate.Y = 0x01;
+      g.viewstate.Y.BYTE = 0x01;
     } else if (prob >= 80 && daily_steps >= 250) {
-      g.viewstate.Y = 0x02;
+      g.viewstate.Y.BYTE = 0x02;
     } else if (daily_steps >= 200) {
-      g.viewstate.Y = 0x03;
+      g.viewstate.Y.BYTE = 0x03;
     } else if (daily_steps >= 100) {
-      g.viewstate.Y = 0x04;
+      g.viewstate.Y.BYTE = 0x04;
     } else if (g.save_sessionTicksElapsed >= 60 && daily_steps <= 50) {
-      g.viewstate.Y = 0x05;
+      g.viewstate.Y.BYTE = 0x05;
     } else {
       return;
     }

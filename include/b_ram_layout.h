@@ -20,10 +20,10 @@
 /* 0xF792 */ volatile uint8_t  save_stepWattCounter;
 /* 0xF793 */ volatile uint8_t  save_peerSlotIndex;
 /* 0xF794 */ volatile uint8_t  _peer_slot_tail[3];     /* original alloc was uint32 */
-/* 0xF797 */ volatile uint8_t  save_settings;           /* aka RamCache_settingsByte */
+/* 0xF797 */ volatile settings_byte_t save_settings;      /* aka RamCache_settingsByte */
 
 /* --- Button input (4 B) --- */
-/* 0xF798 */ volatile uint8_t  btn_inputRaw;          /* bit-field via _BIT */
+/* 0xF798 */ volatile button_input_t btn_inputRaw;
 /* 0xF799 */ volatile uint8_t  btn_inputPrevious;
 /* 0xF79A */ volatile uint8_t  btn_trigger;
 /* 0xF79B */ volatile uint8_t  btn_holdDuration;
@@ -35,7 +35,7 @@
 /* 0xF7A4 */ volatile uint8_t  rtc_seconds;
 /* 0xF7A5 */ volatile uint8_t  rtc_minutes;
 /* 0xF7A6 */ volatile uint8_t  rtc_hours;
-/* 0xF7A7 */ volatile uint8_t  ped_taskFlags;           /* bit-field via _BIT */
+/* 0xF7A7 */ volatile ped_task_flags_t ped_taskFlags;
 /* 0xF7A8 */ volatile uint8_t  notif_scheduledHour;
 /* 0xF7A9 */ volatile uint8_t  lcd_shadeBase;
 /* 0xF7AA */ volatile uint8_t  ui_menuCursor;
@@ -51,8 +51,8 @@
 /* 0xF7B4 */ volatile uint8_t  ped_batchAccumulator;
 
 /* --- System status flags --- */
-/* 0xF7B5 */ volatile uint8_t  sys_statusFlags;            /* bit-field via _BIT */
-/* 0xF7B6 */ volatile uint8_t  sys_walkerFlags;    /* bit-field via _BIT */
+/* 0xF7B5 */ volatile status_flags_t sys_statusFlags;
+/* 0xF7B6 */ volatile walker_status_t sys_walkerFlags;
 /* 0xF7B7 */ volatile uint8_t  _pad_f7b7;
 
 /* --- Command / wake / heap / RNG --- */

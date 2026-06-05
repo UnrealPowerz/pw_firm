@@ -9,12 +9,12 @@
  *   VIEW_POKE_ITEMS    - inventory grid: own / caught / event pokemon + items.
  *     Handler:  ui_handle_inventory_pokemon
  *     Render:   ui_render_inventory_pokemon
- *     Cursor:   g.viewstate.Y = 0..9 (see enum inventory_slot below)
+ *     Cursor:   g.viewstate.Y.BYTE = 0..9 (see enum inventory_slot below)
  *
  *   VIEW_GIFTS         - dowsed-items list.
  *     Handler:  ui_handle_inventory_items
  *     Render:   ui_render_inventory_items
- *     Cursor:   g.viewstate.Y = 0..9 (gift slot)
+ *     Cursor:   g.viewstate.Y.BYTE = 0..9 (gift slot)
  *
  * The storage-full discard picker (VIEW_DISCARD_PICKER) lives in
  * src/ui/discard_picker.c.
@@ -42,7 +42,7 @@
  *     bits 0..9       - dowsed item entries 0..9 present
  *
  * Cursor helpers (ui_inventory_cursor_next / _prev / _find_present /
- * _back_wrap / _reset) advance g.viewstate.Y through the 10-bit presence
+ * _back_wrap / _reset) advance g.viewstate.Y.BYTE through the 10-bit presence
  * mask, skipping empty slots.
  */
 
@@ -62,7 +62,7 @@ enum inventory_slot {
 
 // ROM: 0x9108  98.8%
 void ui_inventory_jump_to_items(void) {
-  g.viewstate.Y = INV_SLOT_EVENT_ITEM;
+  g.viewstate.Y.BYTE = INV_SLOT_EVENT_ITEM;
   ui_inventory_cursor_find_present(accel_xPosition_word);
 }
 
@@ -122,7 +122,7 @@ void ui_handle_inventory_items(void) {
       /* At first gift — flip back into the pokemon view if any present,
          otherwise just play the boundary beep. */
       if (g.viewstate.A != 0) {
-        g.viewstate.Y = 0;
+        g.viewstate.Y.BYTE = 0;
         ui_inventory_cursor_back_wrap(*(volatile uint16_t *)&g.viewstate.A);
         ui_set_view(VIEW_POKE_ITEMS);
         sid = SND_CURSOR;
@@ -172,7 +172,7 @@ void ui_render_inventory_pokemon(void) {
   drv_lcd_blit(0x08, 0x00, buf180, 0x50, 0x10);
 
   /* Per-slot detail panel. */
-  switch (g.viewstate.Y) {
+  switch (g.viewstate.Y.BYTE) {
   case INV_SLOT_OWN_POKE:
     gfx_draw_own_pokemon_small(0x3C, 0x18);
     gfx_draw_own_pokemon_name(0x00, 0x30, 7);
@@ -183,7 +183,7 @@ void ui_render_inventory_pokemon(void) {
     /* Match the caught species ID at 0xCE8C+(slot-1)*0x10 against the route
        table at EEPROM_POKEMON_SLOTS, then draw the matching sprite + name. */
     drv_eeprom_read_block(EEPROM_POKEMON_SLOTS, buf180, 0x30);
-    addr = 0xCE8C + (uint32_t)(g.viewstate.Y - 1) * 0x10;
+    addr = 0xCE8C + (uint32_t)(g.viewstate.Y.BYTE - 1) * 0x10;
     drv_eeprom_read_block((uint16_t)addr, (uint8_t *)buf180 + 0x30, 0x10);
 
     for (i = 0; i < 3; i++) {
@@ -216,7 +216,7 @@ void ui_render_inventory_pokemon(void) {
        and draw its name. */
     void *itemBuf;
     gfx_draw_treasure_chest_icon(0x3C, 0x18);
-    addr = 0xCEBC + (uint32_t)(g.viewstate.Y - 6) * 4;
+    addr = 0xCEBC + (uint32_t)(g.viewstate.Y.BYTE - 6) * 4;
     drv_eeprom_read_block((uint16_t)addr, buf180, 4);
 
     itemBuf = sbrk(0x14);
@@ -241,10 +241,10 @@ void ui_render_inventory_pokemon(void) {
   addr = romBase + 0x278 + (uint32_t)((g.ui_animationTick & 1) + 3) * 0x10;
   drv_eeprom_read_block((uint16_t)addr, buf180, 0x10);
 
-  x = (uint8_t)((g.viewstate.Y % 5) * 8 + 0x10);
-  if (g.viewstate.Y == INV_SLOT_OWN_POKE)
+  x = (uint8_t)((g.viewstate.Y.BYTE % 5) * 8 + 0x10);
+  if (g.viewstate.Y.BYTE == INV_SLOT_OWN_POKE)
     x -= 8;
-  y = (uint8_t)((g.viewstate.Y / 5) * 0x10 + 0x10);
+  y = (uint8_t)((g.viewstate.Y.BYTE / 5) * 0x10 + 0x10);
 
   drv_lcd_blit(x, y, buf180, 8, 8);
 
@@ -342,7 +342,7 @@ void ui_render_inventory_items(void) {
   anim = (uint16_t)((uint16_t)(g.ui_animationTick & 1) + 3) * 0x10;
   eread(0x0278 + base + anim, buf, 0x10);
 
-  cursor = g.viewstate.Y;
+  cursor = g.viewstate.Y.BYTE;
   col_x = (uint8_t)((cursor % 5) * 8 + 0x10);
   row_y = (uint8_t)((cursor / 5) * 0x10 + 0x10);
   blit(col_x, row_y, buf, 8, 8);
@@ -364,7 +364,7 @@ void ui_render_inventory_items(void) {
   }
 
   /* Lookup the item name for the currently-selected slot. */
-  eread(0xCEC8 + (uint16_t)((uint16_t)g.viewstate.Y << 2), (void *)item_id, 4);
+  eread(0xCEC8 + (uint16_t)((uint16_t)g.viewstate.Y.BYTE << 2), (void *)item_id, 4);
   namebuf = sbrk(0x14);
   eread(0x8F8C, namebuf, 0x14);
   for (i = 0; i < 10; i++) {
@@ -379,7 +379,7 @@ void ui_render_inventory_items(void) {
 
 // ROM: 0x8bd2  79.1%
 uint8_t ui_inventory_cursor_next(uint16_t mask) {
-  uint8_t y = g.viewstate.Y;
+  uint8_t y = g.viewstate.Y.BYTE;
   uint8_t tries;
 
   if (y == INV_SLOT_EVENT_ITEM)
@@ -388,7 +388,7 @@ uint8_t ui_inventory_cursor_next(uint16_t mask) {
 
   for (tries = 0; tries < 10; tries++) {
     if (mask & (1 << y)) {
-      g.viewstate.Y = y;
+      g.viewstate.Y.BYTE = y;
       return 0;
     }
     if (y == INV_SLOT_EVENT_ITEM)
@@ -401,15 +401,15 @@ uint8_t ui_inventory_cursor_next(uint16_t mask) {
 // ROM: 0x8c0e  74.8%  saves: e6,r5
 uint8_t ui_inventory_cursor_find_present(uint16_t mask) {
   uint8_t tries;
-  uint8_t y = (uint8_t)((g.viewstate.Y + 1) % 10);
-  g.viewstate.Y = y;
+  uint8_t y = (uint8_t)((g.viewstate.Y.BYTE + 1) % 10);
+  g.viewstate.Y.BYTE = y;
 
   for (tries = 0; tries < 10; tries++) {
-    if (mask & (1 << g.viewstate.Y)) {
+    if (mask & (1 << g.viewstate.Y.BYTE)) {
       return 1;
     }
-    y = (uint8_t)((g.viewstate.Y + 1) % 10);
-    g.viewstate.Y = y;
+    y = (uint8_t)((g.viewstate.Y.BYTE + 1) % 10);
+    g.viewstate.Y.BYTE = y;
   }
   return 0;
 }
@@ -417,16 +417,16 @@ uint8_t ui_inventory_cursor_find_present(uint16_t mask) {
 // ROM: 0x8c62  90.6%
 uint8_t ui_inventory_cursor_prev(uint16_t mask) {
   uint8_t tries;
-  if (g.viewstate.Y == 0)
+  if (g.viewstate.Y.BYTE == 0)
     return 1;
-  g.viewstate.Y--;
+  g.viewstate.Y.BYTE--;
 
   for (tries = 0; tries < 10; tries++) {
-    if (mask & (1 << g.viewstate.Y))
+    if (mask & (1 << g.viewstate.Y.BYTE))
       return 0;
-    if (g.viewstate.Y == 0)
+    if (g.viewstate.Y.BYTE == 0)
       return 1;
-    g.viewstate.Y--;
+    g.viewstate.Y.BYTE--;
   }
   return 0;
 }
@@ -434,17 +434,17 @@ uint8_t ui_inventory_cursor_prev(uint16_t mask) {
 // ROM: 0x8ca4  80.2%
 void ui_inventory_cursor_back_wrap(uint16_t mask) {
   uint8_t tries;
-  g.viewstate.Y = (uint8_t)((g.viewstate.Y + 9) % 10);
+  g.viewstate.Y.BYTE = (uint8_t)((g.viewstate.Y.BYTE + 9) % 10);
   for (tries = 0; tries < 10; tries++) {
-    if (mask & (1 << g.viewstate.Y))
+    if (mask & (1 << g.viewstate.Y.BYTE))
       return;
-    g.viewstate.Y = (uint8_t)((g.viewstate.Y + 9) % 10);
+    g.viewstate.Y.BYTE = (uint8_t)((g.viewstate.Y.BYTE + 9) % 10);
   }
 }
 
 // ROM: 0x8cf4  98.8%
 void ui_inventory_cursor_reset(void) {
-  g.viewstate.Y = INV_SLOT_EVENT_ITEM;
+  g.viewstate.Y.BYTE = INV_SLOT_EVENT_ITEM;
   ui_inventory_cursor_find_present(*(uint16_t *)&g.viewstate.A);
 }
 
@@ -473,7 +473,7 @@ void ui_load_inventory_mask(uint16_t *status_mask_ptr) {
     status_mask_ptr[i] = 0;
   }
 
-  if (sys_walkerFlags_BIT.walking) {
+  if (g.sys_walkerFlags.BIT.walking) {
     status_mask_ptr[0] |= 0x01;       /* bit 0: walking */
   }
 

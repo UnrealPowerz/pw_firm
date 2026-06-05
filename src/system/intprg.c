@@ -18,7 +18,7 @@ __interrupt(vect=13) void INT_SLEEP(void) {}
 
 // ROM: 0xa300  84.9%  saves: r0
 __interrupt(vect=16) void irq0(void) {
-    sys_statusFlags_BIT.button_event = 1;
+    g.sys_statusFlags.BIT.button_event = 1;
     g.sys_wakeFlag[0] = 1;
     CKSTPR1 |= 0x04;
     IRR1 &= ~0x01;
@@ -37,7 +37,7 @@ __interrupt(vect=22) void INT_COMP1(void) {}
 
 // ROM: 0xa65e  81.1%  saves: r0
 __interrupt(vect=23) void drv_rtc_handle_quarter_sec(void) {
-    sys_statusFlags_BIT.tick = 1;
+    g.sys_statusFlags.BIT.tick = 1;
     RTCFLG &= ~0x01;
 }
 
@@ -71,7 +71,7 @@ __interrupt(vect=26) void drv_rtc_handle_min(void) {
     if (!(min & 0x80)) {
         g.rtc_minutes = min;
     }
-    g.ped_taskFlags |= 0x01;
+    g.ped_taskFlags.BYTE |= 0x01;
     RTCFLG &= ~0x08;
 }
 
@@ -81,7 +81,7 @@ __interrupt(vect=27) void drv_rtc_handle_hour(void) {
     if (!(hr & 0x80)) {
         g.rtc_hours = RHRDR;
     }
-    g.ped_taskFlags |= 0x02;
+    g.ped_taskFlags.BYTE |= 0x02;
     RTCFLG &= ~0x10;
 }
 

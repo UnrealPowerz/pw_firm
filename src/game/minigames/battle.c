@@ -10,7 +10,7 @@
  *
  * Player input mapping (game_battle_process_turn, called from PICK_MOVE):
  *   BTN_M = Attack       -> ATTACK_ANIM
- *   BTN_L = Defend/Flee  -> branches on g.viewstate.v.bytes.at_d8 bits 3-4:
+ *   BTN_L = Defend/Flee  -> branches on g.viewstate.v.bytes.at_d8.BYTE bits 3-4:
  *                            m==0 -> COUNTER_ANIM
  *                            m==1 -> STARE_DOWN
  *                            m==2 -> FLED  (only path that leaves)
@@ -18,23 +18,23 @@
  *
  * State enum: see `enum battle_state` below. Transitions documented per-case.
  *
- * g.viewstate.v.bytes.at_d8 packed flags (named where understood):
+ * g.viewstate.v.bytes.at_d8.BYTE packed flags (named where understood):
  *   bit 0    : started_fight (set in render case 1)
- *   bits 1-2 : counter sub-mode  (read via (g.viewstate.v.bytes.at_d8 >> 1) & 3, written by
+ *   bits 1-2 : counter sub-mode  (read via (g.viewstate.v.bytes.at_d8.BYTE >> 1) & 3, written by
  *              BTN_L path)
- *   bits 3-4 : attack outcome    (read via (g.viewstate.v.bytes.at_d8 >> 3) & 3)
+ *   bits 3-4 : attack outcome    (read via (g.viewstate.v.bytes.at_d8.BYTE >> 3) & 3)
  *   bits 5-7 : move-class index  (selects 3-entry row in
  *              BATTLE_OUTCOME_WEIGHTS)
  *
  * Globals repurposed for battle (all named for their non-battle use):
  *   g.viewstate.A      = wiggle/turn counter
- *   g.viewstate.Y      = pokemon kind (1..3 wild route slot, 4 peer)
+ *   g.viewstate.Y.BYTE      = pokemon kind (1..3 wild route slot, 4 peer)
  *   g.viewstate.v.bytes.at_d2          = per-state animation tick (counts up to g.viewstate.v.bytes.at_d3)
  *   g.viewstate.v.bytes.at_d4          = pokemon sprite y position (animation frame)
  *   accel_zPosition_word          = g.save_watts paid on loss (state 5)
- *   g.viewstate.v.bytes.at_d1           = HP/wiggle bar segments left
+ *   g.viewstate.v.bytes.at_d1.BYTE           = HP/wiggle bar segments left
  *   g.viewstate.v.bytes.at_d5           = pokemon sprite x position / ball x position
- *   g.viewstate.v.bytes.at_d8           = packed flags byte (see above)
+ *   g.viewstate.v.bytes.at_d8.BYTE           = packed flags byte (see above)
  *   g.viewstate.v.bytes.at_d9         = wiggle-success counter (3 caps capture)
  *   g.viewstate.v.bytes.at_d3   = state-dwell length (frames to wait before advancing)
  */
@@ -43,7 +43,7 @@ enum battle_state {
     BS_INTRO          = 0,   /* vertical-shutter scroll-in                       */
     BS_APPEARED       = 1,   /* "<pokemon> appeared!" banner; button -> PICK_MOVE */
     BS_PICK_MOVE      = 2,   /* waits on player input (game_battle_process_turn) */
-    BS_ATTACK_ANIM    = 3,   /* hit / evade / crit by (g.viewstate.v.bytes.at_d8>>3)&3            */
+    BS_ATTACK_ANIM    = 3,   /* hit / evade / crit by (g.viewstate.v.bytes.at_d8.BYTE>>3)&3            */
     BS_COUNTER_ANIM   = 4,   /* counter; loops to PICK_MOVE or chains ATTACK_ANIM */
     BS_DEFEATED       = 5,   /* "<pokemon> was too strong" -> LOST               */
     BS_LOST           = 6,   /* "Lost!" + g.save_watts forfeit; button -> home          */
@@ -90,8 +90,8 @@ void ui_render_battle(void) {
 
   /* HP/wiggle pips for wild side (bottom row). Only drawn once the
      "started_fight" bit is set (case 1 advances past intro). */
-  if (g.viewstate.v.bytes.at_d8 & 0x01) {
-    for (i = 0; i < g.viewstate.v.bytes.at_d1; i++) {
+  if (g.viewstate.v.bytes.at_d8.BYTE & 0x01) {
+    for (i = 0; i < g.viewstate.v.bytes.at_d1.BYTE; i++) {
       blit((uint8_t)(0x08 + (i << 3)), 0x18, sprite_buf, 8, 8);
     }
   }
@@ -99,7 +99,7 @@ void ui_render_battle(void) {
   /* Wild-pokemon sprite. Suppressed for ball-fly / wiggle / caught states
      (>= BS_BALL_FLY), where the ball overlay takes over. */
   if (g.viewstate.Z <= BS_THROW_BALL) {
-    uint8_t kind = g.viewstate.Y;
+    uint8_t kind = g.viewstate.Y.BYTE;
     if (kind < 4) {
       /* Route encounter (kinds 1..3): index into 16-byte metadata table at
          0x8F52 to read the flip flag, then load 0x180-byte sprite. */
@@ -153,9 +153,9 @@ void ui_render_battle(void) {
     case BS_APPEARED:
       if (g.viewstate.v.bytes.at_d2 >= g.viewstate.v.bytes.at_d3) {
         if (!drv_sound_is_playing()) {
-          if (g.viewstate.Y < 4) {
+          if (g.viewstate.Y.BYTE < 4) {
             gfx_draw_route_pokemon_name(0x00, 0x20,
-                                        (uint8_t)(g.viewstate.Y - 1), 0x05);
+                                        (uint8_t)(g.viewstate.Y.BYTE - 1), 0x05);
           } else {
             gfx_draw_special_pokemon_name(0, 0x20, 5);
           }
@@ -170,9 +170,9 @@ void ui_render_battle(void) {
       blit(0x00, 0x20, sprite_buf, 0x60, 0x20);
       goto switch_default;
     case BS_ATTACK_ANIM: {
-      /* Player-attack animation. Outcome is in g.viewstate.v.bytes.at_d8 bits 3-4:
+      /* Player-attack animation. Outcome is in g.viewstate.v.bytes.at_d8.BYTE bits 3-4:
          0 = hit, 1 = enemy evaded, 2 = critical hit. */
-      uint8_t outcome = (g.viewstate.v.bytes.at_d8 >> 3) & 0x03;
+      uint8_t outcome = (g.viewstate.v.bytes.at_d8.BYTE >> 3) & 0x03;
       if (outcome == 0) {
         if (g.viewstate.v.bytes.at_d2 == 4) {
           drv_sound_play(SND_ATTACK_HIT);
@@ -188,9 +188,9 @@ void ui_render_battle(void) {
         if (g.viewstate.v.bytes.at_d2 == 4)
           drv_sound_play(SND_ATTACK_MISS);
         if (g.viewstate.v.bytes.at_d2 >= 4) {
-          if (g.viewstate.Y < 4) {
+          if (g.viewstate.Y.BYTE < 4) {
             gfx_draw_route_pokemon_name(0x00, 0x20,
-                                        (uint8_t)(g.viewstate.Y - 1), 0x05);
+                                        (uint8_t)(g.viewstate.Y.BYTE - 1), 0x05);
           } else {
             gfx_draw_special_pokemon_name(0, 0x20, 5);
           }
@@ -212,9 +212,9 @@ void ui_render_battle(void) {
       break;
     }
     case BS_COUNTER_ANIM: {
-      /* Counter-attack animation. Sub-mode in g.viewstate.v.bytes.at_d8 bits 1-2:
+      /* Counter-attack animation. Sub-mode in g.viewstate.v.bytes.at_d8.BYTE bits 1-2:
          0 = enemy hit you, 1 = you evaded. */
-      uint8_t sub = (g.viewstate.v.bytes.at_d8 >> 1) & 0x03;
+      uint8_t sub = (g.viewstate.v.bytes.at_d8.BYTE >> 1) & 0x03;
       if (sub == 0) {
         if (g.viewstate.v.bytes.at_d2 == 4) {
           drv_sound_play(SND_ATTACK_HIT);
@@ -222,9 +222,9 @@ void ui_render_battle(void) {
           blit(0x28, 0x00, sprite_buf, 0x10, 0x20);
         }
         if (g.viewstate.v.bytes.at_d2 >= 4) {
-          if (g.viewstate.Y < 4) {
+          if (g.viewstate.Y.BYTE < 4) {
             gfx_draw_route_pokemon_name(0x00, 0x20,
-                                        (uint8_t)(g.viewstate.Y - 1), 0x05);
+                                        (uint8_t)(g.viewstate.Y.BYTE - 1), 0x05);
           } else {
             gfx_draw_special_pokemon_name(0, 0x20, 5);
           }
@@ -243,9 +243,9 @@ void ui_render_battle(void) {
       break;
     }
     case BS_DEFEATED:
-      if (g.viewstate.Y < 4) {
+      if (g.viewstate.Y.BYTE < 4) {
         gfx_draw_route_pokemon_name(0x00, 0x20,
-                                    (uint8_t)(g.viewstate.Y - 1), 0x05);
+                                    (uint8_t)(g.viewstate.Y.BYTE - 1), 0x05);
       } else {
         gfx_draw_special_pokemon_name(0, 0x20, 5);
       }
@@ -257,9 +257,9 @@ void ui_render_battle(void) {
       goto switch_default;
     case BS_FLED:
       if (g.viewstate.v.bytes.at_d2 > 3) {
-        if (g.viewstate.Y < 4) {
+        if (g.viewstate.Y.BYTE < 4) {
           gfx_draw_route_pokemon_name(0x00, 0x20,
-                                      (uint8_t)(g.viewstate.Y - 1), 0x05);
+                                      (uint8_t)(g.viewstate.Y.BYTE - 1), 0x05);
         } else {
           gfx_draw_special_pokemon_name(0, 0x20, 5);
         }
@@ -318,8 +318,8 @@ void ui_render_battle(void) {
     case BS_CAUGHT_TEXT:
       read_eeprom(0x460, sprite_buf, 0x10);
       blit(20, 0x0C, sprite_buf, 8, 8);
-      if (g.viewstate.Y < 4) {
-        gfx_draw_route_pokemon_name(0x00, 0x20, (uint8_t)(g.viewstate.Y - 1),
+      if (g.viewstate.Y.BYTE < 4) {
+        gfx_draw_route_pokemon_name(0x00, 0x20, (uint8_t)(g.viewstate.Y.BYTE - 1),
                                     0x05);
       } else {
         gfx_draw_special_pokemon_name(0x00, 0x20, 5);
@@ -346,12 +346,12 @@ void ui_render_battle(void) {
 void game_start_battle(void) {
   g.viewstate.Z = BS_INTRO;
   g.viewstate.A = 4;          /* 4 player HP/turn pips */
-  g.viewstate.v.bytes.at_d1 = 4;               /* 4 wild HP/wiggle pips */
+  g.viewstate.v.bytes.at_d1.BYTE = 4;               /* 4 wild HP/wiggle pips */
   g.viewstate.v.bytes.at_d2 = 0;
   g.viewstate.v.bytes.at_d3 = 6;       /* state-0 intro dwell length */
   g.viewstate.v.bytes.at_d4 = 0x38;
   g.viewstate.v.bytes.at_d5 = 0xE0;
-  g.viewstate.v.bytes.at_d8 &= 0x1E;           /* preserve bits 1-4, clear move-class + flag */
+  g.viewstate.v.bytes.at_d8.BYTE &= 0x1E;           /* preserve bits 1-4, clear move-class + flag */
   g.viewstate.v.bytes.at_d9 = 0;             /* wiggle-success counter */
   drv_sound_play(SND_BATTLE_START);
 }
@@ -371,23 +371,23 @@ void game_battle_process_turn(void) {
      and chosen by cumulative compare. */
   rnd = sys_get_rng();
   rnd_pct = (uint8_t)((rnd >> 3) % 100);
-  move_class = (uint8_t)((g.viewstate.v.bytes.at_d8 >> 5) & 0x07);
+  move_class = (uint8_t)((g.viewstate.v.bytes.at_d8.BYTE >> 5) & 0x07);
   weights_idx = (uint8_t)(move_class * 3);
 
   if (rnd_pct < BATTLE_OUTCOME_WEIGHTS[weights_idx + 2]) {
-    g.viewstate.v.bytes.at_d8 = (g.viewstate.v.bytes.at_d8 & 0xE7) | 0x10;            /* outcome = crit (2) */
+    g.viewstate.v.bytes.at_d8.BYTE = (g.viewstate.v.bytes.at_d8.BYTE & 0xE7) | 0x10;            /* outcome = crit (2) */
   } else if (rnd_pct < BATTLE_OUTCOME_WEIGHTS[weights_idx + 2] +
                        BATTLE_OUTCOME_WEIGHTS[weights_idx + 1]) {
-    g.viewstate.v.bytes.at_d8 = (g.viewstate.v.bytes.at_d8 & 0xE7) | 0x08;            /* outcome = evade (1) */
+    g.viewstate.v.bytes.at_d8.BYTE = (g.viewstate.v.bytes.at_d8.BYTE & 0xE7) | 0x08;            /* outcome = evade (1) */
   } else {
-    g.viewstate.v.bytes.at_d8 = (g.viewstate.v.bytes.at_d8 & 0xE7);                   /* outcome = hit (0) */
+    g.viewstate.v.bytes.at_d8.BYTE = (g.viewstate.v.bytes.at_d8.BYTE & 0xE7);                   /* outcome = hit (0) */
   }
 
   /* Attack (middle button). */
   if (drv_button_is_triggered(BTN_M) != 0) {
     uint8_t outcome;
-    g.viewstate.v.bytes.at_d8 &= 0xF9;
-    outcome = (uint8_t)((g.viewstate.v.bytes.at_d8 >> 3) & 3);
+    g.viewstate.v.bytes.at_d8.BYTE &= 0xF9;
+    outcome = (uint8_t)((g.viewstate.v.bytes.at_d8.BYTE >> 3) & 3);
     if (outcome != 3) {
       g.viewstate.Z = BS_ATTACK_ANIM;
       g.viewstate.v.bytes.at_d2 = 0;
@@ -396,12 +396,12 @@ void game_battle_process_turn(void) {
     }
   }
 
-  /* Defend / Flee (left button). The sub-mode (g.viewstate.v.bytes.at_d8 bits 3-4) picks
+  /* Defend / Flee (left button). The sub-mode (g.viewstate.v.bytes.at_d8.BYTE bits 3-4) picks
      between counter-anim, stare-down, and the only flee path. */
   if (drv_button_is_triggered(BTN_L) != 0) {
     uint8_t sub_mode;
-    g.viewstate.v.bytes.at_d8 = (uint8_t)((g.viewstate.v.bytes.at_d8 & 0xF9) | 0x02);
-    sub_mode = (uint8_t)((g.viewstate.v.bytes.at_d8 >> 3) & 3);
+    g.viewstate.v.bytes.at_d8.BYTE = (uint8_t)((g.viewstate.v.bytes.at_d8.BYTE & 0xF9) | 0x02);
+    sub_mode = (uint8_t)((g.viewstate.v.bytes.at_d8.BYTE >> 3) & 3);
     if (sub_mode == 2) {
       drv_sound_play(SND_FLED);
       g.viewstate.Z = BS_FLED;
@@ -436,16 +436,16 @@ uint8_t game_battle_check_capture_success(void) {
   uint32_t rnd = sys_get_rng();
   uint8_t rnd_pct = (uint8_t)((rnd >> 3) % 100);
 
-  if (g.viewstate.v.bytes.at_d1 == 0)
+  if (g.viewstate.v.bytes.at_d1.BYTE == 0)
     return 0;
-  if (CAPTURE_PROBS[g.viewstate.v.bytes.at_d1 - 1] > rnd_pct)
+  if (CAPTURE_PROBS[g.viewstate.v.bytes.at_d1.BYTE - 1] > rnd_pct)
     return 1;
   return 0;
 }
 
 // ROM: 0x2a96  84.9%  saves: er5,e6
 void game_battle_handle_finish(void) {
-  uint8_t kind_idx = (uint8_t)(g.viewstate.Y - 1);
+  uint8_t kind_idx = (uint8_t)(g.viewstate.Y.BYTE - 1);
 
   if (kind_idx > 3)
     return;
@@ -479,7 +479,7 @@ void game_battle_handle_finish(void) {
     drv_eeprom_read_block(EEPROM_TRAINER_PROFILE, trainer_buf, 0xBE);
 
     gift_buf = sbrk(0x88);
-    game_log_interaction(trainer_buf, gift_buf, 0x0D, 0, 0, (uint8_t)g.viewstate.Y);
+    game_log_interaction(trainer_buf, gift_buf, 0x0D, 0, 0, (uint8_t)g.viewstate.Y.BYTE);
   } else {
     /* Peer-pokemon catch: copy the peer-event blocks from the staging area
        (0xBF08+) into their permanent homes (0xBA44+), mark the event
@@ -522,7 +522,7 @@ void game_battle_handle_finish(void) {
     drv_eeprom_read_block(EEPROM_TRAINER_PROFILE, trainer_buf, 0xBE);
 
     gift_buf = (void *)sbrk(0x88);
-    game_log_interaction(trainer_buf, gift_buf, 0x0E, 0x01, 0, (uint8_t)g.viewstate.Y);
+    game_log_interaction(trainer_buf, gift_buf, 0x0E, 0x01, 0, (uint8_t)g.viewstate.Y.BYTE);
   }
 }
 
@@ -561,7 +561,7 @@ void ui_handle_battle(void) {
     g.viewstate.v.bytes.at_d5 = BATTLE_ANIM_P1_X[tick];
     if (g.viewstate.v.bytes.at_d2 < g.viewstate.v.bytes.at_d3)
       return;
-    DAT_f7d8_BIT.b0 = 1;        /* started_fight flag */
+    g.viewstate.v.bytes.at_d8.BIT.b0 = 1;        /* started_fight flag */
     if (drv_sound_is_playing())
       return;
     if (drv_button_is_triggered(BTN_ANY)) {
@@ -583,32 +583,32 @@ void ui_handle_battle(void) {
       return;
     g.viewstate.v.bytes.at_d4 = 0x38;
     g.viewstate.v.bytes.at_d5 = 8;
-    hp = g.viewstate.v.bytes.at_d1;
-    outcome = (uint8_t)((g.viewstate.v.bytes.at_d8 >> 3) & 0x03);
+    hp = g.viewstate.v.bytes.at_d1.BYTE;
+    outcome = (uint8_t)((g.viewstate.v.bytes.at_d8.BYTE >> 3) & 0x03);
     if (outcome == 0) {
       uint8_t next_class;
       if (hp <= 1)
         goto hp_empty;
-      g.viewstate.v.bytes.at_d1 = hp - 1;
-      next_class = (uint8_t)((g.viewstate.v.bytes.at_d8 >> 1) & 0x03);
+      g.viewstate.v.bytes.at_d1.BYTE = hp - 1;
+      next_class = (uint8_t)((g.viewstate.v.bytes.at_d8.BYTE >> 1) & 0x03);
       if (next_class == 0)
         goto enter_counter;
       if (next_class != 1)
         return;
       g.viewstate.Z = BS_PICK_MOVE;
-      g.viewstate.v.bytes.at_d8 = (uint8_t)((g.viewstate.v.bytes.at_d8 & 0x1F) | 0x20);  /* move-class = 1 */
+      g.viewstate.v.bytes.at_d8.BYTE = (uint8_t)((g.viewstate.v.bytes.at_d8.BYTE & 0x1F) | 0x20);  /* move-class = 1 */
       return;
     } else if (outcome == 1) {
       goto enter_counter;
     } else if (outcome == 2) {
       if (hp <= 2)
         goto hp_empty;
-      g.viewstate.v.bytes.at_d1 = hp - 2;
+      g.viewstate.v.bytes.at_d1.BYTE = hp - 2;
       goto enter_counter;
     }
     return;
   hp_empty:
-    g.viewstate.v.bytes.at_d1 = 0;
+    g.viewstate.v.bytes.at_d1.BYTE = 0;
     drv_sound_play(SND_FLED);
     g.viewstate.Z = BS_FLED;
     g.viewstate.v.bytes.at_d2 = 0;
@@ -633,7 +633,7 @@ void ui_handle_battle(void) {
       return;
     g.viewstate.v.bytes.at_d4 = 0x38;
     g.viewstate.v.bytes.at_d5 = 8;
-    sub = (uint8_t)((g.viewstate.v.bytes.at_d8 >> 1) & 0x03);
+    sub = (uint8_t)((g.viewstate.v.bytes.at_d8.BYTE >> 1) & 0x03);
     if (sub == 0) {
       uint8_t next_class;
       uint8_t new_a = (uint8_t)(g.viewstate.A - 1);
@@ -645,13 +645,13 @@ void ui_handle_battle(void) {
         return;
       }
       /* Rotate to next move-class encoded in bits 3-4. */
-      next_class = (uint8_t)((g.viewstate.v.bytes.at_d8 >> 3) & 0x03);
+      next_class = (uint8_t)((g.viewstate.v.bytes.at_d8.BYTE >> 3) & 0x03);
       if (next_class == 0) {
-        g.viewstate.v.bytes.at_d8 = (uint8_t)((g.viewstate.v.bytes.at_d8 & 0x1F) | 0x20);
+        g.viewstate.v.bytes.at_d8.BYTE = (uint8_t)((g.viewstate.v.bytes.at_d8.BYTE & 0x1F) | 0x20);
       } else if (next_class == 1) {
-        g.viewstate.v.bytes.at_d8 = (uint8_t)((g.viewstate.v.bytes.at_d8 & 0x1F) | 0x60);
+        g.viewstate.v.bytes.at_d8.BYTE = (uint8_t)((g.viewstate.v.bytes.at_d8.BYTE & 0x1F) | 0x60);
       } else if (next_class == 2) {
-        g.viewstate.v.bytes.at_d8 = (uint8_t)((g.viewstate.v.bytes.at_d8 & 0x1F) | 0x40);
+        g.viewstate.v.bytes.at_d8.BYTE = (uint8_t)((g.viewstate.v.bytes.at_d8.BYTE & 0x1F) | 0x40);
       }
       g.viewstate.Z = BS_PICK_MOVE;
       return;
@@ -675,12 +675,12 @@ void ui_handle_battle(void) {
       sys_init_heap();
       trainer_buf = sbrk(0xBE);
       drv_eeprom_read_block(EEPROM_TRAINER_PROFILE, trainer_buf, 0xBE);
-      if (g.viewstate.Y < 4) {
+      if (g.viewstate.Y.BYTE < 4) {
         log_buf = sbrk(0x10);
-        game_log_interaction(log_buf, trainer_buf, 0x10, 0x00, 0, (uint8_t)g.viewstate.Y);
+        game_log_interaction(log_buf, trainer_buf, 0x10, 0x00, 0, (uint8_t)g.viewstate.Y.BYTE);
       } else {
         log_buf = sbrk(0x110);
-        game_log_interaction(log_buf, trainer_buf, 0x10, 0x01, 0, (uint8_t)g.viewstate.Y);
+        game_log_interaction(log_buf, trainer_buf, 0x10, 0x01, 0, (uint8_t)g.viewstate.Y.BYTE);
       }
       if (g.save_watts >= 10) {
         accel_zPosition_word = 10;
@@ -714,12 +714,12 @@ void ui_handle_battle(void) {
       sys_init_heap();
       trainer_buf = sbrk(0xBE);
       drv_eeprom_read_block(EEPROM_TRAINER_PROFILE, trainer_buf, 0xBE);
-      if (g.viewstate.Y < 4) {
+      if (g.viewstate.Y.BYTE < 4) {
         log_buf = sbrk(0x10);
-        game_log_interaction(log_buf, trainer_buf, 0x0F, 0x00, 0, (uint8_t)g.viewstate.Y);
+        game_log_interaction(log_buf, trainer_buf, 0x0F, 0x00, 0, (uint8_t)g.viewstate.Y.BYTE);
       } else {
         log_buf = sbrk(0x110);
-        game_log_interaction(log_buf, trainer_buf, 0x0F, 0x01, 0, (uint8_t)g.viewstate.Y);
+        game_log_interaction(log_buf, trainer_buf, 0x0F, 0x01, 0, (uint8_t)g.viewstate.Y.BYTE);
       }
       drv_sound_play(SND_FAIL);
       ui_reset_substate();
@@ -732,7 +732,7 @@ void ui_handle_battle(void) {
     if (tick < dwell)
       return;
     g.viewstate.Z = BS_PICK_MOVE;
-    g.viewstate.v.bytes.at_d8 = (uint8_t)((g.viewstate.v.bytes.at_d8 & 0x1F) | 0x80);
+    g.viewstate.v.bytes.at_d8.BYTE = (uint8_t)((g.viewstate.v.bytes.at_d8.BYTE & 0x1F) | 0x80);
     break;
 
   case BS_ALMOST_HAD_IT:
@@ -749,7 +749,7 @@ void ui_handle_battle(void) {
     /* Ball thrown — clear started_fight bit, start ball-flight. */
     if (tick < dwell)
       return;
-    g.viewstate.v.bytes.at_d8 &= ~0x01;
+    g.viewstate.v.bytes.at_d8.BYTE &= ~0x01;
     g.viewstate.Z = BS_BALL_FLY;
     g.viewstate.v.bytes.at_d2 = 0;
     g.viewstate.v.bytes.at_d3 = 2;

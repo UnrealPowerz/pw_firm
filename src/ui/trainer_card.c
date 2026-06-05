@@ -3,7 +3,7 @@
 /*
  * Trainer Card view.
  *
- * Page navigation (g.viewstate.Z + g.viewstate.Y):
+ * Page navigation (g.viewstate.Z + g.viewstate.Y.BYTE):
  *
  *   TC_PAGE_DEFAULT (z=0):
  *     y=0 ............... clock face          (ui_render_trainer_card_time)
@@ -32,7 +32,7 @@ enum trainer_card_page {
 // ROM: 0xb3c0  100.0%
 void ui_reset_trainer_card_state(void) {
   g.viewstate.Z = 0;
-  g.viewstate.Y = 0;
+  g.viewstate.Y.BYTE = 0;
 }
 
 #define STEP_GOAL 0x98967F   /* 9,999,999 — one step short of 10M, the cutoff
@@ -46,7 +46,7 @@ void ui_handle_trainer_card(void) {
   /* TC_PAGE_DEFAULT: navigate the 8 sub-views with BTN_M (up) / BTN_L (down). */
   if (g.viewstate.Z == TC_PAGE_DEFAULT) {
     if (drv_button_is_triggered(BTN_M) != 0) {
-      uint8_t cursor = g.viewstate.Y;
+      uint8_t cursor = g.viewstate.Y.BYTE;
       if (cursor == 0) {
         /* Already on clock — leave the trainer card entirely. */
         drv_sound_play(SND_BACK);
@@ -54,13 +54,13 @@ void ui_handle_trainer_card(void) {
         ui_set_view(VIEW_MAIN_MENU);
         return;
       }
-      g.viewstate.Y = cursor - 1;
+      g.viewstate.Y.BYTE = cursor - 1;
       drv_sound_play(SND_CURSOR);
     }
     if (drv_button_is_triggered(BTN_L) != 0) {
-      uint8_t cursor = g.viewstate.Y;
+      uint8_t cursor = g.viewstate.Y.BYTE;
       if (cursor < 7) {
-        g.viewstate.Y = cursor + 1;
+        g.viewstate.Y.BYTE = cursor + 1;
         drv_sound_play(SND_CURSOR);
       }
     }
@@ -127,7 +127,7 @@ void ui_render_trainer_card_time(void) {
   drv_lcd_blit(0, 0x20, buf, 0x10, 0x10);
 
   /* Date label — different art for co-op vs solo. */
-  if (g.save_settings & 1) {
+  if (g.save_settings.BYTE & 1) {
     drv_eeprom_read_block(0xC8FC, buf, 0x140);
   } else {
     drv_eeprom_read_block(0x907E, buf, 0x140);
@@ -179,7 +179,7 @@ void ui_render_daily_step_history(void) {
   /* Left gutter chevron (always); right chevron only for y < 7 (not at end). */
   drv_eeprom_read_block(0x338 + base, buf, 0xC0);
   drv_lcd_blit(0, 0, buf, 8, 0x10);
-  if (g.viewstate.Y < 7) {
+  if (g.viewstate.Y.BYTE < 7) {
     drv_lcd_blit(0x58, 0, buf + 0x20, 8, 0x10);
   }
 
@@ -200,12 +200,12 @@ void ui_render_daily_step_history(void) {
   drv_eeprom_read_block(0x160 + base, buf, 0x20);
   drv_lcd_blit(0x18, 0, buf, 8, 0x10);
 
-  /* Day digit (picked from the 16-glyph sheet by g.viewstate.Y). */
+  /* Day digit (picked from the 16-glyph sheet by g.viewstate.Y.BYTE). */
   drv_eeprom_read_block(base, buf, 0x140);
-  drv_lcd_blit(0x20, 0, buf + (uint16_t)g.viewstate.Y * 0x20, 8, 0x10);
+  drv_lcd_blit(0x20, 0, buf + (uint16_t)g.viewstate.Y.BYTE * 0x20, 8, 0x10);
 
-  /* Step count for "today − g.viewstate.Y". Each day uses 4 bytes at 0xCEF0. */
-  days_ago = (uint16_t)g.viewstate.Y - 1;
+  /* Step count for "today − g.viewstate.Y.BYTE". Each day uses 4 bytes at 0xCEF0. */
+  days_ago = (uint16_t)g.viewstate.Y.BYTE - 1;
   day_addr = 0xCEF0 + days_ago * 4;
   drv_eeprom_read_block(day_addr, &day_steps, 4);
   gfx_draw_numeric_value(0x30, 0x10, (uint32_t)day_steps, 0);
@@ -268,7 +268,7 @@ void ui_render_trainer_card(void) {
   goto page_reward;
 
 page_default:
-  if (g.viewstate.Y)
+  if (g.viewstate.Y.BYTE)
     goto day_history;
   ui_render_trainer_card_time();
   goto draw_battery;

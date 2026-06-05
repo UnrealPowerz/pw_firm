@@ -18,7 +18,7 @@
  *   diag_eeprom_factory_test   the EEPROM-stress sub-test (write-all,
  *                              read-and-verify, then fill 0xFF).
  *
- * Factory-test stages (g.viewstate.Y values 0..0x12) progress sequentially.
+ * Factory-test stages (g.viewstate.Y.BYTE values 0..0x12) progress sequentially.
  * Each stage either auto-advances after a frame counter (g.viewstate.A >= 4)
  * or waits for a specific button. The stage numbers are referenced both by
  * the handler (decide-when-to-advance) and the renderer (decide-what-to-show);
@@ -230,10 +230,10 @@ cleanup:
 
 // ROM: 0xaa42  98.4%
 void diag_init_test_mode(void) {
-  g.viewstate.Y = 0;
+  g.viewstate.Y.BYTE = 0;
   g.viewstate.A = 0;
   g.viewstate.v.bytes.at_d4 = 1;
-  g.save_settings = (g.save_settings & 0xF9) | 0x04;
+  g.save_settings.BYTE = (g.save_settings.BYTE & 0xF9) | 0x04;
   drv_sound_set_volume(2);
   drv_lcd_set_contrast(4);
 }
@@ -247,7 +247,7 @@ void ui_handle_factory_test(void) {
   g.ped_stepTimer = 0x1E;
 
   subA = g.viewstate.A;
-  subY = g.viewstate.Y;
+  subY = g.viewstate.Y.BYTE;
 
   if (subY > 0x12) {
     return;
@@ -260,28 +260,28 @@ void ui_handle_factory_test(void) {
     if (g.viewstate.Z == 0) {
       return;
     }
-    subY = g.viewstate.Y + 1;
-    g.viewstate.Y = subY;
+    subY = g.viewstate.Y.BYTE + 1;
+    g.viewstate.Y.BYTE = subY;
     return;
 
   case 0x01:
     /* Sound test. After a 4-frame settle, BTN_LM advances + plays the
        factory sound. The unreachable BTN_M-decrement branch below is
-       dead code (g.viewstate.Y == 1 always true in this case). */
+       dead code (g.viewstate.Y.BYTE == 1 always true in this case). */
     if (subA < 4) {
       return;
     }
     if (drv_button_is_triggered(BTN_LM) != 0) {
       goto do_sound_and_inc;
     }
-    if (g.viewstate.Y == 1) {
+    if (g.viewstate.Y.BYTE == 1) {
       return;
     }
     if (drv_button_is_triggered(BTN_M) == 0) {
       return;
     }
     drv_sound_set_data((uint8_t *)FACTORY_TEST_SOUND);
-    subY = g.viewstate.Y - 1;
+    subY = g.viewstate.Y.BYTE - 1;
     goto set_substate_y_and_clear_a;
 
   /* Stages 0x02..0x06 (LCD fills + SPI/pixel tests) have no handler case —
@@ -328,7 +328,7 @@ void ui_handle_factory_test(void) {
       s1 = RSECDR;
       s2 = RSECDR;
     } while (s1 != s2);
-    g.viewstate.v.bytes.at_d1 = s1;
+    g.viewstate.v.bytes.at_d1.BYTE = s1;
     diag_eeprom_factory_test(0x300);
     g.viewstate.v.bytes.at_d3 = (uint8_t)diag_eeprom_factory_test(0x300);
     sys_factory_reset_eeprom(1, 1);
@@ -380,7 +380,7 @@ void ui_handle_factory_test(void) {
   case 0x0F:
     /* Accel sample check — advance only once samples diverge from the
        stashed value (gives the technician time to wiggle the device). */
-    if (g.viewstate.v.bytes.at_d1 != *(uint8_t *)(&g.viewstate.v.bytes.at_d2)) {
+    if (g.viewstate.v.bytes.at_d1.BYTE != *(uint8_t *)(&g.viewstate.v.bytes.at_d2)) {
       goto do_sound_and_inc;
     }
     return;
@@ -427,9 +427,9 @@ void ui_handle_factory_test(void) {
 do_sound_and_inc:
   drv_sound_set_data((uint8_t *)FACTORY_TEST_SOUND);
 do_inc:
-  subY = g.viewstate.Y + 1;
+  subY = g.viewstate.Y.BYTE + 1;
 set_substate_y_and_clear_a:
-  g.viewstate.Y = subY;
+  g.viewstate.Y.BYTE = subY;
   g.viewstate.A = 0;
 }
 
@@ -441,7 +441,7 @@ void ui_render_factory_test(void) {
   uint8_t subA;
 
   draw_string = gfx_draw_string;
-  subY = g.viewstate.Y;
+  subY = g.viewstate.Y.BYTE;
 
   if (subY > 0x12) {
     goto case_d;
@@ -519,7 +519,7 @@ void ui_render_factory_test(void) {
     goto case_d;
 
   case 0x0F:
-    if (g.viewstate.v.bytes.at_d1 != *(uint8_t *)(&g.viewstate.v.bytes.at_d2)) {
+    if (g.viewstate.v.bytes.at_d1.BYTE != *(uint8_t *)(&g.viewstate.v.bytes.at_d2)) {
       goto case_d;
     }
     draw_string(0x20, 0x08, FACTORY_STR_NG4);

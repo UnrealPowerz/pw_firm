@@ -73,26 +73,26 @@ void game_calculate_interaction_reward(void) {
     game_add_watts(g.viewstate.v.bytes.at_d3);
   }
 
-  /* Pick the result-text index (g.viewstate.v.bytes.at_d1 = 0x2C..0x30 → TEXT_HAD_ADVENTURES,
+  /* Pick the result-text index (g.viewstate.v.bytes.at_d1.BYTE = 0x2C..0x30 → TEXT_HAD_ADVENTURES,
      PLAY_BATTLED, etc.) and the dowsing-item index based on score tier. */
   if (score >= 20000) {
-    g.viewstate.v.bytes.at_d1 = 0x2C;
+    g.viewstate.v.bytes.at_d1.BYTE = 0x2C;
     if (g.viewstate.v.bytes.at_d3 != 0) return;
     g.viewstate.v.bytes.at_d2 = (g.session_steps > *(uint32_t *)peer_steps) ? 0 : 1;
   } else if (score >= 10000) {
-    g.viewstate.v.bytes.at_d1 = 0x2D;
+    g.viewstate.v.bytes.at_d1.BYTE = 0x2D;
     if (g.viewstate.v.bytes.at_d3 != 0) return;
     g.viewstate.v.bytes.at_d2 = (g.session_steps > *(uint32_t *)peer_steps) ? 2 : 3;
   } else if (score >= 5000) {
-    g.viewstate.v.bytes.at_d1 = 0x2E;
+    g.viewstate.v.bytes.at_d1.BYTE = 0x2E;
     if (g.viewstate.v.bytes.at_d3 != 0) return;
     g.viewstate.v.bytes.at_d2 = (g.session_steps > *(uint32_t *)peer_steps) ? 4 : 5;
   } else if (score >= 2500) {
-    g.viewstate.v.bytes.at_d1 = 0x2F;
+    g.viewstate.v.bytes.at_d1.BYTE = 0x2F;
     if (g.viewstate.v.bytes.at_d3 != 0) return;
     g.viewstate.v.bytes.at_d2 = (g.session_steps > *(uint32_t *)peer_steps) ? 6 : 7;
   } else {
-    g.viewstate.v.bytes.at_d1 = 0x30;
+    g.viewstate.v.bytes.at_d1.BYTE = 0x30;
     if (g.viewstate.v.bytes.at_d3 != 0) return;
     g.viewstate.v.bytes.at_d2 = (g.session_steps > *(uint32_t *)peer_steps) ? 8 : 9;
   }
@@ -114,10 +114,10 @@ void ui_start_peer_play_app(void) {
   sys_init_heap();
   buf = sbrk(0x38);
   drv_eeprom_read_block(0xF6C0, buf, 0x38);
-  /* Copy bit 0 of buf[0x37] into bit 1 of g.viewstate.Y -- the ROM uses
+  /* Copy bit 0 of buf[0x37] into bit 1 of g.viewstate.Y.BYTE -- the ROM uses
    * bld+bst here, which means the destination bit is unconditionally set
    * to the source bit (not OR'd as the original C suggested). */
-  ((byte_bits_t *)&g.viewstate.Y)->BIT.b1 =
+  ((byte_bits_t *)&g.viewstate.Y.BYTE)->BIT.b1 =
       ((byte_bits_t *)&buf[0x37])->BIT.b0;
   g.viewstate.Z = 0;
   g.viewstate.A = 0;
@@ -146,9 +146,9 @@ void ui_draw_music_note(uint8_t x, uint8_t y, uint8_t shift) {
 //   caller's r3/r4/r5/r6 freely, like ui_load_inventory_mask. ch38 emits
 //   `push.l er6; push.l er5; push.w r4; push.w r3` (12 bytes), breaking
 //   alignment from byte 0. ROM also uses the `bld/bst` bit-copy idiom
-//   (`bld #1, g.viewstate.Y; bst #0, r6l`) for the `r6l = (g.viewstate.Y >>
+//   (`bld #1, g.viewstate.Y.BYTE; bst #0, r6l`) for the `r6l = (g.viewstate.Y.BYTE >>
 //   1) & 1` pattern; ch38 emits the `btst/beq/mov #1` triple from the
-//   explicit `if (g.viewstate.Y & 2) r6l = 1` form. Rewriting that one site
+//   explicit `if (g.viewstate.Y.BYTE & 2) r6l = 1` form. Rewriting that one site
 //   with byte_bits_t bit-copy might gain ~2pp but the prologue blocker caps
 //   the function regardless. Body's branch structure and call args look
 //   correct.
@@ -162,7 +162,7 @@ void ui_render_peer_play(void) {
 
   if (z < 3) {
     gfx_draw_own_pokemon_small(0x38, 0x08);
-    if (g.viewstate.Y & 0x02) {
+    if (g.viewstate.Y.BYTE & 0x02) {
       peer_facing = 1;
     }
     if (z == 0) {
@@ -195,21 +195,21 @@ void ui_render_peer_play(void) {
     uint8_t table_idx = 0;
     uint8_t i;
 
-    if (g.viewstate.v.bytes.at_d1 == 0x2C) {
+    if (g.viewstate.v.bytes.at_d1.BYTE == 0x2C) {
       limit = count;
       if (limit > 5)
         limit = 5;
-    } else if (g.viewstate.v.bytes.at_d1 == 0x2D) {
+    } else if (g.viewstate.v.bytes.at_d1.BYTE == 0x2D) {
       if (limit > 4)
         limit = 4;
-    } else if (g.viewstate.v.bytes.at_d1 == 0x2E) {
+    } else if (g.viewstate.v.bytes.at_d1.BYTE == 0x2E) {
       if (limit > 3)
         limit = 3;
-    } else if (g.viewstate.v.bytes.at_d1 == 0x2F) {
+    } else if (g.viewstate.v.bytes.at_d1.BYTE == 0x2F) {
       if (limit > 2)
         limit = 2;
       table_idx = 1;
-    } else if (g.viewstate.v.bytes.at_d1 == 0x30) {
+    } else if (g.viewstate.v.bytes.at_d1.BYTE == 0x30) {
       ui_draw_music_note(0x2C, MUSIC_NOTE_HEIGHTS[2], 0);  /* peak height */
       goto music_done;
     }
@@ -219,7 +219,7 @@ void ui_render_peer_play(void) {
       ui_draw_music_note((uint8_t)(i * 8 + 0x1C), note_y, 0);
     }
   music_done:
-    gfx_draw_text_box(0x30, (uint8_t)g.viewstate.v.bytes.at_d1, TEXT_BOX_FULL, TEXT_BOX_STATIC);
+    gfx_draw_text_box(0x30, (uint8_t)g.viewstate.v.bytes.at_d1.BYTE, TEXT_BOX_FULL, TEXT_BOX_STATIC);
   } else if (z == 3) {
     gfx_draw_present_icon(0x20, 0x04);
     gfx_draw_text_box(0x30, TEXT_HERES_A_GIFT, TEXT_BOX_FULL, TEXT_BOX_STATIC);

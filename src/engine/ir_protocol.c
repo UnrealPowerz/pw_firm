@@ -71,7 +71,7 @@ void sys_begin_ir_session(event_loop_func_t current_loop,
    * try to play that garbage as notes — producing a continuous screech.
    * Stop any in-progress sound up front. */
   g.sound_dataPointer = NULL;
-  if (!(sys_walkerFlags_BIT.session_active)) {
+  if (!(g.sys_walkerFlags.BIT.session_active)) {
     drv_lcd_clear_pages(0x40);
     ui_render_happy_walker(0);
     drv_lcd_flip();
@@ -138,8 +138,8 @@ factory_reset_minimal:
   g.session_idleSeconds = 0xE10;
   sys_factory_reset_eeprom(0, 0);
 apply_volume_and_contrast:
-  drv_sound_set_volume((g.save_settings >> 1) & 0x3);
-  drv_lcd_set_contrast((g.save_settings >> 3) & 0xF);
+  drv_sound_set_volume((g.save_settings.BYTE >> 1) & 0x3);
+  drv_lcd_set_contrast((g.save_settings.BYTE >> 3) & 0xF);
   goto return_to_main_view;
 start_new_walk:
   g.save_walkStepCount = 0;
@@ -148,19 +148,19 @@ start_new_walk:
 end_walk_show_report:
   game_end_walk();
   ui_set_view(VIEW_WALK_DEPARTURE_ANIM);
-  g.viewstate.Y = 5;
+  g.viewstate.Y.BYTE = 5;
   goto reset_substate_z;
 restart_walk_clear_history:
   game_start_walk();
   drv_eeprom_fill(EEPROM_STEP_HIST_FLAGS, 0x06C8, 0);
 enter_walk_view:
   ui_set_view(VIEW_WALK_ARRIVAL_ANIM);
-  g.viewstate.Y = 0;
+  g.viewstate.Y.BYTE = 0;
   goto reset_substate_z;
 clear_walk_stats:
   game_clear_stats();
   ui_set_view(VIEW_WALK_DEPARTURE_ANIM);
-  g.viewstate.Y = 6;
+  g.viewstate.Y.BYTE = 6;
   goto reset_substate_z;
 start_peer_play:
   ui_set_view(VIEW_PEER_PLAY);
@@ -168,49 +168,49 @@ start_peer_play:
   goto finalize;
 show_menu_a3:
   ui_set_view(VIEW_EVENT_REWARD_ANIM);
-  g.viewstate.Y = 0;
+  g.viewstate.Y.BYTE = 0;
   g.viewstate.Z = 0;
   g.viewstate.A = 3;
   goto finalize;
 show_menu_a0:
   ui_set_view(VIEW_EVENT_REWARD_ANIM);
-  g.viewstate.Y = 0;
+  g.viewstate.Y.BYTE = 0;
   g.viewstate.Z = 0;
   g.viewstate.A = 0;
   goto finalize;
 show_menu_a2:
   ui_set_view(VIEW_EVENT_REWARD_ANIM);
-  g.viewstate.Y = 0;
+  g.viewstate.Y.BYTE = 0;
   g.viewstate.Z = 0;
   g.viewstate.A = 2;
   goto finalize;
 show_menu_a1:
   ui_set_view(VIEW_EVENT_REWARD_ANIM);
-  g.viewstate.Y = 0;
+  g.viewstate.Y.BYTE = 0;
   g.viewstate.Z = 0;
   g.viewstate.A = 1;
   goto finalize;
 show_menu_a4:
   ui_set_view(VIEW_EVENT_REWARD_ANIM);
-  g.viewstate.Y = 0;
+  g.viewstate.Y.BYTE = 0;
   g.viewstate.Z = 0;
   g.viewstate.A = 4;
   goto finalize;
 show_menu_a5:
   ui_set_view(VIEW_EVENT_REWARD_ANIM);
-  g.viewstate.Y = 0;
+  g.viewstate.Y.BYTE = 0;
   g.viewstate.Z = 0;
   g.viewstate.A = 5;
   goto finalize;
 show_menu_a6:
   ui_set_view(VIEW_EVENT_REWARD_ANIM);
-  g.viewstate.Y = 0;
+  g.viewstate.Y.BYTE = 0;
   g.viewstate.Z = 0;
   g.viewstate.A = 6;
   goto finalize;
 show_menu_a7:
   ui_set_view(VIEW_EVENT_REWARD_ANIM);
-  g.viewstate.Y = 0;
+  g.viewstate.Y.BYTE = 0;
   g.viewstate.Z = 0;
   g.viewstate.A = 7;
   goto finalize;
@@ -352,12 +352,12 @@ void ir_comm_loop(void) {
       drv_ir_tx_u8(0xFC);
       goto LAB_182e;
     }
-    g.ir_resultCode = ir_packetReceivedFlag_BIT.b0 ? 2 : 1;
+    g.ir_resultCode = g_scratch2.s.ir_packetReceivedFlag.BIT.b0 ? 2 : 1;
     goto do_action;
   }
   if (cmdPos_local == 0)
     goto finish_no_action;
-  ir_packetReceivedFlag_BIT.b0 = 1;
+  g_scratch2.s.ir_packetReceivedFlag.BIT.b0 = 1;
   if (cmdPos_local == 1) {
     g.ir_commandPos = 0;
     cmdByte = g_scratch2.s.ir_commandType;
@@ -467,11 +467,11 @@ void ir_comm_loop(void) {
       g_scratch2.s.ir_handshakeStep = 4;
       save_read_reliable(EEPROM_TRAINER_REC, EEPROM_TRAINER_REC_BACKUP, (void *)g_scratch.s.trainerRecBuf, 0x68);
       drv_ir_send_packet(0x68, 0x10, 2);
-      ui_substateY_BIT.b0 = 0;
+      g.viewstate.Y.BIT.b0 = 0;
       goto LAB_182e;
 
     case 0x10:
-      ui_substateY_BIT.b0 = 1;
+      g.viewstate.Y.BIT.b0 = 1;
       memcpy(payload, (void *)DAT_f7e6, 0x68);
       save_read_reliable(EEPROM_TRAINER_REC, EEPROM_TRAINER_REC_BACKUP, (void *)g_scratch.s.trainerRecBuf, 0x68);
       if (!((byte_bits_t *)&payload[0x5B])->BIT.b0) {
@@ -552,7 +552,7 @@ void ir_comm_loop(void) {
       goto start_eeprom_tx;
 
     case 0x14:
-      if (ui_substateY_BIT.b0) {
+      if (g.viewstate.Y.BIT.b0) {
         uint8_t *rxptr;
         uint8_t i;
         drv_eeprom_write_block(0xF6C0, payload, 0x38);
@@ -583,7 +583,7 @@ void ir_comm_loop(void) {
       goto LAB_182e;
 
     case 0x16:
-      if (ui_substateY_BIT.b0) {
+      if (g.viewstate.Y.BIT.b0) {
         drv_ir_send_packet(0x00, 0x16, 2);
       }
       cmdByte = 0x16;
@@ -728,7 +728,7 @@ void ir_comm_loop(void) {
       drv_eeprom_write_u8(EEPROM_STEP_HIST_FLAGS, bf);
     }
       save_set_event_bit((void *)g_scratch.s.trainerRecBuf, DAT_f840);
-      g.save_settings |= 0x01;
+      g.save_settings.BYTE |= 0x01;
       save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (void *)&g.save_totalSteps, 0x18);
       drv_ir_send_packet(0x00, 0xC6, 2);
       cmdByte = 0xC6;
@@ -740,7 +740,7 @@ void ir_comm_loop(void) {
       drv_eeprom_write_u8(EEPROM_STEP_HIST_FLAGS, bf);
     }
       save_set_event_bit((void *)g_scratch.s.trainerRecBuf, DAT_f840);
-      g.save_settings |= 0x01;
+      g.save_settings.BYTE |= 0x01;
       save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (void *)&g.save_totalSteps, 0x18);
       drv_ir_send_packet(0x00, 0xC6, 2);
       cmdByte = 0xC6;

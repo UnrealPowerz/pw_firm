@@ -27,8 +27,8 @@ __entry(vect = 0) void PowerON_Reset(void) {
   }
 
   g.notif_scheduledHour = 0;
-  sys_statusFlags_BIT.lcd_dirty = 1;
-  g.sys_walkerFlags = (g.sys_walkerFlags & 0xE7) | WALKER_MODE_DEEP_SLEEP;
+  g.sys_statusFlags.BIT.lcd_dirty = 1;
+  g.sys_walkerFlags.BYTE = (g.sys_walkerFlags.BYTE & 0xE7) | WALKER_MODE_DEEP_SLEEP;
 
   g.sys_activityTimer = 0x3C;
   g.ped_stepTimer = 0x5A;
@@ -47,7 +47,7 @@ __entry(vect = 0) void PowerON_Reset(void) {
   drv_timerw_init();
 
   {
-    uint8_t vol = (g.save_settings >> 1) & 0x3;
+    uint8_t vol = (g.save_settings.BYTE >> 1) & 0x3;
     drv_sound_set_volume(vol);
   }
 

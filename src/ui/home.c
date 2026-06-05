@@ -14,15 +14,15 @@
 
 // ROM: 0x6a3e  93.4%
 void ui_handle_home(void) {
-  if (!(sys_walkerFlags_BIT.session_active)) {
-    if (drv_button_is_triggered(BTN_R) || (sys_statusFlags_BIT.pedometer_paused)) {
+  if (!(g.sys_walkerFlags.BIT.session_active)) {
+    if (drv_button_is_triggered(BTN_R) || (g.sys_statusFlags.BIT.pedometer_paused)) {
       ui_enter_ir_session();
     }
   } else {
     if (g.viewstate.Z != 0) {
       if (drv_button_is_triggered(BTN_ANY)) {
         g.viewstate.Z = 0;
-        game_process_interaction_reward(g.viewstate.Y);
+        game_process_interaction_reward(g.viewstate.Y.BYTE);
         return;
       } else {
         g.viewstate.Z--;
@@ -56,7 +56,7 @@ void ui_render_route_image(void) {
 
   sys_init_heap();
   ptr = sbrk(0xC0);
-  if ((g.save_settings & 1)) {
+  if ((g.save_settings.BYTE & 1)) {
     addr = 0xC83C;
   } else {
     addr = 0x8FBE;
@@ -72,17 +72,17 @@ void ui_render_home_route(void) {
 
   if (g.viewstate.Z != 0) {
     uint8_t idx;
-    idx = ROUTE_ICON_INDICES[g.viewstate.Y - 1];
+    idx = ROUTE_ICON_INDICES[g.viewstate.Y.BYTE - 1];
     gfx_draw_small_route_icon(idx);
   }
   ui_render_route_image();
-  if (!(sys_walkerFlags_BIT.walking)) {
+  if (!(g.sys_walkerFlags.BIT.walking)) {
     return;
   }
   subA = g.viewstate.A;
-  if (!DAT_f7d1_BIT.b1) {
+  if (!g.viewstate.v.bytes.at_d1.BIT.b1) {
     gfx_draw_home_pokemon(subA, 0);
-  } else if (!DAT_f7d1_BIT.b2) {
+  } else if (!g.viewstate.v.bytes.at_d1.BIT.b2) {
     gfx_draw_own_pokemon_small(subA, 0x18);
   } else {
     sys_init_heap();
@@ -94,7 +94,7 @@ void ui_render_home_route(void) {
       gfx_draw_own_pokemon_small(subA, 0x18);
     }
   }
-  if (DAT_f7d1_BIT.b1) {
+  if (g.viewstate.v.bytes.at_d1.BIT.b1) {
     sys_update_standby_state();
   } else {
     sys_enter_standby();

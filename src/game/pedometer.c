@@ -28,10 +28,10 @@
  *     game_rotate_step_history        Daily roll-over: shift the 6-day history
  *                                     and start a fresh g.session_steps slot.
  *
- *   --- Pedometer task dispatch (g.ped_taskFlags) ---
+ *   --- Pedometer task dispatch (g.ped_taskFlags.BYTE) ---
  *     game_pedometer_tick_session     Per-second g.save_sessionTicksElapsed bump
- *                                     (g.ped_taskFlags bit 0 dispatches to here).
- *     game_dispatch_pedometer_task    Pop bits off g.ped_taskFlags and run the
+ *                                     (g.ped_taskFlags.BYTE bit 0 dispatches to here).
+ *     game_dispatch_pedometer_task    Pop bits off g.ped_taskFlags.BYTE and run the
  *                                     corresponding task.
  *     game_reset_pedometer_flags      Clear the step-detection accumulators.
  *
@@ -57,7 +57,7 @@ void game_reset_step_data(uint8_t a) {
   g.save_sessionTicksElapsed = 0;
   g.save_watts = 0;
   g.save_stepWattCounter = 0;
-  g.save_settings = (g.save_settings & 0xA4) | 0x24;
+  g.save_settings.BYTE = (g.save_settings.BYTE & 0xA4) | 0x24;
   g.save_peerSlotIndex = 0;
   save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (uint8_t *)&g.save_totalSteps, 0x18);
 }
@@ -184,34 +184,34 @@ void game_pedometer_set_total(uint32_t val) {
 }
 
 /* Reason: do NOT bit-field-ize g.ped_taskFlags.
- * Tested converting `(g.ped_taskFlags & 0x0N)` to `ped_taskFlags_BIT.<name>` and the
+ * Tested converting `(g.ped_taskFlags.BYTE & 0x0N)` to `g.ped_taskFlags.BIT.<name>` and the
  * function regressed by -12.8% (67.9% -> 55.1%).  The ROM tests these
  * three bits with `btst #N, r0l; beq` (the original C used `& mask` in
  * if-conditions), not with `bld; bcc`.  Flat-mask form is what matches
- * here, even though for g.sys_statusFlags the bit-field form is the one that
+ * here, even though for g.sys_statusFlags.BYTE the bit-field form is the one that
  * matches.  Lesson: always check `bld` vs `btst` count for the global in
  * main.mar before sweeping it to bit-field form.
  * Class: do-not-bit-field */
 // ROM: 0xa34a  69.0%  saves: er2,r3,r5,er6
 void game_dispatch_pedometer_task(void) {
-  if (!sys_statusFlags_BIT.pedometer_paused) {
-    if ((g.ped_taskFlags & 0x01)) {
+  if (!g.sys_statusFlags.BIT.pedometer_paused) {
+    if ((g.ped_taskFlags.BYTE & 0x01)) {
       game_pedometer_tick_session();
     }
-    if ((g.ped_taskFlags & 0x02)) {
+    if ((g.ped_taskFlags.BYTE & 0x02)) {
       game_pedometer_increment_step();
     }
-    if ((g.ped_taskFlags & 0x04)) {
+    if ((g.ped_taskFlags.BYTE & 0x04)) {
       game_rotate_step_history();
     }
-    g.ped_taskFlags &= 0xF8;
+    g.ped_taskFlags.BYTE &= 0xF8;
   }
 }
 
 // ROM: 0xa396  99.3%
 void game_pedometer_tick_session(void) {
   /* Increment with overflow guard — g.save_sessionTicksElapsed saturates at 0xFFFF
-     rather than wrapping to 0. Driven by g.ped_taskFlags bit 0 (per-second). */
+     rather than wrapping to 0. Driven by g.ped_taskFlags.BYTE bit 0 (per-second). */
   if (g.save_sessionTicksElapsed + 1 != 0) {
     g.save_sessionTicksElapsed++;
   }
@@ -219,7 +219,7 @@ void game_pedometer_tick_session(void) {
 
 // ROM: 0xa3aa  78.0%
 void game_pedometer_increment_step(void) {
-  sys_statusFlags_BIT.battery_check_request = 1;
+  g.sys_statusFlags.BIT.battery_check_request = 1;
 
   if (g.save_totalSteps < 9999999 && g.save_walkStepCount < 9999999) {
     g.save_walkStepCount++;
@@ -227,7 +227,7 @@ void game_pedometer_increment_step(void) {
 
   save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (uint8_t *)&g.save_totalSteps, 0x18);
 
-  if ((sys_walkerFlags_BIT.walking) != 0) {
+  if ((g.sys_walkerFlags.BIT.walking) != 0) {
     void *buf;
     void *extra_buf;
     uint16_t val;
@@ -237,7 +237,7 @@ void game_pedometer_increment_step(void) {
     drv_eeprom_read_block(EEPROM_TRAINER_PROFILE, buf, 0xBE);
 
     val = 0;
-    if (((g.save_settings & 1)) != 0) {
+    if (((g.save_settings.BYTE & 1)) != 0) {
       val = 1;
     }
 
@@ -247,7 +247,7 @@ void game_pedometer_increment_step(void) {
 
   g.session_recentSteps = 0;
   if (g.rtc_hours == g.notif_scheduledHour) {
-    g.ped_taskFlags |= 0x04;
+    g.ped_taskFlags.BYTE |= 0x04;
   }
 }
 
@@ -357,7 +357,7 @@ void game_process_accel_data(void) {
   uint8_t view, sub, limit;
   uint16_t threshold, tx, ty, tz;
 
-  sys_statusFlags_BIT.sleeping = 0;
+  g.sys_statusFlags.BIT.sleeping = 0;
 
   i = 0;
   do {
@@ -375,7 +375,7 @@ void game_process_accel_data(void) {
   view = g.ui_activeView;
   if (view == VIEW_ACCEL_DEBUG) {
     sub = g.viewstate.A;
-    limit = g.viewstate.v.bytes.at_d8;
+    limit = g.viewstate.v.bytes.at_d8.BYTE;
     if (sub < limit) {
       if (steps != 0) {
         g.viewstate.A = sub + 1;
@@ -400,11 +400,11 @@ void game_process_accel_data(void) {
         if (tz > threshold)
           g.ui_activeView = VIEW_TEXT;
       }
-    } else if (g.viewstate.v.bytes.at_d1 < g.viewstate.v.bytes.at_d9) {
+    } else if (g.viewstate.v.bytes.at_d1.BYTE < g.viewstate.v.bytes.at_d9) {
       threshold = g.ped_axisIdleThreshold;
       if (accel_xPosition_word < threshold && accel_yPosition_word < threshold &&
           accel_zPosition_word < threshold) {
-        g.viewstate.v.bytes.at_d1++;
+        g.viewstate.v.bytes.at_d1.BYTE++;
       }
     }
   }
@@ -412,7 +412,7 @@ void game_process_accel_data(void) {
   if (steps == 0) {
     ped_pendingStepDetect = 0;
   } else {
-    sys_statusFlags_BIT.sleeping = 1;
+    g.sys_statusFlags.BIT.sleeping = 1;
 
     if (ped_pendingStepDetect != 0) {
       uint32_t accumulation = ped_stepDetectAccumulator + ped_pendingStepDetect;

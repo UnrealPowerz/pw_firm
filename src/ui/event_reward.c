@@ -12,7 +12,7 @@
  * intentional stack-frame placeholder.
  */
 
-/* Sub-animation index in g.viewstate.Y for VIEW_EVENT_REWARD_ANIM. */
+/* Sub-animation index in g.viewstate.Y.BYTE for VIEW_EVENT_REWARD_ANIM. */
 enum event_reward_phase {
     REWARD_BALL_DROP = 0,
     REWARD_CLOUD     = 1,
@@ -42,7 +42,7 @@ void ui_draw_ball_sparkles_anim(void) {
 
   g.viewstate.Z++;
   if (g.viewstate.Z > 2) {
-    g.viewstate.Y = 1;
+    g.viewstate.Y.BYTE = 1;
     g.viewstate.Z = 0;
   }
 }
@@ -103,11 +103,11 @@ void ui_render_event_reward_info(void) {
   }
 }
 
-/* Reason: do NOT bit-field-ize g.save_settings bit 0 reads here.
- * The expression `(uint8_t)(g.save_settings & 1)` is passed as a
+/* Reason: do NOT bit-field-ize g.save_settings.BYTE bit 0 reads here.
+ * The expression `(uint8_t)(g.save_settings.BYTE & 1)` is passed as a
  * function argument; ch38 already compiles it to MOV+SUB+BLD+BST (the
  * byte-widening produces the bit-store-to-byte sequence the ROM also
- * uses).  Switching to save_settings_BIT.mute adds a redundant
+ * uses).  Switching to g.save_settings.BIT.mute adds a redundant
  * widen and regressed this function by -3.2%.  See note in include/types.h
  * about the multi-bit fields of settings_byte_t -- those are tabled and
  * may require shift-based access to match.
@@ -115,10 +115,10 @@ void ui_render_event_reward_info(void) {
 // ROM: 0x4178  66.1%
 void ui_handle_event_reward_anim(void) {
   uint16_t stackVar;
-  uint8_t y = g.viewstate.Y;
+  uint8_t y = g.viewstate.Y.BYTE;
   if (y == REWARD_BALL_DROP) {
     if (g.viewstate.Z > 4) {
-      g.viewstate.Y = REWARD_SPARKLES;
+      g.viewstate.Y.BYTE = REWARD_SPARKLES;
       g.viewstate.Z = 0;
       drv_sound_play(SND_ANIM_CUE);
     }
@@ -126,7 +126,7 @@ void ui_handle_event_reward_anim(void) {
   }
   if (y == REWARD_CLOUD) {
     if (g.viewstate.Z != 0) {
-      g.viewstate.Y = REWARD_INFO;
+      g.viewstate.Y.BYTE = REWARD_INFO;
       g.viewstate.Z = 0;
       drv_sound_play(SND_ANIM_CUE);
     }
@@ -148,10 +148,10 @@ void ui_handle_event_reward_anim(void) {
     sbrk(0x10);
     drv_eeprom_read_block(0xBA44, ptr1,
                           0x10); /* reusing ptr1 to save register */
-    stackVar = ((g.save_settings & 1)) << 8;
+    stackVar = ((g.save_settings.BYTE & 1)) << 8;
     ptr3 = sbrk(0x88);
     game_log_interaction(ptr1, ptr3, 0x1D,
-                          (uint8_t)((g.save_settings & 1)), 0, 4);
+                          (uint8_t)((g.save_settings.BYTE & 1)), 0, 4);
   } else if (g.viewstate.A == 2) {
     void *ptr1;
     uint16_t *ptr2;
@@ -161,10 +161,10 @@ void ui_handle_event_reward_anim(void) {
     drv_eeprom_read_block(EEPROM_TRAINER_PROFILE, ptr1, 0xBE);
     ptr2 = (uint16_t *)sbrk(0x188);
     drv_eeprom_read_block(EEPROM_WILD_POKE, ptr2, 0x188);
-    stackVar = ((g.save_settings & 1)) << 8;
+    stackVar = ((g.save_settings.BYTE & 1)) << 8;
     ptr3 = sbrk(0x88);
     game_log_interaction(ptr1, ptr3, 0x1C,
-                          (uint8_t)((g.save_settings & 1)), ptr2[3], 0);
+                          (uint8_t)((g.save_settings.BYTE & 1)), ptr2[3], 0);
   } else {
     ui_reset_substate();
     ui_set_view(VIEW_HOME);
@@ -176,7 +176,7 @@ void ui_handle_event_reward_anim(void) {
 
 // ROM: 0x42a0  96.4%
 void ui_render_event_reward_anim(void) {
-  uint8_t y = g.viewstate.Y;
+  uint8_t y = g.viewstate.Y.BYTE;
   if (y == REWARD_BALL_DROP) goto phase_ball_drop;
   if (y == REWARD_SPARKLES)  goto phase_sparkles;
   if (y == REWARD_CLOUD)     goto phase_cloud;

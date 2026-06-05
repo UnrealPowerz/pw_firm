@@ -2,7 +2,7 @@
 
 /*
  * VIEW_WALK_ARRIVAL_ANIM — animation played when the walker pokemon arrives
- * (returns from a session). Sub-animation index in g.viewstate.Y drives the
+ * (returns from a session). Sub-animation index in g.viewstate.Y.BYTE drives the
  * phase dispatch.
  *
  * Also hosts two shared drawers — ui_draw_ball_drop_anim and
@@ -15,7 +15,7 @@
  * reads; removing them shifts ch38's stack layout and tanks the match.
  */
 
-/* Sub-animation index in g.viewstate.Y for VIEW_WALK_ARRIVAL_ANIM. */
+/* Sub-animation index in g.viewstate.Y.BYTE for VIEW_WALK_ARRIVAL_ANIM. */
 enum walk_arrival_phase {
     ARRIVAL_BALL_DROP = 0,
     ARRIVAL_CLOUD     = 1,
@@ -109,7 +109,7 @@ void ui_handle_walk_arrival_anim(void) {
   uint8_t z;
   uint8_t y;
   z = g.viewstate.Z;
-  y = g.viewstate.Y;
+  y = g.viewstate.Y.BYTE;
   if (y == ARRIVAL_BALL_DROP) goto phase_ball_drop;
   if (y == ARRIVAL_CLOUD)     goto phase_cloud;
   if (y != ARRIVAL_POKE)      goto done;
@@ -117,7 +117,7 @@ void ui_handle_walk_arrival_anim(void) {
 phase_ball_drop:
   /* Ball-drop runs 5 frames (z 0..4), then advance to cloud. */
   if (z > 4) {
-    g.viewstate.Y = ARRIVAL_CLOUD;
+    g.viewstate.Y.BYTE = ARRIVAL_CLOUD;
     g.viewstate.Z = 0;
   }
   goto done;
@@ -125,13 +125,13 @@ phase_cloud:
   /* Cloud renderer self-increments z (so it stays at 0 here until
      externally bumped); when it has ticked, advance to poke + cue. */
   if (z == 0) goto done;
-  g.viewstate.Y = ARRIVAL_POKE;
+  g.viewstate.Y.BYTE = ARRIVAL_POKE;
   g.viewstate.Z = 0;
   goto play;
 phase_poke:
   if (z <= 8) goto done;
   g.viewstate.Z = 0;
-  g.viewstate.Y = ARRIVAL_SUCCESS;
+  g.viewstate.Y.BYTE = ARRIVAL_SUCCESS;
 play:
   drv_sound_play(SND_ANIM_CUE);
 done:;
@@ -139,7 +139,7 @@ done:;
 
 // ROM: 0x4148  96.4%
 void ui_render_walk_arrival_anim(void) {
-  uint8_t y = g.viewstate.Y;
+  uint8_t y = g.viewstate.Y.BYTE;
   if (y == ARRIVAL_BALL_DROP) goto phase_ball_drop;
   if (y == ARRIVAL_CLOUD)     goto phase_cloud;
   if (y == ARRIVAL_POKE)      goto phase_poke;

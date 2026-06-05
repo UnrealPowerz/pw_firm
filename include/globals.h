@@ -30,19 +30,19 @@
  * added to the union as we audit each consumer. The `union` deliberately
  * uses *named* inner members (not anonymous) for ch38 6.2.2 C89 compat. */
 struct viewstate {
-    volatile uint8_t  Y;        /* 0xF7CE */
+    volatile byte_bits_t Y;     /* 0xF7CE */
     volatile uint8_t  Z;        /* 0xF7CF */
     volatile uint8_t  A;        /* 0xF7D0 */
     union {
         struct {
-            volatile uint8_t  at_d1;   /* 0xF7D1 */
+            volatile byte_bits_t at_d1; /* 0xF7D1 */
             volatile uint8_t  at_d2;   /* 0xF7D2 */
             volatile uint8_t  at_d3;   /* 0xF7D3 */
             volatile uint8_t  at_d4;   /* 0xF7D4 */
             volatile uint8_t  at_d5;   /* 0xF7D5 */
             volatile uint8_t  at_d6;   /* 0xF7D6 */
             volatile uint8_t  at_d7;   /* 0xF7D7 */
-            volatile uint8_t  at_d8;   /* 0xF7D8 */
+            volatile byte_bits_t at_d8; /* 0xF7D8 */
             volatile uint8_t  at_d9;   /* 0xF7D9 */
         } bytes;
         /* Dowsing minigame's interpretation of these 9 bytes.
@@ -73,9 +73,7 @@ struct b_ram_section {
 extern volatile struct b_ram_section g;
 
 /* --- System Status Flags --- */
-#define sys_statusFlags_BIT (((volatile status_flags_t *)&g.sys_statusFlags)->BIT)
 extern volatile uint8_t status_flags_f7f1;   /* DAT_f7f1 */
-#define sys_walkerFlags_BIT (((volatile walker_status_t *)&g.sys_walkerFlags)->BIT)
 
 /* --- LCD & UI / Timers --- */
 
@@ -108,7 +106,6 @@ enum view_id {
 };
 
 /* --- Button Input --- */
-#define btn_inputRaw_BIT (((volatile button_input_t *)&g.btn_inputRaw)->BIT)
 
 /* --- Pedometer & Activity --- */
 /* Persisted save block at 0xF780..F797 (see struct session_save in globals.c).
@@ -116,19 +113,14 @@ enum view_id {
  * field by its top-level name continue to compile and so &name remains a
  * valid pointer to the underlying byte. */
 
-#define ped_taskFlags_BIT (((volatile ped_task_flags_t *)&g.ped_taskFlags)->BIT)
 
 /* --- Substate Management & Sensor Data --- */
 /* g.viewstate.Y -- bits 0/1 used as flags via bset/bclr/bst in ROM. */
-#define ui_substateY_BIT (((volatile byte_bits_t *)&g.viewstate.Y)->BIT)
 
 /* g.viewstate.v.bytes.at_d8 -- bit 0 used as a flag in battle.c via bset/bclr in ROM. */
-#define DAT_f7d8_BIT (((volatile byte_bits_t *)&g.viewstate.v.bytes.at_d8)->BIT)
 
 /* ir_packetReceivedFlag -- bit 0 used; ROM emits bset/bclr. */
-#define ir_packetReceivedFlag_BIT (((volatile byte_bits_t *)&g_scratch2.s.ir_packetReceivedFlag)->BIT)
 
-#define DAT_f7d1_BIT (((volatile byte_bits_t *)&g.viewstate.v.bytes.at_d1)->BIT)
 /* 16-bit "accel physics" view: the accel driver and game_process_accel_data
  * read these positions as uint16 (mov.w) while game/UI code uses the byte form
  * above for slot indices. */
@@ -139,7 +131,6 @@ enum view_id {
  * slot index, radar countdown, etc.); only the accel-physics accumulator in
  * drv_accel_sample treats it as the high byte of a uint16. This alias is the
  * byte view. */
-#define accel_zPosition_byte (*(volatile uint8_t  *)&g.viewstate.v.bytes.at_d6)
 /* 0xF7D8 is also accessed as a 16-bit word in dowsing (item ID) — disassembly
  * shows mov.w @g.viewstate.v.bytes.at_d8 + drv_eeprom_write_block size 2. The byte alias above
  * is used by battle.c and pedometer.c for flag/limit bytes. */
@@ -174,7 +165,7 @@ union pw_scratch2 {
         volatile uint8_t  _pad_at_5a;              /* +0x5A */
         volatile uint8_t  at_f8c1;                 /* +0x5B */
         volatile uint8_t  ir_crcRetryCount;        /* +0x5C */
-        volatile uint8_t  ir_packetReceivedFlag;   /* +0x5D */
+        volatile byte_bits_t ir_packetReceivedFlag; /* +0x5D */
         volatile uint8_t  ir_requestedPokemonAction; /* +0x5E */
         volatile uint8_t  ir_sessionPhase;         /* +0x5F */
         volatile uint16_t ir_xferRemaining;        /* +0x60 */
@@ -267,8 +258,6 @@ union pw_scratch {
 /* --- RNG & Memory --- */
 
 /* --- LCD & EEPROM --- */
-#define _pad_f7e5 (*(volatile uint8_t *)0xF7E5u)
-#define save_settings_BIT (((volatile settings_byte_t *)&g.save_settings)->BIT)
 
 /* --- Step Processing & IR Comm: see g_scratch2 union above for the full
  * 240-byte scratch region; these symbols are macros. Only globals NOT
@@ -341,7 +330,5 @@ extern const uint8_t ROM_TAIL_PADDING[56];
 
 
 /* --- Sound Engine Globals (Fixed addresses) --- */
-#define _pad_f7cd (*(uint8_t *)0xF7CDu)
-#define _pad_f7c7 (*(uint8_t *)0xF7C7u)
 
 #endif /* GLOBALS_H */

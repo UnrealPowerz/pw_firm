@@ -183,7 +183,7 @@ void game_log_poke_interaction(void) {
   uint16_t sub_y;
   void *slot_buf;
 
-  if (g.viewstate.Y == 0)
+  if (g.viewstate.Y.BYTE == 0)
     return;
 
   /* Copy the chosen pokemon slot into the log context at the discard cursor's
@@ -192,14 +192,14 @@ void game_log_poke_interaction(void) {
   log_block = sbrk(0x30);
   drv_eeprom_read_block(EEPROM_LOG_CONTEXT, log_block, 0x30);
 
-  drv_eeprom_read_block(EEPROM_POKEMON_SLOTS + ((g.viewstate.Y - 1) * 0x10),
+  drv_eeprom_read_block(EEPROM_POKEMON_SLOTS + ((g.viewstate.Y.BYTE - 1) * 0x10),
                         log_block + (g.viewstate.Z * 0x10), 0x10);
   drv_eeprom_write_block(EEPROM_LOG_CONTEXT, log_block, 0x30);
 
   trainer_buf = sbrk(0xBE);
   drv_eeprom_read_block(EEPROM_TRAINER_PROFILE, trainer_buf, 0xBE);
 
-  sub_y = g.viewstate.Y;
+  sub_y = g.viewstate.Y.BYTE;
   slot_buf = sbrk(0x88);
   /* ROM r0=trainer_buf, e0=slot_buf. sub_y is the event_subtype (6th arg,
      pushed); val_at_0e (e1) is 0. */
@@ -219,7 +219,7 @@ void game_log_item_interaction(void) {
   log_block = sbrk(0x0C);
   drv_eeprom_read_block(EEPROM_LOG_ITEMS, log_block, 0x0C);
 
-  drv_eeprom_read_block(EEPROM_SUBY_LOOKUP_TABLE + (g.viewstate.Y * 2),
+  drv_eeprom_read_block(EEPROM_SUBY_LOOKUP_TABLE + (g.viewstate.Y.BYTE * 2),
                         log_block + (g.viewstate.Z * 4), 0x02);
   drv_eeprom_write_block(EEPROM_LOG_ITEMS, log_block, 0x0C);
 
@@ -229,11 +229,11 @@ void game_log_item_interaction(void) {
   slot_buf = sbrk(0x88);
   /* `scratch_val` is unused locally but the assignment is preserved because
      ch38 allocates a stack slot to match the ROM's frame. */
-  scratch_val = ((uint32_t)(*(uint16_t *)(trainer_buf + (g.viewstate.Y * 2) + 0x8C)) << 16) |
+  scratch_val = ((uint32_t)(*(uint16_t *)(trainer_buf + (g.viewstate.Y.BYTE * 2) + 0x8C)) << 16) |
                 0x0B;
   (void)scratch_val;
   game_log_interaction(trainer_buf, slot_buf, 0x0B, 0x00,
-                       *(uint16_t *)(trainer_buf + (g.viewstate.Y * 2) + 0x8C), 0);
+                       *(uint16_t *)(trainer_buf + (g.viewstate.Y.BYTE * 2) + 0x8C), 0);
 }
 
 // ROM: 0x67de  85.9%
@@ -309,7 +309,7 @@ void game_rotate_interaction_log_record(void) {
        * (val_at_0e), push=0 (event_subtype). */
       game_log_interaction(
           trainer_buf, log_record, accel_val + 1,
-          (uint8_t)((g.save_settings & 1)),
+          (uint8_t)((g.save_settings.BYTE & 1)),
           *(uint16_t *)(trainer_buf + 0x8C + (uint16_t)accel_val * 2), 0);
     }
   }

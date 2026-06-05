@@ -14,7 +14,7 @@
  * Helpers:
  *   ui_set_view()           writes g.ui_activeView (one-liner).
  *   ui_reset_substate()     zeroes the substate cursors before a view switch.
- *   ui_clear_substate_y()   zeroes only g.viewstate.Y (one-liner).
+ *   ui_clear_substate_y()   zeroes only g.viewstate.Y.BYTE (one-liner).
  *   sys_set_handler()       swaps the foreground event-loop function pointer,
  *                           saving the prior one for restoration. Used when
  *                           entering / leaving the IR app's low-power loop.
@@ -31,10 +31,10 @@ void ui_set_view(uint8_t viewId) { g.ui_activeView = viewId; }
 
 // ROM: 0x6a1c  77.0%
 void ui_reset_substate(void) {
-  g.viewstate.Y = 0;
+  g.viewstate.Y.BYTE = 0;
   g.viewstate.Z = 0;
   g.viewstate.A = 0x20;       /* initial animation tick / dwell countdown */
-  g.viewstate.v.bytes.at_d1 &= ~0x07;          /* clear the 3 low flag bits (b0/b1/b2) used by
+  g.viewstate.v.bytes.at_d1.BYTE &= ~0x07;          /* clear the 3 low flag bits (b0/b1/b2) used by
                                  home + battle; preserve the upper byte state */
 }
 
@@ -84,7 +84,7 @@ void ui_dispatch_event(void) {
     ui_handle_inventory_items();
     break;
   case VIEW_STEP_HISTORY:
-    if (sys_walkerFlags_BIT.session_active) {
+    if (g.sys_walkerFlags.BIT.session_active) {
       if (drv_button_is_triggered(BTN_ANY)) {
         ui_reset_substate();
         ui_set_view(VIEW_HOME);
@@ -122,7 +122,7 @@ void ui_dispatch_event(void) {
 void ui_dispatch_draw(void) {
   switch (g.ui_activeView) {
   case VIEW_HOME:
-    if (!(sys_walkerFlags_BIT.session_active)) {
+    if (!(g.sys_walkerFlags.BIT.session_active)) {
       ui_render_empty_eeprom();
     } else {
       ui_render_home_route();
@@ -166,7 +166,7 @@ void ui_dispatch_draw(void) {
     ui_render_inventory_items();
     break;
   case VIEW_STEP_HISTORY:
-    if (!(sys_walkerFlags_BIT.session_active)) {
+    if (!(g.sys_walkerFlags.BIT.session_active)) {
       ui_render_sad_walker();
     } else {
       ui_render_step_history();
@@ -201,4 +201,4 @@ void ui_dispatch_draw(void) {
 }
 
 // ROM: 0x974e  100.0%
-void ui_clear_substate_y(void) { g.viewstate.Y = 0; }
+void ui_clear_substate_y(void) { g.viewstate.Y.BYTE = 0; }

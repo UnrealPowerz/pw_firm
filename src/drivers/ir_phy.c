@@ -116,7 +116,7 @@ void drv_ir_send_discovery(void) {
   g_scratch2.s.ir_timeoutRetryCount = 0x00;
   g_scratch2.s.ir_crcRetryCount = 0x00;
   g_scratch2.s.ir_requestedPokemonAction = 0xFF;
-  ir_packetReceivedFlag_BIT.b0 = 0;
+  g_scratch2.s.ir_packetReceivedFlag.BIT.b0 = 0;
   g.ir_commandPos = 0x00;
   DAT_f8c1 = 0x00;
   g.ir_lastCommandTime = TCNT;

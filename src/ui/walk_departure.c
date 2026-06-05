@@ -16,7 +16,7 @@
  * uninitializedE0` stack-frame placeholders.
  */
 
-/* Sub-animation index in g.viewstate.Y for VIEW_WALK_DEPARTURE_ANIM. */
+/* Sub-animation index in g.viewstate.Y.BYTE for VIEW_WALK_DEPARTURE_ANIM. */
 enum walk_departure_phase {
     DEPARTURE_CLOUD        = 0,   /* cloud rising                            */
     DEPARTURE_CLOUD_AFTER  = 1,   /* cloud-clear frame                       */
@@ -56,7 +56,7 @@ void ui_draw_departure_cloud_anim(void) {
   gfx_fill_rect(0, 0, 0x60, 8, 3);
   gfx_fill_rect(0, 0x38, 0x60, 8, 3);
 
-  g.viewstate.Y = 0;
+  g.viewstate.Y.BYTE = 0;
   g.viewstate.Z = 0;
 }
 
@@ -138,7 +138,7 @@ void ui_handle_walk_departure_anim(void) {
   uint8_t z;
   uint8_t y;
   z = g.viewstate.Z;
-  y = g.viewstate.Y;
+  y = g.viewstate.Y.BYTE;
   if (y == DEPARTURE_START)    goto phase_start;
   if (y == DEPARTURE_POKE)     goto phase_poke;
   if (y == DEPARTURE_CLOUD)    goto phase_cloud;
@@ -147,12 +147,12 @@ void ui_handle_walk_departure_anim(void) {
 phase_start:
   /* Entry — kick the poke-departure anim with sound. */
   g.viewstate.Z = 0;
-  g.viewstate.Y = DEPARTURE_POKE;
+  g.viewstate.Y.BYTE = DEPARTURE_POKE;
   goto sound;
 phase_poke:
   if (z <= 8) goto done;
   g.viewstate.Z = 0;
-  g.viewstate.Y = DEPARTURE_CLOUD_AFTER;
+  g.viewstate.Y.BYTE = DEPARTURE_CLOUD_AFTER;
   goto done;
 phase_cloud:
   if (z < 9) goto done;
@@ -161,7 +161,7 @@ phase_cloud:
 phase_done_pre:
   y = DEPARTURE_DONE;
 shared_advance:
-  g.viewstate.Y = y;
+  g.viewstate.Y.BYTE = y;
   g.viewstate.Z = 0;
 sound:
   drv_sound_play(SND_ANIM_CUE);
@@ -171,7 +171,7 @@ done:
 
 // ROM: 0x44f4  94.2%
 void ui_render_walk_departure_anim(void) {
-  uint8_t y = g.viewstate.Y;
+  uint8_t y = g.viewstate.Y.BYTE;
   if (y == DEPARTURE_POKE)        goto phase_poke;
   if (y == DEPARTURE_CLOUD_AFTER) goto phase_cloud_after;
   if (y == DEPARTURE_CLOUD)       goto phase_cloud;

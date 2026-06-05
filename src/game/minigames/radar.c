@@ -19,11 +19,11 @@
  *
  * Globals repurposed for radar:
  *   g.viewstate.A      = cursor position over the 2x2 patch grid (0..3)
- *   g.viewstate.Y      = encounter pokemon kind (1..3 wild, 4 peer)
+ *   g.viewstate.Y.BYTE      = encounter pokemon kind (1..3 wild, 4 peer)
  *   g.viewstate.v.bytes.at_d2          = total rounds required before battle (rolled at init)
  *   g.viewstate.v.bytes.at_d4          = sub-tick before each timer decrement
- *   accel_zPosition_byte        = lock-animation timer for RADAR_LOCK_ANIM
- *   g.viewstate.v.bytes.at_d1           = rounds completed so far
+ *   g.viewstate.v.bytes.at_d6        = lock-animation timer for RADAR_LOCK_ANIM
+ *   g.viewstate.v.bytes.at_d1.BYTE           = rounds completed so far
  *   g.viewstate.v.bytes.at_d5           = time-remaining countdown (SEARCH) / fade-frame (FADE)
  *   g.viewstate.v.bytes.at_d3   = secret patch index (0..3), re-rolled each round
  */
@@ -65,7 +65,7 @@ void ui_render_pokeradar(void) {
     drv_lcd_blit(RADAR_Y_COORDS[i], (i & 1) * 0x18, buf, 0x20, 0x18);
   }
 
-  if (accel_zPosition_byte != 0) {
+  if (g.viewstate.v.bytes.at_d6 != 0) {
     /* Reveal phase — overlay the encounter icon on the secret patch. */
     drv_eeprom_read_block(0x1AF0 + base, buf, 0x100);
     drv_lcd_blit(RADAR_Y_COORDS[g.viewstate.v.bytes.at_d3] + 0x10,
@@ -81,7 +81,7 @@ void ui_render_pokeradar(void) {
                     (uint8_t)(g.viewstate.v.bytes.at_d5 * 8), 3);
       g.viewstate.v.bytes.at_d5++;
     } else if (g.viewstate.Z == RADAR_REWARD) {
-      gfx_draw_value_with_icon(2, 0x20, 0x0D, g.viewstate.Y);
+      gfx_draw_value_with_icon(2, 0x20, 0x0D, g.viewstate.Y.BYTE);
       gfx_draw_text_box(0x30, TEXT_RECEIVED, TEXT_BOX_NO_LINES, TEXT_BOX_BLINK);
     }
   } else {
@@ -91,7 +91,7 @@ void ui_render_pokeradar(void) {
       drv_eeprom_read_block(0x1AF0 + base, buf, 0x100);
       drv_lcd_blit(RADAR_Y_COORDS[g.viewstate.v.bytes.at_d3] + 0x10,
                    (g.viewstate.v.bytes.at_d3 & 1) * 0x18,
-                   (uint8_t *)buf + RADAR_FRAME_MULT[g.viewstate.v.bytes.at_d1] * 0x40,
+                   (uint8_t *)buf + RADAR_FRAME_MULT[g.viewstate.v.bytes.at_d1.BYTE] * 0x40,
                    0x10, 0x10);
     }
   }
@@ -118,10 +118,10 @@ void ui_handle_radar_grass_menu(void) {
         /* Correct patch — start lock animation. */
         drv_sound_play(SND_RADAR_LOCK);
         g.viewstate.Z = RADAR_LOCK_ANIM;
-        accel_zPosition_byte = 0x10;
+        g.viewstate.v.bytes.at_d6 = 0x10;
         return;
       }
-      if (g.viewstate.v.bytes.at_d1 == 0) {
+      if (g.viewstate.v.bytes.at_d1.BYTE == 0) {
         /* First-round wrong guess: just beep, don't end the game. */
         drv_sound_play(SND_FAIL);
         return;
@@ -186,27 +186,27 @@ void ui_handle_pokeradar(void) {
     return;
   }
 
-  /* RADAR_LOCK_ANIM: hold for accel_zPosition_byte ticks while the reveal plays. */
-  if (accel_zPosition_byte == 0)
+  /* RADAR_LOCK_ANIM: hold for g.viewstate.v.bytes.at_d6 ticks while the reveal plays. */
+  if (g.viewstate.v.bytes.at_d6 == 0)
     return;
-  accel_zPosition_byte--;
-  if (accel_zPosition_byte != 0)
+  g.viewstate.v.bytes.at_d6--;
+  if (g.viewstate.v.bytes.at_d6 != 0)
     return;
 
   /* Animation done. If we've completed enough rounds, fade to battle;
      otherwise re-roll the secret patch and go back to searching. */
-  if ((int16_t)g.viewstate.v.bytes.at_d1 >= (int16_t)((uint16_t)g.viewstate.v.bytes.at_d2 - 1)) {
+  if ((int16_t)g.viewstate.v.bytes.at_d1.BYTE >= (int16_t)((uint16_t)g.viewstate.v.bytes.at_d2 - 1)) {
     g.viewstate.Z = RADAR_FADE_TO_BATTLE;
-    accel_zPosition_byte = 1;
+    g.viewstate.v.bytes.at_d6 = 1;
     g.viewstate.v.bytes.at_d5 = 0;
     return;
   }
 
   g.viewstate.Z = RADAR_SEARCH;
   r = sys_get_rng() >> 2;
-  g.viewstate.v.bytes.at_d4 = (uint8_t)((uint16_t)r % RADAR_STATE_Y_DIVISOR[g.viewstate.v.bytes.at_d1] + 0x10);
-  g.viewstate.v.bytes.at_d1++;
-  g.viewstate.v.bytes.at_d5 = RADAR_STATE_X[g.viewstate.v.bytes.at_d1];
+  g.viewstate.v.bytes.at_d4 = (uint8_t)((uint16_t)r % RADAR_STATE_Y_DIVISOR[g.viewstate.v.bytes.at_d1.BYTE] + 0x10);
+  g.viewstate.v.bytes.at_d1.BYTE++;
+  g.viewstate.v.bytes.at_d5 = RADAR_STATE_X[g.viewstate.v.bytes.at_d1.BYTE];
   g.viewstate.v.bytes.at_d3 = (uint8_t)((sys_get_rng() << 3) & 3);
 }
 
@@ -244,10 +244,10 @@ void ui_render_radar_failure(void) {
  * Pre-roll for the radar encounter. Picks what's behind the curtain and
  * how many rounds the player has to win to reach it:
  *
- *   g.viewstate.Y = 4  : peer-event encounter (co-op mode + step gates passed)
- *   g.viewstate.Y = 1..3: wild encounter, slot N+1 (solo path, step-gated tiers
+ *   g.viewstate.Y.BYTE = 4  : peer-event encounter (co-op mode + step gates passed)
+ *   g.viewstate.Y.BYTE = 1..3: wild encounter, slot N+1 (solo path, step-gated tiers
  *                         in the trainer profile at offset 0x82)
- *   g.viewstate.Y = 3, g.viewstate.v.bytes.at_d2 low: fall-through small encounter
+ *   g.viewstate.Y.BYTE = 3, g.viewstate.v.bytes.at_d2 low: fall-through small encounter
  *
  *   g.viewstate.v.bytes.at_d2: number of rounds the radar minigame should require before
  *              transitioning to battle (3..4 for peer/wild, 1..2 for the
@@ -261,8 +261,8 @@ void game_roll_radar_encounter(void) {
   uint8_t rnd_pct;
   uint8_t *trainer_buf;
 
-  g.viewstate.Y = 0;
-  if (((g.save_settings & 1)) != 0) {
+  g.viewstate.Y.BYTE = 0;
+  if (((g.save_settings.BYTE & 1)) != 0) {
     uint8_t peer_evt_seed = drv_eeprom_read_u8(EEPROM_EEP_STR);
     sys_init_heap();
     scratch = sbrk(0x68);
@@ -275,7 +275,7 @@ void game_roll_radar_encounter(void) {
                          ((uint32_t)scratch[2] << 8) | scratch[3];
         if (steps_required <= g.session_steps) {
           if ((sys_get_rng() % 100) < scratch[2]) {
-            g.viewstate.Y = 4;
+            g.viewstate.Y.BYTE = 4;
             g.viewstate.v.bytes.at_d2 = ((sys_get_rng() >> 3) & 1) + 3;
             return;
           }
@@ -297,7 +297,7 @@ void game_roll_radar_encounter(void) {
   for (slot = 0; slot < 3; slot++) {
     if (!game_check_step_unlock((uint16_t)(slot * 2), 0x82, trainer_buf)) {
       if (trainer_buf[0x88 + slot] > rnd_pct) {
-        g.viewstate.Y = slot + 1;
+        g.viewstate.Y.BYTE = slot + 1;
         /* Codegen note: ROM emits the add as `-slot + (rng>>3 & 1) + 3`,
            hence the negation order here matters for the score. */
         g.viewstate.v.bytes.at_d2 = (slot * -1) + ((sys_get_rng() >> 3) & 1) + 3;
@@ -306,22 +306,22 @@ void game_roll_radar_encounter(void) {
     }
   }
 
-  g.viewstate.Y = 3;
+  g.viewstate.Y.BYTE = 3;
   g.viewstate.v.bytes.at_d2 = ((sys_get_rng() >> 3) & 1) + 1;
 }
 
 // ROM: 0x9d92  88.0%
 void game_pokeradar_init(void) {
   uint8_t *ram_base;
-  game_roll_radar_encounter();         /* rolls g.viewstate.Y + g.viewstate.v.bytes.at_d2 */
+  game_roll_radar_encounter();         /* rolls g.viewstate.Y.BYTE + g.viewstate.v.bytes.at_d2 */
   g.viewstate.Z = RADAR_SEARCH;
   g.viewstate.A = 0;                   /* cursor at patch 0 */
-  g.viewstate.v.bytes.at_d1 = 0;                        /* zero rounds completed */
+  g.viewstate.v.bytes.at_d1.BYTE = 0;                        /* zero rounds completed */
   g.viewstate.v.bytes.at_d4 = 5;                       /* initial sub-tick counter */
   /* g.viewstate.v.bytes.at_d5 (round timer) seeded from EEPROM cache shadow at 0xBF1A. */
   ram_base = (uint8_t *)0;
   g.viewstate.v.bytes.at_d5 = ram_base[0xBF1A];
   /* Initial secret patch from 2-bit rng slice. */
   g.viewstate.v.bytes.at_d3 = ((sys_get_rng() << 3) >> 8) & 3;
-  accel_zPosition_byte = 0;
+  g.viewstate.v.bytes.at_d6 = 0;
 }
