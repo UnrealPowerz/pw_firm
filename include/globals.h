@@ -18,6 +18,42 @@
  *
  * Verify with `scripts/compare_data_layout.py --section B_RAM`.
  * ============================================================ */
+/* View-state region (0xF7CE..0xF7D9, 12 bytes).
+ *
+ * Y/Z/A are the universal per-tick substate triple every view uses. The
+ * remaining 9 bytes are time-multiplexed: each view re-uses them for its
+ * own state (accel position when sampling, dowsing slot index, battle HP,
+ * radar round, peer reward tier, inventory bitmask, etc.).
+ *
+ * Until each view's interpretation is researched, accesses go through the
+ * `bytes` view (raw byte at ROM offset). Per-subsystem typed views can be
+ * added to the union as we audit each consumer. The `union` deliberately
+ * uses *named* inner members (not anonymous) for ch38 6.2.2 C89 compat. */
+struct viewstate {
+    volatile uint8_t  Y;        /* 0xF7CE */
+    volatile uint8_t  Z;        /* 0xF7CF */
+    volatile uint8_t  A;        /* 0xF7D0 */
+    union {
+        struct {
+            volatile uint8_t  at_d1;   /* 0xF7D1 */
+            volatile uint8_t  at_d2;   /* 0xF7D2 */
+            volatile uint8_t  at_d3;   /* 0xF7D3 */
+            volatile uint8_t  at_d4;   /* 0xF7D4 */
+            volatile uint8_t  at_d5;   /* 0xF7D5 */
+            volatile uint8_t  at_d6;   /* 0xF7D6 */
+            volatile uint8_t  at_d7;   /* 0xF7D7 */
+            volatile uint8_t  at_d8;   /* 0xF7D8 */
+            volatile uint8_t  at_d9;   /* 0xF7D9 */
+        } bytes;
+        /* Future: typed views per subsystem, e.g.
+         *   struct { uint8_t _p[1]; uint8_t xPos; ...; } accel;
+         *   struct { uint8_t cursorIdx; ...; } dowsing;
+         * Multi-byte types must respect their natural alignment within
+         * their parent struct (ch38 pads uint16 members to even offsets);
+         * for now wider views are exposed via cast macros below. */
+    } v;
+};
+
 struct b_ram_section {
 #include "b_ram_layout.h"
 };
@@ -71,30 +107,31 @@ enum view_id {
 #define ped_taskFlags_BIT (((volatile ped_task_flags_t *)&g.ped_taskFlags)->BIT)
 
 /* --- Substate Management & Sensor Data --- */
-/* g.ui_substateY -- bits 0/1 used as flags via bset/bclr/bst in ROM. */
-#define ui_substateY_BIT (((volatile byte_bits_t *)&g.ui_substateY)->BIT)
+/* g.viewstate.Y -- bits 0/1 used as flags via bset/bclr/bst in ROM. */
+#define ui_substateY_BIT (((volatile byte_bits_t *)&g.viewstate.Y)->BIT)
 
-/* g.DAT_f7d8 -- bit 0 used as a flag in battle.c via bset/bclr in ROM. */
-#define DAT_f7d8_BIT (((volatile byte_bits_t *)&g.DAT_f7d8)->BIT)
+/* g.viewstate.v.bytes.at_d8 -- bit 0 used as a flag in battle.c via bset/bclr in ROM. */
+#define DAT_f7d8_BIT (((volatile byte_bits_t *)&g.viewstate.v.bytes.at_d8)->BIT)
 
 /* irPacketReceivedFlag -- bit 0 used; ROM emits bset/bclr. */
 #define irPacketReceivedFlag_BIT (((volatile byte_bits_t *)&irPacketReceivedFlag)->BIT)
 
-#define DAT_f7d1_BIT (((volatile byte_bits_t *)&g.DAT_f7d1)->BIT)
+#define DAT_f7d1_BIT (((volatile byte_bits_t *)&g.viewstate.v.bytes.at_d1)->BIT)
 /* 16-bit "accel physics" view: the accel driver and game_process_accel_data
  * read these positions as uint16 (mov.w) while game/UI code uses the byte form
  * above for slot indices. */
-#define accel_xPosition_word  (*(volatile uint16_t *)&g.accel_xPosition)
-#define accel_yPosition_word  (*(volatile uint16_t *)&g.accel_yPosition)
+#define accel_xPosition_word  (*(volatile uint16_t *)&g.viewstate.v.bytes.at_d2)
+#define accel_yPosition_word  (*(volatile uint16_t *)&g.viewstate.v.bytes.at_d4)
+#define accel_zPosition_word  (*(volatile uint16_t *)&g.viewstate.v.bytes.at_d6)
 /* 0xF7D6 is accessed as a BYTE (mov.b) in most game-logic contexts (dowsing
  * slot index, radar countdown, etc.); only the accel-physics accumulator in
  * drv_accel_sample treats it as the high byte of a uint16. This alias is the
  * byte view. */
-#define accel_zPosition_byte (*(volatile uint8_t  *)&g.accel_zPosition)
+#define accel_zPosition_byte (*(volatile uint8_t  *)&g.viewstate.v.bytes.at_d6)
 /* 0xF7D8 is also accessed as a 16-bit word in dowsing (item ID) — disassembly
- * shows mov.w @g.DAT_f7d8 + drv_eeprom_write_block size 2. The byte alias above
+ * shows mov.w @g.viewstate.v.bytes.at_d8 + drv_eeprom_write_block size 2. The byte alias above
  * is used by battle.c and pedometer.c for flag/limit bytes. */
-#define DAT_f7d8_w  (*(volatile uint16_t *)&g.DAT_f7d8)
+#define DAT_f7d8_w  (*(volatile uint16_t *)&g.viewstate.v.bytes.at_d8)
 
 /* 0xF866..0xF955: 240-byte multi-purpose scratch region (sibling of g_scratch).
  * Memory is reused across mutually-exclusive subsystems:

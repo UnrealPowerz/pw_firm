@@ -66,7 +66,7 @@ void gfx_draw_home_pokemon(uint8_t x, uint8_t y) {
   sys_init_heap();
   ptr = sbrk(0x300);
   drv_eeprom_read_block(EEPROM_TRAINER_PROFILE, ptr, 0x10);
-  if (g.ui_substateZ != 0) {
+  if (g.viewstate.Z != 0) {
     addr = 0x933E;
   } else {
     addr = (uint16_t)((g.ui_animationTick >> 1) & 1) * 0x300 + 0x933E;

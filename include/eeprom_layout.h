@@ -28,7 +28,7 @@
  *
  * 0x8F00..0x9000   active trainer profile (0xBE bytes; read into local heap)
  *    0x8F00          trainer_profile_main
- *    0x8F52+         per-pokemon-slot 16-byte records (indexed by g.ui_substateY-1)
+ *    0x8F52+         per-pokemon-slot 16-byte records (indexed by g.viewstate.Y-1)
  *    0x8F8C          some 2-byte-per-slot table indexed by sub-state Y
  *
  * 0x91BE..0xA8BE   pokemon / animation asset banks (large reads)

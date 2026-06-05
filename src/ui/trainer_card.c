@@ -3,7 +3,7 @@
 /*
  * Trainer Card view.
  *
- * Page navigation (g.ui_substateZ + g.ui_substateY):
+ * Page navigation (g.viewstate.Z + g.viewstate.Y):
  *
  *   TC_PAGE_DEFAULT (z=0):
  *     y=0 ............... clock face          (ui_render_trainer_card_time)
@@ -31,8 +31,8 @@ enum trainer_card_page {
 
 // ROM: 0xb3c0  100.0%
 void ui_reset_trainer_card_state(void) {
-  g.ui_substateZ = 0;
-  g.ui_substateY = 0;
+  g.viewstate.Z = 0;
+  g.viewstate.Y = 0;
 }
 
 #define STEP_GOAL 0x98967F   /* 9,999,999 — one step short of 10M, the cutoff
@@ -44,9 +44,9 @@ void ui_handle_trainer_card(void) {
   uint8_t reward_flags;
 
   /* TC_PAGE_DEFAULT: navigate the 8 sub-views with BTN_M (up) / BTN_L (down). */
-  if (g.ui_substateZ == TC_PAGE_DEFAULT) {
+  if (g.viewstate.Z == TC_PAGE_DEFAULT) {
     if (drv_button_is_triggered(BTN_M) != 0) {
-      uint8_t cursor = g.ui_substateY;
+      uint8_t cursor = g.viewstate.Y;
       if (cursor == 0) {
         /* Already on clock — leave the trainer card entirely. */
         drv_sound_play(SND_BACK);
@@ -54,13 +54,13 @@ void ui_handle_trainer_card(void) {
         ui_set_view(VIEW_MAIN_MENU);
         return;
       }
-      g.ui_substateY = cursor - 1;
+      g.viewstate.Y = cursor - 1;
       drv_sound_play(SND_CURSOR);
     }
     if (drv_button_is_triggered(BTN_L) != 0) {
-      uint8_t cursor = g.ui_substateY;
+      uint8_t cursor = g.viewstate.Y;
       if (cursor < 7) {
-        g.ui_substateY = cursor + 1;
+        g.viewstate.Y = cursor + 1;
         drv_sound_play(SND_CURSOR);
       }
     }
@@ -68,27 +68,27 @@ void ui_handle_trainer_card(void) {
 
   /* BTN_R advances through the milestone sequence (or exits if at the end). */
   if (drv_button_is_triggered(BTN_R) != 0) {
-    if (g.ui_substateZ == TC_PAGE_DEFAULT) {
+    if (g.viewstate.Z == TC_PAGE_DEFAULT) {
       if (g.save_totalSteps >= STEP_GOAL) {
-        g.ui_substateZ = TC_PAGE_GOAL_REACHED;
+        g.viewstate.Z = TC_PAGE_GOAL_REACHED;
         drv_sound_play(SND_CONFIRM);
         return;
       }
       goto exit_to_home;
     }
-    if (g.ui_substateZ == TC_PAGE_GOAL_REACHED) {
+    if (g.viewstate.Z == TC_PAGE_GOAL_REACHED) {
       reward_flag_addr = 0xCE84 + 4;
       reward_flags = drv_eeprom_read_u8(reward_flag_addr);
       if (!(reward_flags & 0x01)) {
         reward_flags |= 0x01;
         drv_eeprom_write_u8(reward_flag_addr, reward_flags);
-        g.ui_substateZ = TC_PAGE_REWARD;
+        g.viewstate.Z = TC_PAGE_REWARD;
         drv_sound_play(SND_FANFARE);
         return;
       }
       goto exit_to_home;
     }
-    if (g.ui_substateZ == TC_PAGE_REWARD) {
+    if (g.viewstate.Z == TC_PAGE_REWARD) {
       goto exit_to_home;
     }
   }
@@ -179,7 +179,7 @@ void ui_render_daily_step_history(void) {
   /* Left gutter chevron (always); right chevron only for y < 7 (not at end). */
   drv_eeprom_read_block(0x338 + base, buf, 0xC0);
   drv_lcd_blit(0, 0, buf, 8, 0x10);
-  if (g.ui_substateY < 7) {
+  if (g.viewstate.Y < 7) {
     drv_lcd_blit(0x58, 0, buf + 0x20, 8, 0x10);
   }
 
@@ -200,12 +200,12 @@ void ui_render_daily_step_history(void) {
   drv_eeprom_read_block(0x160 + base, buf, 0x20);
   drv_lcd_blit(0x18, 0, buf, 8, 0x10);
 
-  /* Day digit (picked from the 16-glyph sheet by g.ui_substateY). */
+  /* Day digit (picked from the 16-glyph sheet by g.viewstate.Y). */
   drv_eeprom_read_block(base, buf, 0x140);
-  drv_lcd_blit(0x20, 0, buf + (uint16_t)g.ui_substateY * 0x20, 8, 0x10);
+  drv_lcd_blit(0x20, 0, buf + (uint16_t)g.viewstate.Y * 0x20, 8, 0x10);
 
-  /* Step count for "today − g.ui_substateY". Each day uses 4 bytes at 0xCEF0. */
-  days_ago = (uint16_t)g.ui_substateY - 1;
+  /* Step count for "today − g.viewstate.Y". Each day uses 4 bytes at 0xCEF0. */
+  days_ago = (uint16_t)g.viewstate.Y - 1;
   day_addr = 0xCEF0 + days_ago * 4;
   drv_eeprom_read_block(day_addr, &day_steps, 4);
   gfx_draw_numeric_value(0x30, 0x10, (uint32_t)day_steps, 0);
@@ -257,7 +257,7 @@ void ui_render_step_goal_reward(void) {
 
 // ROM: 0xb8f2  96.4%
 void ui_render_trainer_card(void) {
-  uint8_t page = g.ui_substateZ;
+  uint8_t page = g.viewstate.Z;
 
   if (page == TC_PAGE_DEFAULT)
     goto page_default;
@@ -268,7 +268,7 @@ void ui_render_trainer_card(void) {
   goto page_reward;
 
 page_default:
-  if (g.ui_substateY)
+  if (g.viewstate.Y)
     goto day_history;
   ui_render_trainer_card_time();
   goto draw_battery;

@@ -4,7 +4,7 @@
  * Main menu (VIEW_MAIN_MENU) — the 6-entry scrolling menu reached from home.
  *
  * Cursor is `g.ui_menuCursor` (0..5, see enum main_menu_item in
- * include/menu_consts.h). g.ui_substateY tracks any overlay popup (see
+ * include/menu_consts.h). g.viewstate.Y tracks any overlay popup (see
  * enum main_menu_popup below) that suppresses the normal display until
  * a button is pressed.
  *
@@ -12,7 +12,7 @@
  * MENU_CONNECTION and from the home-screen R-button shortcut.
  */
 
-/* Main-menu overlay popups (g.ui_substateY in ui_handle_main_menu /
+/* Main-menu overlay popups (g.viewstate.Y in ui_handle_main_menu /
    ui_render_main_menu). NONE = normal cursor/g.save_watts display. */
 enum main_menu_popup {
     MENU_POPUP_NONE         = 0,
@@ -32,9 +32,9 @@ void ui_handle_main_menu(void) {
   const uint8_t *costTable = MENU_ITEM_COSTS;
 
   /* A popup is active — any button dismisses it back to the normal menu. */
-  if (g.ui_substateY != MENU_POPUP_NONE) {
+  if (g.viewstate.Y != MENU_POPUP_NONE) {
     if (drv_button_is_triggered(BTN_ANY)) {
-      g.ui_substateY = MENU_POPUP_NONE;
+      g.viewstate.Y = MENU_POPUP_NONE;
       drv_sound_play(SND_CURSOR);
     }
     return;
@@ -43,7 +43,7 @@ void ui_handle_main_menu(void) {
   if (drv_button_is_triggered(BTN_R)) {
     cost = costTable[g.ui_menuCursor];
     if (g.save_watts < cost) {
-      g.ui_substateY = MENU_POPUP_NEED_WATTS;
+      g.viewstate.Y = MENU_POPUP_NEED_WATTS;
       drv_sound_play(SND_CURSOR);
       return;
     }
@@ -53,7 +53,7 @@ void ui_handle_main_menu(void) {
       switch (g.ui_menuCursor) {
       case MENU_POKERADAR:
         if (!(sys_walkerFlags_BIT.walking)) {
-          g.ui_substateY = MENU_POPUP_NO_POKEMON;
+          g.viewstate.Y = MENU_POPUP_NO_POKEMON;
           drv_sound_play(SND_CURSOR);
           return;
         }
@@ -89,21 +89,21 @@ void ui_handle_main_menu(void) {
         uint16_t mask[2];
         ui_load_inventory_mask(mask);
         if (mask[0] != 0) {
-          *(volatile uint16_t *)&g.ui_substateA = mask[0];
+          *(volatile uint16_t *)&g.viewstate.A = mask[0];
           accel_xPosition_word = mask[1];
           ui_inventory_cursor_reset();
           ui_set_view(VIEW_POKE_ITEMS);
           return;
         }
         if (mask[1] != 0) {
-          *(volatile uint16_t *)&g.ui_substateA = mask[0];
+          *(volatile uint16_t *)&g.viewstate.A = mask[0];
           accel_xPosition_word = mask[1];
           ui_inventory_jump_to_items();
           ui_set_view(VIEW_GIFTS);
           return;
         }
         /* Nothing in either pokemon or item slots — show the empty popup. */
-        g.ui_substateY = MENU_POPUP_NOTHING_HELD;
+        g.viewstate.Y = MENU_POPUP_NOTHING_HELD;
         drv_sound_play(SND_CURSOR);
         return;
       }
@@ -197,7 +197,7 @@ void ui_render_main_menu(void) {
     drv_lcd_blit((uint8_t)(i * 0x10), 0x10, e0_buf, 0x10, 0x20);
   }
 
-  if (g.ui_substateY == MENU_POPUP_NONE) {
+  if (g.viewstate.Y == MENU_POPUP_NONE) {
     gfx_draw_numeric_value(0x48, 0x30, g.save_watts, 0);
     /* Cost number: dowsing costs 10, radar costs 3. */
     if (g.ui_menuCursor == MENU_POKERADAR) {
@@ -217,11 +217,11 @@ void ui_render_main_menu(void) {
       drv_eeprom_read_block(base + 0x180, sprite_buf, 0x20);
       drv_lcd_blit(0x28, 0x30, sprite_buf, 8, 0x10);
     }
-  } else if (g.ui_substateY == MENU_POPUP_NEED_WATTS) {
+  } else if (g.viewstate.Y == MENU_POPUP_NEED_WATTS) {
     gfx_draw_text_box(0x30, TEXT_NEED_MORE_WATTS, TEXT_BOX_FULL, TEXT_BOX_BLINK);
-  } else if (g.ui_substateY == MENU_POPUP_NO_POKEMON) {
+  } else if (g.viewstate.Y == MENU_POPUP_NO_POKEMON) {
     gfx_draw_text_box(0x30, TEXT_NO_POKEMON_HELD, TEXT_BOX_FULL, TEXT_BOX_BLINK);
-  } else if (g.ui_substateY == MENU_POPUP_NOTHING_HELD) {
+  } else if (g.viewstate.Y == MENU_POPUP_NOTHING_HELD) {
     gfx_draw_text_box(0x30, TEXT_NOTHING_HELD, TEXT_BOX_FULL, TEXT_BOX_BLINK);
   }
 

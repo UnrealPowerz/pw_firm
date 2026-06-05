@@ -5,7 +5,7 @@
  *
  *   diag_init_test_mode        reset state, set vol/contrast.
  *   ui_handle_factory_test     progress through the 0x13-stage test sequence
- *                              driven by g.ui_substateY.
+ *                              driven by g.viewstate.Y.
  *   ui_render_factory_test     per-stage UI (LCD fills, button indicators,
  *                              NG/OK strings drawn via gfx_draw_string).
  *
@@ -18,8 +18,8 @@
  *   diag_eeprom_factory_test   the EEPROM-stress sub-test (write-all,
  *                              read-and-verify, then fill 0xFF).
  *
- * Factory-test stages (g.ui_substateY values 0..0x12) progress sequentially.
- * Each stage either auto-advances after a frame counter (g.ui_substateA >= 4)
+ * Factory-test stages (g.viewstate.Y values 0..0x12) progress sequentially.
+ * Each stage either auto-advances after a frame counter (g.viewstate.A >= 4)
  * or waits for a specific button. The stage numbers are referenced both by
  * the handler (decide-when-to-advance) and the renderer (decide-what-to-show);
  * see per-case inline comments below for the role of each stage.
@@ -230,9 +230,9 @@ cleanup:
 
 // ROM: 0xaa42  98.4%
 void diag_init_test_mode(void) {
-  g.ui_substateY = 0;
-  g.ui_substateA = 0;
-  g.accel_yPosition = 1;
+  g.viewstate.Y = 0;
+  g.viewstate.A = 0;
+  g.viewstate.v.bytes.at_d4 = 1;
   g.save_settings = (g.save_settings & 0xF9) | 0x04;
   drv_sound_set_volume(2);
   drv_lcd_set_contrast(4);
@@ -246,8 +246,8 @@ void ui_handle_factory_test(void) {
   g.ped_activityTimer = 0x3C;
   g.ped_stepTimer = 0x1E;
 
-  subA = g.ui_substateA;
-  subY = g.ui_substateY;
+  subA = g.viewstate.A;
+  subY = g.viewstate.Y;
 
   if (subY > 0x12) {
     return;
@@ -255,38 +255,38 @@ void ui_handle_factory_test(void) {
 
   switch (subY) {
   case 0x00:
-    /* Idle entry — wait for g.ui_substateZ to be poked non-zero by the IR
+    /* Idle entry — wait for g.viewstate.Z to be poked non-zero by the IR
        command path, then advance to sound test. */
-    if (g.ui_substateZ == 0) {
+    if (g.viewstate.Z == 0) {
       return;
     }
-    subY = g.ui_substateY + 1;
-    g.ui_substateY = subY;
+    subY = g.viewstate.Y + 1;
+    g.viewstate.Y = subY;
     return;
 
   case 0x01:
     /* Sound test. After a 4-frame settle, BTN_LM advances + plays the
        factory sound. The unreachable BTN_M-decrement branch below is
-       dead code (g.ui_substateY == 1 always true in this case). */
+       dead code (g.viewstate.Y == 1 always true in this case). */
     if (subA < 4) {
       return;
     }
     if (drv_button_is_triggered(BTN_LM) != 0) {
       goto do_sound_and_inc;
     }
-    if (g.ui_substateY == 1) {
+    if (g.viewstate.Y == 1) {
       return;
     }
     if (drv_button_is_triggered(BTN_M) == 0) {
       return;
     }
     drv_sound_set_data((uint8_t *)FACTORY_TEST_SOUND);
-    subY = g.ui_substateY - 1;
+    subY = g.viewstate.Y - 1;
     goto set_substate_y_and_clear_a;
 
   /* Stages 0x02..0x06 (LCD fills + SPI/pixel tests) have no handler case —
      they fall to default and stick until something external advances
-     g.ui_substateY. The render path keeps showing the test pattern. */
+     g.viewstate.Y. The render path keeps showing the test pattern. */
 
   case 0x07:
     /* Middle-button test. */
@@ -328,9 +328,9 @@ void ui_handle_factory_test(void) {
       s1 = RSECDR;
       s2 = RSECDR;
     } while (s1 != s2);
-    g.DAT_f7d1 = s1;
+    g.viewstate.v.bytes.at_d1 = s1;
     diag_eeprom_factory_test(0x300);
-    g.dowsing_itemPosition = (uint8_t)diag_eeprom_factory_test(0x300);
+    g.viewstate.v.bytes.at_d3 = (uint8_t)diag_eeprom_factory_test(0x300);
     sys_factory_reset_eeprom(1, 1);
     do {
       while (RSECDR & 0x80)
@@ -338,15 +338,15 @@ void ui_handle_factory_test(void) {
       s1 = RSECDR;
       s2 = RSECDR;
     } while (s1 != s2);
-    *(uint8_t *)(&g.accel_xPosition) = s1;
+    *(uint8_t *)(&g.viewstate.v.bytes.at_d2) = s1;
     goto do_inc;
   }
 
   case 0x0C:
-    /* EEPROM result gate — `g.dowsing_itemPosition` here doubles as a generic
+    /* EEPROM result gate — `g.viewstate.v.bytes.at_d3` here doubles as a generic
        pass-flag (1=passed, 0=failed). Wait for the renderer to settle
        then advance with sound. NG2 is shown if it failed. */
-    if (g.dowsing_itemPosition == 0) {
+    if (g.viewstate.v.bytes.at_d3 == 0) {
       return;
     }
     if (subA < 4) {
@@ -357,19 +357,19 @@ void ui_handle_factory_test(void) {
   case 0x0D: {
     /* Accel calibration validate — read EEPROM cal block, verify checksum. */
     uint16_t val;
-    save_read_reliable(EEPROM_ACCEL_CAL, EEPROM_ACCEL_CAL_BACKUP, (void *)&g.accel_yPosition, 2);
-    val = g.accel_yPosition;
-    g.dowsing_itemPosition = drv_adc_validate_calib_checksum(val);
+    save_read_reliable(EEPROM_ACCEL_CAL, EEPROM_ACCEL_CAL_BACKUP, (void *)&g.viewstate.v.bytes.at_d4, 2);
+    val = g.viewstate.v.bytes.at_d4;
+    g.viewstate.v.bytes.at_d3 = drv_adc_validate_calib_checksum(val);
     if (val != 0) {
       goto do_inc;
     }
-    g.dowsing_itemPosition = 0;
+    g.viewstate.v.bytes.at_d3 = 0;
     goto set_substate_y_and_clear_a;
   }
 
   case 0x0E:
-    /* Accel calibration result gate. NG3 if g.dowsing_itemPosition == 0. */
-    if (g.dowsing_itemPosition == 0) {
+    /* Accel calibration result gate. NG3 if g.viewstate.v.bytes.at_d3 == 0. */
+    if (g.viewstate.v.bytes.at_d3 == 0) {
       return;
     }
     if (subA < 4) {
@@ -380,7 +380,7 @@ void ui_handle_factory_test(void) {
   case 0x0F:
     /* Accel sample check — advance only once samples diverge from the
        stashed value (gives the technician time to wiggle the device). */
-    if (g.DAT_f7d1 != *(uint8_t *)(&g.accel_xPosition)) {
+    if (g.viewstate.v.bytes.at_d1 != *(uint8_t *)(&g.viewstate.v.bytes.at_d2)) {
       goto do_sound_and_inc;
     }
     return;
@@ -388,12 +388,12 @@ void ui_handle_factory_test(void) {
   case 0x10:
     /* Re-init the accel driver and arm the result check. */
     drv_accel_init();
-    g.dowsing_itemPosition = 0;
+    g.viewstate.v.bytes.at_d3 = 0;
     goto do_inc;
 
   case 0x11:
     /* Accel init result gate. NG5 if pass-flag still 0. */
-    if (g.dowsing_itemPosition == 0) {
+    if (g.viewstate.v.bytes.at_d3 == 0) {
       return;
     }
     goto do_sound_and_inc;
@@ -427,10 +427,10 @@ void ui_handle_factory_test(void) {
 do_sound_and_inc:
   drv_sound_set_data((uint8_t *)FACTORY_TEST_SOUND);
 do_inc:
-  subY = g.ui_substateY + 1;
+  subY = g.viewstate.Y + 1;
 set_substate_y_and_clear_a:
-  g.ui_substateY = subY;
-  g.ui_substateA = 0;
+  g.viewstate.Y = subY;
+  g.viewstate.A = 0;
 }
 
 // ROM: 0xad06  50.3%
@@ -441,7 +441,7 @@ void ui_render_factory_test(void) {
   uint8_t subA;
 
   draw_string = gfx_draw_string;
-  subY = g.ui_substateY;
+  subY = g.viewstate.Y;
 
   if (subY > 0x12) {
     goto case_d;
@@ -449,7 +449,7 @@ void ui_render_factory_test(void) {
 
   switch (subY) {
   case 0x00:
-    if (g.ui_substateZ != 0) {
+    if (g.viewstate.Z != 0) {
       goto case_d;
     }
     draw_string(0x20, 0x08, FACTORY_STR_NG1);
@@ -505,28 +505,28 @@ void ui_render_factory_test(void) {
     goto case_d;
 
   case 0x0C:
-    if (g.dowsing_itemPosition != 0) {
+    if (g.viewstate.v.bytes.at_d3 != 0) {
       goto case_d;
     }
     draw_string(0x20, 0x08, FACTORY_STR_NG2);
     goto case_d;
 
   case 0x0E:
-    if (g.dowsing_itemPosition != 0) {
+    if (g.viewstate.v.bytes.at_d3 != 0) {
       goto case_d;
     }
     draw_string(0x20, 0x08, FACTORY_STR_NG3);
     goto case_d;
 
   case 0x0F:
-    if (g.DAT_f7d1 != *(uint8_t *)(&g.accel_xPosition)) {
+    if (g.viewstate.v.bytes.at_d1 != *(uint8_t *)(&g.viewstate.v.bytes.at_d2)) {
       goto case_d;
     }
     draw_string(0x20, 0x08, FACTORY_STR_NG4);
     goto case_d;
 
   case 0x11:
-    if (g.dowsing_itemPosition != 0) {
+    if (g.viewstate.v.bytes.at_d3 != 0) {
       goto case_d;
     }
     draw_string(0x20, 0x08, FACTORY_STR_NG5);
@@ -543,10 +543,10 @@ void ui_render_factory_test(void) {
       ;
     PDR1 |= 0x01;
 
-    /* Draw hex digits of g.accel_yPosition */
+    /* Draw hex digits of g.viewstate.v.bytes.at_d4 */
     {
       const uint8_t *hexTable = HEX_DIGITS;
-      uint16_t val = g.accel_yPosition;
+      uint16_t val = g.viewstate.v.bytes.at_d4;
 
       draw_string(0x20, 0x00, FACTORY_STR_OK);
 
@@ -572,8 +572,8 @@ void ui_render_factory_test(void) {
   }
 
 case_d:
-  subA = g.ui_substateA;
+  subA = g.viewstate.A;
   if (subA < 4) {
-    g.ui_substateA = subA + 1;
+    g.viewstate.A = subA + 1;
   }
 }

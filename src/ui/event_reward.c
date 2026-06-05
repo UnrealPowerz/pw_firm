@@ -5,14 +5,14 @@
  *
  * Reuses two phases from walk_arrival.c (ball-drop and cloud); the only
  * event-specific phases are the sparkles and the final reward-info banner.
- * The kind of reward shown in REWARD_INFO is selected by g.ui_substateA
+ * The kind of reward shown in REWARD_INFO is selected by g.viewstate.A
  * (event-pokemon name / special route / event item / special map / stamp).
  *
  * The `uint16_t stackVar` local in ui_handle_event_reward_anim is an
  * intentional stack-frame placeholder.
  */
 
-/* Sub-animation index in g.ui_substateY for VIEW_EVENT_REWARD_ANIM. */
+/* Sub-animation index in g.viewstate.Y for VIEW_EVENT_REWARD_ANIM. */
 enum event_reward_phase {
     REWARD_BALL_DROP = 0,
     REWARD_CLOUD     = 1,
@@ -33,17 +33,17 @@ void ui_draw_ball_sparkles_anim(void) {
 
   drv_eeprom_read_block(0x2040, ptr, 0x10);
   {
-    uint16_t packed = ((const uint16_t *)ANIM_SPARKLES_XY)[g.ui_substateZ];
+    uint16_t packed = ((const uint16_t *)ANIM_SPARKLES_XY)[g.viewstate.Z];
     drv_lcd_blit((uint8_t)packed, (uint8_t)(packed >> 8), ptr, 8, 8);
   }
 
   gfx_fill_rect(0, 0, 0x60, 8, 3);
   gfx_fill_rect(0, 0x38, 0x60, 8, 3);
 
-  g.ui_substateZ++;
-  if (g.ui_substateZ > 2) {
-    g.ui_substateY = 1;
-    g.ui_substateZ = 0;
+  g.viewstate.Z++;
+  if (g.viewstate.Z > 2) {
+    g.viewstate.Y = 1;
+    g.viewstate.Z = 0;
   }
 }
 
@@ -56,8 +56,8 @@ void ui_render_event_reward_info(void) {
   sys_init_heap();
   ptr = sbrk(0x180);
 
-  if (g.ui_substateA <= 7) {
-    switch (g.ui_substateA) {
+  if (g.viewstate.A <= 7) {
+    switch (g.viewstate.A) {
     case 0:
       drv_eeprom_read_block(0xBA80 + ((g.ui_animationTick & 1) * 0xC0), ptr, 0x180);
       drv_lcd_blit(0x20, 0x08, ptr, 0x20, 0x18);
@@ -82,9 +82,9 @@ void ui_render_event_reward_info(void) {
     case 6:
     case 7: {
       uint16_t case_off;
-      if (g.ui_substateA == 4)      case_off = 0x238;
-      else if (g.ui_substateA == 5) case_off = 0x238 + 0x10;
-      else if (g.ui_substateA == 6) case_off = 0x258;
+      if (g.viewstate.A == 4)      case_off = 0x238;
+      else if (g.viewstate.A == 5) case_off = 0x238 + 0x10;
+      else if (g.viewstate.A == 6) case_off = 0x258;
       else                         case_off = 0x268;
       drv_eeprom_read_block(off + case_off, ptr, 0x10);
       drv_lcd_blit(0x2C, 0x10, ptr, 0x08, 0x08);
@@ -96,9 +96,9 @@ void ui_render_event_reward_info(void) {
 
   gfx_draw_text_box(0x30, TEXT_RECEIVED, TEXT_BOX_NO_LINES, TEXT_BOX_STATIC);
   {
-    uint8_t z = g.ui_substateZ;
+    uint8_t z = g.viewstate.Z;
     if (z < 0x10) {
-      g.ui_substateZ = z + 1;
+      g.viewstate.Z = z + 1;
     }
   }
 }
@@ -115,19 +115,19 @@ void ui_render_event_reward_info(void) {
 // ROM: 0x4178  66.1%
 void ui_handle_event_reward_anim(void) {
   uint16_t stackVar;
-  uint8_t y = g.ui_substateY;
+  uint8_t y = g.viewstate.Y;
   if (y == REWARD_BALL_DROP) {
-    if (g.ui_substateZ > 4) {
-      g.ui_substateY = REWARD_SPARKLES;
-      g.ui_substateZ = 0;
+    if (g.viewstate.Z > 4) {
+      g.viewstate.Y = REWARD_SPARKLES;
+      g.viewstate.Z = 0;
       drv_sound_play(SND_ANIM_CUE);
     }
     return;
   }
   if (y == REWARD_CLOUD) {
-    if (g.ui_substateZ != 0) {
-      g.ui_substateY = REWARD_INFO;
-      g.ui_substateZ = 0;
+    if (g.viewstate.Z != 0) {
+      g.viewstate.Y = REWARD_INFO;
+      g.viewstate.Z = 0;
       drv_sound_play(SND_ANIM_CUE);
     }
     return;
@@ -136,10 +136,10 @@ void ui_handle_event_reward_anim(void) {
     return;
   if (drv_sound_is_playing())
     return;
-  if (g.ui_substateZ <= 8)
+  if (g.viewstate.Z <= 8)
     return;
 
-  if (g.ui_substateA == 0) {
+  if (g.viewstate.A == 0) {
     void *ptr1;
     void *ptr3;
     sys_init_heap();
@@ -152,7 +152,7 @@ void ui_handle_event_reward_anim(void) {
     ptr3 = sbrk(0x88);
     game_log_interaction(ptr1, ptr3, 0x1D,
                           (uint8_t)((g.save_settings & 1)), 0, 4);
-  } else if (g.ui_substateA == 2) {
+  } else if (g.viewstate.A == 2) {
     void *ptr1;
     uint16_t *ptr2;
     void *ptr3;
@@ -176,7 +176,7 @@ void ui_handle_event_reward_anim(void) {
 
 // ROM: 0x42a0  96.4%
 void ui_render_event_reward_anim(void) {
-  uint8_t y = g.ui_substateY;
+  uint8_t y = g.viewstate.Y;
   if (y == REWARD_BALL_DROP) goto phase_ball_drop;
   if (y == REWARD_SPARKLES)  goto phase_sparkles;
   if (y == REWARD_CLOUD)     goto phase_cloud;

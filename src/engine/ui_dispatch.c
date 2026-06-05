@@ -14,7 +14,7 @@
  * Helpers:
  *   ui_set_view()           writes g.ui_activeView (one-liner).
  *   ui_reset_substate()     zeroes the substate cursors before a view switch.
- *   ui_clear_substate_y()   zeroes only g.ui_substateY (one-liner).
+ *   ui_clear_substate_y()   zeroes only g.viewstate.Y (one-liner).
  *   sys_set_handler()       swaps the foreground event-loop function pointer,
  *                           saving the prior one for restoration. Used when
  *                           entering / leaving the IR app's low-power loop.
@@ -31,10 +31,10 @@ void ui_set_view(uint8_t viewId) { g.ui_activeView = viewId; }
 
 // ROM: 0x6a1c  77.0%
 void ui_reset_substate(void) {
-  g.ui_substateY = 0;
-  g.ui_substateZ = 0;
-  g.ui_substateA = 0x20;       /* initial animation tick / dwell countdown */
-  g.DAT_f7d1 &= ~0x07;          /* clear the 3 low flag bits (b0/b1/b2) used by
+  g.viewstate.Y = 0;
+  g.viewstate.Z = 0;
+  g.viewstate.A = 0x20;       /* initial animation tick / dwell countdown */
+  g.viewstate.v.bytes.at_d1 &= ~0x07;          /* clear the 3 low flag bits (b0/b1/b2) used by
                                  home + battle; preserve the upper byte state */
 }
 
@@ -201,4 +201,4 @@ void ui_dispatch_draw(void) {
 }
 
 // ROM: 0x974e  100.0%
-void ui_clear_substate_y(void) { g.ui_substateY = 0; }
+void ui_clear_substate_y(void) { g.viewstate.Y = 0; }

@@ -16,7 +16,7 @@
  * uninitializedE0` stack-frame placeholders.
  */
 
-/* Sub-animation index in g.ui_substateY for VIEW_WALK_DEPARTURE_ANIM. */
+/* Sub-animation index in g.viewstate.Y for VIEW_WALK_DEPARTURE_ANIM. */
 enum walk_departure_phase {
     DEPARTURE_CLOUD        = 0,   /* cloud rising                            */
     DEPARTURE_CLOUD_AFTER  = 1,   /* cloud-clear frame                       */
@@ -39,7 +39,7 @@ void ui_draw_poke_departure_anim(void) {
   gfx_fill_rect(0, 0, 0x60, 8, 3);
   gfx_fill_rect(0, 0x38, 0x60, 8, 3);
 
-  g.ui_substateZ++;
+  g.viewstate.Z++;
 }
 
 // ROM: 0x4310  77.9%  saves: r2,r5,r6 -> sys_epilogue_r2_r5_r6
@@ -56,8 +56,8 @@ void ui_draw_departure_cloud_anim(void) {
   gfx_fill_rect(0, 0, 0x60, 8, 3);
   gfx_fill_rect(0, 0x38, 0x60, 8, 3);
 
-  g.ui_substateY = 0;
-  g.ui_substateZ = 0;
+  g.viewstate.Y = 0;
+  g.viewstate.Z = 0;
 }
 
 // ROM: 0x4372  81.3%  saves: r2,r5,r6 -> sys_epilogue_r2_r5_r6
@@ -68,17 +68,17 @@ void ui_draw_cloud_rise_anim(void) {
   sys_init_heap();
   ptr = sbrk(0x180);
 
-  if (g.ui_substateZ <= 4) {
+  if (g.viewstate.Z <= 4) {
     drv_eeprom_read_block(0x2480, ptr, 0x10);
     drv_lcd_blit(
-        0x2c, ANIM_CLOUD_Y[g.ui_substateZ],
+        0x2c, ANIM_CLOUD_Y[g.viewstate.Z],
         (void *)ptr, 8, 8);
   }
 
   gfx_fill_rect(0, 0, 0x60, 8, 3);
   gfx_fill_rect(0, 0x38, 0x60, 8, 3);
 
-  g.ui_substateZ++;
+  g.viewstate.Z++;
 }
 
 // ROM: 0x43e4  86.0%  saves: r2
@@ -92,14 +92,14 @@ void ui_render_departure_success(void) {
   gfx_draw_text_box(0x30, TEXT_PEER_HAS_LEFT, TEXT_BOX_NO_LINES, TEXT_BOX_STATIC);
 
   {
-    uint8_t z = g.ui_substateZ;
+    uint8_t z = g.viewstate.Z;
     if (z < 0x10) {
-      g.ui_substateZ = z + 1;
+      g.viewstate.Z = z + 1;
     }
   }
 
   if (drv_sound_is_playing() == 0) {
-    if (g.ui_substateZ > 8) {
+    if (g.viewstate.Z > 8) {
       ui_reset_substate();
       ui_set_view(VIEW_HOME);
     }
@@ -119,14 +119,14 @@ void ui_render_operation_completed(void) {
   gfx_draw_text_box(0x30, TEXT_COMPLETED, TEXT_BOX_FULL, TEXT_BOX_STATIC);
 
   {
-    uint8_t z = g.ui_substateZ;
+    uint8_t z = g.viewstate.Z;
     if (z < 0x10) {
-      g.ui_substateZ = z + 1;
+      g.viewstate.Z = z + 1;
     }
   }
 
   if (drv_sound_is_playing() == 0) {
-    if (g.ui_substateZ > 8) {
+    if (g.viewstate.Z > 8) {
       ui_reset_substate();
       ui_set_view(VIEW_HOME);
     }
@@ -137,8 +137,8 @@ void ui_render_operation_completed(void) {
 void ui_handle_walk_departure_anim(void) {
   uint8_t z;
   uint8_t y;
-  z = g.ui_substateZ;
-  y = g.ui_substateY;
+  z = g.viewstate.Z;
+  y = g.viewstate.Y;
   if (y == DEPARTURE_START)    goto phase_start;
   if (y == DEPARTURE_POKE)     goto phase_poke;
   if (y == DEPARTURE_CLOUD)    goto phase_cloud;
@@ -146,13 +146,13 @@ void ui_handle_walk_departure_anim(void) {
   goto phase_done_pre;
 phase_start:
   /* Entry — kick the poke-departure anim with sound. */
-  g.ui_substateZ = 0;
-  g.ui_substateY = DEPARTURE_POKE;
+  g.viewstate.Z = 0;
+  g.viewstate.Y = DEPARTURE_POKE;
   goto sound;
 phase_poke:
   if (z <= 8) goto done;
-  g.ui_substateZ = 0;
-  g.ui_substateY = DEPARTURE_CLOUD_AFTER;
+  g.viewstate.Z = 0;
+  g.viewstate.Y = DEPARTURE_CLOUD_AFTER;
   goto done;
 phase_cloud:
   if (z < 9) goto done;
@@ -161,8 +161,8 @@ phase_cloud:
 phase_done_pre:
   y = DEPARTURE_DONE;
 shared_advance:
-  g.ui_substateY = y;
-  g.ui_substateZ = 0;
+  g.viewstate.Y = y;
+  g.viewstate.Z = 0;
 sound:
   drv_sound_play(SND_ANIM_CUE);
 done:
@@ -171,7 +171,7 @@ done:
 
 // ROM: 0x44f4  94.2%
 void ui_render_walk_departure_anim(void) {
-  uint8_t y = g.ui_substateY;
+  uint8_t y = g.viewstate.Y;
   if (y == DEPARTURE_POKE)        goto phase_poke;
   if (y == DEPARTURE_CLOUD_AFTER) goto phase_cloud_after;
   if (y == DEPARTURE_CLOUD)       goto phase_cloud;

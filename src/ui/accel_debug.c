@@ -5,7 +5,7 @@
  *
  * Entered from the final stage of the factory test (or directly via IR
  * command 0xFE). Displays live axis thresholds + step counters as hex,
- * and emits SPI command 0xA7 when g.DAT_f7d1 matches g.DAT_f7d8_1 (acceptance
+ * and emits SPI command 0xA7 when g.viewstate.v.bytes.at_d1 matches g.viewstate.v.bytes.at_d9 (acceptance
  * gesture from the technician).
  *
  * The view has no per-tick input — sys_noop is its event handler; rendering
@@ -15,13 +15,13 @@
 // ROM: 0xaebc  66.1%
 void sys_init_accel_debug(void) {
   g.ped_sampleCount = 0;
-  g.ui_substateY = 0x10;
-  g.ui_substateA = 0;
-  g.DAT_f7d1 = 0;
-  g.accel_xPosition = 0;
-  g.accel_yPosition = 0;
-  g.accel_zPosition = 0;
-  drv_eeprom_read_block(8, (void *)&g.DAT_f7d8, 8);
+  g.viewstate.Y = 0x10;
+  g.viewstate.A = 0;
+  g.viewstate.v.bytes.at_d1 = 0;
+  g.viewstate.v.bytes.at_d2 = 0;
+  g.viewstate.v.bytes.at_d4 = 0;
+  accel_zPosition_word = 0;
+  drv_eeprom_read_block(8, (void *)&g.viewstate.v.bytes.at_d8, 8);
   sys_walkerFlags_BIT.session_active = 1;
 }
 
@@ -52,13 +52,13 @@ void ui_render_accel_debug(void) {
   p = buf;
   q = p + 1;
 
-  /* Draw g.ui_substateA as ASCII digit at position 0x4C */
-  *p = (uint8_t)(g.ui_substateA + 0x30);
+  /* Draw g.viewstate.A as ASCII digit at position 0x4C */
+  *p = (uint8_t)(g.viewstate.A + 0x30);
   *q = 0;
   draw_string(0x4C, 0x00, (const char *)p);
 
-  /* Draw g.DAT_f7d8 as ASCII digit at position 0x54 */
-  *p = (uint8_t)(g.DAT_f7d8 + 0x30);
+  /* Draw g.viewstate.v.bytes.at_d8 as ASCII digit at position 0x54 */
+  *p = (uint8_t)(g.viewstate.v.bytes.at_d8 + 0x30);
   *q = 0;
   draw_string(0x54, 0x00, (const char *)p);
 
@@ -114,17 +114,17 @@ void ui_render_accel_debug(void) {
     draw_string(0x20, 0x10, (const char *)p);
   }
 
-  /* Draw g.DAT_f7d1 as ASCII digit at 0x104C */
-  *p = (uint8_t)(g.DAT_f7d1 + 0x30);
+  /* Draw g.viewstate.v.bytes.at_d1 as ASCII digit at 0x104C */
+  *p = (uint8_t)(g.viewstate.v.bytes.at_d1 + 0x30);
   *q = 0;
   draw_string(0x4C, 0x10, (const char *)p);
 
-  /* Draw g.DAT_f7d8_1 (the byte after g.DAT_f7d8) at 0x1054 */
-  *p = g.DAT_f7d8_1;
+  /* Draw g.viewstate.v.bytes.at_d9 (the byte after g.viewstate.v.bytes.at_d8) at 0x1054 */
+  *p = g.viewstate.v.bytes.at_d9;
   draw_string(0x54, 0x10, (const char *)p);
 
-  /* If g.DAT_f7d1 == g.DAT_f7d8_1, send SPI command 0xA7 and draw check mark */
-  if (g.DAT_f7d1 == g.DAT_f7d8_1) {
+  /* If g.viewstate.v.bytes.at_d1 == g.viewstate.v.bytes.at_d9, send SPI command 0xA7 and draw check mark */
+  if (g.viewstate.v.bytes.at_d1 == g.viewstate.v.bytes.at_d9) {
     PDR1 &= ~0x01;
     PDR1 &= ~0x02;
     while (!SSSR_BIT.TDRE)

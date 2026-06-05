@@ -148,19 +148,19 @@ start_new_walk:
 end_walk_show_report:
   game_end_walk();
   ui_set_view(VIEW_WALK_DEPARTURE_ANIM);
-  g.ui_substateY = 5;
+  g.viewstate.Y = 5;
   goto reset_substate_z;
 restart_walk_clear_history:
   game_start_walk();
   drv_eeprom_fill(EEPROM_STEP_HIST_FLAGS, 0x06C8, 0);
 enter_walk_view:
   ui_set_view(VIEW_WALK_ARRIVAL_ANIM);
-  g.ui_substateY = 0;
+  g.viewstate.Y = 0;
   goto reset_substate_z;
 clear_walk_stats:
   game_clear_stats();
   ui_set_view(VIEW_WALK_DEPARTURE_ANIM);
-  g.ui_substateY = 6;
+  g.viewstate.Y = 6;
   goto reset_substate_z;
 start_peer_play:
   ui_set_view(VIEW_PEER_PLAY);
@@ -168,51 +168,51 @@ start_peer_play:
   goto finalize;
 show_menu_a3:
   ui_set_view(VIEW_EVENT_REWARD_ANIM);
-  g.ui_substateY = 0;
-  g.ui_substateZ = 0;
-  g.ui_substateA = 3;
+  g.viewstate.Y = 0;
+  g.viewstate.Z = 0;
+  g.viewstate.A = 3;
   goto finalize;
 show_menu_a0:
   ui_set_view(VIEW_EVENT_REWARD_ANIM);
-  g.ui_substateY = 0;
-  g.ui_substateZ = 0;
-  g.ui_substateA = 0;
+  g.viewstate.Y = 0;
+  g.viewstate.Z = 0;
+  g.viewstate.A = 0;
   goto finalize;
 show_menu_a2:
   ui_set_view(VIEW_EVENT_REWARD_ANIM);
-  g.ui_substateY = 0;
-  g.ui_substateZ = 0;
-  g.ui_substateA = 2;
+  g.viewstate.Y = 0;
+  g.viewstate.Z = 0;
+  g.viewstate.A = 2;
   goto finalize;
 show_menu_a1:
   ui_set_view(VIEW_EVENT_REWARD_ANIM);
-  g.ui_substateY = 0;
-  g.ui_substateZ = 0;
-  g.ui_substateA = 1;
+  g.viewstate.Y = 0;
+  g.viewstate.Z = 0;
+  g.viewstate.A = 1;
   goto finalize;
 show_menu_a4:
   ui_set_view(VIEW_EVENT_REWARD_ANIM);
-  g.ui_substateY = 0;
-  g.ui_substateZ = 0;
-  g.ui_substateA = 4;
+  g.viewstate.Y = 0;
+  g.viewstate.Z = 0;
+  g.viewstate.A = 4;
   goto finalize;
 show_menu_a5:
   ui_set_view(VIEW_EVENT_REWARD_ANIM);
-  g.ui_substateY = 0;
-  g.ui_substateZ = 0;
-  g.ui_substateA = 5;
+  g.viewstate.Y = 0;
+  g.viewstate.Z = 0;
+  g.viewstate.A = 5;
   goto finalize;
 show_menu_a6:
   ui_set_view(VIEW_EVENT_REWARD_ANIM);
-  g.ui_substateY = 0;
-  g.ui_substateZ = 0;
-  g.ui_substateA = 6;
+  g.viewstate.Y = 0;
+  g.viewstate.Z = 0;
+  g.viewstate.A = 6;
   goto finalize;
 show_menu_a7:
   ui_set_view(VIEW_EVENT_REWARD_ANIM);
-  g.ui_substateY = 0;
-  g.ui_substateZ = 0;
-  g.ui_substateA = 7;
+  g.viewstate.Y = 0;
+  g.viewstate.Z = 0;
+  g.viewstate.A = 7;
   goto finalize;
 
 default_handle_error:
@@ -220,7 +220,7 @@ default_handle_error:
     goto return_to_main_view;
   ui_set_view(VIEW_STEP_HISTORY);
 reset_substate_z:
-  g.ui_substateZ = 0;
+  g.viewstate.Z = 0;
   goto finalize;
 
 return_to_main_view:
@@ -886,7 +886,7 @@ void ir_comm_loop(void) {
     case 0xF0: {
       save_write_reliable(EEPROM_RESV_0083, EEPROM_RESV_0083_BACKUP, payload, 0x28);
       drv_eeprom_write_block(0x0008, payload + 0x68, 0x08);
-      g.ui_substateZ = 1;
+      g.viewstate.Z = 1;
       REQUESTED_POKEMON_ACTION_TYPE = 0xF0;
       switch (payload[0x70]) {
       case 0:
@@ -899,7 +899,7 @@ void ir_comm_loop(void) {
                            eepromPageScratch, 0x40);
         do {
           if (payload[0x28 + i] != eepromPageScratch[i]) {
-            g.ui_substateZ = 0;
+            g.viewstate.Z = 0;
             break;
           }
           i++;

@@ -183,23 +183,23 @@ void game_log_poke_interaction(void) {
   uint16_t sub_y;
   void *slot_buf;
 
-  if (g.ui_substateY == 0)
+  if (g.viewstate.Y == 0)
     return;
 
   /* Copy the chosen pokemon slot into the log context at the discard cursor's
-     position (g.ui_substateZ * 0x10), then write the whole block back. */
+     position (g.viewstate.Z * 0x10), then write the whole block back. */
   sys_init_heap();
   log_block = sbrk(0x30);
   drv_eeprom_read_block(EEPROM_LOG_CONTEXT, log_block, 0x30);
 
-  drv_eeprom_read_block(EEPROM_POKEMON_SLOTS + ((g.ui_substateY - 1) * 0x10),
-                        log_block + (g.ui_substateZ * 0x10), 0x10);
+  drv_eeprom_read_block(EEPROM_POKEMON_SLOTS + ((g.viewstate.Y - 1) * 0x10),
+                        log_block + (g.viewstate.Z * 0x10), 0x10);
   drv_eeprom_write_block(EEPROM_LOG_CONTEXT, log_block, 0x30);
 
   trainer_buf = sbrk(0xBE);
   drv_eeprom_read_block(EEPROM_TRAINER_PROFILE, trainer_buf, 0xBE);
 
-  sub_y = g.ui_substateY;
+  sub_y = g.viewstate.Y;
   slot_buf = sbrk(0x88);
   /* ROM r0=trainer_buf, e0=slot_buf. sub_y is the event_subtype (6th arg,
      pushed); val_at_0e (e1) is 0. */
@@ -219,8 +219,8 @@ void game_log_item_interaction(void) {
   log_block = sbrk(0x0C);
   drv_eeprom_read_block(EEPROM_LOG_ITEMS, log_block, 0x0C);
 
-  drv_eeprom_read_block(EEPROM_SUBY_LOOKUP_TABLE + (g.ui_substateY * 2),
-                        log_block + (g.ui_substateZ * 4), 0x02);
+  drv_eeprom_read_block(EEPROM_SUBY_LOOKUP_TABLE + (g.viewstate.Y * 2),
+                        log_block + (g.viewstate.Z * 4), 0x02);
   drv_eeprom_write_block(EEPROM_LOG_ITEMS, log_block, 0x0C);
 
   trainer_buf = sbrk(0xBE);
@@ -229,11 +229,11 @@ void game_log_item_interaction(void) {
   slot_buf = sbrk(0x88);
   /* `scratch_val` is unused locally but the assignment is preserved because
      ch38 allocates a stack slot to match the ROM's frame. */
-  scratch_val = ((uint32_t)(*(uint16_t *)(trainer_buf + (g.ui_substateY * 2) + 0x8C)) << 16) |
+  scratch_val = ((uint32_t)(*(uint16_t *)(trainer_buf + (g.viewstate.Y * 2) + 0x8C)) << 16) |
                 0x0B;
   (void)scratch_val;
   game_log_interaction(trainer_buf, slot_buf, 0x0B, 0x00,
-                       *(uint16_t *)(trainer_buf + (g.ui_substateY * 2) + 0x8C), 0);
+                       *(uint16_t *)(trainer_buf + (g.viewstate.Y * 2) + 0x8C), 0);
 }
 
 // ROM: 0x67de  85.9%
@@ -302,10 +302,10 @@ void game_rotate_interaction_log_record(void) {
     log_record[0x10 + i] = peer_data[0x26 + i];
   }
 
-  if (g.dowsing_itemPosition == 0) {
-    uint8_t accel_val = g.accel_xPosition;
+  if (g.viewstate.v.bytes.at_d3 == 0) {
+    uint8_t accel_val = g.viewstate.v.bytes.at_d2;
     if (accel_val < 10) {
-      /* ROM: r1h=settings_bit (d_high), e1=trainer[0x8C+g.accel_xPosition*2] uint16
+      /* ROM: r1h=settings_bit (d_high), e1=trainer[0x8C+g.viewstate.v.bytes.at_d2*2] uint16
        * (val_at_0e), push=0 (event_subtype). */
       game_log_interaction(
           trainer_buf, log_record, accel_val + 1,

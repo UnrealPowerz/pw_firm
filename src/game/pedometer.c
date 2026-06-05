@@ -374,11 +374,11 @@ void game_process_accel_data(void) {
 
   view = g.ui_activeView;
   if (view == VIEW_ACCEL_DEBUG) {
-    sub = g.ui_substateA;
-    limit = g.DAT_f7d8;
+    sub = g.viewstate.A;
+    limit = g.viewstate.v.bytes.at_d8;
     if (sub < limit) {
       if (steps != 0) {
-        g.ui_substateA = sub + 1;
+        g.viewstate.A = sub + 1;
         threshold = g.ped_axisStepThresholdLo;
         tx = accel_xPosition_word;
         if (tx < threshold)
@@ -386,7 +386,7 @@ void game_process_accel_data(void) {
         ty = accel_yPosition_word;
         if (ty < threshold)
           g.ui_activeView = VIEW_TEXT;
-        tz = g.accel_zPosition;
+        tz = accel_zPosition_word;
         if (tz < threshold)
           g.ui_activeView = VIEW_TEXT;
         threshold = g.ped_axisStepThresholdHi;
@@ -396,15 +396,15 @@ void game_process_accel_data(void) {
         ty = accel_yPosition_word;
         if (ty > threshold)
           g.ui_activeView = VIEW_TEXT;
-        tz = g.accel_zPosition;
+        tz = accel_zPosition_word;
         if (tz > threshold)
           g.ui_activeView = VIEW_TEXT;
       }
-    } else if (g.DAT_f7d1 < g.DAT_f7d8_1) {
+    } else if (g.viewstate.v.bytes.at_d1 < g.viewstate.v.bytes.at_d9) {
       threshold = g.ped_axisIdleThreshold;
       if (accel_xPosition_word < threshold && accel_yPosition_word < threshold &&
-          g.accel_zPosition < threshold) {
-        g.DAT_f7d1++;
+          accel_zPosition_word < threshold) {
+        g.viewstate.v.bytes.at_d1++;
       }
     }
   }

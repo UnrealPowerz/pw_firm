@@ -82,8 +82,8 @@ void ui_render_sad_walker(void) {
   drv_lcd_blit(0x20, 0x10, buf, 0x20, 0x20);
 
   {
-    uint8_t tmp = g.ui_substateZ + 1;
-    g.ui_substateZ = tmp;
+    uint8_t tmp = g.viewstate.Z + 1;
+    g.viewstate.Z = tmp;
     if (tmp > 0x08) {
       ui_reset_substate();
       ui_set_view(VIEW_HOME);

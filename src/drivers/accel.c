@@ -114,7 +114,7 @@ void drv_accel_sample(void) {
     if (g.ped_sampleCount == 0) {
       accel_xPosition_word = 0;
       accel_yPosition_word = 0;
-      g.accel_zPosition = 0;
+      accel_zPosition_word = 0;
     }
 
     if ((int16_t)accelXSamples[g.ped_sampleCount] -
@@ -140,10 +140,10 @@ void drv_accel_sample(void) {
     if ((int16_t)accelZSamples[g.ped_sampleCount] -
             (int16_t)accelZSamples[prev_count] <
         0) {
-      g.accel_zPosition += (uint16_t)(-accelZSamples[g.ped_sampleCount] +
+      accel_zPosition_word += (uint16_t)(-accelZSamples[g.ped_sampleCount] +
                               accelZSamples[prev_count]);
     } else {
-      g.accel_zPosition += (uint16_t)(accelZSamples[g.ped_sampleCount] -
+      accel_zPosition_word += (uint16_t)(accelZSamples[g.ped_sampleCount] -
                               accelZSamples[prev_count]);
     }
   }

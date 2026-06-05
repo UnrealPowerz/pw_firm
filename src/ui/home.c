@@ -19,13 +19,13 @@ void ui_handle_home(void) {
       ui_enter_ir_session();
     }
   } else {
-    if (g.ui_substateZ != 0) {
+    if (g.viewstate.Z != 0) {
       if (drv_button_is_triggered(BTN_ANY)) {
-        g.ui_substateZ = 0;
-        game_process_interaction_reward(g.ui_substateY);
+        g.viewstate.Z = 0;
+        game_process_interaction_reward(g.viewstate.Y);
         return;
       } else {
-        g.ui_substateZ--;
+        g.viewstate.Z--;
       }
     }
     /* Home-screen button shortcuts: each jumps straight into a main-menu
@@ -70,16 +70,16 @@ void ui_render_home_route(void) {
   uint8_t *buf;
   uint8_t subA;
 
-  if (g.ui_substateZ != 0) {
+  if (g.viewstate.Z != 0) {
     uint8_t idx;
-    idx = ROUTE_ICON_INDICES[g.ui_substateY - 1];
+    idx = ROUTE_ICON_INDICES[g.viewstate.Y - 1];
     gfx_draw_small_route_icon(idx);
   }
   ui_render_route_image();
   if (!(sys_walkerFlags_BIT.walking)) {
     return;
   }
-  subA = g.ui_substateA;
+  subA = g.viewstate.A;
   if (!DAT_f7d1_BIT.b1) {
     gfx_draw_home_pokemon(subA, 0);
   } else if (!DAT_f7d1_BIT.b2) {
