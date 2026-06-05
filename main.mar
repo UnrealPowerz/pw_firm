@@ -910,7 +910,7 @@ drv_ir_isr_sci3:
 ; Called by: sys_factory_reset_eeprom, ir_parse_rx_packet, ir_comm_loop
 ; =============================================================================
 drv_ir_get_rx_ptr:
-          mov.w       #irPacketPayload, r0
+          mov.w       #ir_payload, r0
           rts
 ; =============================================================================
 ; Function: drv_ir_init_pins
@@ -935,7 +935,7 @@ drv_ir_init_pins:
 drv_ir_send_packet:
           jsr         @$sp_regsv$3:16
           mov.b       r0l, r5l
-          mov.w       #commandType, r6
+          mov.w       #ir_commandType, r6
           mov.b       r0h, @er6
           mov.b       r1l, @(H'1,er6)
           mov.l       @ir_sessionKey, er1
@@ -958,7 +958,7 @@ drv_ir_send_packet:
           sub.w       r6, r6
           bra         LAB_07c4:8
 LAB_07bc:
-          mov.b       @(commandType,er6), r0l
+          mov.b       @(ir_commandType,er6), r0l
           bsr         drv_ir_tx_u8:8
           inc.w       #1, r6
 LAB_07c4:
@@ -978,7 +978,7 @@ LAB_07d6:
           bld         #H'6, @SSR3
           bcc         LAB_07ee:8
           mov.b       @RDR3:8, r0l
-          mov.b       r0l, @rdr_data
+          mov.b       r0l, @ir_rdrData
 LAB_07ee:
           jmp         @$spregld2$3:16
 ; =============================================================================
@@ -1067,7 +1067,7 @@ drv_ir_init_hw:
           bld         #H'6, @SSR3
           bcc         LAB_087c:8
           mov.b       @RDR3:8, r0l
-          mov.b       r0l, @rdr_data
+          mov.b       r0l, @ir_rdrData
 LAB_087c:
           pop.w       r6
           rts
@@ -1121,7 +1121,7 @@ ir_comm_loop:
           cmp.b       #H'88, r5l
           bcs         LAB_090e:8
           mov.b       @RDR3:8, r0l
-          mov.b       r0l, @rdr_data
+          mov.b       r0l, @ir_rdrData
           mov.b       #H'8, r0l
           mov.b       r0l, @ir_resultCode
           jmp         @LAB_0a74:16
@@ -1133,7 +1133,7 @@ LAB_090e:
           extu.w      r0
           mov.b       @RDR3:8, r1l
           xor.b       #H'AA, r1l
-          mov.b       r1l, @(commandType,er0)
+          mov.b       r1l, @(ir_commandType,er0)
           mov.w       @TCNT, r0
           mov.w       r0, @ir_lastCommandTime
           jmp         @sys_ir_comm_loop__finishIRComms:16
@@ -1207,7 +1207,7 @@ LAB_09d8:
           bne         LAB_0a2c:8
           sub.b       r0l, r0l
           mov.b       r0l, @ir_commandPos
-          mov.b       @commandType, r0l
+          mov.b       @ir_commandType, r0l
           cmp.b       #H'FC, r0l
           bne         sys_ir_comm_loop__finishIRComms:16
           mov.b       @ir_handshakeStep, r0l
@@ -1227,7 +1227,7 @@ LAB_0a18:
           jsr         @drv_ir_send_packet:16
           jmp         @sys_ir_comm_loop__finishIRComms:16
 LAB_0a2c:
-          mov.w       #commandType, r5
+          mov.w       #ir_commandType, r5
           mov.b       @(H'3,er5), r0h
           sub.b       r0l, r0l
           mov.b       @(H'2,er5), r1l
@@ -1262,7 +1262,7 @@ LAB_0a7c:
           mov.b       @ir_commandPos, r4h
           add.b       #H'F8, r4h
           mov.w       e5, r5
-          add.w       #commandType, r5
+          add.w       #ir_commandType, r5
           cmp.b       #H'F8, r3l
           bcc         LAB_0ab4:8
           mov.l       @ir_sessionKey, er1
@@ -21519,19 +21519,19 @@ ir_xferDst:
           .RES.B      2
 ir_xferChunkCount:
           .RES.B      1
-rdr_data:
+ir_rdrData:
           .RES.B      1
-commandType:
+ir_commandType:
           .RES.B      1
-commandSubtype:
+ir_commandSubtype:
           .RES.B      1
-commandCrcLo:
+ir_commandCrcLo:
           .RES.B      1
-commandCrcHi:
+ir_commandCrcHi:
           .RES.B      1
-commandSessionToken:
+ir_commandSessionToken:
           .RES.B      4
-irPacketPayload:
+ir_payload:
           .RES.B      1
 DAT_f8d7:
           .RES.B      1

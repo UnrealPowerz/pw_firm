@@ -52,13 +52,13 @@ void drv_ir_init_hw(void) {
   tmp = SSR3 & 0xC4;
   SSR3 = tmp;
   if (SSR3_BIT.RDRF) {
-    rdr_data = RDR3;
+    ir_rdrData = RDR3;
   }
 }
 
 // ROM: 0x075c  99.5%
 uint8_t *drv_ir_get_rx_ptr(void) {
-  return (uint8_t *)&irPacketPayload;
+  return (uint8_t *)&ir_payload;
 }
 
 // ROM: 0x0762  98.6%
@@ -73,7 +73,7 @@ void drv_ir_init_output_pins(void) { drv_ir_init_pins(); }
 
 // ROM: 0x0772  66.8%  saves: er3,er4,er5,er6
 void drv_ir_send_packet(uint8_t pktLen, uint8_t cmdType, uint8_t subtype) {
-  uint8_t *pkt = (uint8_t *)&commandType;
+  uint8_t *pkt = (uint8_t *)&ir_commandType;
   uint16_t crc;
   uint16_t i;
   uint16_t tcntSnap;
@@ -102,7 +102,7 @@ void drv_ir_send_packet(uint8_t pktLen, uint8_t cmdType, uint8_t subtype) {
     ;
 
   if (SSR3_BIT.RDRF) {
-    rdr_data = RDR3;
+    ir_rdrData = RDR3;
   }
 }
 

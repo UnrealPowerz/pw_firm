@@ -182,11 +182,11 @@ union pw_scratch2 {
         volatile uint16_t ir_xfer_dst;          /* +0x64 */
         volatile uint8_t  ir_xfer_chunk_count;  /* +0x66 */
         volatile uint8_t  rdr_data_byte;        /* +0x67 */
-        volatile uint8_t  cmd;                  /* +0x68 commandType */
-        volatile uint8_t  cmd_subtype;          /* +0x69 commandSubtype */
-        volatile uint8_t  cmd_crc_lo;           /* +0x6A commandCrcLo */
-        volatile uint8_t  cmd_crc_hi;           /* +0x6B commandCrcHi */
-        volatile uint32_t cmd_session_token;    /* +0x6C commandSessionToken */
+        volatile uint8_t  cmd;                  /* +0x68 ir_commandType */
+        volatile uint8_t  cmd_subtype;          /* +0x69 ir_commandSubtype */
+        volatile uint8_t  cmd_crc_lo;           /* +0x6A ir_commandCrcLo */
+        volatile uint8_t  cmd_crc_hi;           /* +0x6B ir_commandCrcHi */
+        volatile uint32_t cmd_session_token;    /* +0x6C ir_commandSessionToken */
         volatile uint8_t  payload[0x80];        /* +0x70 IR payload (also overlaps step state when idle) */
     } as_struct;
 };
@@ -215,13 +215,13 @@ union pw_scratch2 {
 #define ir_xferSrc                      (g_scratch2.as_struct.ir_xfer_src)
 #define ir_xferDst                      (g_scratch2.as_struct.ir_xfer_dst)
 #define ir_xferChunkCount               (g_scratch2.as_struct.ir_xfer_chunk_count)
-#define rdr_data                       (g_scratch2.as_struct.rdr_data_byte)
-#define commandType                    (g_scratch2.as_struct.cmd)
-#define commandSubtype                 (g_scratch2.as_struct.cmd_subtype)
-#define commandCrcLo                   (g_scratch2.as_struct.cmd_crc_lo)
-#define commandCrcHi                   (g_scratch2.as_struct.cmd_crc_hi)
-#define commandSessionToken            (g_scratch2.as_struct.cmd_session_token)
-#define irPacketPayload                (g_scratch2.as_struct.payload[0])
+#define ir_rdrData                       (g_scratch2.as_struct.rdr_data_byte)
+#define ir_commandType                    (g_scratch2.as_struct.cmd)
+#define ir_commandSubtype                 (g_scratch2.as_struct.cmd_subtype)
+#define ir_commandCrcLo                   (g_scratch2.as_struct.cmd_crc_lo)
+#define ir_commandCrcHi                   (g_scratch2.as_struct.cmd_crc_hi)
+#define ir_commandSessionToken            (g_scratch2.as_struct.cmd_session_token)
+#define ir_payload                (g_scratch2.as_struct.payload[0])
 #define DAT_f8d7                       (g_scratch2.as_struct.payload[1])
 #define DAT_f8d8                       (&g_scratch2.as_struct.payload[2])
 #define stepDetectAccum                (*(volatile uint32_t *)&g_scratch2.as_struct.payload[0x10])

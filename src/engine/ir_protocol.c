@@ -327,12 +327,12 @@ void ir_comm_loop(void) {
   cmdPos_local = g.ir_commandPos;
   if (SSR3_BIT.RDRF) {
     if (cmdPos_local >= 0x88) {
-      rdr_data = RDR3;
+      ir_rdrData = RDR3;
       g.ir_resultCode = 0x08;
       goto do_action;
     }
     g.ir_commandPos = cmdPos_local + 1;
-    *((uint8_t *)&commandType + cmdPos_local) = RDR3 ^ 0xAA;
+    *((uint8_t *)&ir_commandType + cmdPos_local) = RDR3 ^ 0xAA;
     g.ir_lastCommandTime = TCNT;
     goto finish_no_action;
   }
@@ -360,7 +360,7 @@ void ir_comm_loop(void) {
   ir_packetReceivedFlag_BIT.b0 = 1;
   if (cmdPos_local == 1) {
     g.ir_commandPos = 0;
-    cmdByte = commandType;
+    cmdByte = ir_commandType;
     if (cmdByte != 0xFC)
       goto finish_no_action;
     phase = ir_handshakeStep;
@@ -377,7 +377,7 @@ void ir_comm_loop(void) {
     }
     goto finish_no_action;
   }
-  pktBase = (uint8_t *)&commandType;
+  pktBase = (uint8_t *)&ir_commandType;
   cmdLen = (uint8_t)cmdPos_local;
   crcExpected = ((uint16_t)pktBase[3] << 8) | pktBase[2];
   pktBase[2] = 0;
@@ -392,7 +392,7 @@ void ir_comm_loop(void) {
     g.ir_resultCode = 2;
     goto do_action;
   }
-  *(uint32_t *)((uint8_t *)&commandType + 2) = *(uint32_t *)(pktBase + 4);
+  *(uint32_t *)((uint8_t *)&ir_commandType + 2) = *(uint32_t *)(pktBase + 4);
   {
     uint8_t subtype;
     uint8_t pktLen2;
