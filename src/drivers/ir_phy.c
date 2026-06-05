@@ -58,7 +58,7 @@ void drv_ir_init_hw(void) {
 
 // ROM: 0x075c  99.5%
 uint8_t *drv_ir_get_rx_ptr(void) {
-  return (uint8_t *)&ir_payload;
+  return (uint8_t *)&g.scratch2.ir.payload[0];
 }
 
 // ROM: 0x0762  98.6%

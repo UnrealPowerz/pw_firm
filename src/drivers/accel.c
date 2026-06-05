@@ -373,7 +373,7 @@ void drv_accel_fft(void *samples) {
     stage_half = group_size;
   }
 
-  /* Magnitude accumulation: fft_results[i] += |real[i]| + |imag[i]| for i=0..31.
+  /* Magnitude accumulation: g.scratch1.fft[i] += |real[i]| + |imag[i]| for i=0..31.
    * The ROM accumulates (does not overwrite) because the caller invokes the
    * FFT three times (X, Y, Z) and sums their magnitudes. */
   {
@@ -386,13 +386,13 @@ void drv_accel_fft(void *samples) {
       if (r < 0) r = -r;
       im = *ip;
       if (im < 0) im = -im;
-      *(int16_t *)((char *)fft_results + off) += r + im;
+      *(int16_t *)((char *)g.scratch1.fft + off) += r + im;
       rp++; ip++; off += 2;
       r = *rp;
       if (r < 0) r = -r;
       im = *ip;
       if (im < 0) im = -im;
-      *(int16_t *)((char *)fft_results + off) += r + im;
+      *(int16_t *)((char *)g.scratch1.fft + off) += r + im;
       rp++; ip++; off += 2;
     } while (off < 0x40);
   }

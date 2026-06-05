@@ -245,15 +245,9 @@ enum view_id {
 #define DAT_f88e                  (g.scratch2.ir.at_f88e)
 #define DAT_f896                  (g.scratch2.ir.at_f896)
 #define DAT_f8c1                  (g.scratch2.ir.at_f8c1)
-#define ir_payload                (g.scratch2.ir.payload[0])
-#define ped_stepDetectAccumulator (g.scratch2.ped.stepDetectAccumulator)
-#define ped_pendingStepDetect     (g.scratch2.ped.pendingStepDetect)
-#define DAT_f8ee                  (g.scratch2.ped.at_f8ee)
-#define ped_isNotWalking          (g.scratch2.ped.isNotWalking)
 
 #define DAT_f7e6        (g.scratch1.bytes)              /* uint8_t[128] -- decays to (uint8_t *) */
 #define DAT_f7f2        (g.scratch1.ir.at_0c_w)
-#define fft_results     (g.scratch1.fft)
 #define DAT_f82e        (g.scratch1.ir.at_48)
 #define DAT_f842        (g.scratch1.ir.at_5c)
 #define DAT_f843        (g.scratch1.ir.at_5d)

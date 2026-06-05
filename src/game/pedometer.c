@@ -64,10 +64,10 @@ void game_reset_step_data(uint8_t a) {
 
 // ROM: 0x9328  77.8%
 void game_reset_pedometer_flags(void) {
-  DAT_f8ee = 0;
-  ped_pendingStepDetect = 0;
-  ped_stepDetectAccumulator = 0;
-  ped_isNotWalking = 0;
+  g.scratch2.ped.at_f8ee = 0;
+  g.scratch2.ped.pendingStepDetect = 0;
+  g.scratch2.ped.stepDetectAccumulator = 0;
+  g.scratch2.ped.isNotWalking = 0;
 }
 
 // Reason: ROM saves r2/e4 (words) + er6 (long) = 8 bytes via mixed
@@ -321,7 +321,7 @@ uint32_t game_detect_steps_fft(volatile int16_t *fft_res) {
   } while (++i < 10);
 
   if (peakBin != 0xFF) {
-    if (ped_isNotWalking) {
+    if (g.scratch2.ped.isNotWalking) {
       if (maxVal <= (uint16_t)(peakVal * 4 / 3)) {
         goto success;
       }
@@ -332,13 +332,13 @@ uint32_t game_detect_steps_fft(volatile int16_t *fft_res) {
     }
   }
 
-  DAT_f8ee = 0;
-  ped_pendingStepDetect = 0;
-  ped_isNotWalking = 1;
+  g.scratch2.ped.at_f8ee = 0;
+  g.scratch2.ped.pendingStepDetect = 0;
+  g.scratch2.ped.isNotWalking = 1;
   return 0;
 
 success:
-  ped_isNotWalking = 0;
+  g.scratch2.ped.isNotWalking = 0;
   return (uint32_t)game_pedometer_interpolate_batch(
       peakBin, (uint16_t)(uint32_t)binBase);
 }
@@ -361,8 +361,8 @@ void game_process_accel_data(void) {
 
   i = 0;
   do {
-    fft_results[i] = 0;
-    fft_results[i + 1] = 0;
+    g.scratch1.fft[i] = 0;
+    g.scratch1.fft[i + 1] = 0;
     i += 2;
   } while (i < 32);
 
@@ -370,7 +370,7 @@ void game_process_accel_data(void) {
   drv_accel_fft(g.scratch2.accel.y);
   drv_accel_fft(g.scratch2.accel.z);
 
-  steps = game_detect_steps_fft(fft_results);
+  steps = game_detect_steps_fft(g.scratch1.fft);
 
   view = g.ui_activeView;
   if (view == VIEW_ACCEL_DEBUG) {
@@ -410,17 +410,17 @@ void game_process_accel_data(void) {
   }
 
   if (steps == 0) {
-    ped_pendingStepDetect = 0;
+    g.scratch2.ped.pendingStepDetect = 0;
   } else {
     g.sys_statusFlags.BIT.sleeping = 1;
 
-    if (ped_pendingStepDetect != 0) {
-      uint32_t accumulation = ped_stepDetectAccumulator + ped_pendingStepDetect;
-      ped_stepDetectAccumulator = accumulation;
-      ped_pendingStepDetect = 0;
+    if (g.scratch2.ped.pendingStepDetect != 0) {
+      uint32_t accumulation = g.scratch2.ped.stepDetectAccumulator + g.scratch2.ped.pendingStepDetect;
+      g.scratch2.ped.stepDetectAccumulator = accumulation;
+      g.scratch2.ped.pendingStepDetect = 0;
 
       g.ped_batchSize = (uint8_t)(accumulation >> 9);
-      ped_stepDetectAccumulator = accumulation & 0x1FF;
+      g.scratch2.ped.stepDetectAccumulator = accumulation & 0x1FF;
 
       g.session_recentSteps += (uint16_t)g.ped_batchSize;
       if (g.session_recentSteps > 9999) {
@@ -446,10 +446,10 @@ void game_process_accel_data(void) {
     }
 
     {
-      uint32_t accumulation = ped_stepDetectAccumulator + steps;
-      ped_stepDetectAccumulator = accumulation;
+      uint32_t accumulation = g.scratch2.ped.stepDetectAccumulator + steps;
+      g.scratch2.ped.stepDetectAccumulator = accumulation;
       g.ped_batchSize = (uint8_t)(accumulation >> 9);
-      ped_stepDetectAccumulator = accumulation & 0x1FF;
+      g.scratch2.ped.stepDetectAccumulator = accumulation & 0x1FF;
     }
 
     if (g.ped_batchSize != 0) {
