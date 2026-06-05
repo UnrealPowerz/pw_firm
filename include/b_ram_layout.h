@@ -63,12 +63,12 @@
 /* 0xF7C0 */ volatile uint32_t nextRandom;
 
 /* --- Sound engine state --- */
-/* 0xF7C4 */ volatile uint8_t *soundData;
-/* 0xF7C6 */ volatile uint8_t  volume;                 /* 0..3 */
+/* 0xF7C4 */ volatile uint8_t *sound_dataPointer;
+/* 0xF7C6 */ volatile uint8_t  sound_volume;                 /* 0..3 */
 /* 0xF7C7 */ volatile uint8_t  _pad_f7c7;
-/* 0xF7C8 */ volatile uint16_t noteDuration;
-/* 0xF7CA */ volatile uint16_t isSeparateNote;
-/* 0xF7CC */ volatile uint8_t  soundHeader;
+/* 0xF7C8 */ volatile uint16_t sound_noteDuration;
+/* 0xF7CA */ volatile uint16_t sound_isSeparateNote;
+/* 0xF7CC */ volatile uint8_t  sound_header;
 /* 0xF7CD */ volatile uint8_t  _pad_f7cd;
 
 /* --- View substate + accel positions --- */

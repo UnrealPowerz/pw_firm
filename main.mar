@@ -6151,7 +6151,7 @@ LAB_369a:
 ;            ... and 6 more
 ; =============================================================================
 drv_sound_is_playing:
-          mov.w       @soundData, r0
+          mov.w       @sound_dataPointer, r0
           bne         LAB_36a6:8
           sub.b       r0l, r0l
           bra         LAB_36a8:8
@@ -6167,9 +6167,9 @@ LAB_36a8:
 ; =============================================================================
 drv_timerw_init:
           mov.b       #H'78, r0l
-          mov.b       r0l, @soundHeader
+          mov.b       r0l, @sound_header
           sub.b       r0l, r0l
-          mov.b       r0l, @volume
+          mov.b       r0l, @sound_volume
           mov.b       @PCR8:8, r0h
           or.b        #H'C, r0h
           mov.b       r0h, @PCR8:8
@@ -6187,7 +6187,7 @@ drv_timerw_init:
           mov.w       e0, @GRB
           mov.w       e0, @GRC
           bclr        #H'6, @CKSTPR2
-          mov.w       e0, @soundData
+          mov.w       e0, @sound_dataPointer
           rts
 ; =============================================================================
 ; Function: drv_sound_play
@@ -6200,9 +6200,9 @@ drv_timerw_init:
 drv_sound_play:
           jsr         @$sp_regsv$3:16
           subs        #4, er7
-          mov.w       #soundData, r6
+          mov.w       #sound_dataPointer, r6
           mov.b       r0l, r5l
-          mov.b       @volume, r0h
+          mov.b       @sound_volume, r0h
           beq         LAB_37c0:16
           mov.w       #TIERW, r0
           bclr        #H'0, @r0
@@ -6278,8 +6278,8 @@ LAB_37a8:
           bra         LAB_37b8:8
 LAB_37ae:
           sub.w       r0, r0
-          mov.w       r0, @noteDuration
-          mov.w       r0, @isSeparateNote
+          mov.w       r0, @sound_noteDuration
+          mov.w       r0, @sound_isSeparateNote
 LAB_37b8:
           mov.w       #TIERW, r0
           bset        #H'0, @r0
@@ -6294,10 +6294,10 @@ LAB_37c0:
 ; Parameters: 1
 ; =============================================================================
 drv_sound_set_data:
-          mov.w       r0, @soundData
+          mov.w       r0, @sound_dataPointer
           sub.w       r0, r0
-          mov.w       r0, @noteDuration
-          mov.w       r0, @isSeparateNote
+          mov.w       r0, @sound_noteDuration
+          mov.w       r0, @sound_isSeparateNote
           rts
 ; =============================================================================
 ; Function: drv_timerw_enable
@@ -6349,7 +6349,7 @@ drv_timerw_disable:
 ; Parameters: 1
 ; =============================================================================
 drv_sound_set_volume:
-          mov.b       r0l, @volume
+          mov.b       r0l, @sound_volume
           rts
 ; =============================================================================
 ; Function: drv_sound_set_freq_pwm
@@ -6361,7 +6361,7 @@ drv_sound_set_freq_pwm:
           mov.b       r0l, r5l
           extu.w      r5
           mov.w       r5, r0
-          mov.b       @volume, r1l
+          mov.b       @sound_volume, r1l
           beq         LAB_384e:8
           cmp.b       #H'1, r1l
           beq         LAB_385c:8
@@ -6402,15 +6402,15 @@ LAB_3884:
 drv_sound_update:
           push.w      r6
           push.w      r5
-          mov.w       #soundData, r6
+          mov.w       #sound_dataPointer, r6
           mov.w       @er6, r0
           beq         LAB_3a44:16
-          mov.w       @noteDuration, r0
+          mov.w       @sound_noteDuration, r0
           beq         LAB_38d8:8
-          mov.w       @noteDuration, r0
+          mov.w       @sound_noteDuration, r0
           dec.w       #1, r0
-          mov.w       r0, @noteDuration
-          mov.w       @noteDuration, r0
+          mov.w       r0, @sound_noteDuration
+          mov.w       @sound_noteDuration, r0
           dec.w       #1, r0
           bne         LAB_38d0:8
           mov.w       @er6, r0
@@ -6425,12 +6425,12 @@ drv_sound_update:
           mov.b       #H'1, r0l
           mov.b       r0l, @TIOR1
 LAB_38d0:
-          mov.w       @noteDuration, r0
+          mov.w       @sound_noteDuration, r0
           bne         LAB_3a44:16
 LAB_38d8:
-          mov.w       @noteDuration, r0
+          mov.w       @sound_noteDuration, r0
           bne         LAB_3910:8
-          mov.w       @isSeparateNote, r0
+          mov.w       @sound_isSeparateNote, r0
           beq         LAB_3910:8
           mov.w       #H'140, r0
           mov.w       r0, @GRA
@@ -6438,11 +6438,11 @@ LAB_38d8:
           mov.w       r0, @GRC
           sub.w       e0, e0
           mov.w       e0, @TCNT
-          mov.w       @isSeparateNote, e0
+          mov.w       @sound_isSeparateNote, e0
           beq         LAB_3a44:16
-          mov.w       @isSeparateNote, e0
+          mov.w       @sound_isSeparateNote, e0
           dec.w       #1, e0
-          mov.w       e0, @isSeparateNote
+          mov.w       e0, @sound_isSeparateNote
           jmp         @LAB_3a44:16
 LAB_3910:
           mov.w       @er6, r0
@@ -6457,7 +6457,7 @@ LAB_3922:
           bne         LAB_3934:8
           mov.w       @er6, r0
           mov.b       @er0, r0l
-          mov.b       r0l, @soundHeader
+          mov.b       r0l, @sound_header
           mov.w       @er6, r0
           inc.w       #2, r0
           mov.w       r0, @er6
@@ -6482,7 +6482,7 @@ LAB_3948:
           mov.l       #H'14000, er0
           jsr         @$MULL$3:16
           sub.l       er1, er1
-          mov.b       @soundHeader, r1l
+          mov.b       @sound_header, r1l
           jsr         @$DIVUL$3:16
           mov.w       @er6, r1
           mov.b       @(H'1,er1), r1l
@@ -6493,7 +6493,7 @@ LAB_3948:
           extu.w      r5
           extu.l      er0
           divxu.w     r5, er0
-          mov.w       r0, @noteDuration
+          mov.w       r0, @sound_noteDuration
           sub.b       r0l, r0l
           jmp         @LAB_3a3a:16
 LAB_3990:
@@ -6505,7 +6505,7 @@ LAB_3990:
           mov.l       #H'14000, er0
           jsr         @$MULL$3:16
           sub.l       er1, er1
-          mov.b       @soundHeader, r1l
+          mov.b       @sound_header, r1l
           jsr         @$DIVUL$3:16
           mov.w       @er6, r1
           mov.b       @(H'1,er1), r1l
@@ -6516,9 +6516,9 @@ LAB_3990:
           extu.w      r5
           extu.l      er0
           divxu.w     r5, er0
-          mov.w       r0, @noteDuration
+          mov.w       r0, @sound_noteDuration
           sub.w       r0, r0
-          mov.w       r0, @isSeparateNote
+          mov.w       r0, @sound_isSeparateNote
           bra         LAB_3a0c:8
 LAB_39d0:
           sub.l       er1, er1
@@ -6526,7 +6526,7 @@ LAB_39d0:
           mov.l       #H'14000, er0
           jsr         @$MULL$3:16
           sub.l       er1, er1
-          mov.b       @soundHeader, r1l
+          mov.b       @sound_header, r1l
           jsr         @$DIVUL$3:16
           sub.w       #H'140, r0
           mov.w       @er6, r1
@@ -6538,9 +6538,9 @@ LAB_39d0:
           extu.w      r5
           extu.l      er0
           divxu.w     r5, er0
-          mov.w       r0, @noteDuration
+          mov.w       r0, @sound_noteDuration
           mov.w       #H'1, r0
-          mov.w       r0, @isSeparateNote
+          mov.w       r0, @sound_isSeparateNote
 LAB_3a0c:
           mov.w       @er6, r0
           mov.w       #ACCEL_SAMPLES_X, r1
@@ -21407,15 +21407,15 @@ sys_heapPointer:
           .RES.B      2
 nextRandom:
           .RES.B      4
-soundData:
+sound_dataPointer:
           .RES.B      2
-volume:
+sound_volume:
           .RES.B      2
-noteDuration:
+sound_noteDuration:
           .RES.B      2
-isSeparateNote:
+sound_isSeparateNote:
           .RES.B      2
-soundHeader:
+sound_header:
           .RES.B      2
 ui_substateY:
           .RES.B      1

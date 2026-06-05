@@ -2,7 +2,7 @@
 
 // ROM: 0x369c  89.2%
 uint8_t drv_sound_is_playing(void) {
-  if (g.soundData == NULL) {
+  if (g.sound_dataPointer == NULL) {
     return 0;
   }
   return 1;
@@ -10,8 +10,8 @@ uint8_t drv_sound_is_playing(void) {
 
 // ROM: 0x36aa  95.4%
 void drv_timerw_init(void) {
-  g.soundHeader = 0x78;
-  g.volume = 0;
+  g.sound_header = 0x78;
+  g.sound_volume = 0;
   PCR8 |= 0x0C;
   PDR8 &= ~0x04;
   PDR8 &= ~0x08;
@@ -23,7 +23,7 @@ void drv_timerw_init(void) {
   GRB = 0;
   GRC = 0;
   CKSTPR2 &= ~0x40;
-  g.soundData = NULL;
+  g.sound_dataPointer = NULL;
 }
 
 // ROM: 0x37d6  80.3%
@@ -51,14 +51,14 @@ void drv_timerw_disable(void) {
 
 // ROM: 0x3832  100.0%
 void drv_sound_set_volume(uint8_t v) {
-  g.volume = v;
+  g.sound_volume = v;
   (void)0;
 }
 
 // ROM: 0x3838  72.6%
 void drv_sound_set_freq_pwm(uint8_t freq) {
   uint16_t f = freq;
-  switch (g.volume) {
+  switch (g.sound_volume) {
   case 0:
     GRA = f;
     GRB = f;
@@ -81,9 +81,9 @@ void drv_sound_set_freq_pwm(uint8_t freq) {
 
 // ROM: 0x37c6  100.0%
 void drv_sound_set_data(uint8_t *data) {
-  g.soundData = data;
-  g.noteDuration = 0;
-  g.isSeparateNote = 0;
+  g.sound_dataPointer = data;
+  g.sound_noteDuration = 0;
+  g.sound_isSeparateNote = 0;
 }
 
 // ROM: 0x36f2  71.0%  saves: er3,er4,er5,er6
@@ -98,7 +98,7 @@ void drv_sound_play(uint8_t sound_idx) {
     uint8_t chk;
   } metadata;
 
-  if (g.volume == 0)
+  if (g.sound_volume == 0)
     return;
 
   TIERW &= ~0x01;
@@ -111,26 +111,26 @@ void drv_sound_play(uint8_t sound_idx) {
     goto end;
   }
 
-  g.soundData = ACCEL_SAMPLES_X;
-  drv_eeprom_read_block((uint16_t)(uintptr_t)src_ptr, g.soundData, metadata.len);
+  g.sound_dataPointer = ACCEL_SAMPLES_X;
+  drv_eeprom_read_block((uint16_t)(uintptr_t)src_ptr, g.sound_dataPointer, metadata.len);
 
   sum = 0;
   i = 0;
   while (i < (metadata.len >> 1)) {
-    sum += g.soundData[i * 2];
-    sum += g.soundData[i * 2 + 1];
+    sum += g.sound_dataPointer[i * 2];
+    sum += g.sound_dataPointer[i * 2 + 1];
     i++;
   }
 
   if (sum == metadata.chk) {
-    if ((g.soundData[(metadata.len >> 1) * 2 - 1] & 0x7F) >= 0x7E) {
-      g.noteDuration = 0;
-      g.isSeparateNote = 0;
+    if ((g.sound_dataPointer[(metadata.len >> 1) * 2 - 1] & 0x7F) >= 0x7E) {
+      g.sound_noteDuration = 0;
+      g.sound_isSeparateNote = 0;
     } else {
-      g.soundData = NULL;
+      g.sound_dataPointer = NULL;
     }
   } else {
-    g.soundData = NULL;
+    g.sound_dataPointer = NULL;
   }
 
 end:
@@ -140,83 +140,83 @@ end:
 // ROM: 0x388c  62.8%  saves: r6,r5
 #pragma option noregexpansion  /* pragma:auto */
 void drv_sound_update(void) {
-  if (g.soundData == NULL)
+  if (g.sound_dataPointer == NULL)
     return;
 
-  if (g.noteDuration != 0) {
-    g.noteDuration--;
-    if (g.noteDuration == 1) {
-      if ((g.soundData[1] & 0x7F) == 0x7F) {
+  if (g.sound_noteDuration != 0) {
+    g.sound_noteDuration--;
+    if (g.sound_noteDuration == 1) {
+      if ((g.sound_dataPointer[1] & 0x7F) == 0x7F) {
         TMRW = 0x80;
         TIOR0 = 0x10;
         TIOR1 = 0x01;
       }
     }
-    if (g.noteDuration != 0)
+    if (g.sound_noteDuration != 0)
       return;
   }
 
-  if (g.noteDuration == 0) {
-    if (g.isSeparateNote != 0) {
+  if (g.sound_noteDuration == 0) {
+    if (g.sound_isSeparateNote != 0) {
       GRA = 0x140;
       GRB = 0x140;
       GRC = 0x140;
       TCNT = 0;
-      if (g.isSeparateNote != 0) {
-        g.isSeparateNote--;
+      if (g.sound_isSeparateNote != 0) {
+        g.sound_isSeparateNote--;
       }
       return;
     }
   }
 
-  if ((g.soundData[1] & 0x7F) == 0x7F) {
-    g.soundData = NULL;
+  if ((g.sound_dataPointer[1] & 0x7F) == 0x7F) {
+    g.sound_dataPointer = NULL;
     return;
   }
 
-  if ((g.soundData[1] & 0x7F) == 0x7B) {
-    g.soundHeader = g.soundData[0];
-    g.soundData += 2;
+  if ((g.sound_dataPointer[1] & 0x7F) == 0x7B) {
+    g.sound_header = g.sound_dataPointer[0];
+    g.sound_dataPointer += 2;
   }
 
-  if ((g.soundData[1] & 0x7F) == 0x7E) {
-    g.soundData = ACCEL_SAMPLES_X;
+  if ((g.sound_dataPointer[1] & 0x7F) == 0x7E) {
+    g.sound_dataPointer = ACCEL_SAMPLES_X;
     return;
   }
 
-  if ((g.soundData[1] & 0x7F) == 0x7D) {
-    uint32_t t = (uint32_t)0x14000 * g.soundData[0];
-    uint16_t d = (uint16_t)(t / g.soundHeader);
-    uint8_t divisor = SOUND_PERIOD_TABLE[g.soundData[1] & 0x7F];
-    g.noteDuration = (uint32_t)d / divisor;
+  if ((g.sound_dataPointer[1] & 0x7F) == 0x7D) {
+    uint32_t t = (uint32_t)0x14000 * g.sound_dataPointer[0];
+    uint16_t d = (uint16_t)(t / g.sound_header);
+    uint8_t divisor = SOUND_PERIOD_TABLE[g.sound_dataPointer[1] & 0x7F];
+    g.sound_noteDuration = (uint32_t)d / divisor;
     drv_sound_set_freq_pwm(0);
-    g.soundData += 2;
+    g.sound_dataPointer += 2;
     return;
   }
 
-  if (g.soundData[1] & 0x80) {
-    uint32_t t = (uint32_t)0x14000 * g.soundData[0];
-    uint16_t d = (uint16_t)(t / g.soundHeader);
-    uint8_t divisor = SOUND_PERIOD_TABLE[g.soundData[1] & 0x7F];
-    g.noteDuration = (uint32_t)d / divisor;
-    g.isSeparateNote = 0;
+  if (g.sound_dataPointer[1] & 0x80) {
+    uint32_t t = (uint32_t)0x14000 * g.sound_dataPointer[0];
+    uint16_t d = (uint16_t)(t / g.sound_header);
+    uint8_t divisor = SOUND_PERIOD_TABLE[g.sound_dataPointer[1] & 0x7F];
+    g.sound_noteDuration = (uint32_t)d / divisor;
+    g.sound_isSeparateNote = 0;
   } else {
-    uint32_t t = (uint32_t)0x14000 * g.soundData[0];
-    uint16_t d = (uint16_t)(t / g.soundHeader);
-    uint8_t divisor = SOUND_PERIOD_TABLE[g.soundData[1] & 0x7F];
+    uint32_t t = (uint32_t)0x14000 * g.sound_dataPointer[0];
+    uint16_t d = (uint16_t)(t / g.sound_header);
+    uint8_t divisor = SOUND_PERIOD_TABLE[g.sound_dataPointer[1] & 0x7F];
     d -= 0x140;
-    g.noteDuration = (uint32_t)d / divisor;
-    g.isSeparateNote = 1;
+    g.sound_noteDuration = (uint32_t)d / divisor;
+    g.sound_isSeparateNote = 1;
   }
 
-  if (g.soundData != ACCEL_SAMPLES_X) {
-    if ((g.soundData[-1] & 0x80) != 0x80) {
+  if (g.sound_dataPointer != ACCEL_SAMPLES_X) {
+    if ((g.sound_dataPointer[-1] & 0x80) != 0x80) {
       TMRW = 0x83;
       TCRW = 0xC2;
-      drv_sound_set_freq_pwm(SOUND_PERIOD_TABLE[g.soundData[1] & 0x7F]);
+      drv_sound_set_freq_pwm(SOUND_PERIOD_TABLE[g.sound_dataPointer[1] & 0x7F]);
     }
   }
 
-  g.soundData += 2;
+  g.sound_dataPointer += 2;
 }
 

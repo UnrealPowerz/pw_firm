@@ -4,11 +4,11 @@
  * Settings view (VIEW_SETTINGS).
  *
  * Three-page state machine driven by g.ui_substateY:
- *   SETTINGS_MENU    = 0   main settings list (g.volume / shade rows)
- *   SETTINGS_VOLUME  = 1   g.volume adjustment sub-page
+ *   SETTINGS_MENU    = 0   main settings list (g.sound_volume / shade rows)
+ *   SETTINGS_VOLUME  = 1   g.sound_volume adjustment sub-page
  *   SETTINGS_SHADE   = 2   contrast/shade adjustment sub-page
  *
- * On the main page, g.ui_substateZ is the within-page cursor: 0 = g.volume row,
+ * On the main page, g.ui_substateZ is the within-page cursor: 0 = g.sound_volume row,
  * 1 = shade row. Pressing R from the main page enters the highlighted row
  * (g.ui_substateY = g.ui_substateZ + 1). Pressing R from a sub-page commits
  * the new setting and exits to home.
@@ -113,7 +113,7 @@ void ui_handle_settings(void) {
   if (drv_button_is_triggered(BTN_R)) {
     if (g.ui_substateY == SETTINGS_MENU) {
       /* R on the main settings menu enters the highlighted row. The within-
-         page cursor (g.ui_substateZ) is 0 for g.volume and 1 for shade; +1 maps
+         page cursor (g.ui_substateZ) is 0 for g.sound_volume and 1 for shade; +1 maps
          to SETTINGS_VOLUME / SETTINGS_SHADE. */
       drv_sound_play(SND_CONFIRM);
       g.ui_substateY = g.ui_substateZ + 1;
@@ -155,7 +155,7 @@ void ui_render_settings(void) {
 
   drv_eeprom_read_block(0x4F8, buf, 0xC0);
 
-  /* Within-page cursor x: 0 = g.volume row, 0x30 = shade row. */
+  /* Within-page cursor x: 0 = g.sound_volume row, 0x30 = shade row. */
   cursor_x = g.ui_substateZ * 0x30;
 
   if (g.ui_substateY == SETTINGS_MENU) {

@@ -70,7 +70,7 @@ void sys_begin_ir_session(event_loop_func_t current_loop,
    * when we exit connect and interrupts come back, drv_sound_update will
    * try to play that garbage as notes — producing a continuous screech.
    * Stop any in-progress sound up front. */
-  g.soundData = NULL;
+  g.sound_dataPointer = NULL;
   if (!(sys_walkerFlags_BIT.session_active)) {
     drv_lcd_clear_pages(0x40);
     ui_render_happy_walker(0);

@@ -94,7 +94,7 @@ typedef union {
     struct {
         uint8_t          : 1;  /* bit 7 unused */
         uint8_t contrast : 4;  /* bits 6-3 -- (>>3 & 0xF) in flat form */
-        uint8_t volume   : 2;  /* bits 2-1 -- (>>1 & 0x3) in flat form */
+        uint8_t sound_volume   : 2;  /* bits 2-1 -- (>>1 & 0x3) in flat form */
         uint8_t mute     : 1;  /* bit 0 -- 0x01 */
     } BIT;
 } settings_byte_t;
