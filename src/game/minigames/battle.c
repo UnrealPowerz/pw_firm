@@ -29,14 +29,14 @@
  * Globals repurposed for battle (all named for their non-battle use):
  *   g.ui_substateA      = wiggle/turn counter
  *   g.ui_substateY      = pokemon kind (1..3 wild route slot, 4 peer)
- *   g.accel_xPosition          = per-state animation tick (counts up to g.dowsing_item_pos)
+ *   g.accel_xPosition          = per-state animation tick (counts up to g.dowsing_itemPosition)
  *   g.accel_yPosition          = pokemon sprite y position (animation frame)
  *   g.accel_zPosition          = g.save_watts paid on loss (state 5)
  *   g.DAT_f7d1           = HP/wiggle bar segments left
  *   g.DAT_f7d5           = pokemon sprite x position / ball x position
  *   g.DAT_f7d8           = packed flags byte (see above)
  *   g.DAT_f7d8_1         = wiggle-success counter (3 caps capture)
- *   g.dowsing_item_pos   = state-dwell length (frames to wait before advancing)
+ *   g.dowsing_itemPosition   = state-dwell length (frames to wait before advancing)
  */
 
 enum battle_state {
@@ -151,7 +151,7 @@ void ui_render_battle(void) {
       }
       break;
     case BS_APPEARED:
-      if (g.accel_xPosition >= g.dowsing_item_pos) {
+      if (g.accel_xPosition >= g.dowsing_itemPosition) {
         if (!drv_sound_is_playing()) {
           if (g.ui_substateY < 4) {
             gfx_draw_route_pokemon_name(0x00, 0x20,
@@ -336,8 +336,8 @@ void ui_render_battle(void) {
   switch_default:
     gfx_draw_battery_low(0, 0);
     g.accel_xPosition++;
-    if (g.accel_xPosition > g.dowsing_item_pos) {
-      g.accel_xPosition = g.dowsing_item_pos;
+    if (g.accel_xPosition > g.dowsing_itemPosition) {
+      g.accel_xPosition = g.dowsing_itemPosition;
     }
   }
 }
@@ -348,7 +348,7 @@ void game_start_battle(void) {
   g.ui_substateA = 4;          /* 4 player HP/turn pips */
   g.DAT_f7d1 = 4;               /* 4 wild HP/wiggle pips */
   g.accel_xPosition = 0;
-  g.dowsing_item_pos = 6;       /* state-0 intro dwell length */
+  g.dowsing_itemPosition = 6;       /* state-0 intro dwell length */
   g.accel_yPosition = 0x38;
   g.DAT_f7d5 = 0xE0;
   g.DAT_f7d8 &= 0x1E;           /* preserve bits 1-4, clear move-class + flag */
@@ -391,7 +391,7 @@ void game_battle_process_turn(void) {
     if (outcome != 3) {
       g.ui_substateZ = BS_ATTACK_ANIM;
       g.accel_xPosition = 0;
-      g.dowsing_item_pos = 8;
+      g.dowsing_itemPosition = 8;
       return;
     }
   }
@@ -406,18 +406,18 @@ void game_battle_process_turn(void) {
       drv_sound_play(SND_FLED);
       g.ui_substateZ = BS_FLED;
       g.accel_xPosition = 0;
-      g.dowsing_item_pos = 0x0A;
+      g.dowsing_itemPosition = 0x0A;
       return;
     } else if (sub_mode == 1) {
       drv_sound_play(SND_CONFIRM);
       g.ui_substateZ = BS_STARE_DOWN;
       g.accel_xPosition = 0;
-      g.dowsing_item_pos = 6;
+      g.dowsing_itemPosition = 6;
       return;
     } else if (sub_mode == 0) {
       g.ui_substateZ = BS_COUNTER_ANIM;
       g.accel_xPosition = 0;
-      g.dowsing_item_pos = 8;
+      g.dowsing_itemPosition = 8;
       return;
     }
   }
@@ -427,7 +427,7 @@ void game_battle_process_turn(void) {
     drv_sound_play(SND_BALL_THROW);
     g.ui_substateZ = BS_THROW_BALL;
     g.accel_xPosition = 0;
-    g.dowsing_item_pos = 6;
+    g.dowsing_itemPosition = 6;
   }
 }
 
@@ -528,7 +528,7 @@ void game_battle_handle_finish(void) {
 
 // Reason: ROM hoists `mov.l #0x880000, er5` (ER-packing of constants 0x88
 //   and 0) plus `mov.w #0xBE, e6` at entry, and pre-loads g.accel_xPosition/
-//   g.dowsing_item_pos into r6l/r6h before the dispatch. ch38 inlines all of
+//   g.dowsing_itemPosition into r6l/r6h before the dispatch. ch38 inlines all of
 //   these at their use sites. ROM has no prologue; ch38 emits `$sp_regsv$3`.
 //   Body switch-jump-table structure matches.
 // Class: cannot-fix-without-compiler-change (ER-packing + no-prologue + constant
@@ -537,7 +537,7 @@ void game_battle_handle_finish(void) {
 void ui_handle_battle(void) {
   uint8_t state = (uint8_t)g.ui_substateZ;
   uint8_t tick = g.accel_xPosition;
-  uint8_t dwell = g.dowsing_item_pos;
+  uint8_t dwell = g.dowsing_itemPosition;
 
   if (state == BS_PICK_MOVE) {
     /* State 2 input handling is its own function. */
@@ -554,12 +554,12 @@ void ui_handle_battle(void) {
       return;
     g.ui_substateZ = BS_APPEARED;
     g.accel_xPosition = 0;
-    g.dowsing_item_pos = 3;
+    g.dowsing_itemPosition = 3;
     break;
 
   case BS_APPEARED:
     g.DAT_f7d5 = BATTLE_ANIM_P1_X[tick];
-    if (g.accel_xPosition < g.dowsing_item_pos)
+    if (g.accel_xPosition < g.dowsing_itemPosition)
       return;
     DAT_f7d8_BIT.b0 = 1;        /* started_fight flag */
     if (drv_sound_is_playing())
@@ -612,12 +612,12 @@ void ui_handle_battle(void) {
     drv_sound_play(SND_FLED);
     g.ui_substateZ = BS_FLED;
     g.accel_xPosition = 0;
-    g.dowsing_item_pos = 0x0A;
+    g.dowsing_itemPosition = 0x0A;
     break;
   enter_counter:
     g.ui_substateZ = BS_COUNTER_ANIM;
     g.accel_xPosition = 0;
-    g.dowsing_item_pos = 8;
+    g.dowsing_itemPosition = 8;
   } break;
 
   case BS_COUNTER_ANIM: {
@@ -641,7 +641,7 @@ void ui_handle_battle(void) {
       if (new_a == 0) {
         g.ui_substateZ = BS_DEFEATED;
         g.accel_xPosition = 0;
-        g.dowsing_item_pos = 6;
+        g.dowsing_itemPosition = 6;
         return;
       }
       /* Rotate to next move-class encoded in bits 3-4. */
@@ -659,7 +659,7 @@ void ui_handle_battle(void) {
     if (sub == 1) {
       g.ui_substateZ = BS_ATTACK_ANIM;
       g.accel_xPosition = 0;
-      g.dowsing_item_pos = 8;
+      g.dowsing_itemPosition = 8;
       return;
     }
     return;
@@ -692,7 +692,7 @@ void ui_handle_battle(void) {
     }
     g.ui_substateZ = BS_LOST;
     g.accel_xPosition = 0;
-    g.dowsing_item_pos = 8;
+    g.dowsing_itemPosition = 8;
     break;
 
   case BS_LOST:
@@ -742,7 +742,7 @@ void ui_handle_battle(void) {
     drv_sound_play(SND_FLED);
     g.ui_substateZ = BS_FLED;
     g.accel_xPosition = 0;
-    g.dowsing_item_pos = 0x0A;
+    g.dowsing_itemPosition = 0x0A;
     break;
 
   case BS_THROW_BALL:
@@ -752,7 +752,7 @@ void ui_handle_battle(void) {
     g.DAT_f7d8 &= ~0x01;
     g.ui_substateZ = BS_BALL_FLY;
     g.accel_xPosition = 0;
-    g.dowsing_item_pos = 2;
+    g.dowsing_itemPosition = 2;
     break;
 
   case BS_BALL_FLY:
@@ -760,7 +760,7 @@ void ui_handle_battle(void) {
       return;
     g.ui_substateZ = BS_BALL_LAND;
     g.accel_xPosition = 0;
-    g.dowsing_item_pos = 3;
+    g.dowsing_itemPosition = 3;
     break;
 
   case BS_BALL_LAND:
@@ -768,7 +768,7 @@ void ui_handle_battle(void) {
       return;
     g.ui_substateZ = BS_WIGGLE_ROLL;
     g.accel_xPosition = 0;
-    g.dowsing_item_pos = 4;
+    g.dowsing_itemPosition = 4;
     break;
 
   case BS_WIGGLE_CHECK:
@@ -778,12 +778,12 @@ void ui_handle_battle(void) {
     if (g.DAT_f7d8_1 >= 3) {
       g.ui_substateZ = BS_CAUGHT_FANFARE;
       g.accel_xPosition = 0;
-      g.dowsing_item_pos = 6;
+      g.dowsing_itemPosition = 6;
       drv_sound_play(SND_FANFARE);
     } else {
       g.ui_substateZ = BS_WIGGLE_ROLL;
       g.accel_xPosition = 0;
-      g.dowsing_item_pos = 4;
+      g.dowsing_itemPosition = 4;
     }
     break;
 
@@ -795,11 +795,11 @@ void ui_handle_battle(void) {
       g.DAT_f7d8_1++;
       g.ui_substateZ = BS_WIGGLE_CHECK;
       g.accel_xPosition = 0;
-      g.dowsing_item_pos = 4;
+      g.dowsing_itemPosition = 4;
     } else {
       g.ui_substateZ = BS_BALL_MISS;
       g.accel_xPosition = 0;
-      g.dowsing_item_pos = 1;
+      g.dowsing_itemPosition = 1;
     }
     break;
 
@@ -809,7 +809,7 @@ void ui_handle_battle(void) {
       return;
     g.ui_substateZ = BS_CAUGHT_TEXT;
     g.accel_xPosition = 0;
-    g.dowsing_item_pos = 6;
+    g.dowsing_itemPosition = 6;
     drv_sound_play(SND_FANFARE);
     break;
 
@@ -832,7 +832,7 @@ void ui_handle_battle(void) {
       return;
     g.ui_substateZ = BS_ALMOST_HAD_IT;
     g.accel_xPosition = 0;
-    g.dowsing_item_pos = 6;
+    g.dowsing_itemPosition = 6;
     break;
   }
 }

@@ -60,40 +60,40 @@ void game_calculate_interaction_reward(void) {
     }
   }
 
-  g.dowsing_item_pos = 0;
+  g.dowsing_itemPosition = 0;
   if (free_slot < 10) {
     /* Watts award = score/200, clamped to [1, 99]. */
-    g.dowsing_item_pos = (uint8_t)(score / 200);
-    if (g.dowsing_item_pos == 0) {
-      g.dowsing_item_pos = 1;
+    g.dowsing_itemPosition = (uint8_t)(score / 200);
+    if (g.dowsing_itemPosition == 0) {
+      g.dowsing_itemPosition = 1;
     }
-    if (g.dowsing_item_pos > 99) {
-      g.dowsing_item_pos = 99;
+    if (g.dowsing_itemPosition > 99) {
+      g.dowsing_itemPosition = 99;
     }
-    game_add_watts(g.dowsing_item_pos);
+    game_add_watts(g.dowsing_itemPosition);
   }
 
   /* Pick the result-text index (g.DAT_f7d1 = 0x2C..0x30 → TEXT_HAD_ADVENTURES,
      PLAY_BATTLED, etc.) and the dowsing-item index based on score tier. */
   if (score >= 20000) {
     g.DAT_f7d1 = 0x2C;
-    if (g.dowsing_item_pos != 0) return;
+    if (g.dowsing_itemPosition != 0) return;
     g.accel_xPosition = (g.session_steps > *(uint32_t *)peer_steps) ? 0 : 1;
   } else if (score >= 10000) {
     g.DAT_f7d1 = 0x2D;
-    if (g.dowsing_item_pos != 0) return;
+    if (g.dowsing_itemPosition != 0) return;
     g.accel_xPosition = (g.session_steps > *(uint32_t *)peer_steps) ? 2 : 3;
   } else if (score >= 5000) {
     g.DAT_f7d1 = 0x2E;
-    if (g.dowsing_item_pos != 0) return;
+    if (g.dowsing_itemPosition != 0) return;
     g.accel_xPosition = (g.session_steps > *(uint32_t *)peer_steps) ? 4 : 5;
   } else if (score >= 2500) {
     g.DAT_f7d1 = 0x2F;
-    if (g.dowsing_item_pos != 0) return;
+    if (g.dowsing_itemPosition != 0) return;
     g.accel_xPosition = (g.session_steps > *(uint32_t *)peer_steps) ? 6 : 7;
   } else {
     g.DAT_f7d1 = 0x30;
-    if (g.dowsing_item_pos != 0) return;
+    if (g.dowsing_itemPosition != 0) return;
     g.accel_xPosition = (g.session_steps > *(uint32_t *)peer_steps) ? 8 : 9;
   }
 
@@ -225,8 +225,8 @@ void ui_render_peer_play(void) {
     gfx_draw_text_box(0x30, TEXT_HERES_A_GIFT, TEXT_BOX_FULL, TEXT_BOX_STATIC);
   } else if (z == 4) {
     gfx_draw_present_icon(0x20, 0x04);
-    if (g.dowsing_item_pos != 0) {
-      gfx_draw_value_with_icon(0x02, 0x20, 0x0D, (uint16_t)g.dowsing_item_pos);
+    if (g.dowsing_itemPosition != 0) {
+      gfx_draw_value_with_icon(0x02, 0x20, 0x0D, (uint16_t)g.dowsing_itemPosition);
     } else {
       gfx_draw_item_name(0x00, 0x20, (uint8_t)g.accel_xPosition, 0x0D);
     }

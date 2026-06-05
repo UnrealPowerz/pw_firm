@@ -330,7 +330,7 @@ void ui_handle_factory_test(void) {
     } while (s1 != s2);
     g.DAT_f7d1 = s1;
     diag_eeprom_factory_test(0x300);
-    g.dowsing_item_pos = (uint8_t)diag_eeprom_factory_test(0x300);
+    g.dowsing_itemPosition = (uint8_t)diag_eeprom_factory_test(0x300);
     sys_factory_reset_eeprom(1, 1);
     do {
       while (RSECDR & 0x80)
@@ -343,10 +343,10 @@ void ui_handle_factory_test(void) {
   }
 
   case 0x0C:
-    /* EEPROM result gate — `g.dowsing_item_pos` here doubles as a generic
+    /* EEPROM result gate — `g.dowsing_itemPosition` here doubles as a generic
        pass-flag (1=passed, 0=failed). Wait for the renderer to settle
        then advance with sound. NG2 is shown if it failed. */
-    if (g.dowsing_item_pos == 0) {
+    if (g.dowsing_itemPosition == 0) {
       return;
     }
     if (subA < 4) {
@@ -359,17 +359,17 @@ void ui_handle_factory_test(void) {
     uint16_t val;
     save_read_reliable(EEPROM_ACCEL_CAL, EEPROM_ACCEL_CAL_BACKUP, (void *)&g.accel_yPosition, 2);
     val = g.accel_yPosition;
-    g.dowsing_item_pos = drv_adc_validate_calib_checksum(val);
+    g.dowsing_itemPosition = drv_adc_validate_calib_checksum(val);
     if (val != 0) {
       goto do_inc;
     }
-    g.dowsing_item_pos = 0;
+    g.dowsing_itemPosition = 0;
     goto set_substate_y_and_clear_a;
   }
 
   case 0x0E:
-    /* Accel calibration result gate. NG3 if g.dowsing_item_pos == 0. */
-    if (g.dowsing_item_pos == 0) {
+    /* Accel calibration result gate. NG3 if g.dowsing_itemPosition == 0. */
+    if (g.dowsing_itemPosition == 0) {
       return;
     }
     if (subA < 4) {
@@ -388,12 +388,12 @@ void ui_handle_factory_test(void) {
   case 0x10:
     /* Re-init the accel driver and arm the result check. */
     drv_accel_init();
-    g.dowsing_item_pos = 0;
+    g.dowsing_itemPosition = 0;
     goto do_inc;
 
   case 0x11:
     /* Accel init result gate. NG5 if pass-flag still 0. */
-    if (g.dowsing_item_pos == 0) {
+    if (g.dowsing_itemPosition == 0) {
       return;
     }
     goto do_sound_and_inc;
@@ -505,14 +505,14 @@ void ui_render_factory_test(void) {
     goto case_d;
 
   case 0x0C:
-    if (g.dowsing_item_pos != 0) {
+    if (g.dowsing_itemPosition != 0) {
       goto case_d;
     }
     draw_string(0x20, 0x08, FACTORY_STR_NG2);
     goto case_d;
 
   case 0x0E:
-    if (g.dowsing_item_pos != 0) {
+    if (g.dowsing_itemPosition != 0) {
       goto case_d;
     }
     draw_string(0x20, 0x08, FACTORY_STR_NG3);
@@ -526,7 +526,7 @@ void ui_render_factory_test(void) {
     goto case_d;
 
   case 0x11:
-    if (g.dowsing_item_pos != 0) {
+    if (g.dowsing_itemPosition != 0) {
       goto case_d;
     }
     draw_string(0x20, 0x08, FACTORY_STR_NG5);

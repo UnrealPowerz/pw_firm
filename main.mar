@@ -4760,7 +4760,7 @@ game_start_battle:
           mov.b       r0h, @DAT_f7d1
           mov.b       r0l, @accel_xPosition
           mov.b       #H'6, r1l
-          mov.b       r1l, @dowsing_item_pos
+          mov.b       r1l, @dowsing_itemPosition
           mov.b       #H'38, r1l
           mov.b       r1l, @accel_yPosition
           mov.b       #H'E0, r1l
@@ -4907,7 +4907,7 @@ LAB_2a84:
           mov.b       r0l, @accel_xPosition
           mov.b       #H'6, r0l
 LAB_2a90:
-          mov.b       r0l, @dowsing_item_pos
+          mov.b       r0l, @dowsing_itemPosition
 LAB_2a94:
           rts
 ; =============================================================================
@@ -5109,7 +5109,7 @@ ui_handle_battle:
           jmp         @switchD_2c92__caseD_2:16
 LAB_2c7c:
           mov.b       @accel_xPosition, r6l
-          mov.b       @dowsing_item_pos, r6h
+          mov.b       @dowsing_itemPosition, r6h
           cmp.b       #H'11, r0l
           bhi         switchD_2c92__caseD_2:16
           extu.w      r0
@@ -5128,7 +5128,7 @@ switchD_2c92__caseD_1:
           mov.b       @(BATTLE_ANIM_P1_X,er0), r0l
           mov.b       r0l, @DAT_f7d5
           mov.b       @accel_xPosition, r0l
-          mov.b       @dowsing_item_pos, r0h
+          mov.b       @dowsing_itemPosition, r0h
           cmp.b       r0h, r0l
           bcs         switchD_2c92__caseD_2:16
           mov.w       #DAT_f7d8, r0
@@ -5156,7 +5156,7 @@ switchD_2c92__caseD_3:
           mov.b       r0l, r0l
           bne         switchD_2c92__caseD_2:16
           mov.b       @accel_xPosition, r0l
-          mov.b       @dowsing_item_pos, r0h
+          mov.b       @dowsing_itemPosition, r0h
           cmp.b       r0h, r0l
           bcs         switchD_2c92__caseD_2:16
           mov.b       #H'38, r0l
@@ -5228,7 +5228,7 @@ switchD_2c92__caseD_4:
           mov.b       r0l, r0l
           bne         switchD_2c92__caseD_2:16
           mov.b       @accel_xPosition, r0l
-          mov.b       @dowsing_item_pos, r0h
+          mov.b       @dowsing_itemPosition, r0h
           cmp.b       r0h, r0l
           bcs         switchD_2c92__caseD_2:16
           mov.b       #H'38, r0l
@@ -5472,7 +5472,7 @@ LAB_3018:
           sub.b       r0l, r0l
           mov.b       r0l, @accel_xPosition
           mov.b       #H'6, r0h
-          mov.b       r0h, @dowsing_item_pos
+          mov.b       r0h, @dowsing_itemPosition
           bra         LAB_3044:8
 switchD_2c92__caseD_f:
           cmp.b       r6h, r6l
@@ -5482,7 +5482,7 @@ switchD_2c92__caseD_f:
           sub.b       r0l, r0l
           mov.b       r0l, @accel_xPosition
           mov.b       #H'6, r0l
-          mov.b       r0l, @dowsing_item_pos
+          mov.b       r0l, @dowsing_itemPosition
           mov.b       #H'7, r0l
 LAB_3044:
           jsr         @drv_sound_play:16
@@ -5513,7 +5513,7 @@ LAB_3076:
           mov.b       r0l, @accel_xPosition
           mov.b       #H'6, r0l
 LAB_3082:
-          mov.b       r0l, @dowsing_item_pos
+          mov.b       r0l, @dowsing_itemPosition
           bra         switchD_2c92__caseD_2:8
 switchD_2c92__caseD_9:
           cmp.b       r6h, r6l
@@ -5525,7 +5525,7 @@ switchD_2c92__caseD_9:
           sub.b       r0l, r0l
           mov.b       r0l, @accel_xPosition
           mov.b       #H'A, r0l
-          mov.b       r0l, @dowsing_item_pos
+          mov.b       r0l, @dowsing_itemPosition
 switchD_2c92__caseD_2:
           rts
 ; =============================================================================
@@ -5767,7 +5767,7 @@ switchD_3296__caseD_0:
           jmp         @switchD_3296__default:16
 switchD_3296__caseD_1:
           mov.b       @accel_xPosition, r0l
-          mov.b       @dowsing_item_pos, r0h
+          mov.b       @dowsing_itemPosition, r0h
           cmp.b       r0h, r0l
           bcs         switchD_3296__default:16
           jsr         @drv_sound_is_playing:16
@@ -6136,7 +6136,7 @@ switchD_3296__default:
           mov.b       @accel_xPosition, r0l
           inc.b       r0l
           mov.b       r0l, @accel_xPosition
-          mov.b       @dowsing_item_pos, r0h
+          mov.b       @dowsing_itemPosition, r0h
           cmp.b       r0h, r0l
           bcs         LAB_369a:8
           mov.b       r0h, r0l
@@ -8058,7 +8058,7 @@ game_init_dowsing:
           mov.w       #H'6, r2
           divxs.w     r2, er0
           mov.w       e0, r0
-          mov.b       r0l, @dowsing_item_pos
+          mov.b       r0l, @dowsing_itemPosition
           mov.b       #H'FF, r0l
           mov.b       r0l, @accel_yPosition
           sub.b       r0l, r0l
@@ -8138,7 +8138,7 @@ LAB_4874:
           mov.b       r0l, r0l
           bne         LAB_499a:16
           mov.b       @DAT_f7d1, r0l
-          mov.b       @dowsing_item_pos, r0h
+          mov.b       @dowsing_itemPosition, r0h
           cmp.b       r0h, r0l
           bne         LAB_48a6:8
           mov.b       #H'2, r0l
@@ -8779,7 +8779,7 @@ LAB_4ece:
           jsr         @drv_eeprom_read_block:16
           mov.w       #H'3, e6
 LAB_4ef4:
-          mov.b       @dowsing_item_pos, r0l
+          mov.b       @dowsing_itemPosition, r0l
           mov.b       #H'10, r0h
           mulxu.b     r0h, r0
           add.b       #H'4, r0l
@@ -8794,7 +8794,7 @@ LAB_4f10:
           mov.b       @DAT_f7d1, r0l
           extu.w      r0
           mov.w       r0, r1
-          mov.b       @dowsing_item_pos, r6l
+          mov.b       @dowsing_itemPosition, r6l
           extu.w      r6
           mov.w       r6, e6
           sub.w       e6, r0
@@ -11123,32 +11123,32 @@ LAB_63ee:
           bcs         LAB_63ee:8
 LAB_6402:
           sub.b       r0l, r0l
-          mov.b       r0l, @dowsing_item_pos
+          mov.b       r0l, @dowsing_itemPosition
           cmp.b       #H'A, r5l
           bcs         LAB_6438:8
           mov.l       er3, er0
           sub.l       er1, er1
           mov.b       #H'C8, r1l
           jsr         @$DIVUL$3:16
-          mov.b       r0l, @dowsing_item_pos
+          mov.b       r0l, @dowsing_itemPosition
           bne         LAB_6422:8
           mov.b       #H'1, r0l
-          mov.b       r0l, @dowsing_item_pos
+          mov.b       r0l, @dowsing_itemPosition
 LAB_6422:
-          mov.b       @dowsing_item_pos, r0l
+          mov.b       @dowsing_itemPosition, r0l
           cmp.b       #H'63, r0l
           bls         LAB_6430:8
           mov.b       #H'63, r0l
-          mov.b       r0l, @dowsing_item_pos
+          mov.b       r0l, @dowsing_itemPosition
 LAB_6430:
-          mov.b       @dowsing_item_pos, r0l
+          mov.b       @dowsing_itemPosition, r0l
           jsr         @game_add_watts:16
 LAB_6438:
           cmp.l       #H'4E20, er3
           bcs         LAB_6468:8
           mov.b       #H'2C, r0l
           mov.b       r0l, @DAT_f7d1
-          mov.b       @dowsing_item_pos, r0l
+          mov.b       @dowsing_itemPosition, r0l
           bne         LAB_6526:16
           mov.l       @session_steps, er0
           mov.l       @er4, er1
@@ -11164,7 +11164,7 @@ LAB_6468:
           bcs         LAB_6494:8
           mov.b       #H'2D, r0l
           mov.b       r0l, @DAT_f7d1
-          mov.b       @dowsing_item_pos, r0l
+          mov.b       @dowsing_itemPosition, r0l
           bne         LAB_6526:16
           mov.l       @session_steps, er0
           mov.l       @er4, er1
@@ -11180,7 +11180,7 @@ LAB_6494:
           bcs         LAB_64be:8
           mov.b       #H'2E, r0l
           mov.b       r0l, @DAT_f7d1
-          mov.b       @dowsing_item_pos, r0l
+          mov.b       @dowsing_itemPosition, r0l
           bne         LAB_6526:8
           mov.l       @session_steps, er0
           mov.l       @er4, er1
@@ -11196,7 +11196,7 @@ LAB_64be:
           bcs         LAB_64e8:8
           mov.b       #H'2F, r0l
           mov.b       r0l, @DAT_f7d1
-          mov.b       @dowsing_item_pos, r0l
+          mov.b       @dowsing_itemPosition, r0l
           bne         LAB_6526:8
           mov.l       @session_steps, er0
           mov.l       @er4, er1
@@ -11210,7 +11210,7 @@ LAB_64e4:
 LAB_64e8:
           mov.b       #H'30, r0l
           mov.b       r0l, @DAT_f7d1
-          mov.b       @dowsing_item_pos, r0l
+          mov.b       @dowsing_itemPosition, r0l
           bne         LAB_6526:8
           mov.l       @session_steps, er0
           mov.l       @er4, er1
@@ -11464,7 +11464,7 @@ LAB_66ea:
 LAB_66fc:
           mov.w       #H'420, r0
           jsr         @gfx_draw_present_icon:16
-          mov.b       @dowsing_item_pos, r0l
+          mov.b       @dowsing_itemPosition, r0l
           beq         LAB_671a:8
           extu.w      r0
           mov.w       r0, e0
@@ -11681,7 +11681,7 @@ LAB_68e0:
           inc.b       r4l
           cmp.b       #H'12, r4l
           bcs         LAB_68e0:8
-          mov.b       @dowsing_item_pos, r0l
+          mov.b       @dowsing_itemPosition, r0l
           bne         LAB_6938:8
           mov.b       @accel_xPosition, r5l
           cmp.b       #H'A, r5l
@@ -17732,7 +17732,7 @@ game_pokeradar_init:
           shll.w      r0
           shll.w      r0
           and.b       #H'3, r0h
-          mov.b       r0h, @dowsing_item_pos
+          mov.b       r0h, @dowsing_itemPosition
           sub.b       r0l, r0l
           mov.b       r0l, @accel_zPosition
           rts
@@ -17772,7 +17772,7 @@ LAB_9e06:
           mov.b       @DAT_f7d5, r0l
           beq         LAB_9e44:8
           mov.b       @ui_substateA, r0l
-          mov.b       @dowsing_item_pos, r0h
+          mov.b       @dowsing_itemPosition, r0h
           cmp.b       r0h, r0l
           bne         LAB_9e36:8
           mov.b       #H'3, r0l
@@ -17893,7 +17893,7 @@ LAB_9efc:
           shll.w      r0
           shll.w      r0
           and.b       #H'3, r0h
-          mov.b       r0h, @dowsing_item_pos
+          mov.b       r0h, @dowsing_itemPosition
 LAB_9f42:
           rts
 ; =============================================================================
@@ -17969,7 +17969,7 @@ LAB_9fbc:
           mov.w       r6, e0
           jsr         @drv_eeprom_read_block:16
           add.w       #H'C0, r6
-          mov.b       @dowsing_item_pos, r4l
+          mov.b       @dowsing_itemPosition, r4l
           mov.b       r4l, r0h
           and.b       #H'1, r0h
           mov.b       #H'18, r0l
@@ -18056,7 +18056,7 @@ LAB_a0a2:
           mov.w       #H'40, e0
           mulxu.w     e0, er0
           add.w       r0, r6
-          mov.b       @dowsing_item_pos, r4l
+          mov.b       @dowsing_itemPosition, r4l
           mov.b       r4l, r0h
           and.b       #H'1, r0h
           mov.b       #H'18, r0l
@@ -19252,7 +19252,7 @@ switchD_aa8e__caseD_b:
           mov.b       r1l, @DAT_f7d1
           mov.w       #H'300, r0
           jsr         @diag_eeprom_factory_test:16
-          mov.b       r0l, @dowsing_item_pos
+          mov.b       r0l, @dowsing_itemPosition
           mov.w       #H'101, r0
           jsr         @sys_factory_reset_eeprom:16
 LAB_ab44:
@@ -19265,7 +19265,7 @@ LAB_ab44:
           mov.b       r1l, @accel_xPosition
           bra         LAB_abc8:8
 switchD_aa8e__caseD_c:
-          mov.b       @dowsing_item_pos, r0l
+          mov.b       @dowsing_itemPosition, r0l
           beq         switchD_aa8e__default:16
           cmp.b       #H'4, r1l
           bcs         switchD_aa8e__default:16
@@ -19277,13 +19277,13 @@ switchD_aa8e__caseD_d:
           jsr         @save_read_reliable:16
           mov.w       @accel_yPosition, r0
           jsr         @drv_adc_validate_calib_checksum:16
-          mov.b       r0l, @dowsing_item_pos
+          mov.b       r0l, @dowsing_itemPosition
           mov.w       @accel_yPosition, r0
           bne         LAB_abc8:8
           sub.b       r0l, r0l
           bra         LAB_abb4:8
 switchD_aa8e__caseD_e:
-          mov.b       @dowsing_item_pos, r0l
+          mov.b       @dowsing_itemPosition, r0l
           beq         switchD_aa8e__default:16
           cmp.b       #H'4, r1l
           bcs         switchD_aa8e__default:8
@@ -19297,10 +19297,10 @@ switchD_aa8e__caseD_f:
 switchD_aa8e__caseD_10:
           jsr         @drv_accel_init:16
 LAB_abb4:
-          mov.b       r0l, @dowsing_item_pos
+          mov.b       r0l, @dowsing_itemPosition
           bra         LAB_abc8:8
 switchD_aa8e__caseD_11:
-          mov.b       @dowsing_item_pos, r0l
+          mov.b       @dowsing_itemPosition, r0l
           beq         switchD_aa8e__default:8
 LAB_abc0:
           mov.w       #FACTORY_TEST_SOUND, r0
@@ -19470,12 +19470,12 @@ switchD_ad20__caseD_a:
           mov.w       #FACTORY_STR_EEP, e0
           jmp         @LAB_adea:16
 switchD_ad20__caseD_c:
-          mov.b       @dowsing_item_pos, r0l
+          mov.b       @dowsing_itemPosition, r0l
           bne         switchD_ad20__caseD_d:16
           mov.w       #FACTORY_STR_NG2, e0
           jmp         @LAB_adea:16
 switchD_ad20__caseD_e:
-          mov.b       @dowsing_item_pos, r0l
+          mov.b       @dowsing_itemPosition, r0l
           bne         switchD_ad20__caseD_d:16
           mov.w       #FACTORY_STR_NG3, e0
           jmp         @LAB_adea:16
@@ -19533,7 +19533,7 @@ switchD_ad20__caseD_9:
           mov.w       #FACTORY_STR_V, e0
           jmp         @LAB_aea2:16
 switchD_ad20__caseD_11:
-          mov.b       @dowsing_item_pos, r0l
+          mov.b       @dowsing_itemPosition, r0l
           bne         switchD_ad20__caseD_d:16
           mov.w       #FACTORY_STR_NG5, e0
 LAB_adea:
@@ -21427,7 +21427,7 @@ DAT_f7d1:
           .RES.B      1
 accel_xPosition:
           .RES.B      1
-dowsing_item_pos:
+dowsing_itemPosition:
           .RES.B      1
 accel_yPosition:
           .RES.B      1

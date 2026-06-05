@@ -26,7 +26,7 @@
  *   g.DAT_f7d1           = cursor position (0..5)
  *   g.DAT_f7d5           = watt reward (nonzero => show g.save_watts on found screen)
  *   DAT_f7d8_w         = item id awarded
- *   g.dowsing_item_pos   = hidden item slot (0..5), chosen at init
+ *   g.dowsing_itemPosition   = hidden item slot (0..5), chosen at init
  */
 
 // ROM: 0x4792  82.8%
@@ -40,7 +40,7 @@ void game_init_dowsing(void) {
   rnd = (uint16_t)sys_get_rng();
   rnd <<= 3;
   rnd = (uint16_t)((uint8_t)(rnd >> 8));
-  g.dowsing_item_pos = (uint8_t)((int16_t)rnd % 6);
+  g.dowsing_itemPosition = (uint8_t)((int16_t)rnd % 6);
 
   g.accel_yPosition = 0xFF;
   g.DAT_f7d5 = 0;
@@ -95,7 +95,7 @@ state_digging:
   if (drv_sound_is_playing()) {
     return;
   }
-  if (g.DAT_f7d1 == g.dowsing_item_pos) {
+  if (g.DAT_f7d1 == g.dowsing_itemPosition) {
     g.ui_substateZ = 2;
     ui_handle_dowsing_selection();
     drv_sound_play(SND_DOWSE_HIT);
@@ -482,7 +482,7 @@ void ui_render_dowsing(void) {
       uint16_t k;
       drv_eeprom_read_block(0x208 + sprites_base, buf, 0x10);
       for (k = 3; k > 0; k--) {
-        uint8_t item_x = (uint8_t)(g.dowsing_item_pos * 0x10 + 0x04);
+        uint8_t item_x = (uint8_t)(g.dowsing_itemPosition * 0x10 + 0x04);
         drv_lcd_blit(item_x, 0x16, buf, 8, 8);
       }
     }
@@ -490,7 +490,7 @@ void ui_render_dowsing(void) {
   } else if (g.ui_substateZ == 4) {
     /* Proximity indicator: |cursor - hidden| < 2 ⇒ "close", else "far". */
     int16_t diff = (int16_t)(uint16_t)g.DAT_f7d1 -
-                   (int16_t)(uint16_t)g.dowsing_item_pos;
+                   (int16_t)(uint16_t)g.dowsing_itemPosition;
     uint16_t dist = diff < 0 ? (uint16_t)(-diff) : (uint16_t)diff;
 
     if (dist < 2) {

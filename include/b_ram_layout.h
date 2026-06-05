@@ -77,7 +77,7 @@
 /* 0xF7D0 */ volatile uint8_t  ui_substateA;
 /* 0xF7D1 */ volatile uint8_t  DAT_f7d1;               /* MULTI-PURPOSE */
 /* 0xF7D2 */ volatile uint8_t  accel_xPosition;              /* accel_xPosition_word = uint16 view */
-/* 0xF7D3 */ volatile uint8_t  dowsing_item_pos;
+/* 0xF7D3 */ volatile uint8_t  dowsing_itemPosition;
 /* 0xF7D4 */ volatile uint8_t  accel_yPosition;              /* accel_yPosition_word = uint16 view */
 /* 0xF7D5 */ volatile uint8_t  DAT_f7d5;               /* MULTI-PURPOSE */
 /* 0xF7D6 */ volatile uint16_t accel_zPosition;              /* accel_zPosition_byte = uint8 view */

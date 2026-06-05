@@ -25,7 +25,7 @@
  *   accel_zPosition_byte        = lock-animation timer for RADAR_LOCK_ANIM
  *   g.DAT_f7d1           = rounds completed so far
  *   g.DAT_f7d5           = time-remaining countdown (SEARCH) / fade-frame (FADE)
- *   g.dowsing_item_pos   = secret patch index (0..3), re-rolled each round
+ *   g.dowsing_itemPosition   = secret patch index (0..3), re-rolled each round
  */
 
 enum radar_state {
@@ -68,8 +68,8 @@ void ui_render_pokeradar(void) {
   if (accel_zPosition_byte != 0) {
     /* Reveal phase — overlay the encounter icon on the secret patch. */
     drv_eeprom_read_block(0x1AF0 + base, buf, 0x100);
-    drv_lcd_blit(RADAR_Y_COORDS[g.dowsing_item_pos] + 0x10,
-                 (g.dowsing_item_pos & 1) * 0x18, (uint8_t *)buf + 0xC0,
+    drv_lcd_blit(RADAR_Y_COORDS[g.dowsing_itemPosition] + 0x10,
+                 (g.dowsing_itemPosition & 1) * 0x18, (uint8_t *)buf + 0xC0,
                  0x10, 0x10);
 
     if (g.ui_substateZ == RADAR_LOCK_ANIM) {
@@ -89,8 +89,8 @@ void ui_render_pokeradar(void) {
     gfx_draw_text_box(0x30, TEXT_FIND_A_POKEMON, TEXT_BOX_FULL, TEXT_BOX_STATIC);
     if (g.accel_yPosition == 0) {
       drv_eeprom_read_block(0x1AF0 + base, buf, 0x100);
-      drv_lcd_blit(RADAR_Y_COORDS[g.dowsing_item_pos] + 0x10,
-                   (g.dowsing_item_pos & 1) * 0x18,
+      drv_lcd_blit(RADAR_Y_COORDS[g.dowsing_itemPosition] + 0x10,
+                   (g.dowsing_itemPosition & 1) * 0x18,
                    (uint8_t *)buf + RADAR_FRAME_MULT[g.DAT_f7d1] * 0x40,
                    0x10, 0x10);
     }
@@ -114,7 +114,7 @@ void ui_handle_radar_grass_menu(void) {
   if (drv_button_is_triggered(BTN_R) != 0) {
     /* Commit on current patch — only valid while the round timer is alive. */
     if (g.DAT_f7d5 != 0) {
-      if (g.ui_substateA == g.dowsing_item_pos) {
+      if (g.ui_substateA == g.dowsing_itemPosition) {
         /* Correct patch — start lock animation. */
         drv_sound_play(SND_RADAR_LOCK);
         g.ui_substateZ = RADAR_LOCK_ANIM;
@@ -207,7 +207,7 @@ void ui_handle_pokeradar(void) {
   g.accel_yPosition = (uint8_t)((uint16_t)r % RADAR_STATE_Y_DIVISOR[g.DAT_f7d1] + 0x10);
   g.DAT_f7d1++;
   g.DAT_f7d5 = RADAR_STATE_X[g.DAT_f7d1];
-  g.dowsing_item_pos = (uint8_t)((sys_get_rng() << 3) & 3);
+  g.dowsing_itemPosition = (uint8_t)((sys_get_rng() << 3) & 3);
 }
 
 // ROM: 0xa10a  97.9%
@@ -322,6 +322,6 @@ void game_pokeradar_init(void) {
   ram_base = (uint8_t *)0;
   g.DAT_f7d5 = ram_base[0xBF1A];
   /* Initial secret patch from 2-bit rng slice. */
-  g.dowsing_item_pos = ((sys_get_rng() << 3) >> 8) & 3;
+  g.dowsing_itemPosition = ((sys_get_rng() << 3) >> 8) & 3;
   accel_zPosition_byte = 0;
 }
