@@ -80,9 +80,9 @@ void ui_render_home_route(void) {
     return;
   }
   subA = g.viewstate.A;
-  if (!g.viewstate.v.bytes.at_d1.BIT.b1) {
+  if (!g.viewstate.v.peerPlay.resultTextIndex.BIT.b1) {
     gfx_draw_home_pokemon(subA, 0);
-  } else if (!g.viewstate.v.bytes.at_d1.BIT.b2) {
+  } else if (!g.viewstate.v.peerPlay.resultTextIndex.BIT.b2) {
     gfx_draw_own_pokemon_small(subA, 0x18);
   } else {
     sys_init_heap();
@@ -94,7 +94,7 @@ void ui_render_home_route(void) {
       gfx_draw_own_pokemon_small(subA, 0x18);
     }
   }
-  if (g.viewstate.v.bytes.at_d1.BIT.b1) {
+  if (g.viewstate.v.peerPlay.resultTextIndex.BIT.b1) {
     sys_update_standby_state();
   } else {
     sys_enter_standby();

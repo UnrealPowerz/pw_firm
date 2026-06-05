@@ -60,46 +60,46 @@ void game_calculate_interaction_reward(void) {
     }
   }
 
-  g.viewstate.v.bytes.at_d3 = 0;
+  g.viewstate.v.peerPlay.wattsAwarded = 0;
   if (free_slot < 10) {
     /* Watts award = score/200, clamped to [1, 99]. */
-    g.viewstate.v.bytes.at_d3 = (uint8_t)(score / 200);
-    if (g.viewstate.v.bytes.at_d3 == 0) {
-      g.viewstate.v.bytes.at_d3 = 1;
+    g.viewstate.v.peerPlay.wattsAwarded = (uint8_t)(score / 200);
+    if (g.viewstate.v.peerPlay.wattsAwarded == 0) {
+      g.viewstate.v.peerPlay.wattsAwarded = 1;
     }
-    if (g.viewstate.v.bytes.at_d3 > 99) {
-      g.viewstate.v.bytes.at_d3 = 99;
+    if (g.viewstate.v.peerPlay.wattsAwarded > 99) {
+      g.viewstate.v.peerPlay.wattsAwarded = 99;
     }
-    game_add_watts(g.viewstate.v.bytes.at_d3);
+    game_add_watts(g.viewstate.v.peerPlay.wattsAwarded);
   }
 
-  /* Pick the result-text index (g.viewstate.v.bytes.at_d1.BYTE = 0x2C..0x30 → TEXT_HAD_ADVENTURES,
+  /* Pick the result-text index (g.viewstate.v.peerPlay.resultTextIndex.BYTE = 0x2C..0x30 → TEXT_HAD_ADVENTURES,
      PLAY_BATTLED, etc.) and the dowsing-item index based on score tier. */
   if (score >= 20000) {
-    g.viewstate.v.bytes.at_d1.BYTE = 0x2C;
-    if (g.viewstate.v.bytes.at_d3 != 0) return;
-    g.viewstate.v.bytes.at_d2 = (g.session_steps > *(uint32_t *)peer_steps) ? 0 : 1;
+    g.viewstate.v.peerPlay.resultTextIndex.BYTE = 0x2C;
+    if (g.viewstate.v.peerPlay.wattsAwarded != 0) return;
+    g.viewstate.v.peerPlay.subTextOrSlot = (g.session_steps > *(uint32_t *)peer_steps) ? 0 : 1;
   } else if (score >= 10000) {
-    g.viewstate.v.bytes.at_d1.BYTE = 0x2D;
-    if (g.viewstate.v.bytes.at_d3 != 0) return;
-    g.viewstate.v.bytes.at_d2 = (g.session_steps > *(uint32_t *)peer_steps) ? 2 : 3;
+    g.viewstate.v.peerPlay.resultTextIndex.BYTE = 0x2D;
+    if (g.viewstate.v.peerPlay.wattsAwarded != 0) return;
+    g.viewstate.v.peerPlay.subTextOrSlot = (g.session_steps > *(uint32_t *)peer_steps) ? 2 : 3;
   } else if (score >= 5000) {
-    g.viewstate.v.bytes.at_d1.BYTE = 0x2E;
-    if (g.viewstate.v.bytes.at_d3 != 0) return;
-    g.viewstate.v.bytes.at_d2 = (g.session_steps > *(uint32_t *)peer_steps) ? 4 : 5;
+    g.viewstate.v.peerPlay.resultTextIndex.BYTE = 0x2E;
+    if (g.viewstate.v.peerPlay.wattsAwarded != 0) return;
+    g.viewstate.v.peerPlay.subTextOrSlot = (g.session_steps > *(uint32_t *)peer_steps) ? 4 : 5;
   } else if (score >= 2500) {
-    g.viewstate.v.bytes.at_d1.BYTE = 0x2F;
-    if (g.viewstate.v.bytes.at_d3 != 0) return;
-    g.viewstate.v.bytes.at_d2 = (g.session_steps > *(uint32_t *)peer_steps) ? 6 : 7;
+    g.viewstate.v.peerPlay.resultTextIndex.BYTE = 0x2F;
+    if (g.viewstate.v.peerPlay.wattsAwarded != 0) return;
+    g.viewstate.v.peerPlay.subTextOrSlot = (g.session_steps > *(uint32_t *)peer_steps) ? 6 : 7;
   } else {
-    g.viewstate.v.bytes.at_d1.BYTE = 0x30;
-    if (g.viewstate.v.bytes.at_d3 != 0) return;
-    g.viewstate.v.bytes.at_d2 = (g.session_steps > *(uint32_t *)peer_steps) ? 8 : 9;
+    g.viewstate.v.peerPlay.resultTextIndex.BYTE = 0x30;
+    if (g.viewstate.v.peerPlay.wattsAwarded != 0) return;
+    g.viewstate.v.peerPlay.subTextOrSlot = (g.session_steps > *(uint32_t *)peer_steps) ? 8 : 9;
   }
 
   /* Write the chosen item id into the free slot. */
   {
-    uint16_t item_id = save_get_dowsing_item_id(g.viewstate.v.bytes.at_d2);
+    uint16_t item_id = save_get_dowsing_item_id(g.viewstate.v.peerPlay.subTextOrSlot);
     item_table[free_slot * 2] = item_id;
     drv_eeprom_write_block(0xCEC8, item_table, 0x28);
   }
@@ -195,21 +195,21 @@ void ui_render_peer_play(void) {
     uint8_t table_idx = 0;
     uint8_t i;
 
-    if (g.viewstate.v.bytes.at_d1.BYTE == 0x2C) {
+    if (g.viewstate.v.peerPlay.resultTextIndex.BYTE == 0x2C) {
       limit = count;
       if (limit > 5)
         limit = 5;
-    } else if (g.viewstate.v.bytes.at_d1.BYTE == 0x2D) {
+    } else if (g.viewstate.v.peerPlay.resultTextIndex.BYTE == 0x2D) {
       if (limit > 4)
         limit = 4;
-    } else if (g.viewstate.v.bytes.at_d1.BYTE == 0x2E) {
+    } else if (g.viewstate.v.peerPlay.resultTextIndex.BYTE == 0x2E) {
       if (limit > 3)
         limit = 3;
-    } else if (g.viewstate.v.bytes.at_d1.BYTE == 0x2F) {
+    } else if (g.viewstate.v.peerPlay.resultTextIndex.BYTE == 0x2F) {
       if (limit > 2)
         limit = 2;
       table_idx = 1;
-    } else if (g.viewstate.v.bytes.at_d1.BYTE == 0x30) {
+    } else if (g.viewstate.v.peerPlay.resultTextIndex.BYTE == 0x30) {
       ui_draw_music_note(0x2C, MUSIC_NOTE_HEIGHTS[2], 0);  /* peak height */
       goto music_done;
     }
@@ -219,16 +219,16 @@ void ui_render_peer_play(void) {
       ui_draw_music_note((uint8_t)(i * 8 + 0x1C), note_y, 0);
     }
   music_done:
-    gfx_draw_text_box(0x30, (uint8_t)g.viewstate.v.bytes.at_d1.BYTE, TEXT_BOX_FULL, TEXT_BOX_STATIC);
+    gfx_draw_text_box(0x30, (uint8_t)g.viewstate.v.peerPlay.resultTextIndex.BYTE, TEXT_BOX_FULL, TEXT_BOX_STATIC);
   } else if (z == 3) {
     gfx_draw_present_icon(0x20, 0x04);
     gfx_draw_text_box(0x30, TEXT_HERES_A_GIFT, TEXT_BOX_FULL, TEXT_BOX_STATIC);
   } else if (z == 4) {
     gfx_draw_present_icon(0x20, 0x04);
-    if (g.viewstate.v.bytes.at_d3 != 0) {
-      gfx_draw_value_with_icon(0x02, 0x20, 0x0D, (uint16_t)g.viewstate.v.bytes.at_d3);
+    if (g.viewstate.v.peerPlay.wattsAwarded != 0) {
+      gfx_draw_value_with_icon(0x02, 0x20, 0x0D, (uint16_t)g.viewstate.v.peerPlay.wattsAwarded);
     } else {
-      gfx_draw_item_name(0x00, 0x20, (uint8_t)g.viewstate.v.bytes.at_d2, 0x0D);
+      gfx_draw_item_name(0x00, 0x20, (uint8_t)g.viewstate.v.peerPlay.subTextOrSlot, 0x0D);
     }
     gfx_draw_text_box(0x30, TEXT_RECEIVED, TEXT_BOX_NO_LINES, TEXT_BOX_STATIC);
   }

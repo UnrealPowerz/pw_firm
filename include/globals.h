@@ -186,6 +186,19 @@ struct viewstate {
             volatile byte_bits_t _at_d8;          /* 0xF7D8 — unused by radar */
             volatile uint8_t     _at_d9;          /* 0xF7D9 — unused by radar */
         } radar;
+        /* Peer-play post-IR celebration view (game_calculate_interaction_reward
+         * + ui_render_peer_play). Documented in peer_play.c. */
+        struct {
+            volatile byte_bits_t resultTextIndex;  /* 0xF7D1 = at_d1 — TEXT_BOX index 0x2C..0x30 (also bit-read in home.c) */
+            volatile uint8_t     subTextOrSlot;    /* 0xF7D2 = at_d2 — sub-text id / dowsing-item slot 0..9 */
+            volatile uint8_t     wattsAwarded;     /* 0xF7D3 = at_d3 — clamped to 1..99 */
+            volatile uint8_t     _at_d4;           /* 0xF7D4 — unused by peer_play */
+            volatile uint8_t     _at_d5;           /* 0xF7D5 — unused by peer_play */
+            volatile uint8_t     _at_d6;           /* 0xF7D6 — unused by peer_play */
+            volatile uint8_t     _at_d7;           /* 0xF7D7 — unused by peer_play */
+            volatile byte_bits_t _at_d8;           /* 0xF7D8 — unused by peer_play */
+            volatile uint8_t     _at_d9;           /* 0xF7D9 — unused by peer_play */
+        } peerPlay;
         /* Add more per-subsystem views here as each is audited. ch38 pads
          * uint16 members to even offsets within a struct; since this
          * union sits at an odd offset within viewstate (Y/Z/A take 3
