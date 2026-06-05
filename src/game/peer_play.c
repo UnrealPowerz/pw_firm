@@ -78,28 +78,28 @@ void game_calculate_interaction_reward(void) {
   if (score >= 20000) {
     g.DAT_f7d1 = 0x2C;
     if (g.dowsing_item_pos != 0) return;
-    g.accelXPos = (g.session_steps > *(uint32_t *)peer_steps) ? 0 : 1;
+    g.accel_xPosition = (g.session_steps > *(uint32_t *)peer_steps) ? 0 : 1;
   } else if (score >= 10000) {
     g.DAT_f7d1 = 0x2D;
     if (g.dowsing_item_pos != 0) return;
-    g.accelXPos = (g.session_steps > *(uint32_t *)peer_steps) ? 2 : 3;
+    g.accel_xPosition = (g.session_steps > *(uint32_t *)peer_steps) ? 2 : 3;
   } else if (score >= 5000) {
     g.DAT_f7d1 = 0x2E;
     if (g.dowsing_item_pos != 0) return;
-    g.accelXPos = (g.session_steps > *(uint32_t *)peer_steps) ? 4 : 5;
+    g.accel_xPosition = (g.session_steps > *(uint32_t *)peer_steps) ? 4 : 5;
   } else if (score >= 2500) {
     g.DAT_f7d1 = 0x2F;
     if (g.dowsing_item_pos != 0) return;
-    g.accelXPos = (g.session_steps > *(uint32_t *)peer_steps) ? 6 : 7;
+    g.accel_xPosition = (g.session_steps > *(uint32_t *)peer_steps) ? 6 : 7;
   } else {
     g.DAT_f7d1 = 0x30;
     if (g.dowsing_item_pos != 0) return;
-    g.accelXPos = (g.session_steps > *(uint32_t *)peer_steps) ? 8 : 9;
+    g.accel_xPosition = (g.session_steps > *(uint32_t *)peer_steps) ? 8 : 9;
   }
 
   /* Write the chosen item id into the free slot. */
   {
-    uint16_t item_id = save_get_dowsing_item_id(g.accelXPos);
+    uint16_t item_id = save_get_dowsing_item_id(g.accel_xPosition);
     item_table[free_slot * 2] = item_id;
     drv_eeprom_write_block(0xCEC8, item_table, 0x28);
   }
@@ -228,7 +228,7 @@ void ui_render_peer_play(void) {
     if (g.dowsing_item_pos != 0) {
       gfx_draw_value_with_icon(0x02, 0x20, 0x0D, (uint16_t)g.dowsing_item_pos);
     } else {
-      gfx_draw_item_name(0x00, 0x20, (uint8_t)g.accelXPos, 0x0D);
+      gfx_draw_item_name(0x00, 0x20, (uint8_t)g.accel_xPosition, 0x0D);
     }
     gfx_draw_text_box(0x30, TEXT_RECEIVED, TEXT_BOX_NO_LINES, TEXT_BOX_STATIC);
   }

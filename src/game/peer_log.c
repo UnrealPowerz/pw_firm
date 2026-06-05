@@ -303,9 +303,9 @@ void game_rotate_interaction_log_record(void) {
   }
 
   if (g.dowsing_item_pos == 0) {
-    uint8_t accel_val = g.accelXPos;
+    uint8_t accel_val = g.accel_xPosition;
     if (accel_val < 10) {
-      /* ROM: r1h=settings_bit (d_high), e1=trainer[0x8C+g.accelXPos*2] uint16
+      /* ROM: r1h=settings_bit (d_high), e1=trainer[0x8C+g.accel_xPosition*2] uint16
        * (val_at_0e), push=0 (event_subtype). */
       game_log_interaction(
           trainer_buf, log_record, accel_val + 1,

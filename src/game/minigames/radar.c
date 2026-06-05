@@ -20,9 +20,9 @@
  * Globals repurposed for radar:
  *   g.ui_substateA      = cursor position over the 2x2 patch grid (0..3)
  *   g.ui_substateY      = encounter pokemon kind (1..3 wild, 4 peer)
- *   g.accelXPos          = total rounds required before battle (rolled at init)
- *   g.accelYPos          = sub-tick before each timer decrement
- *   accelZPos_b        = lock-animation timer for RADAR_LOCK_ANIM
+ *   g.accel_xPosition          = total rounds required before battle (rolled at init)
+ *   g.accel_yPosition          = sub-tick before each timer decrement
+ *   accel_zPosition_byte        = lock-animation timer for RADAR_LOCK_ANIM
  *   g.DAT_f7d1           = rounds completed so far
  *   g.DAT_f7d5           = time-remaining countdown (SEARCH) / fade-frame (FADE)
  *   g.dowsing_item_pos   = secret patch index (0..3), re-rolled each round
@@ -65,7 +65,7 @@ void ui_render_pokeradar(void) {
     drv_lcd_blit(RADAR_Y_COORDS[i], (i & 1) * 0x18, buf, 0x20, 0x18);
   }
 
-  if (accelZPos_b != 0) {
+  if (accel_zPosition_byte != 0) {
     /* Reveal phase — overlay the encounter icon on the secret patch. */
     drv_eeprom_read_block(0x1AF0 + base, buf, 0x100);
     drv_lcd_blit(RADAR_Y_COORDS[g.dowsing_item_pos] + 0x10,
@@ -87,7 +87,7 @@ void ui_render_pokeradar(void) {
   } else {
     /* Search phase — prompt and (briefly) flash the next-patch hint. */
     gfx_draw_text_box(0x30, TEXT_FIND_A_POKEMON, TEXT_BOX_FULL, TEXT_BOX_STATIC);
-    if (g.accelYPos == 0) {
+    if (g.accel_yPosition == 0) {
       drv_eeprom_read_block(0x1AF0 + base, buf, 0x100);
       drv_lcd_blit(RADAR_Y_COORDS[g.dowsing_item_pos] + 0x10,
                    (g.dowsing_item_pos & 1) * 0x18,
@@ -118,7 +118,7 @@ void ui_handle_radar_grass_menu(void) {
         /* Correct patch — start lock animation. */
         drv_sound_play(SND_RADAR_LOCK);
         g.ui_substateZ = RADAR_LOCK_ANIM;
-        accelZPos_b = 0x10;
+        accel_zPosition_byte = 0x10;
         return;
       }
       if (g.DAT_f7d1 == 0) {
@@ -129,12 +129,12 @@ void ui_handle_radar_grass_menu(void) {
     }
     /* Wrong commit on a later round, or timer already expired -> failure. */
   } else {
-    /* No commit: count down the round timer in two stages (g.accelYPos drains
-       first, then each g.accelYPos cycle ticks g.DAT_f7d5 down by one). */
+    /* No commit: count down the round timer in two stages (g.accel_yPosition drains
+       first, then each g.accel_yPosition cycle ticks g.DAT_f7d5 down by one). */
     {
-      uint8_t sub = g.accelYPos;
+      uint8_t sub = g.accel_yPosition;
       if (sub != 0) {
-        g.accelYPos = sub - 1;
+        g.accel_yPosition = sub - 1;
         return;
       }
     }
@@ -186,25 +186,25 @@ void ui_handle_pokeradar(void) {
     return;
   }
 
-  /* RADAR_LOCK_ANIM: hold for accelZPos_b ticks while the reveal plays. */
-  if (accelZPos_b == 0)
+  /* RADAR_LOCK_ANIM: hold for accel_zPosition_byte ticks while the reveal plays. */
+  if (accel_zPosition_byte == 0)
     return;
-  accelZPos_b--;
-  if (accelZPos_b != 0)
+  accel_zPosition_byte--;
+  if (accel_zPosition_byte != 0)
     return;
 
   /* Animation done. If we've completed enough rounds, fade to battle;
      otherwise re-roll the secret patch and go back to searching. */
-  if ((int16_t)g.DAT_f7d1 >= (int16_t)((uint16_t)g.accelXPos - 1)) {
+  if ((int16_t)g.DAT_f7d1 >= (int16_t)((uint16_t)g.accel_xPosition - 1)) {
     g.ui_substateZ = RADAR_FADE_TO_BATTLE;
-    accelZPos_b = 1;
+    accel_zPosition_byte = 1;
     g.DAT_f7d5 = 0;
     return;
   }
 
   g.ui_substateZ = RADAR_SEARCH;
   r = sys_get_rng() >> 2;
-  g.accelYPos = (uint8_t)((uint16_t)r % RADAR_STATE_Y_DIVISOR[g.DAT_f7d1] + 0x10);
+  g.accel_yPosition = (uint8_t)((uint16_t)r % RADAR_STATE_Y_DIVISOR[g.DAT_f7d1] + 0x10);
   g.DAT_f7d1++;
   g.DAT_f7d5 = RADAR_STATE_X[g.DAT_f7d1];
   g.dowsing_item_pos = (uint8_t)((sys_get_rng() << 3) & 3);
@@ -247,9 +247,9 @@ void ui_render_radar_failure(void) {
  *   g.ui_substateY = 4  : peer-event encounter (co-op mode + step gates passed)
  *   g.ui_substateY = 1..3: wild encounter, slot N+1 (solo path, step-gated tiers
  *                         in the trainer profile at offset 0x82)
- *   g.ui_substateY = 3, g.accelXPos low: fall-through small encounter
+ *   g.ui_substateY = 3, g.accel_xPosition low: fall-through small encounter
  *
- *   g.accelXPos: number of rounds the radar minigame should require before
+ *   g.accel_xPosition: number of rounds the radar minigame should require before
  *              transitioning to battle (3..4 for peer/wild, 1..2 for the
  *              fall-through).
  */
@@ -276,7 +276,7 @@ void game_roll_radar_encounter(void) {
         if (steps_required <= g.session_steps) {
           if ((sys_get_rng() % 100) < scratch[2]) {
             g.ui_substateY = 4;
-            g.accelXPos = ((sys_get_rng() >> 3) & 1) + 3;
+            g.accel_xPosition = ((sys_get_rng() >> 3) & 1) + 3;
             return;
           }
         }
@@ -300,28 +300,28 @@ void game_roll_radar_encounter(void) {
         g.ui_substateY = slot + 1;
         /* Codegen note: ROM emits the add as `-slot + (rng>>3 & 1) + 3`,
            hence the negation order here matters for the score. */
-        g.accelXPos = (slot * -1) + ((sys_get_rng() >> 3) & 1) + 3;
+        g.accel_xPosition = (slot * -1) + ((sys_get_rng() >> 3) & 1) + 3;
         return;
       }
     }
   }
 
   g.ui_substateY = 3;
-  g.accelXPos = ((sys_get_rng() >> 3) & 1) + 1;
+  g.accel_xPosition = ((sys_get_rng() >> 3) & 1) + 1;
 }
 
 // ROM: 0x9d92  88.0%
 void game_pokeradar_init(void) {
   uint8_t *ram_base;
-  game_roll_radar_encounter();         /* rolls g.ui_substateY + g.accelXPos */
+  game_roll_radar_encounter();         /* rolls g.ui_substateY + g.accel_xPosition */
   g.ui_substateZ = RADAR_SEARCH;
   g.ui_substateA = 0;                   /* cursor at patch 0 */
   g.DAT_f7d1 = 0;                        /* zero rounds completed */
-  g.accelYPos = 5;                       /* initial sub-tick counter */
+  g.accel_yPosition = 5;                       /* initial sub-tick counter */
   /* g.DAT_f7d5 (round timer) seeded from EEPROM cache shadow at 0xBF1A. */
   ram_base = (uint8_t *)0;
   g.DAT_f7d5 = ram_base[0xBF1A];
   /* Initial secret patch from 2-bit rng slice. */
   g.dowsing_item_pos = ((sys_get_rng() << 3) >> 8) & 3;
-  accelZPos_b = 0;
+  accel_zPosition_byte = 0;
 }

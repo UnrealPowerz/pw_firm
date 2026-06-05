@@ -22,7 +22,7 @@
  * "Presence mask" — when the inventory views are entered from the main menu,
  *   ui_load_inventory_mask builds a 2-word bitmask of what's available to
  *   show. The two words are stashed in (g.ui_substateA:uint16) and
- *   accelPos_X:uint16, then read back by the render functions.
+ *   accel_xPosition_word:uint16, then read back by the render functions.
  *
  *   mask[0]  (held in *(uint16_t *)&g.ui_substateA, the pokemon/event word):
  *     bit 0  (0x001) - walker is currently walking
@@ -38,7 +38,7 @@
  *                      set by ui_load_inventory_mask in our current decomp;
  *                      kept for ROM-match
  *
- *   mask[1]  (held in accelPos_X, the dowsed-items word):
+ *   mask[1]  (held in accel_xPosition_word, the dowsed-items word):
  *     bits 0..9       - dowsed item entries 0..9 present
  *
  * Cursor helpers (ui_inventory_cursor_next / _prev / _find_present /
@@ -63,7 +63,7 @@ enum inventory_slot {
 // ROM: 0x9108  98.8%
 void ui_inventory_jump_to_items(void) {
   g.ui_substateY = INV_SLOT_EVENT_ITEM;
-  ui_inventory_cursor_find_present(accelPos_X);
+  ui_inventory_cursor_find_present(accel_xPosition_word);
 }
 
 // ROM: 0x8d02  77.9%
@@ -84,7 +84,7 @@ void ui_handle_inventory_pokemon(void) {
   if (drv_button_is_triggered(BTN_L) != 0) {
     if (ui_inventory_cursor_next(*(volatile uint16_t *)&g.ui_substateA) != 0) {
       /* Walked off the end of pokemon — fall through to gifts list if any. */
-      if (accelPos_X != 0) {
+      if (accel_xPosition_word != 0) {
         ui_inventory_jump_to_items();
         ui_set_view(VIEW_GIFTS);
         sid = SND_CURSOR;
@@ -98,7 +98,7 @@ void ui_handle_inventory_pokemon(void) {
   }
 
   if (drv_button_is_triggered(BTN_R) != 0) {
-    if (accelPos_X != 0) {
+    if (accel_xPosition_word != 0) {
       ui_inventory_jump_to_items();
       ui_set_view(VIEW_GIFTS);
     } else {
@@ -118,7 +118,7 @@ do_play_sound:
 void ui_handle_inventory_items(void) {
   uint8_t sid;
   if (drv_button_is_triggered(BTN_M) != 0) {
-    if (ui_inventory_cursor_prev(accelPos_X) != 0) {
+    if (ui_inventory_cursor_prev(accel_xPosition_word) != 0) {
       /* At first gift — flip back into the pokemon view if any present,
          otherwise just play the boundary beep. */
       if (g.ui_substateA != 0) {
@@ -136,7 +136,7 @@ void ui_handle_inventory_items(void) {
   }
 
   if (drv_button_is_triggered(BTN_L) != 0) {
-    if (ui_inventory_cursor_next(accelPos_X) != 0) {
+    if (ui_inventory_cursor_next(accel_xPosition_word) != 0) {
       sid = SND_BACK;
       goto do_play_sound;
     }
@@ -249,13 +249,13 @@ void ui_render_inventory_pokemon(void) {
   drv_lcd_blit(x, y, buf180, 8, 8);
 
   /* Status icons across the grid, driven by the mask in
-     g.ui_substateA (lo word) + accelPos_X (hi word). */
+     g.ui_substateA (lo word) + accel_xPosition_word (hi word). */
   drv_eeprom_read_block((uint16_t)(romBase + 0x358), buf180, 0x40);
   drv_lcd_blit(0, 0, (uint8_t *)buf180 + 0x20, 8, 0x10);
 
   {
   uint16_t maskA = *(volatile uint16_t *)&g.ui_substateA;
-  uint16_t maskX = accelPos_X;
+  uint16_t maskX = accel_xPosition_word;
 
   /* Right-side dowsed-items "available" tab. */
   if (maskX != 0) {
@@ -352,13 +352,13 @@ void ui_render_inventory_items(void) {
   eread(base, buf, 0x10);
 
   for (i = 0; i < 5; i++) {
-    if (g.accelXPos & (1 << i)) {
+    if (g.accel_xPosition & (1 << i)) {
       blit((uint8_t)(i * 8 + 0x10), 0x18, buf, 8, 8);
     }
   }
 
   for (i = 0; i < 5; i++) {
-    if (g.accelXPos & (0x20 << i)) {
+    if (g.accel_xPosition & (0x20 << i)) {
       blit((uint8_t)(i * 8 + 0x10), 0x28, buf, 8, 8);
     }
   }

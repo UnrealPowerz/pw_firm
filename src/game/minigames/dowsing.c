@@ -20,9 +20,9 @@
  * Globals repurposed for dowsing state:
  *   g.ui_substateY      = result slot index / item kind
  *   g.ui_substateA      = animation tick countdown
- *   g.accelXPos          = attempts remaining (counts down)
- *   g.accelYPos          = "marked-wrong" slot
- *   accelZPos_b        = save-slot index for the awarded item
+ *   g.accel_xPosition          = attempts remaining (counts down)
+ *   g.accel_yPosition          = "marked-wrong" slot
+ *   accel_zPosition_byte        = save-slot index for the awarded item
  *   g.DAT_f7d1           = cursor position (0..5)
  *   g.DAT_f7d5           = watt reward (nonzero => show g.save_watts on found screen)
  *   DAT_f7d8_w         = item id awarded
@@ -35,14 +35,14 @@ void game_init_dowsing(void) {
 
   g.ui_substateZ = 0;
   g.DAT_f7d1 = 0;
-  g.accelXPos = 2;
+  g.accel_xPosition = 2;
 
   rnd = (uint16_t)sys_get_rng();
   rnd <<= 3;
   rnd = (uint16_t)((uint8_t)(rnd >> 8));
   g.dowsing_item_pos = (uint8_t)((int16_t)rnd % 6);
 
-  g.accelYPos = 0xFF;
+  g.accel_yPosition = 0xFF;
   g.DAT_f7d5 = 0;
 }
 
@@ -67,7 +67,7 @@ void ui_handle_dowsing(void) {
 
 state_idle:
   if (drv_button_is_triggered(BTN_R)) {
-    if (g.DAT_f7d1 == g.accelYPos) {
+    if (g.DAT_f7d1 == g.accel_yPosition) {
       /* Already marked as wrong — beep but don't advance. */
       drv_sound_play(SND_BACK);
       return;
@@ -104,10 +104,10 @@ state_digging:
   /* Wrong slot. */
   g.ui_substateZ = 3;
   drv_sound_play(SND_FAIL);
-  if (g.accelXPos == 2) {
-    g.accelYPos = g.DAT_f7d1;
+  if (g.accel_xPosition == 2) {
+    g.accel_yPosition = g.DAT_f7d1;
   }
-  g.accelXPos--;
+  g.accel_xPosition--;
   return;
 
 state_found:
@@ -118,7 +118,7 @@ state_found:
     goto exit_to_home;
   }
   {
-    uint8_t save_slot = accelZPos_b;
+    uint8_t save_slot = accel_zPosition_byte;
     if (save_slot == 3) {
       /* No room left — kick into peer-session caught-stats view. */
       g.ui_substateA = 1;
@@ -147,7 +147,7 @@ state_miss:
   if (!drv_button_is_triggered(BTN_ANY)) {
     return;
   }
-  if (g.accelXPos != 0) {
+  if (g.accel_xPosition != 0) {
     /* Still have attempts left — bounce back to idle. */
     drv_sound_play(SND_CONFIRM);
     g.ui_substateZ = 4;
@@ -222,7 +222,7 @@ void game_check_wild_encounter(void) {
   }
 
 no_encounter:
-  g.DAT_f7d5 = (uint8_t)((g.accelXPos << 2) + 2);
+  g.DAT_f7d5 = (uint8_t)((g.accel_xPosition << 2) + 2);
   game_add_watts(10);
   return;
 
@@ -265,7 +265,7 @@ void ui_handle_dowsing_selection(void) {
   item_table = (uint8_t *)sbrk(0x0C);
   drv_eeprom_read_block(EEPROM_LOG_ITEMS, item_table, 0x0C);
 
-  accelZPos_b = save_find_empty_item_slot(item_table);
+  accel_zPosition_byte = save_find_empty_item_slot(item_table);
 
   if ((g.save_settings & 1)) {
     game_check_wild_encounter();
@@ -310,8 +310,8 @@ void ui_render_dowsing_grass(void) {
   sys_init_heap();
   buf = (uint8_t *)sbrk(0x180);
 
-  /* Player sprite (frame selected by g.accelXPos). */
-  drv_eeprom_read_block(sprites_base + (uint16_t)g.accelXPos * 0x20, buf, 0x20);
+  /* Player sprite (frame selected by g.accel_xPosition). */
+  drv_eeprom_read_block(sprites_base + (uint16_t)g.accel_xPosition * 0x20, buf, 0x20);
   drv_lcd_blit(0x40, 0, buf, 0x08, 0x10);
 
   /* Background top strip. */
@@ -345,7 +345,7 @@ void ui_render_dowsing_grass(void) {
   drv_eeprom_read_block(0x18D0 + sprites_base, buf, 0x80);
   for (i = 0; i < 6; i++) {
     uint8_t x = (uint8_t)(i * 0x10);
-    if ((uint8_t)i == g.accelYPos) {
+    if ((uint8_t)i == g.accel_yPosition) {
       /* "Wrong-slot" marker. */
       drv_lcd_blit(x, 0x18, buf + 0x40, 0x10, 0x10);
     } else if ((uint8_t)i != g.DAT_f7d1) {
@@ -395,9 +395,9 @@ void ui_render_dowsing(void) {
   sprite_sheet = (uint8_t *)sbrk(0x140);
   buf = (uint8_t *)sbrk(0x180);
 
-  /* Player sprite — load full sheet, then point at frame g.accelXPos. */
+  /* Player sprite — load full sheet, then point at frame g.accel_xPosition. */
   drv_eeprom_read_block(sprites_base, sprite_sheet, 0x140);
-  sprite_sheet += (uint16_t)g.accelXPos * 0x20;
+  sprite_sheet += (uint16_t)g.accel_xPosition * 0x20;
   drv_lcd_blit(0x40, 0, sprite_sheet, 0x08, 0x10);
 
   /* Background pieces. */
@@ -435,7 +435,7 @@ void ui_render_dowsing(void) {
       /* Found state hides the cursor slot — item sprite drawn below. */
       continue;
     }
-    if ((uint8_t)i == g.accelYPos) {
+    if ((uint8_t)i == g.accel_yPosition) {
       drv_lcd_blit(x, 0x18, buf + 0x40, 0x10, 0x10);
     } else {
       drv_lcd_blit(x, 0x18, buf, 0x10, 0x10);
@@ -478,7 +478,7 @@ void ui_render_dowsing(void) {
 
     /* Reveal the hidden item only after all attempts are spent. The loop
        draws the icon 3 times for emphasis (single-frame flash effect). */
-    if (g.accelXPos == 0) {
+    if (g.accel_xPosition == 0) {
       uint16_t k;
       drv_eeprom_read_block(0x208 + sprites_base, buf, 0x10);
       for (k = 3; k > 0; k--) {

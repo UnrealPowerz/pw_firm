@@ -380,30 +380,30 @@ void game_process_accel_data(void) {
       if (steps != 0) {
         g.ui_substateA = sub + 1;
         threshold = g.ped_axisStepThresholdLo;
-        tx = accelPos_X;
+        tx = accel_xPosition_word;
         if (tx < threshold)
           g.ui_activeView = VIEW_TEXT;
-        ty = accelPos_Y;
+        ty = accel_yPosition_word;
         if (ty < threshold)
           g.ui_activeView = VIEW_TEXT;
-        tz = g.accelZPos;
+        tz = g.accel_zPosition;
         if (tz < threshold)
           g.ui_activeView = VIEW_TEXT;
         threshold = g.ped_axisStepThresholdHi;
-        tx = accelPos_X;
+        tx = accel_xPosition_word;
         if (tx > threshold)
           g.ui_activeView = VIEW_TEXT;
-        ty = accelPos_Y;
+        ty = accel_yPosition_word;
         if (ty > threshold)
           g.ui_activeView = VIEW_TEXT;
-        tz = g.accelZPos;
+        tz = g.accel_zPosition;
         if (tz > threshold)
           g.ui_activeView = VIEW_TEXT;
       }
     } else if (g.DAT_f7d1 < g.DAT_f7d8_1) {
       threshold = g.ped_axisIdleThreshold;
-      if (accelPos_X < threshold && accelPos_Y < threshold &&
-          g.accelZPos < threshold) {
+      if (accel_xPosition_word < threshold && accel_yPosition_word < threshold &&
+          g.accel_zPosition < threshold) {
         g.DAT_f7d1++;
       }
     }

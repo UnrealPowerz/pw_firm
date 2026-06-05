@@ -232,7 +232,7 @@ cleanup:
 void diag_init_test_mode(void) {
   g.ui_substateY = 0;
   g.ui_substateA = 0;
-  g.accelYPos = 1;
+  g.accel_yPosition = 1;
   g.save_settings = (g.save_settings & 0xF9) | 0x04;
   drv_sound_set_volume(2);
   drv_lcd_set_contrast(4);
@@ -338,7 +338,7 @@ void ui_handle_factory_test(void) {
       s1 = RSECDR;
       s2 = RSECDR;
     } while (s1 != s2);
-    *(uint8_t *)(&g.accelXPos) = s1;
+    *(uint8_t *)(&g.accel_xPosition) = s1;
     goto do_inc;
   }
 
@@ -357,8 +357,8 @@ void ui_handle_factory_test(void) {
   case 0x0D: {
     /* Accel calibration validate — read EEPROM cal block, verify checksum. */
     uint16_t val;
-    save_read_reliable(EEPROM_ACCEL_CAL, EEPROM_ACCEL_CAL_BACKUP, (void *)&g.accelYPos, 2);
-    val = g.accelYPos;
+    save_read_reliable(EEPROM_ACCEL_CAL, EEPROM_ACCEL_CAL_BACKUP, (void *)&g.accel_yPosition, 2);
+    val = g.accel_yPosition;
     g.dowsing_item_pos = drv_adc_validate_calib_checksum(val);
     if (val != 0) {
       goto do_inc;
@@ -380,7 +380,7 @@ void ui_handle_factory_test(void) {
   case 0x0F:
     /* Accel sample check — advance only once samples diverge from the
        stashed value (gives the technician time to wiggle the device). */
-    if (g.DAT_f7d1 != *(uint8_t *)(&g.accelXPos)) {
+    if (g.DAT_f7d1 != *(uint8_t *)(&g.accel_xPosition)) {
       goto do_sound_and_inc;
     }
     return;
@@ -519,7 +519,7 @@ void ui_render_factory_test(void) {
     goto case_d;
 
   case 0x0F:
-    if (g.DAT_f7d1 != *(uint8_t *)(&g.accelXPos)) {
+    if (g.DAT_f7d1 != *(uint8_t *)(&g.accel_xPosition)) {
       goto case_d;
     }
     draw_string(0x20, 0x08, FACTORY_STR_NG4);
@@ -543,10 +543,10 @@ void ui_render_factory_test(void) {
       ;
     PDR1 |= 0x01;
 
-    /* Draw hex digits of g.accelYPos */
+    /* Draw hex digits of g.accel_yPosition */
     {
       const uint8_t *hexTable = HEX_DIGITS;
-      uint16_t val = g.accelYPos;
+      uint16_t val = g.accel_yPosition;
 
       draw_string(0x20, 0x00, FACTORY_STR_OK);
 

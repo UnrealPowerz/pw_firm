@@ -14,7 +14,7 @@
  *              the peer-sprite EEPROM slots; resets nickname).
  *   default  - just shows a "social feeling" text-box.
  *
- * accelPos_X points at a per-type 4-byte record in INTERACTION_REWARD_PTRS:
+ * accel_xPosition_word points at a per-type 4-byte record in INTERACTION_REWARD_PTRS:
  *   [0] = flags (bit 0 = exit, bit 1 = show pokemon, bit 2 = show item icon,
  *          bits 3-4 = "use moving text", bits 5-7 = route icon index)
  *   [1] = sound id played by ui_handle_bored_gift on advance
@@ -86,7 +86,7 @@ void game_process_interaction_reward(uint8_t type) {
                                  only set on type 1 (item gift) */
 
   g.ui_substateY = type;
-  accelPos_X = ((const uint16_t *)INTERACTION_REWARD_PTRS)[type];
+  accel_xPosition_word = ((const uint16_t *)INTERACTION_REWARD_PTRS)[type];
   ui_set_view(VIEW_BORED_GIFT);
   g.session_idleSeconds = 0;
 
@@ -150,13 +150,13 @@ void game_process_interaction_reward(uint8_t type) {
 void ui_handle_bored_gift(void) {
   uint8_t *dest;
   if (drv_button_is_triggered(BTN_R)) {
-    dest = (uint8_t *)(uintptr_t)accelPos_X;
+    dest = (uint8_t *)(uintptr_t)accel_xPosition_word;
     if (*dest & 0x01) {
       ui_reset_substate();
       ui_set_view(VIEW_HOME);
     } else {
       dest += 4;
-      accelPos_X = (uint16_t)(uintptr_t)dest;
+      accel_xPosition_word = (uint16_t)(uintptr_t)dest;
       if (dest[1] == 0x10)
         return;
       drv_sound_play(dest[1]);
@@ -173,7 +173,7 @@ void ui_render_bored_gift(void) {
   sys_init_heap();
   sbrk(0xC0);
 
-  /* accelPos_X points into INTERACTION_REWARD_PTRS: a 4-byte event record.
+  /* accel_xPosition_word points into INTERACTION_REWARD_PTRS: a 4-byte event record.
      event_rec[0] = flag byte (bit 1 = show own poke, bit 2 = show item icon,
        bits 3-4 = animated bottom text, bits 5-7 = route icon index, 0xE0
        sentinel = no route icon).
@@ -181,19 +181,19 @@ void ui_render_bored_gift(void) {
        0xFE value+icon, 0xFF no top text, else = text-box index).
      event_rec[3] = bottom text-box index. */
 
-  event_rec = (uint8_t *)(uintptr_t)accelPos_X;
+  event_rec = (uint8_t *)(uintptr_t)accel_xPosition_word;
   if (*event_rec & 0x02) {
     gfx_draw_own_pokemon_small(0x20, 0x04);
   }
 
-  event_rec = (uint8_t *)(uintptr_t)accelPos_X;
+  event_rec = (uint8_t *)(uintptr_t)accel_xPosition_word;
   flags = *event_rec;
   if ((flags & 0xE0) != 0xE0) {
     /* Top 3 bits = route icon index (rotl 3 to extract). */
     gfx_draw_small_route_icon((uint8_t)(((flags << 3) | (flags >> 5)) & 0x07));
   }
 
-  event_rec = (uint8_t *)(uintptr_t)accelPos_X;
+  event_rec = (uint8_t *)(uintptr_t)accel_xPosition_word;
   if (*event_rec & 0x04) {
     gfx_draw_item_symbol(0x14, 0x14);
   }
@@ -201,7 +201,7 @@ void ui_render_bored_gift(void) {
   /* g.ui_substateZ doubles as the prize count (g.save_watts amount or item index)
      for the value/item displays. */
   prize_count = g.ui_substateZ;
-  event_rec = (uint8_t *)(uintptr_t)accelPos_X;
+  event_rec = (uint8_t *)(uintptr_t)accel_xPosition_word;
   flags = event_rec[2];
   if (flags == 0xFC) {
     gfx_draw_own_pokemon_name(0x00, 0x20, 5);
@@ -215,7 +215,7 @@ void ui_render_bored_gift(void) {
 
   /* Bottom text: animated +A variant if flags bits 3-4 are set; otherwise a
      plain index. (FF on the top-strip implies a full-width text box.) */
-  event_rec = (uint8_t *)(uintptr_t)accelPos_X;
+  event_rec = (uint8_t *)(uintptr_t)accel_xPosition_word;
   flags = *event_rec;
   if ((flags & 0x18) > 8) {
     gfx_draw_text_box(0x30, (uint8_t)(event_rec[3] + g.ui_substateA), TEXT_BOX_NO_LINES, TEXT_BOX_BLINK);

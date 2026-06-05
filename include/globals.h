@@ -84,13 +84,13 @@ enum view_id {
 /* 16-bit "accel physics" view: the accel driver and game_process_accel_data
  * read these positions as uint16 (mov.w) while game/UI code uses the byte form
  * above for slot indices. */
-#define accelPos_X  (*(volatile uint16_t *)&g.accelXPos)
-#define accelPos_Y  (*(volatile uint16_t *)&g.accelYPos)
+#define accel_xPosition_word  (*(volatile uint16_t *)&g.accel_xPosition)
+#define accel_yPosition_word  (*(volatile uint16_t *)&g.accel_yPosition)
 /* 0xF7D6 is accessed as a BYTE (mov.b) in most game-logic contexts (dowsing
  * slot index, radar countdown, etc.); only the accel-physics accumulator in
  * drv_accel_sample treats it as the high byte of a uint16. This alias is the
  * byte view. */
-#define accelZPos_b (*(volatile uint8_t  *)&g.accelZPos)
+#define accel_zPosition_byte (*(volatile uint8_t  *)&g.accel_zPosition)
 /* 0xF7D8 is also accessed as a 16-bit word in dowsing (item ID) — disassembly
  * shows mov.w @g.DAT_f7d8 + drv_eeprom_write_block size 2. The byte alias above
  * is used by battle.c and pedometer.c for flag/limit bytes. */

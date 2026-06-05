@@ -12,7 +12,7 @@
  * Entry points (both call ui_init_discard_cursor right before activating
  * the view, which preps g.ui_substateZ = 1 — the cursor starts on slot 1):
  *   game_battle_handle_finish      -> when save_find_empty_poke_slot >= 3
- *   ui_handle_dowsing (state_found) -> when accelZPos_b == 3
+ *   ui_handle_dowsing (state_found) -> when accel_zPosition_byte == 3
  *
  * Normal-case rewards (storage not full) never reach this view; they slot
  * silently into the first empty position.

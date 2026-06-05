@@ -90,14 +90,14 @@ void ui_handle_main_menu(void) {
         ui_load_inventory_mask(mask);
         if (mask[0] != 0) {
           *(volatile uint16_t *)&g.ui_substateA = mask[0];
-          accelPos_X = mask[1];
+          accel_xPosition_word = mask[1];
           ui_inventory_cursor_reset();
           ui_set_view(VIEW_POKE_ITEMS);
           return;
         }
         if (mask[1] != 0) {
           *(volatile uint16_t *)&g.ui_substateA = mask[0];
-          accelPos_X = mask[1];
+          accel_xPosition_word = mask[1];
           ui_inventory_jump_to_items();
           ui_set_view(VIEW_GIFTS);
           return;

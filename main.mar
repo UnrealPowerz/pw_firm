@@ -4758,11 +4758,11 @@ game_start_battle:
           mov.b       #H'4, r0h
           mov.b       r0h, @ui_substateA
           mov.b       r0h, @DAT_f7d1
-          mov.b       r0l, @accelXPos
+          mov.b       r0l, @accel_xPosition
           mov.b       #H'6, r1l
           mov.b       r1l, @dowsing_item_pos
           mov.b       #H'38, r1l
-          mov.b       r1l, @accelYPos
+          mov.b       r1l, @accel_yPosition
           mov.b       #H'E0, r1l
           mov.b       r1l, @DAT_f7d5
           mov.b       @DAT_f7d8, r1l
@@ -4877,7 +4877,7 @@ LAB_2a42:
           mov.b       #H'7, r0l
           mov.b       r0l, @ui_substateZ
           sub.b       r0l, r0l
-          mov.b       r0l, @accelXPos
+          mov.b       r0l, @accel_xPosition
           mov.b       #H'A, r0l
           bra         LAB_2a90:8
 LAB_2a58:
@@ -4890,7 +4890,7 @@ LAB_2a62:
 LAB_2a64:
           mov.b       r0l, @ui_substateZ
           sub.b       r0l, r0l
-          mov.b       r0l, @accelXPos
+          mov.b       r0l, @accel_xPosition
           mov.b       #H'8, r0l
           bra         LAB_2a90:8
 LAB_2a72:
@@ -4904,7 +4904,7 @@ LAB_2a72:
 LAB_2a84:
           mov.b       r0l, @ui_substateZ
           sub.b       r0l, r0l
-          mov.b       r0l, @accelXPos
+          mov.b       r0l, @accel_xPosition
           mov.b       #H'6, r0l
 LAB_2a90:
           mov.b       r0l, @dowsing_item_pos
@@ -5108,7 +5108,7 @@ ui_handle_battle:
           jsr         @game_battle_process_turn:16
           jmp         @switchD_2c92__caseD_2:16
 LAB_2c7c:
-          mov.b       @accelXPos, r6l
+          mov.b       @accel_xPosition, r6l
           mov.b       @dowsing_item_pos, r6h
           cmp.b       #H'11, r0l
           bhi         switchD_2c92__caseD_2:16
@@ -5127,7 +5127,7 @@ switchD_2c92__caseD_1:
           extu.w      r0
           mov.b       @(BATTLE_ANIM_P1_X,er0), r0l
           mov.b       r0l, @DAT_f7d5
-          mov.b       @accelXPos, r0l
+          mov.b       @accel_xPosition, r0l
           mov.b       @dowsing_item_pos, r0h
           cmp.b       r0h, r0l
           bcs         switchD_2c92__caseD_2:16
@@ -5146,8 +5146,8 @@ switchD_2c92__caseD_3:
           extu.w      r0
           shll.w      r0
           mov.b       @(BATTLE_ANIM_P3_Y,er0), r0l
-          mov.b       r0l, @accelYPos
-          mov.b       @accelXPos, r0l
+          mov.b       r0l, @accel_yPosition
+          mov.b       @accel_xPosition, r0l
           extu.w      r0
           shll.w      r0
           mov.b       @(BATTLE_ANIM_P3_X,er0), r0l
@@ -5155,12 +5155,12 @@ switchD_2c92__caseD_3:
           jsr         @drv_sound_is_playing:16
           mov.b       r0l, r0l
           bne         switchD_2c92__caseD_2:16
-          mov.b       @accelXPos, r0l
+          mov.b       @accel_xPosition, r0l
           mov.b       @dowsing_item_pos, r0h
           cmp.b       r0h, r0l
           bcs         switchD_2c92__caseD_2:16
           mov.b       #H'38, r0l
-          mov.b       r0l, @accelYPos
+          mov.b       r0l, @accel_yPosition
           mov.b       #H'8, r0l
           mov.b       r0l, @DAT_f7d5
           mov.b       @DAT_f7d1, r6l
@@ -5210,7 +5210,7 @@ LAB_2d7c:
           mov.b       #H'7, r0l
           mov.b       r0l, @ui_substateZ
           sub.b       r0l, r0l
-          mov.b       r0l, @accelXPos
+          mov.b       r0l, @accel_xPosition
           mov.b       #H'A, r0l
           jmp         @LAB_3082:16
 switchD_2c92__caseD_4:
@@ -5218,8 +5218,8 @@ switchD_2c92__caseD_4:
           extu.w      r0
           shll.w      r0
           mov.b       @(BATTLE_ANIM_P4_Y,er0), r0l
-          mov.b       r0l, @accelYPos
-          mov.b       @accelXPos, r0l
+          mov.b       r0l, @accel_yPosition
+          mov.b       @accel_xPosition, r0l
           extu.w      r0
           shll.w      r0
           mov.b       @(BATTLE_ANIM_P4_X,er0), r0l
@@ -5227,12 +5227,12 @@ switchD_2c92__caseD_4:
           jsr         @drv_sound_is_playing:16
           mov.b       r0l, r0l
           bne         switchD_2c92__caseD_2:16
-          mov.b       @accelXPos, r0l
+          mov.b       @accel_xPosition, r0l
           mov.b       @dowsing_item_pos, r0h
           cmp.b       r0h, r0l
           bcs         switchD_2c92__caseD_2:16
           mov.b       #H'38, r0l
-          mov.b       r0l, @accelYPos
+          mov.b       r0l, @accel_yPosition
           mov.b       #H'8, r0l
           mov.b       r0l, @DAT_f7d5
           mov.b       @DAT_f7d8, r0l
@@ -5320,13 +5320,13 @@ LAB_2e94:
           mov.w       @save_watts, r6
           cmp.w       #H'A, r6
           bcc         LAB_2eaa:8
-          mov.w       r6, @accelZPos
+          mov.w       r6, @accel_zPosition
           bra         LAB_2eb2:8
 LAB_2eaa:
           mov.w       #H'A, r0
-          mov.w       r0, @accelZPos
+          mov.w       r0, @accel_zPosition
 LAB_2eb2:
-          mov.w       @accelZPos, r0
+          mov.w       @accel_zPosition, r0
           mov.w       r6, e0
           sub.w       r0, e0
           mov.w       e0, @save_watts
@@ -5338,7 +5338,7 @@ LAB_2eb2:
 LAB_2ed2:
           mov.b       r0l, @ui_substateZ
           sub.b       r0l, r0l
-          mov.b       r0l, @accelXPos
+          mov.b       r0l, @accel_xPosition
           mov.b       #H'8, r0l
           jmp         @LAB_3082:16
 switchD_2c92__caseD_6:
@@ -5417,7 +5417,7 @@ switchD_2c92__caseD_a:
           mov.b       #H'B, r0l
           mov.b       r0l, @ui_substateZ
           sub.b       r0l, r0l
-          mov.b       r0l, @accelXPos
+          mov.b       r0l, @accel_xPosition
           mov.b       #H'2, r0l
           jmp         @LAB_3082:16
 switchD_2c92__caseD_b:
@@ -5427,7 +5427,7 @@ switchD_2c92__caseD_b:
 LAB_2fb4:
           mov.b       r0l, @ui_substateZ
           sub.b       r0l, r0l
-          mov.b       r0l, @accelXPos
+          mov.b       r0l, @accel_xPosition
           mov.b       #H'3, r0l
           jmp         @LAB_3082:16
 switchD_2c92__caseD_c:
@@ -5449,7 +5449,7 @@ LAB_2fe8:
           mov.b       #H'11, r0l
           mov.b       r0l, @ui_substateZ
           sub.b       r0l, r0l
-          mov.b       r0l, @accelXPos
+          mov.b       r0l, @accel_xPosition
           mov.b       #H'1, r0l
           jmp         @LAB_3082:16
 switchD_2c92__caseD_e:
@@ -5463,14 +5463,14 @@ LAB_3008:
 LAB_300a:
           mov.b       r0l, @ui_substateZ
           sub.b       r0l, r0l
-          mov.b       r0l, @accelXPos
+          mov.b       r0l, @accel_xPosition
           mov.b       #H'4, r0l
           bra         LAB_3082:8
 LAB_3018:
           mov.b       #H'F, r0l
           mov.b       r0l, @ui_substateZ
           sub.b       r0l, r0l
-          mov.b       r0l, @accelXPos
+          mov.b       r0l, @accel_xPosition
           mov.b       #H'6, r0h
           mov.b       r0h, @dowsing_item_pos
           bra         LAB_3044:8
@@ -5480,7 +5480,7 @@ switchD_2c92__caseD_f:
           mov.b       #H'10, r0l
           mov.b       r0l, @ui_substateZ
           sub.b       r0l, r0l
-          mov.b       r0l, @accelXPos
+          mov.b       r0l, @accel_xPosition
           mov.b       #H'6, r0l
           mov.b       r0l, @dowsing_item_pos
           mov.b       #H'7, r0l
@@ -5510,7 +5510,7 @@ switchD_2c92__caseD_11:
 LAB_3076:
           mov.b       r0l, @ui_substateZ
           sub.b       r0l, r0l
-          mov.b       r0l, @accelXPos
+          mov.b       r0l, @accel_xPosition
           mov.b       #H'6, r0l
 LAB_3082:
           mov.b       r0l, @dowsing_item_pos
@@ -5523,7 +5523,7 @@ switchD_2c92__caseD_9:
           mov.b       #H'7, r0l
           mov.b       r0l, @ui_substateZ
           sub.b       r0l, r0l
-          mov.b       r0l, @accelXPos
+          mov.b       r0l, @accel_xPosition
           mov.b       #H'A, r0l
           mov.b       r0l, @dowsing_item_pos
 switchD_2c92__caseD_2:
@@ -5561,7 +5561,7 @@ ui_render_battle:
           mov.w       r6, e0
           mov.w       #H'1820, r1
           mov.b       #H'8, r0h
-          mov.b       @accelYPos, r0l
+          mov.b       @accel_yPosition, r0l
           jsr         @r4
           mov.w       #H'1DB0, e4
           add.w       r5, e4
@@ -5678,7 +5678,7 @@ LAB_31e8:
           jsr         @gfx_draw_sprite_simple:16
           bra         LAB_3280:8
 LAB_3206:
-          mov.b       @accelXPos, r0l
+          mov.b       @accel_xPosition, r0l
           shll.b      r0l
           shll.b      r0l
           mov.b       #H'2C, r0h
@@ -5739,7 +5739,7 @@ LAB_3280:
 switchD_3296__switchD:
           jmp         @r0
 switchD_3296__caseD_0:
-          mov.b       @accelXPos, r6l
+          mov.b       @accel_xPosition, r6l
           cmp.b       #H'3, r6l
           bcc         switchD_3296__default:16
           mov.b       #H'3, r0l
@@ -5766,7 +5766,7 @@ switchD_3296__caseD_0:
           adds        #2, er7
           jmp         @switchD_3296__default:16
 switchD_3296__caseD_1:
-          mov.b       @accelXPos, r0l
+          mov.b       @accel_xPosition, r0l
           mov.b       @dowsing_item_pos, r0h
           cmp.b       r0h, r0l
           bcs         switchD_3296__default:16
@@ -5814,7 +5814,7 @@ switchD_3296__caseD_3:
           beq         LAB_33d4:16
           jmp         @switchD_3296__default:16
 LAB_3356:
-          mov.b       @accelXPos, r0l
+          mov.b       @accel_xPosition, r0l
           cmp.b       #H'4, r0l
           bne         LAB_337c:8
           mov.b       #H'B, r0l
@@ -5829,7 +5829,7 @@ LAB_3356:
           mov.w       #H'28, r0
           jsr         @r4
 LAB_337c:
-          mov.b       @accelXPos, r0l
+          mov.b       @accel_xPosition, r0l
           cmp.b       #H'4, r0l
           bcs         switchD_3296__default:16
           mov.b       #H'5, r1l
@@ -5837,13 +5837,13 @@ LAB_337c:
           jsr         @gfx_draw_own_pokemon_name:16
           jmp         @LAB_3480:16
 LAB_3394:
-          mov.b       @accelXPos, r0l
+          mov.b       @accel_xPosition, r0l
           cmp.b       #H'4, r0l
           bne         LAB_33a2:8
           mov.b       #H'C, r0l
           jsr         @drv_sound_play:16
 LAB_33a2:
-          mov.b       @accelXPos, r0l
+          mov.b       @accel_xPosition, r0l
           cmp.b       #H'4, r0l
           bcs         switchD_3296__default:16
           mov.b       @ui_substateY, r0l
@@ -5861,7 +5861,7 @@ LAB_33c6:
           jsr         @gfx_draw_special_pokemon_name:16
           jmp         @LAB_34ae:16
 LAB_33d4:
-          mov.b       @accelXPos, r0l
+          mov.b       @accel_xPosition, r0l
           cmp.b       #H'4, r0l
           bne         LAB_33fa:8
           mov.b       #H'D, r0l
@@ -5876,7 +5876,7 @@ LAB_33d4:
           mov.w       #H'28, r0
           jsr         @r4
 LAB_33fa:
-          mov.b       @accelXPos, r0l
+          mov.b       @accel_xPosition, r0l
           cmp.b       #H'4, r0l
           bcs         switchD_3296__default:16
           mov.w       #H'D, r1
@@ -5894,7 +5894,7 @@ switchD_3296__caseD_4:
           beq         LAB_348c:8
           jmp         @switchD_3296__default:16
 LAB_342e:
-          mov.b       @accelXPos, r0l
+          mov.b       @accel_xPosition, r0l
           cmp.b       #H'4, r0l
           bne         LAB_3454:8
           mov.b       #H'B, r0l
@@ -5909,7 +5909,7 @@ LAB_342e:
           mov.w       #H'28, r0
           jsr         @r4
 LAB_3454:
-          mov.b       @accelXPos, r0l
+          mov.b       @accel_xPosition, r0l
           cmp.b       #H'4, r0l
           bcs         switchD_3296__default:16
           mov.b       @ui_substateY, r0l
@@ -5930,13 +5930,13 @@ LAB_3480:
           mov.w       #H'2330, r0
           jmp         @LAB_364e:16
 LAB_348c:
-          mov.b       @accelXPos, r0l
+          mov.b       @accel_xPosition, r0l
           cmp.b       #H'4, r0l
           bne         LAB_349a:8
           mov.b       #H'C, r0l
           jsr         @drv_sound_play:16
 LAB_349a:
-          mov.b       @accelXPos, r0l
+          mov.b       @accel_xPosition, r0l
           cmp.b       #H'4, r0l
           bcs         switchD_3296__default:16
           mov.b       #H'5, r1l
@@ -5966,7 +5966,7 @@ LAB_34dc:
           jmp         @LAB_364e:16
 switchD_3296__caseD_6:
           mov.b       #H'D, r1l
-          mov.w       @accelZPos, e0
+          mov.w       @accel_zPosition, e0
           mov.w       #H'2002, r0
           jsr         @gfx_draw_value_with_icon:16
           mov.w       #H'10E, r1
@@ -5977,7 +5977,7 @@ switchD_3296__caseD_8:
           mov.w       #H'2930, r0
           jmp         @LAB_364e:16
 switchD_3296__caseD_7:
-          mov.b       @accelXPos, r0l
+          mov.b       @accel_xPosition, r0l
           cmp.b       #H'3, r0l
           bls         switchD_3296__default:16
           mov.b       @ui_substateY, r0l
@@ -6064,21 +6064,21 @@ switchD_3296__caseD_f:
           mov.w       e6, r1
           mov.w       r6, e0
           jsr         @r3
-          mov.b       @accelXPos, r0l
+          mov.b       @accel_xPosition, r0l
           shll.b      r0l
           mov.b       #H'A, r0h
           sub.b       r0l, r0h
           mov.b       #H'C, r0l
-          mov.b       @accelXPos, r1l
+          mov.b       @accel_xPosition, r1l
           sub.b       r1l, r0l
           mov.w       r6, e0
           mov.w       #H'808, r1
           jsr         @r4
-          mov.b       @accelXPos, r0l
+          mov.b       @accel_xPosition, r0l
           shll.b      r0l
           mov.b       #H'C, r0h
           sub.b       r0l, r0h
-          mov.b       @accelXPos, r0l
+          mov.b       @accel_xPosition, r0l
           add.b       #H'1C, r0l
           mov.w       r6, e0
           mov.w       #H'808, r1
@@ -6133,14 +6133,14 @@ switchD_3296__caseD_9:
 switchD_3296__default:
           sub.w       r0, r0
           jsr         @gfx_draw_battery_low:16
-          mov.b       @accelXPos, r0l
+          mov.b       @accel_xPosition, r0l
           inc.b       r0l
-          mov.b       r0l, @accelXPos
+          mov.b       r0l, @accel_xPosition
           mov.b       @dowsing_item_pos, r0h
           cmp.b       r0h, r0l
           bcs         LAB_369a:8
           mov.b       r0h, r0l
-          mov.b       r0l, @accelXPos
+          mov.b       r0l, @accel_xPosition
 LAB_369a:
           rts
 ; =============================================================================
@@ -8047,7 +8047,7 @@ game_init_dowsing:
           mov.b       r0l, @ui_substateZ
           mov.b       r0l, @DAT_f7d1
           mov.b       #H'2, r0h
-          mov.b       r0h, @accelXPos
+          mov.b       r0h, @accel_xPosition
           jsr         @sys_get_rng:16
           shll.w      r0
           shll.w      r0
@@ -8060,7 +8060,7 @@ game_init_dowsing:
           mov.w       e0, r0
           mov.b       r0l, @dowsing_item_pos
           mov.b       #H'FF, r0l
-          mov.b       r0l, @accelYPos
+          mov.b       r0l, @accel_yPosition
           sub.b       r0l, r0l
           mov.b       r0l, @DAT_f7d5
           rts
@@ -8088,7 +8088,7 @@ LAB_47f0:
           mov.b       r0l, r0l
           beq         LAB_4822:8
           mov.b       @DAT_f7d1, r0l
-          mov.b       @accelYPos, r0h
+          mov.b       @accel_yPosition, r0h
           cmp.b       r0h, r0l
           bne         LAB_480c:8
           mov.b       #H'1, r0l
@@ -8153,15 +8153,15 @@ LAB_48a6:
           mov.b       r0l, @ui_substateZ
           mov.b       #H'4, r0l
           jsr         @drv_sound_play:16
-          mov.b       @accelXPos, r0l
+          mov.b       @accel_xPosition, r0l
           cmp.b       #H'2, r0l
           bne         LAB_48c2:8
           mov.b       @DAT_f7d1, r0l
-          mov.b       r0l, @accelYPos
+          mov.b       r0l, @accel_yPosition
 LAB_48c2:
-          mov.b       @accelXPos, r0l
+          mov.b       @accel_xPosition, r0l
           dec.b       r0l
-          mov.b       r0l, @accelXPos
+          mov.b       r0l, @accel_xPosition
           jmp         @LAB_499a:16
 LAB_48d0:
           mov.b       #H'E, r0l
@@ -8171,7 +8171,7 @@ LAB_48d0:
           mov.b       @RamCache_settingsByte, r0l
           bld         #H'0, r0l
           bcs         LAB_4968:16
-          mov.b       @accelZPos, r6l
+          mov.b       @accel_zPosition, r6l
           cmp.b       #H'3, r6l
           bne         LAB_4900:8
           mov.b       #H'1, r0l
@@ -8215,7 +8215,7 @@ LAB_4958:
           jsr         @drv_button_is_triggered:16
           mov.b       r0l, r0l
           beq         LAB_499a:8
-          mov.b       @accelXPos, r0l
+          mov.b       @accel_xPosition, r0l
           bne         LAB_497a:8
 LAB_4968:
           sub.b       r0l, r0l
@@ -8323,7 +8323,7 @@ game_check_wild_encounter:
           mov.b       r0l, r0l
           beq         LAB_4a5e:8
 LAB_4a48:
-          mov.b       @accelXPos, r0l
+          mov.b       @accel_xPosition, r0l
           shll.b      r0l
           shll.b      r0l
           add.b       #H'2, r0l
@@ -8394,7 +8394,7 @@ ui_handle_dowsing_selection:
           jsr         @drv_eeprom_read_block:16
           mov.w       r6, r0
           jsr         @save_find_empty_item_slot:16
-          mov.b       r0l, @accelZPos
+          mov.b       r0l, @accel_zPosition
           mov.b       @RamCache_settingsByte, r0l
           bld         #H'0, r0l
           bcc         LAB_4b26:8
@@ -8465,7 +8465,7 @@ ui_render_dowsing_grass:
           jsr         @sbrk:16
           mov.w       r0, r6
           mov.w       r0, e0
-          mov.b       @accelXPos, r1l
+          mov.b       @accel_xPosition, r1l
           extu.w      r1
           mov.w       #H'20, e1
           mulxu.w     e1, er1
@@ -8528,7 +8528,7 @@ LAB_4c62:
           mov.w       e6, r5
           mov.b       #H'10, r5h
           mulxu.b     r5h, r5
-          mov.b       @accelYPos, r0l
+          mov.b       @accel_yPosition, r0l
           extu.w      r0
           cmp.w       r0, e6
           bne         LAB_4c7c:8
@@ -8597,7 +8597,7 @@ LAB_4cea:
           mov.w       #H'140, r1
           mov.w       r4, e0
           jsr         @drv_eeprom_read_block:16
-          mov.b       @accelXPos, r0l
+          mov.b       @accel_xPosition, r0l
           extu.w      r0
           mov.w       #H'20, e0
           mulxu.w     e0, er0
@@ -8669,7 +8669,7 @@ LAB_4dce:
           mov.b       #H'10, r0h
           mulxu.b     r0h, r0
           mov.b       r0l, r4l
-          mov.b       @accelYPos, r0l
+          mov.b       @accel_yPosition, r0l
           extu.w      r0
           cmp.w       r0, e6
           bne         LAB_4dea:8
@@ -8769,7 +8769,7 @@ LAB_4ece:
           mov.w       #H'10F, r1
           mov.w       #LAB_1930, r0
           jsr         @gfx_draw_text_box:16
-          mov.b       @accelXPos, r0l
+          mov.b       @accel_xPosition, r0l
           bne         LAB_4f48:8
           mov.w       #H'208, r4
           add.w       r5, r4
@@ -10380,7 +10380,7 @@ game_process_interaction_reward:
           extu.w      r1
           shll.w      r1
           mov.w       @(INTERACTION_REWARD_PTRS,er1), r1
-          mov.w       r1, @accelXPos
+          mov.w       r1, @accel_xPosition
           mov.b       #H'C, r0l
           jsr         @ui_set_view:16
           sub.w       r0, r0
@@ -10515,7 +10515,7 @@ ui_handle_bored_gift:
           jsr         @drv_button_is_triggered:16
           mov.b       r0l, r0l
           beq         LAB_5eda:8
-          mov.w       @accelXPos, r0
+          mov.w       @accel_xPosition, r0
           bld         #H'0, @r0
           bcc         LAB_5ebe:8
           jsr         @ui_reset_substate:16
@@ -10524,11 +10524,11 @@ ui_handle_bored_gift:
           bra         LAB_5eda:8
 LAB_5ebe:
           add.w       #H'4, r0
-          mov.w       r0, @accelXPos
+          mov.w       r0, @accel_xPosition
           mov.b       @(H'1,er0), r0l
           cmp.b       #H'10, r0l
           beq         LAB_5eda:8
-          mov.w       @accelXPos, r0
+          mov.w       @accel_xPosition, r0
           mov.b       @(H'1,er0), r0l
           jsr         @drv_sound_play:16
 LAB_5eda:
@@ -10543,13 +10543,13 @@ ui_render_bored_gift:
           jsr         @sys_init_heap:16
           mov.w       #H'C0, r0
           jsr         @sbrk:16
-          mov.w       @accelXPos, r0
+          mov.w       @accel_xPosition, r0
           bld         #H'1, @r0
           bcc         LAB_5efa:8
           mov.w       #H'420, r0
           jsr         @gfx_draw_own_pokemon_small:16
 LAB_5efa:
-          mov.w       @accelXPos, r0
+          mov.w       @accel_xPosition, r0
           mov.b       @er0, r1l
           and.b       #H'E0, r1l
           cmp.b       #H'E0, r1l
@@ -10561,7 +10561,7 @@ LAB_5efa:
           and.b       #H'7, r0l
           jsr         @gfx_draw_small_route_icon:16
 LAB_5f14:
-          mov.w       @accelXPos, r0
+          mov.w       @accel_xPosition, r0
           bld         #H'2, @r0
           bcc         LAB_5f26:8
           mov.b       #H'14, r0h
@@ -10569,7 +10569,7 @@ LAB_5f14:
           jsr         @gfx_draw_item_symbol:16
 LAB_5f26:
           mov.b       @ui_substateZ, r6l
-          mov.w       @accelXPos, r0
+          mov.w       @accel_xPosition, r0
           mov.b       @(H'2,er0), r1l
           cmp.b       #H'FC, r1l
           beq         LAB_5f44:8
@@ -10604,7 +10604,7 @@ LAB_5f6e:
           mov.b       #H'20, r0l
           jsr         @gfx_draw_text_box:16
 LAB_5f7a:
-          mov.w       @accelXPos, r0
+          mov.w       @accel_xPosition, r0
           mov.b       @er0, r1l
           and.b       #H'18, r1l
           cmp.b       #H'8, r1l
@@ -10617,12 +10617,12 @@ LAB_5f92:
           mov.b       @(H'2,er0), r0l
           cmp.b       #H'FF, r0l
           bne         LAB_5fa8:8
-          mov.w       @accelXPos, r0
+          mov.w       @accel_xPosition, r0
           mov.b       @(H'3,er0), r0h
           mov.w       #H'10F, r1
           bra         LAB_5fb4:8
 LAB_5fa8:
-          mov.w       @accelXPos, r0
+          mov.w       @accel_xPosition, r0
           mov.b       @(H'3,er0), r0h
 LAB_5fb0:
           mov.w       #H'10E, r1
@@ -11221,7 +11221,7 @@ LAB_64e8:
 LAB_6506:
           mov.b       #H'9, r0l
 LAB_6508:
-          mov.b       r0l, @accelXPos
+          mov.b       r0l, @accel_xPosition
           jsr         @save_get_dowsing_item_id:16
           extu.w      r5
           shll.w      r5
@@ -11474,7 +11474,7 @@ LAB_66fc:
           bra         LAB_6728:8
 LAB_671a:
           mov.b       #H'D, r1h
-          mov.b       @accelXPos, r1l
+          mov.b       @accel_xPosition, r1l
           mov.w       #LAB_2000, r0
           jsr         @gfx_draw_item_name:16
 LAB_6728:
@@ -11683,7 +11683,7 @@ LAB_68e0:
           bcs         LAB_68e0:8
           mov.b       @dowsing_item_pos, r0l
           bne         LAB_6938:8
-          mov.b       @accelXPos, r5l
+          mov.b       @accel_xPosition, r5l
           cmp.b       #H'A, r5l
           bcc         LAB_6938:8
           mov.b       r5l, r1l
@@ -13335,9 +13335,9 @@ LAB_772c:
           mov.b       @ped_sampleCount, r0l
           bne         LAB_7788:8
           sub.w       r0, r0
-          mov.w       r0, @accelXPos
-          mov.w       r0, @accelYPos
-          mov.w       r0, @accelZPos
+          mov.w       r0, @accel_xPosition
+          mov.w       r0, @accel_yPosition
+          mov.w       r0, @accel_zPosition
 LAB_7788:
           mov.b       @ped_sampleCount, r0l
           extu.w      r0
@@ -13368,9 +13368,9 @@ LAB_77ba:
           exts.w      r1
           add.w       r1, r0
 LAB_77d0:
-          mov.w       @accelXPos, e0
+          mov.w       @accel_xPosition, e0
           add.w       r0, e0
-          mov.w       e0, @accelXPos
+          mov.w       e0, @accel_xPosition
           mov.b       @ped_sampleCount, r0l
           extu.w      r0
           mov.b       @(ACCEL_SAMPLES_Y,er0), r0l
@@ -13398,9 +13398,9 @@ LAB_7808:
           exts.w      r1
           add.w       r1, r0
 LAB_781e:
-          mov.w       @accelYPos, e0
+          mov.w       @accel_yPosition, e0
           add.w       r0, e0
-          mov.w       e0, @accelYPos
+          mov.w       e0, @accel_yPosition
           mov.b       @ped_sampleCount, r0l
           extu.w      r0
           mov.b       @(ACCEL_SAMPLES_Z,er0), r0l
@@ -13428,9 +13428,9 @@ LAB_7856:
           exts.w      r1
           add.w       r1, r0
 LAB_786c:
-          mov.w       @accelZPos, e0
+          mov.w       @accel_zPosition, e0
           add.w       r0, e0
-          mov.w       e0, @accelZPos
+          mov.w       e0, @accel_zPosition
 LAB_7876:
           add.w       #H'6, r7
           pop.w       r6
@@ -15994,7 +15994,7 @@ LAB_8d2a:
           jsr         @ui_inventory_cursor_next:16
           mov.b       r0l, r0l
           beq         LAB_8d58:8
-          mov.w       @accelXPos, r0
+          mov.w       @accel_xPosition, r0
           beq         LAB_8d54:8
           jsr         @ui_inventory_jump_to_items:16
           mov.b       #H'B, r0l
@@ -16012,7 +16012,7 @@ LAB_8d5e:
           jsr         @drv_button_is_triggered:16
           mov.b       r0l, r0l
           beq         LAB_8d86:8
-          mov.w       @accelXPos, r0
+          mov.w       @accel_xPosition, r0
           beq         LAB_8d76:8
           jsr         @ui_inventory_jump_to_items:16
           mov.b       #H'B, r0l
@@ -16248,7 +16248,7 @@ LAB_8f94:
           mov.w       #H'1008, r1
           sub.w       r0, r0
           jsr         @drv_lcd_blit:16
-          mov.w       @accelXPos, r0
+          mov.w       @accel_xPosition, r0
           beq         LAB_8fec:8
           mov.w       r6, e0
           mov.w       #H'1008, r1
@@ -16387,7 +16387,7 @@ LAB_90fc:
 ui_inventory_jump_to_items:
           mov.b       #H'9, r0l
           mov.b       r0l, @ui_substateY
-          mov.w       @accelXPos, r0
+          mov.w       @accel_xPosition, r0
           jmp         @ui_inventory_cursor_find_present:16
 ; =============================================================================
 ; Function: ui_handle_inventory_items
@@ -16400,7 +16400,7 @@ ui_handle_inventory_items:
           jsr         @drv_button_is_triggered:16
           mov.b       r0l, r0l
           beq         LAB_9150:8
-          mov.w       @accelXPos, r0
+          mov.w       @accel_xPosition, r0
           jsr         @ui_inventory_cursor_prev:16
           mov.b       r0l, r0l
           beq         LAB_914a:8
@@ -16422,7 +16422,7 @@ LAB_9150:
           jsr         @drv_button_is_triggered:16
           mov.b       r0l, r0l
           beq         LAB_9170:8
-          mov.w       @accelXPos, r0
+          mov.w       @accel_xPosition, r0
           jsr         @ui_inventory_cursor_next:16
           mov.b       r0l, r0l
           beq         LAB_916a:8
@@ -16541,7 +16541,7 @@ LAB_926a:
           shll.w      r0
           bra         LAB_926a:8
 LAB_9272:
-          mov.w       @accelXPos, e0
+          mov.w       @accel_xPosition, e0
           and.w       r0, e0
           beq         LAB_928c:8
           mov.b       r6l, r0l
@@ -16567,7 +16567,7 @@ LAB_929c:
           shll.w      r0
           bra         LAB_929c:8
 LAB_92a4:
-          mov.w       @accelXPos, e0
+          mov.w       @accel_xPosition, e0
           and.w       r0, e0
           beq         LAB_92be:8
           mov.b       r6l, r0l
@@ -16814,39 +16814,39 @@ LAB_947a:
           beq         LAB_9560:16
           inc.b       r0l
           mov.b       r0l, @ui_substateA
-          mov.w       @accelXPos, r0
+          mov.w       @accel_xPosition, r0
           mov.w       @ped_axisStepThresholdLo, e0
           cmp.w       e0, r0
           bcc         LAB_94e2:8
           mov.b       #H'18, r0l
           mov.b       r0l, @ui_activeView
 LAB_94e2:
-          mov.w       @accelYPos, r0
+          mov.w       @accel_yPosition, r0
           cmp.w       e0, r0
           bcc         LAB_94f0:8
           mov.b       #H'18, r0l
           mov.b       r0l, @ui_activeView
 LAB_94f0:
-          mov.w       @accelZPos, r0
+          mov.w       @accel_zPosition, r0
           cmp.w       e0, r0
           bcc         LAB_94fe:8
           mov.b       #H'18, r0l
           mov.b       r0l, @ui_activeView
 LAB_94fe:
-          mov.w       @accelXPos, r0
+          mov.w       @accel_xPosition, r0
           mov.w       @ped_axisStepThresholdHi, e0
           cmp.w       e0, r0
           bls         LAB_9510:8
           mov.b       #H'18, r0l
           mov.b       r0l, @ui_activeView
 LAB_9510:
-          mov.w       @accelYPos, r0
+          mov.w       @accel_yPosition, r0
           cmp.w       e0, r0
           bls         LAB_951e:8
           mov.b       #H'18, r0l
           mov.b       r0l, @ui_activeView
 LAB_951e:
-          mov.w       @accelZPos, r0
+          mov.w       @accel_zPosition, r0
           cmp.w       e0, r0
           bls         LAB_9560:8
           mov.b       #H'18, r0l
@@ -16858,13 +16858,13 @@ LAB_952e:
           cmp.b       r0h, r0l
           bcc         LAB_9560:8
           mov.w       @ped_axisIdleThreshold, r1
-          mov.w       @accelXPos, r0
+          mov.w       @accel_xPosition, r0
           cmp.w       r1, r0
           bcc         LAB_9560:8
-          mov.w       @accelYPos, r0
+          mov.w       @accel_yPosition, r0
           cmp.w       r1, r0
           bcc         LAB_9560:8
-          mov.w       @accelZPos, r0
+          mov.w       @accel_zPosition, r0
           cmp.w       r1, r0
           bcc         LAB_9560:8
           mov.b       @DAT_f7d1, r0l
@@ -17186,7 +17186,7 @@ switchD_97b0__caseD_4:
           beq         LAB_988a:8
           mov.w       r0, @ui_substateA
           mov.w       @(H'2,er6), r6
-          mov.w       r6, @accelXPos
+          mov.w       r6, @accel_xPosition
           jsr         @ui_inventory_cursor_reset:16
           mov.b       #H'A, r0l
           bra         LAB_98b6:8
@@ -17196,7 +17196,7 @@ LAB_988a:
           mov.w       @er6, r0
           mov.w       r0, @ui_substateA
           mov.w       @(H'2,er6), r6
-          mov.w       r6, @accelXPos
+          mov.w       r6, @accel_xPosition
           jsr         @ui_inventory_jump_to_items:16
           mov.b       #H'B, r0l
           bra         LAB_98b6:8
@@ -17690,7 +17690,7 @@ LAB_9d32:
           neg.b       r6l
           add.b       r0l, r6l
           add.b       #H'3, r6l
-          mov.b       r6l, @accelXPos
+          mov.b       r6l, @accel_xPosition
           bra         LAB_9d90:8
 LAB_9d72:
           inc.b       r6l
@@ -17706,7 +17706,7 @@ LAB_9d74:
           and.b       #H'1, r0l
           add.b       #H'1, r0l
 LAB_9d8c:
-          mov.b       r0l, @accelXPos
+          mov.b       r0l, @accel_xPosition
 LAB_9d90:
           rts
 ; =============================================================================
@@ -17722,7 +17722,7 @@ game_pokeradar_init:
           mov.b       r0l, @ui_substateA
           mov.b       r0l, @DAT_f7d1
           mov.b       #H'5, r0h
-          mov.b       r0h, @accelYPos
+          mov.b       r0h, @accel_yPosition
           mov.b       r0l, r1l
           extu.w      r1
           mov.b       @(RADAR_STATE_X,er1), r1l
@@ -17734,7 +17734,7 @@ game_pokeradar_init:
           and.b       #H'3, r0h
           mov.b       r0h, @dowsing_item_pos
           sub.b       r0l, r0l
-          mov.b       r0l, @accelZPos
+          mov.b       r0l, @accel_zPosition
           rts
 ; =============================================================================
 ; Function: ui_handle_radar_grass_menu
@@ -17780,7 +17780,7 @@ LAB_9e06:
           mov.b       #H'3, r0l
           mov.b       r0l, @ui_substateZ
           mov.b       #H'10, r0l
-          mov.b       r0l, @accelZPos
+          mov.b       r0l, @accel_zPosition
           bra         LAB_9e70:8
 LAB_9e36:
           mov.b       @DAT_f7d1, r0l
@@ -17789,10 +17789,10 @@ LAB_9e36:
           jsr         @drv_sound_play:16
           bra         LAB_9e70:8
 LAB_9e44:
-          mov.b       @accelYPos, r0l
+          mov.b       @accel_yPosition, r0l
           beq         LAB_9e52:8
           dec.b       r0l
-          mov.b       r0l, @accelYPos
+          mov.b       r0l, @accel_yPosition
           bra         LAB_9e70:8
 LAB_9e52:
           mov.b       @DAT_f7d5, r0l
@@ -17851,12 +17851,12 @@ LAB_9ec4:
           jsr         @ui_set_view:16
           bra         LAB_9f42:8
 LAB_9eca:
-          mov.b       @accelZPos, r0l
+          mov.b       @accel_zPosition, r0l
           beq         LAB_9f42:8
           dec.b       r0l
-          mov.b       r0l, @accelZPos
+          mov.b       r0l, @accel_zPosition
           bne         LAB_9f42:8
-          mov.b       @accelXPos, r0l
+          mov.b       @accel_xPosition, r0l
           extu.w      r0
           dec.w       #1, r0
           mov.b       @DAT_f7d1, r1l
@@ -17865,7 +17865,7 @@ LAB_9eca:
           blt         LAB_9efc:8
           mov.b       #H'1, r0l
           mov.b       r0l, @ui_substateZ
-          mov.b       r0l, @accelZPos
+          mov.b       r0l, @accel_zPosition
           sub.b       r0h, r0h
           mov.b       r0h, @DAT_f7d5
           bra         LAB_9f42:8
@@ -17881,7 +17881,7 @@ LAB_9efc:
           mov.b       @(RADAR_STATE_Y_DIVISOR,er1), r1l
           divxu.b     r1l, r0
           add.b       #H'10, r0h
-          mov.b       r0h, @accelYPos
+          mov.b       r0h, @accel_yPosition
           mov.b       @DAT_f7d1, r0l
           inc.b       r0l
           mov.b       r0l, @DAT_f7d1
@@ -17960,7 +17960,7 @@ LAB_9fbc:
           inc.w       #1, e6
           cmp.w       #H'4, e6
           blt         LAB_9fbc:8
-          mov.b       @accelZPos, r0l
+          mov.b       @accel_zPosition, r0l
           beq         LAB_a0a2:16
           mov.w       #H'1AF0, r4
           add.w       r5, r4
@@ -18041,7 +18041,7 @@ LAB_a0a2:
           mov.w       #H'F, r1
           mov.w       #H'1C30, r0
           jsr         @gfx_draw_text_box:16
-          mov.b       @accelYPos, r0l
+          mov.b       @accel_yPosition, r0l
           bne         LAB_a100:8
           mov.w       #H'1AF0, r4
           add.w       r5, r4
@@ -19165,7 +19165,7 @@ diag_init_test_mode:
           mov.b       r0l, @ui_substateY
           mov.b       r0l, @ui_substateA
           mov.w       #H'1, e0
-          mov.w       e0, @accelYPos
+          mov.w       e0, @accel_yPosition
           mov.b       @RamCache_settingsByte, r0h
           and.b       #H'F9, r0h
           or.b        #H'4, r0h
@@ -19262,7 +19262,7 @@ LAB_ab44:
           mov.b       @RSECDR, r0l
           cmp.b       r0l, r1l
           bne         LAB_ab44:8
-          mov.b       r1l, @accelXPos
+          mov.b       r1l, @accel_xPosition
           bra         LAB_abc8:8
 switchD_aa8e__caseD_c:
           mov.b       @dowsing_item_pos, r0l
@@ -19272,13 +19272,13 @@ switchD_aa8e__caseD_c:
           bra         LAB_abc0:8
 switchD_aa8e__caseD_d:
           mov.w       #H'2, e1
-          mov.w       #accelYPos, r1
+          mov.w       #accel_yPosition, r1
           mov.l       #H'1800080, er0
           jsr         @save_read_reliable:16
-          mov.w       @accelYPos, r0
+          mov.w       @accel_yPosition, r0
           jsr         @drv_adc_validate_calib_checksum:16
           mov.b       r0l, @dowsing_item_pos
-          mov.w       @accelYPos, r0
+          mov.w       @accel_yPosition, r0
           bne         LAB_abc8:8
           sub.b       r0l, r0l
           bra         LAB_abb4:8
@@ -19290,7 +19290,7 @@ switchD_aa8e__caseD_e:
           bra         LAB_abc0:8
 switchD_aa8e__caseD_f:
           mov.b       @DAT_f7d1, r0l
-          mov.b       @accelXPos, r0h
+          mov.b       @accel_xPosition, r0h
           cmp.b       r0h, r0l
           beq         switchD_aa8e__default:8
           bra         LAB_abc0:8
@@ -19481,7 +19481,7 @@ switchD_ad20__caseD_e:
           jmp         @LAB_adea:16
 switchD_ad20__caseD_f:
           mov.b       @DAT_f7d1, r0l
-          mov.b       @accelXPos, r0h
+          mov.b       @accel_xPosition, r0h
           cmp.b       r0h, r0l
           bne         switchD_ad20__caseD_d:16
           mov.w       #FACTORY_STR_NG4, e0
@@ -19559,19 +19559,19 @@ LAB_ae08:
           mov.w       r7, r6
           sub.b       r0l, r0l
           mov.b       r0l, @(H'4,er6)
-          mov.w       @accelYPos, r0
+          mov.w       @accel_yPosition, r0
           mov.w       #H'1000, r1
           extu.l      er0
           divxu.w     r1, er0
           and.w       #H'F, r0
           mov.b       @(HEX_DIGITS,er0), r0l
           mov.b       r0l, @er6
-          mov.b       @accelYPos, r0l
+          mov.b       @accel_yPosition, r0l
           sub.b       r0h, r0h
           and.w       #H'F, r0
           mov.b       @(HEX_DIGITS,er0), r0l
           mov.b       r0l, @(H'1,er6)
-          mov.w       @accelYPos, r0
+          mov.w       @accel_yPosition, r0
           shlr.w      r0
           shlr.w      r0
           shlr.w      r0
@@ -19579,7 +19579,7 @@ LAB_ae08:
           and.w       #H'F, r0
           mov.b       @(HEX_DIGITS,er0), r0l
           mov.b       r0l, @(H'2,er6)
-          mov.w       @accelYPos, r0
+          mov.w       @accel_yPosition, r0
           and.w       #H'F, r0
           mov.b       @(HEX_DIGITS,er0), r0l
           mov.b       r0l, @(H'3,er6)
@@ -19625,9 +19625,9 @@ sys_init_accel_debug:
           mov.b       r0l, @ui_substateA
           mov.b       r0l, @DAT_f7d1
           sub.w       e0, e0
-          mov.w       e0, @accelXPos
-          mov.w       e0, @accelYPos
-          mov.w       e0, @accelZPos
+          mov.w       e0, @accel_xPosition
+          mov.w       e0, @accel_yPosition
+          mov.w       e0, @accel_zPosition
           mov.w       #H'8, r1
           mov.w       #DAT_f7d8, e0
           mov.w       r1, r0
@@ -21425,15 +21425,15 @@ ui_substateA:
           .RES.B      1
 DAT_f7d1:
           .RES.B      1
-accelXPos:
+accel_xPosition:
           .RES.B      1
 dowsing_item_pos:
           .RES.B      1
-accelYPos:
+accel_yPosition:
           .RES.B      1
 DAT_f7d5:
           .RES.B      1
-accelZPos:
+accel_zPosition:
           .RES.B      2
 DAT_f7d8:
           .RES.B      1

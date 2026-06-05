@@ -18,9 +18,9 @@ void sys_init_accel_debug(void) {
   g.ui_substateY = 0x10;
   g.ui_substateA = 0;
   g.DAT_f7d1 = 0;
-  g.accelXPos = 0;
-  g.accelYPos = 0;
-  g.accelZPos = 0;
+  g.accel_xPosition = 0;
+  g.accel_yPosition = 0;
+  g.accel_zPosition = 0;
   drv_eeprom_read_block(8, (void *)&g.DAT_f7d8, 8);
   sys_walkerFlags_BIT.session_active = 1;
 }
