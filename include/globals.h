@@ -53,46 +53,58 @@ union pw_scratch {
 };
 
 /* 0xF866..0xF955: 240-byte multi-purpose scratch region (sibling of scratch1).
- * Memory is reused across mutually-exclusive subsystems:
+ * Time-multiplexed across subsystems; each view names its interpretation.
  *
- *   - Accel-Y samples:   int8_t[64] from offset 0   (covers accel_samplesYArr + at_f886/88e/896/897)
- *   - Accel-Z samples:   int8_t[64] from offset 0x40 (overlaps IR session-key state)
- *   - IR session state:  ir_sessionKeyNext/ir_sessionKey/handshake/retry counters/xfer (offsets 0x50..0x67)
- *   - IR packet buffer:  136 bytes from offset 0x68  (cmd/subtype/crc/session/payload)
- *   - Step detection state when IR idle: ped_stepDetectAccumulator, ped_pendingStepDetect, ped_isNotWalking
- *     overlap with the IR packet payload tail. */
+ *   - accel: Y-samples uint8[64] at 0..0x3F and Z-samples uint8[16] at 0x40..0x4F.
+ *   - ir:    TX/RX byte-iteration buffer at 0x00..0x4F (overlaps accel), session
+ *            state at 0x50..0x67, command header at 0x68..0x6F, packet payload
+ *            at 0x70..0xEF.
+ *   - ped:   step-detect counters at offsets corresponding to ir.payload[0x10..0x19]
+ *            (used while IR is idle). */
 union pw_scratch2 {
     uint8_t bytes[0xF0];
     struct {
-        uint8_t  accel_y[32];        /* +0x00 accel_samplesYArr / accel_samplesY[0..31] */
-        uint8_t  at_f886[8];         /* +0x20 = accel_samplesY[32..39] */
-        uint8_t  at_f88e[8];         /* +0x28 = accel_samplesY[40..47] */
-        uint8_t  at_f896;            /* +0x30 = accel_samplesY[48] */
-        uint8_t  at_f897[15];        /* +0x31 = accel_samplesY[49..63] */
-        uint8_t  accel_z[3];         /* +0x40 accel_samplesZArr / accel_samplesZ[0..2] */
-        uint8_t  at_f8a9[13];        /* +0x43 = accel_samplesZ[3..15] */
-        volatile uint32_t ir_sessionKeyNext;       /* +0x50 */
-        volatile uint32_t ir_sessionKey;           /* +0x54 */
-        volatile uint8_t  ir_handshakeStep;        /* +0x58 */
-        volatile uint8_t  ir_timeoutRetryCount;    /* +0x59 (ROM uses byte access only) */
-        volatile uint8_t  _pad_at_5a;              /* +0x5A */
-        volatile uint8_t  at_f8c1;                 /* +0x5B */
-        volatile uint8_t  ir_crcRetryCount;        /* +0x5C */
-        volatile byte_bits_t ir_packetReceivedFlag; /* +0x5D */
-        volatile uint8_t  ir_requestedPokemonAction; /* +0x5E */
-        volatile uint8_t  ir_sessionPhase;         /* +0x5F */
-        volatile uint16_t ir_xferRemaining;        /* +0x60 */
-        volatile uint16_t ir_xferSrc;              /* +0x62 */
-        volatile uint16_t ir_xferDst;              /* +0x64 */
-        volatile uint8_t  ir_xferChunkCount;       /* +0x66 */
-        volatile uint8_t  ir_rdrData;              /* +0x67 */
-        volatile uint8_t  ir_commandType;          /* +0x68 */
-        volatile uint8_t  ir_commandSubtype;       /* +0x69 (unused) */
-        volatile uint8_t  ir_commandCrcLo;         /* +0x6A */
-        volatile uint8_t  ir_commandCrcHi;         /* +0x6B */
-        volatile uint32_t ir_commandSessionToken;  /* +0x6C */
-        volatile uint8_t  payload[0x80];           /* +0x70 IR payload (also overlaps step state when idle) */
-    } s;
+        uint8_t y[64];                              /* +0x00..0x3F Y-axis accel samples */
+        uint8_t z[16];                              /* +0x40..0x4F Z-axis accel samples */
+        uint8_t _pad0[0xA0];                        /* +0x50..0xEF unused by this view */
+    } accel;
+    struct {
+        uint8_t at_f866[0x20];                      /* +0x00..0x1F */
+        uint8_t at_f886[8];                         /* +0x20 (DAT_f886) — TX byte-iteration buffer */
+        uint8_t at_f88e[8];                         /* +0x28 (DAT_f88e) */
+        uint8_t at_f896;                            /* +0x30 (DAT_f896) */
+        uint8_t at_f897[15];                        /* +0x31..0x3F */
+        uint8_t at_f8a6[3];                         /* +0x40..0x42 */
+        uint8_t at_f8a9[13];                        /* +0x43..0x4F (DAT_f8a9 — unused) */
+        volatile uint32_t sessionKeyNext;           /* +0x50 */
+        volatile uint32_t sessionKey;               /* +0x54 */
+        volatile uint8_t  handshakeStep;            /* +0x58 */
+        volatile uint8_t  timeoutRetryCount;        /* +0x59 */
+        volatile uint8_t  _pad_at_5a;               /* +0x5A */
+        volatile uint8_t  at_f8c1;                  /* +0x5B (DAT_f8c1) */
+        volatile uint8_t  crcRetryCount;            /* +0x5C */
+        volatile byte_bits_t packetReceivedFlag;    /* +0x5D */
+        volatile uint8_t  requestedPokemonAction;   /* +0x5E */
+        volatile uint8_t  sessionPhase;             /* +0x5F */
+        volatile uint16_t xferRemaining;            /* +0x60 */
+        volatile uint16_t xferSrc;                  /* +0x62 */
+        volatile uint16_t xferDst;                  /* +0x64 */
+        volatile uint8_t  xferChunkCount;           /* +0x66 */
+        volatile uint8_t  rdrData;                  /* +0x67 */
+        volatile uint8_t  commandType;              /* +0x68 */
+        volatile uint8_t  commandSubtype;           /* +0x69 (unused) */
+        volatile uint8_t  commandCrcLo;             /* +0x6A */
+        volatile uint8_t  commandCrcHi;             /* +0x6B */
+        volatile uint32_t commandSessionToken;      /* +0x6C */
+        volatile uint8_t  payload[0x80];            /* +0x70..0xEF IR payload */
+    } ir;
+    struct {
+        uint8_t _pad0[0x80];                        /* +0x00..0x7F unused (overlaps accel + ir session+cmd) */
+        volatile uint32_t stepDetectAccumulator;    /* +0x80 = ir.payload[0x10] */
+        volatile uint32_t pendingStepDetect;        /* +0x84 = ir.payload[0x14] */
+        volatile uint8_t  at_f8ee;                  /* +0x88 = ir.payload[0x18] (DAT_f8ee) */
+        volatile uint8_t  isNotWalking;             /* +0x89 = ir.payload[0x19] */
+    } ped;
 };
 
 /* ============================================================
@@ -229,17 +241,17 @@ enum view_id {
 #define DAT_f7d8_w  (*(volatile uint16_t *)&g.viewstate.v.dowsing.awardedItemHi)
 
 /* g.scratch1 / g.scratch2 typed views (no plain struct equivalent). */
-#define accel_samplesY            ((volatile int8_t *)g.scratch2.s.accel_y)
-#define accel_samplesZ            ((volatile int8_t *)g.scratch2.s.accel_z)
-#define DAT_f886                  (g.scratch2.s.at_f886)
-#define DAT_f88e                  (g.scratch2.s.at_f88e)
-#define DAT_f896                  (g.scratch2.s.at_f896)
-#define DAT_f8c1                  (g.scratch2.s.at_f8c1)
-#define ir_payload                (g.scratch2.s.payload[0])
-#define ped_stepDetectAccumulator (*(volatile uint32_t *)&g.scratch2.s.payload[0x10])
-#define ped_pendingStepDetect     (*(volatile uint32_t *)&g.scratch2.s.payload[0x14])
-#define DAT_f8ee                  (g.scratch2.s.payload[0x18])
-#define ped_isNotWalking          (g.scratch2.s.payload[0x19])
+#define accel_samplesY            ((volatile int8_t *)g.scratch2.accel.y)
+#define accel_samplesZ            ((volatile int8_t *)g.scratch2.accel.z)
+#define DAT_f886                  (g.scratch2.ir.at_f886)
+#define DAT_f88e                  (g.scratch2.ir.at_f88e)
+#define DAT_f896                  (g.scratch2.ir.at_f896)
+#define DAT_f8c1                  (g.scratch2.ir.at_f8c1)
+#define ir_payload                (g.scratch2.ir.payload[0])
+#define ped_stepDetectAccumulator (g.scratch2.ped.stepDetectAccumulator)
+#define ped_pendingStepDetect     (g.scratch2.ped.pendingStepDetect)
+#define DAT_f8ee                  (g.scratch2.ped.at_f8ee)
+#define ped_isNotWalking          (g.scratch2.ped.isNotWalking)
 
 #define DAT_f7e6        (g.scratch1.bytes)              /* uint8_t[128] -- decays to (uint8_t *) */
 #define DAT_f7ea        (g.scratch1.ir.id_backup)

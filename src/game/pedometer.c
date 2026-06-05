@@ -367,8 +367,8 @@ void game_process_accel_data(void) {
   } while (i < 32);
 
   drv_accel_fft(g.scratch1.accel.samples);
-  drv_accel_fft(g.scratch2.s.accel_y);
-  drv_accel_fft(g.scratch2.s.accel_z);
+  drv_accel_fft(g.scratch2.accel.y);
+  drv_accel_fft(g.scratch2.accel.z);
 
   steps = game_detect_steps_fft(fft_results);
 

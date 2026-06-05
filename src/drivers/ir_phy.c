@@ -52,7 +52,7 @@ void drv_ir_init_hw(void) {
   tmp = SSR3 & 0xC4;
   SSR3 = tmp;
   if (SSR3_BIT.RDRF) {
-    g.scratch2.s.ir_rdrData = RDR3;
+    g.scratch2.ir.rdrData = RDR3;
   }
 }
 
@@ -73,14 +73,14 @@ void drv_ir_init_output_pins(void) { drv_ir_init_pins(); }
 
 // ROM: 0x0772  66.8%  saves: er3,er4,er5,er6
 void drv_ir_send_packet(uint8_t pktLen, uint8_t cmdType, uint8_t subtype) {
-  uint8_t *pkt = (uint8_t *)&g.scratch2.s.ir_commandType;
+  uint8_t *pkt = (uint8_t *)&g.scratch2.ir.commandType;
   uint16_t crc;
   uint16_t i;
   uint16_t tcntSnap;
 
   pkt[0] = cmdType;
   pkt[1] = subtype;
-  *(uint32_t *)(pkt + 4) = g.scratch2.s.ir_sessionKey;
+  *(uint32_t *)(pkt + 4) = g.scratch2.ir.sessionKey;
   pkt[2] = 0;
   pkt[3] = 0;
 
@@ -102,7 +102,7 @@ void drv_ir_send_packet(uint8_t pktLen, uint8_t cmdType, uint8_t subtype) {
     ;
 
   if (SSR3_BIT.RDRF) {
-    g.scratch2.s.ir_rdrData = RDR3;
+    g.scratch2.ir.rdrData = RDR3;
   }
 }
 
@@ -110,17 +110,17 @@ void drv_ir_send_packet(uint8_t pktLen, uint8_t cmdType, uint8_t subtype) {
 void drv_ir_send_discovery(void) {
   drv_ir_init_hw();
   g.ir_resultCode = 0x00;
-  g.scratch2.s.ir_sessionKeyNext = g.rng_state;
-  g.scratch2.s.ir_sessionKey = g.scratch2.s.ir_sessionKeyNext;
-  g.scratch2.s.ir_handshakeStep = 0x01;
-  g.scratch2.s.ir_timeoutRetryCount = 0x00;
-  g.scratch2.s.ir_crcRetryCount = 0x00;
-  g.scratch2.s.ir_requestedPokemonAction = 0xFF;
-  g.scratch2.s.ir_packetReceivedFlag.BIT.b0 = 0;
+  g.scratch2.ir.sessionKeyNext = g.rng_state;
+  g.scratch2.ir.sessionKey = g.scratch2.ir.sessionKeyNext;
+  g.scratch2.ir.handshakeStep = 0x01;
+  g.scratch2.ir.timeoutRetryCount = 0x00;
+  g.scratch2.ir.crcRetryCount = 0x00;
+  g.scratch2.ir.requestedPokemonAction = 0xFF;
+  g.scratch2.ir.packetReceivedFlag.BIT.b0 = 0;
   g.ir_commandPos = 0x00;
   DAT_f8c1 = 0x00;
   g.ir_lastCommandTime = TCNT;
-  g.scratch2.s.ir_sessionPhase = 0x00;
+  g.scratch2.ir.sessionPhase = 0x00;
   drv_ir_tx_u8(0xFC);
 }
 

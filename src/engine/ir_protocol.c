@@ -12,7 +12,7 @@
  *
  *   ir_handle_remote_cmd       Post-session action dispatcher. After the IR
  *                              loop completes, this runs the action stored in
- *                              g.scratch2.s.ir_requestedPokemonAction (factory reset,
+ *                              g.scratch2.ir.requestedPokemonAction (factory reset,
  *                              start/end walk, peer play, event reward, etc.).
  *
  *   ir_parse_rx_packet         Decode a received 0x68-byte payload into the
@@ -31,7 +31,7 @@
  *                              session.
  *
  * Handshake state machine — drives the SYN-style 3-way exchange before any
- * payload commands are accepted. Stored in `g.scratch2.s.ir_handshakeStep`:
+ * payload commands are accepted. Stored in `g.scratch2.ir.handshakeStep`:
  *
  *   0 = NONE          - no exchange in progress.
  *   1 = FC_SENT       - sent the 0xFC probe byte, waiting for peer 0xFA.
@@ -40,15 +40,15 @@
  *   4 = TRAINER_SENT  - sent our trainer record to the peer (post-handshake).
  *
  * Session phase — once the handshake completes, the multi-step EEPROM-pair
- * transfer is gated by `g.scratch2.s.ir_sessionPhase` (own pokemon → peer pokemon → pokedex
+ * transfer is gated by `g.scratch2.ir.sessionPhase` (own pokemon → peer pokemon → pokedex
  * → etc.). Values 1..5; the 0x04 opcode advances the phase.
  *
  * LAB_xxxx labels at the bottom of ir_comm_loop are the ROM's exit fan-out:
  *
  *   LAB_182e            tx-done epilogue (random LCD reframe + reset cmd pos)
  *   LAB_14bc            drv_ir_finish_and_execute then -> LAB_182e
- *   LAB_1252            g.scratch2.s.ir_requestedPokemonAction = cmdByte then LAB_14bc
- *   LAB_15e4            g.scratch2.s.ir_requestedPokemonAction = cmdByte then LAB_182e
+ *   LAB_1252            g.scratch2.ir.requestedPokemonAction = cmdByte then LAB_14bc
+ *   LAB_15e4            g.scratch2.ir.requestedPokemonAction = cmdByte then LAB_182e
  *   LAB_17ee            send 0x04 ack then -> LAB_182e
  *   LAB_17ea            write trainer profile, then -> LAB_17ee
  *   start_eeprom_tx*    queue the next chunk of an EEPROM transfer
@@ -94,7 +94,7 @@ void sys_begin_ir_session(event_loop_func_t current_loop,
 
 // ROM: 0x009a  91.2%
 void ir_handle_remote_cmd(void) {
-  switch (g.scratch2.s.ir_requestedPokemonAction) {
+  switch (g.scratch2.ir.requestedPokemonAction) {
   case 0xF0: goto enter_test_mode;
   case 0xFE: goto enter_debug_mode;
   case 0xE0: goto factory_reset_full;
@@ -327,12 +327,12 @@ void ir_comm_loop(void) {
   cmdPos_local = g.ir_commandPos;
   if (SSR3_BIT.RDRF) {
     if (cmdPos_local >= 0x88) {
-      g.scratch2.s.ir_rdrData = RDR3;
+      g.scratch2.ir.rdrData = RDR3;
       g.ir_resultCode = 0x08;
       goto do_action;
     }
     g.ir_commandPos = cmdPos_local + 1;
-    *((uint8_t *)&g.scratch2.s.ir_commandType + cmdPos_local) = RDR3 ^ 0xAA;
+    *((uint8_t *)&g.scratch2.ir.commandType + cmdPos_local) = RDR3 ^ 0xAA;
     g.ir_lastCommandTime = TCNT;
     goto finish_no_action;
   }
@@ -340,33 +340,33 @@ void ir_comm_loop(void) {
   if (timerDelta <= 4)
     goto finish_no_action;
   if (timerDelta > 0x0C80) {
-    g.scratch2.s.ir_timeoutRetryCount++;
-    if (g.scratch2.s.ir_handshakeStep < 3 && g.scratch2.s.ir_timeoutRetryCount < 0x14) {
+    g.scratch2.ir.timeoutRetryCount++;
+    if (g.scratch2.ir.handshakeStep < 3 && g.scratch2.ir.timeoutRetryCount < 0x14) {
       uint32_t r = sys_get_rng();
       r = (r >> 5) & 0x0F;
       r *= 0x60;
       tcntSnap = TCNT;
       while ((uint16_t)(TCNT - tcntSnap) < (uint16_t)r)
         ;
-      g.scratch2.s.ir_handshakeStep = 1;
+      g.scratch2.ir.handshakeStep = 1;
       drv_ir_tx_u8(0xFC);
       goto LAB_182e;
     }
-    g.ir_resultCode = g.scratch2.s.ir_packetReceivedFlag.BIT.b0 ? 2 : 1;
+    g.ir_resultCode = g.scratch2.ir.packetReceivedFlag.BIT.b0 ? 2 : 1;
     goto do_action;
   }
   if (cmdPos_local == 0)
     goto finish_no_action;
-  g.scratch2.s.ir_packetReceivedFlag.BIT.b0 = 1;
+  g.scratch2.ir.packetReceivedFlag.BIT.b0 = 1;
   if (cmdPos_local == 1) {
     g.ir_commandPos = 0;
-    cmdByte = g.scratch2.s.ir_commandType;
+    cmdByte = g.scratch2.ir.commandType;
     if (cmdByte != 0xFC)
       goto finish_no_action;
-    phase = g.scratch2.s.ir_handshakeStep;
+    phase = g.scratch2.ir.handshakeStep;
     switch (phase) {
     case 1:
-      g.scratch2.s.ir_handshakeStep = 2;
+      g.scratch2.ir.handshakeStep = 2;
       drv_ir_send_packet(0x00, 0xFA, 2);
       break;
     case 2:
@@ -377,7 +377,7 @@ void ir_comm_loop(void) {
     }
     goto finish_no_action;
   }
-  pktBase = (uint8_t *)&g.scratch2.s.ir_commandType;
+  pktBase = (uint8_t *)&g.scratch2.ir.commandType;
   cmdLen = (uint8_t)cmdPos_local;
   crcExpected = ((uint16_t)pktBase[3] << 8) | pktBase[2];
   pktBase[2] = 0;
@@ -385,14 +385,14 @@ void ir_comm_loop(void) {
   g.ir_commandPos = 0;
   crcCalc = ir_calc_packet_checksum(cmdLen, pktBase);
   if (crcCalc != crcExpected) {
-    g.scratch2.s.ir_crcRetryCount++;
-    if (g.scratch2.s.ir_crcRetryCount < 0x14) {
+    g.scratch2.ir.crcRetryCount++;
+    if (g.scratch2.ir.crcRetryCount < 0x14) {
       goto finish_no_action;
     }
     g.ir_resultCode = 2;
     goto do_action;
   }
-  *(uint32_t *)((uint8_t *)&g.scratch2.s.ir_commandType + 2) = *(uint32_t *)(pktBase + 4);
+  *(uint32_t *)((uint8_t *)&g.scratch2.ir.commandType + 2) = *(uint32_t *)(pktBase + 4);
   {
     uint8_t subtype;
     uint8_t pktLen2;
@@ -405,15 +405,15 @@ void ir_comm_loop(void) {
     subtype = pktBase[1];
     pktLen2 = (uint8_t)(cmdLen - 8);
     payload = drv_ir_get_rx_ptr();
-    e1val = g.scratch2.s.ir_xferRemaining;
+    e1val = g.scratch2.ir.xferRemaining;
     e2val = pktLen2;
-    addr = g.scratch2.s.ir_xferSrc;
+    addr = g.scratch2.ir.xferSrc;
 
     cmdByte = pktBase[0];
     if (cmdByte < 0xF8) {
-      if (*(uint32_t *)(pktBase + 4) != g.scratch2.s.ir_sessionKey)
+      if (*(uint32_t *)(pktBase + 4) != g.scratch2.ir.sessionKey)
         goto LAB_182e;
-      phase = g.scratch2.s.ir_handshakeStep;
+      phase = g.scratch2.ir.handshakeStep;
       if (phase < 3)
         goto LAB_182e;
     }
@@ -421,13 +421,13 @@ void ir_comm_loop(void) {
     switch (cmdByte) {
     case 0xFA:
       if (subtype == 1 || subtype == 2) {
-        phase = g.scratch2.s.ir_handshakeStep;
+        phase = g.scratch2.ir.handshakeStep;
         switch (phase) {
         case 1:
-          g.scratch2.s.ir_handshakeStep = 3;
+          g.scratch2.ir.handshakeStep = 3;
           drv_ir_send_packet(0x00, 0xF8, 2);
-          g.scratch2.s.ir_sessionKey = *(uint32_t *)(pktBase + 4);
-          g.scratch2.s.ir_sessionKey = g.scratch2.s.ir_sessionKeyNext ^ g.scratch2.s.ir_sessionKey;
+          g.scratch2.ir.sessionKey = *(uint32_t *)(pktBase + 4);
+          g.scratch2.ir.sessionKey = g.scratch2.ir.sessionKeyNext ^ g.scratch2.ir.sessionKey;
           goto LAB_182e;
         case 4:
         case 3:
@@ -438,7 +438,7 @@ void ir_comm_loop(void) {
           tcntSnap = TCNT;
           while ((uint16_t)(TCNT - tcntSnap) < (uint16_t)r)
             ;
-          g.scratch2.s.ir_handshakeStep = 1;
+          g.scratch2.ir.handshakeStep = 1;
           drv_ir_tx_u8(0xFC);
           g.ir_lastCommandTime = TCNT;
           goto LAB_182e;
@@ -458,13 +458,13 @@ void ir_comm_loop(void) {
         g.ir_resultCode = 3;
         goto LAB_14bc;
       }
-      phase = g.scratch2.s.ir_handshakeStep;
+      phase = g.scratch2.ir.handshakeStep;
       if (phase >= 3) {
         goto LAB_182e;
       }
-      g.scratch2.s.ir_sessionKey = *(uint32_t *)(pktBase + 4);
-      g.scratch2.s.ir_sessionKey = g.scratch2.s.ir_sessionKeyNext ^ g.scratch2.s.ir_sessionKey;
-      g.scratch2.s.ir_handshakeStep = 4;
+      g.scratch2.ir.sessionKey = *(uint32_t *)(pktBase + 4);
+      g.scratch2.ir.sessionKey = g.scratch2.ir.sessionKeyNext ^ g.scratch2.ir.sessionKey;
+      g.scratch2.ir.handshakeStep = 4;
       save_read_reliable(EEPROM_TRAINER_REC, EEPROM_TRAINER_REC_BACKUP, (void *)g.scratch1.secondTrainer.buf, 0x68);
       drv_ir_send_packet(0x68, 0x10, 2);
       g.viewstate.Y.BIT.b0 = 0;
@@ -544,11 +544,11 @@ void ir_comm_loop(void) {
         g.ir_resultCode = 5;
         goto LAB_14bc;
       }
-      g.scratch2.s.ir_sessionPhase = 1;
-      *(uint16_t *)&g.scratch2.s.ir_xferSrc = 0x91BE;
-      *(uint16_t *)&g.scratch2.s.ir_xferDst = 0xF400;
-      g.scratch2.s.ir_xferRemaining = 0x180;
-      g.scratch2.s.ir_xferChunkCount = 0;
+      g.scratch2.ir.sessionPhase = 1;
+      *(uint16_t *)&g.scratch2.ir.xferSrc = 0x91BE;
+      *(uint16_t *)&g.scratch2.ir.xferDst = 0xF400;
+      g.scratch2.ir.xferRemaining = 0x180;
+      g.scratch2.ir.xferChunkCount = 0;
       goto start_eeprom_tx;
 
     case 0x14:
@@ -775,7 +775,7 @@ void ir_comm_loop(void) {
 
     case 0x04:
       if (e1val == 0) {
-        phase = g.scratch2.s.ir_sessionPhase;
+        phase = g.scratch2.ir.sessionPhase;
         if (phase == 1)
           goto handle_0x04_phase1;
         if (phase == 3)
@@ -784,34 +784,34 @@ void ir_comm_loop(void) {
           goto handle_0x04_phase5;
         goto LAB_182e;
       } else {
-        g.scratch2.s.ir_xferRemaining = e1val;
+        g.scratch2.ir.xferRemaining = e1val;
         if (e1val <= 0x80)
           goto start_eeprom_tx;
         goto LAB_1362;
       }
 
     handle_0x04_phase1:
-      g.scratch2.s.ir_sessionPhase = 3;
-      *(uint16_t *)&g.scratch2.s.ir_xferSrc = 0x993E;
-      *(uint16_t *)&g.scratch2.s.ir_xferDst = (uint16_t)DAT_f580;
-      g.scratch2.s.ir_xferRemaining = 0x140;
-      g.scratch2.s.ir_xferChunkCount = 0;
+      g.scratch2.ir.sessionPhase = 3;
+      *(uint16_t *)&g.scratch2.ir.xferSrc = 0x993E;
+      *(uint16_t *)&g.scratch2.ir.xferDst = (uint16_t)DAT_f580;
+      g.scratch2.ir.xferRemaining = 0x140;
+      g.scratch2.ir.xferChunkCount = 0;
       goto start_eeprom_tx;
 
     handle_0x04_phase3:
-      g.scratch2.s.ir_sessionPhase = 5;
-      *(uint16_t *)&g.scratch2.s.ir_xferSrc = 0xCC00;
-      *(uint16_t *)&g.scratch2.s.ir_xferDst = 0xDC00;
-      g.scratch2.s.ir_xferRemaining = 0x224;
-      g.scratch2.s.ir_xferChunkCount = 0;
+      g.scratch2.ir.sessionPhase = 5;
+      *(uint16_t *)&g.scratch2.ir.xferSrc = 0xCC00;
+      *(uint16_t *)&g.scratch2.ir.xferDst = 0xDC00;
+      g.scratch2.ir.xferRemaining = 0x224;
+      g.scratch2.ir.xferChunkCount = 0;
       goto start_eeprom_tx;
 
     handle_0x04_phase5:
-      g.scratch2.s.ir_sessionPhase = 2;
-      *(uint16_t *)&g.scratch2.s.ir_xferSrc = 0x91BE;
-      *(uint16_t *)&g.scratch2.s.ir_xferDst = 0xF400;
-      g.scratch2.s.ir_xferRemaining = 0x180;
-      g.scratch2.s.ir_xferChunkCount = 0;
+      g.scratch2.ir.sessionPhase = 2;
+      *(uint16_t *)&g.scratch2.ir.xferSrc = 0x91BE;
+      *(uint16_t *)&g.scratch2.ir.xferDst = 0xF400;
+      g.scratch2.ir.xferRemaining = 0x180;
+      g.scratch2.ir.xferChunkCount = 0;
       goto start_eeprom_tx_alt;
 
     case 0xA0:
@@ -867,7 +867,7 @@ void ir_comm_loop(void) {
       case 0xBC: flagByte |= 0x04; break;
       case 0xBE: flagByte |= 0x08; break;
       }
-      g.scratch2.s.ir_requestedPokemonAction = cmdByte;
+      g.scratch2.ir.requestedPokemonAction = cmdByte;
       drv_eeprom_write_u8(EEPROM_STEP_HIST_FLAGS, flagByte);
       drv_ir_send_packet(0x00, (uint8_t)(cmdByte + 0x10), 2);
     }
@@ -887,7 +887,7 @@ void ir_comm_loop(void) {
       save_write_reliable(EEPROM_RESV_0083, EEPROM_RESV_0083_BACKUP, payload, 0x28);
       drv_eeprom_write_block(0x0008, payload + 0x68, 0x08);
       g.viewstate.Z = 1;
-      g.scratch2.s.ir_requestedPokemonAction = 0xF0;
+      g.scratch2.ir.requestedPokemonAction = 0xF0;
       switch (payload[0x70]) {
       case 0:
         save_write_reliable(EEPROM_LCD_INIT_SEQ, EEPROM_LCD_INIT_SEQ_BACKUP,
@@ -911,7 +911,7 @@ void ir_comm_loop(void) {
       case 3:
         save_write_reliable(EEPROM_LCD_INIT_SEQ, EEPROM_LCD_INIT_SEQ_BACKUP,
                             payload + 0x28, 0x40);
-        g.scratch2.s.ir_requestedPokemonAction = 0xE0;
+        g.scratch2.ir.requestedPokemonAction = 0xE0;
         break;
       default:
         break;
@@ -956,17 +956,17 @@ void ir_comm_loop(void) {
 
     case 0x0E:
       drv_eeprom_write_block(addr, payload, 0x80);
-      g.scratch2.s.ir_xferSrc += e2val;
-      g.scratch2.s.ir_xferDst += e2val;
-      g.scratch2.s.ir_xferRemaining -= e2val;
-      g.scratch2.s.ir_xferChunkCount++;
-      if (g.scratch2.s.ir_xferRemaining == 0) {
-        if (g.scratch2.s.ir_sessionPhase == 2) {
-          g.scratch2.s.ir_sessionPhase = 4;
-          *(uint16_t *)&g.scratch2.s.ir_xferSrc = 0x993E;
-          *(uint16_t *)&g.scratch2.s.ir_xferDst = (uint16_t)DAT_f580;
-          g.scratch2.s.ir_xferRemaining = 0x140;
-          g.scratch2.s.ir_xferChunkCount = 0;
+      g.scratch2.ir.xferSrc += e2val;
+      g.scratch2.ir.xferDst += e2val;
+      g.scratch2.ir.xferRemaining -= e2val;
+      g.scratch2.ir.xferChunkCount++;
+      if (g.scratch2.ir.xferRemaining == 0) {
+        if (g.scratch2.ir.sessionPhase == 2) {
+          g.scratch2.ir.sessionPhase = 4;
+          *(uint16_t *)&g.scratch2.ir.xferSrc = 0x993E;
+          *(uint16_t *)&g.scratch2.ir.xferDst = (uint16_t)DAT_f580;
+          g.scratch2.ir.xferRemaining = 0x140;
+          g.scratch2.ir.xferChunkCount = 0;
           goto start_eeprom_tx;
         }
       }
@@ -979,7 +979,7 @@ void ir_comm_loop(void) {
     case 0x06: {
       uint8_t i = 0;
       uint8_t *src = payload + 1;
-      uint8_t *dst = (uint8_t *)g.scratch2.s.ir_xferDst;
+      uint8_t *dst = (uint8_t *)g.scratch2.ir.xferDst;
       while (i < (uint8_t)(pktLen2 - 1)) {
         *dst++ = *src++;
         i++;
@@ -997,14 +997,14 @@ LAB_1362:
 start_eeprom_tx:
 start_eeprom_tx_alt:
 LAB_17b0: {
-  uint16_t chunk = (g.scratch2.s.ir_xferRemaining > 0x80) ? 0x80 : g.scratch2.s.ir_xferRemaining;
+  uint16_t chunk = (g.scratch2.ir.xferRemaining > 0x80) ? 0x80 : g.scratch2.ir.xferRemaining;
   drv_eeprom_read_block(EEPROM_TRAINER_PROFILE, &g.save_watts, 2);
   DAT_f88e[0] = (uint8_t)((g.save_watts / 20) & 0xFF);
   drv_eeprom_write_block(EEPROM_TRAINER_PROFILE, &g.save_watts, 2);
   {
     uint8_t *p = drv_ir_get_rx_ptr();
-    p[0] = (uint8_t)(g.scratch2.s.ir_xferSrc >> 8);
-    p[1] = (uint8_t)(g.scratch2.s.ir_xferSrc);
+    p[0] = (uint8_t)(g.scratch2.ir.xferSrc >> 8);
+    p[1] = (uint8_t)(g.scratch2.ir.xferSrc);
     p[2] = (uint8_t)chunk;
   }
   drv_ir_send_packet(0x03, 0x0C, 2);
@@ -1018,11 +1018,11 @@ LAB_17ee:
   goto LAB_182e;
 
 LAB_15e4:
-  g.scratch2.s.ir_requestedPokemonAction = cmdByte;
+  g.scratch2.ir.requestedPokemonAction = cmdByte;
   goto LAB_182e;
 
 LAB_1252:
-  g.scratch2.s.ir_requestedPokemonAction = cmdByte;
+  g.scratch2.ir.requestedPokemonAction = cmdByte;
 LAB_14bc:
   drv_ir_finish_and_execute();
   goto LAB_182e;
