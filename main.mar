@@ -13815,7 +13815,7 @@ LAB_7bb0:
           mov.w       r6, r0
           inc.w       #1, r6
           mov.b       @er0, r0l
-          mov.b       r0l, @lcdShadeBase
+          mov.b       r0l, @lcd_shadeBase
 LAB_7bba:
           mov.b       @er6, r0l
           cmp.b       #H'FE, r0l
@@ -13851,11 +13851,11 @@ LAB_7be4:
           mov.b       r0h, r0l
           bsr         drv_lcd_set_contrast:8
           mov.b       #H'1, r0l
-          mov.b       r0l, @lcdPageOffset
+          mov.b       r0l, @lcd_pageOffset
           mov.b       #H'40, r0l
           jsr         @drv_lcd_clear_pages:16
           sub.b       r0l, r0l
-          mov.b       r0l, @lcdPageOffset
+          mov.b       r0l, @lcd_pageOffset
           mov.b       #H'40, r0l
           jsr         @drv_lcd_clear_pages:16
           bclr        #H'1, @PDR1
@@ -13880,7 +13880,7 @@ drv_lcd_set_contrast:
           bclr        #H'1, @PDR1
           mov.b       #H'81, r0l
           jsr         @drv_lcd_send_u8:16
-          mov.b       @lcdShadeBase, r0l
+          mov.b       @lcd_shadeBase, r0l
           add.b       r6l, r0l
           jsr         @drv_lcd_send_u8:16
 LAB_7c46:
@@ -13924,7 +13924,7 @@ LAB_7c8a:
           mov.b       @SSSR, r0l
           bld         #H'2, r0l
           bcc         LAB_7c8a:8
-          mov.b       @lcdPageOffset, r0l
+          mov.b       @lcd_pageOffset, r0l
           mov.b       #H'8, r0h
           mulxu.b     r0h, r0
           add.b       r3h, r0l
@@ -13942,7 +13942,7 @@ LAB_7ca2:
 ; Called by: sys_main_loop_low_power, sys_begin_ir_session, sys_main_loop_active
 ; =============================================================================
 drv_lcd_flip:
-          mov.w       #lcdPageOffset, r1
+          mov.w       #lcd_pageOffset, r1
           mov.b       #H'80, r0l
           mov.b       r0l, @SSER
           bclr        #H'0, @PDR1
@@ -14012,7 +14012,7 @@ LAB_7d36:
           bcc         LAB_7d36:8
           bset        #H'0, @PDR1
           xor.b       #H'1, r1l
-          mov.b       r1l, @lcdPageOffset
+          mov.b       r1l, @lcd_pageOffset
 LAB_7d48:
           rts
 ; =============================================================================
@@ -14049,7 +14049,7 @@ LAB_7d80:
           mov.b       @SSSR, r0l
           bld         #H'2, r0l
           bcc         LAB_7d80:8
-          mov.b       @lcdPageOffset, r0l
+          mov.b       @lcd_pageOffset, r0l
           mov.b       #H'8, r0h
           mulxu.b     r0h, r0
           add.b       r1h, r0l
@@ -14207,7 +14207,7 @@ LAB_7ed6:
           mov.b       @SSSR, r0l
           bld         #H'2, r0l
           bcc         LAB_7ed6:8
-          mov.b       @lcdPageOffset, r0l
+          mov.b       @lcd_pageOffset, r0l
           mov.b       #H'8, r0h
           mulxu.b     r0h, r0
           add.b       r5l, r0l
@@ -14382,7 +14382,7 @@ LAB_803e:
           mov.b       @SSSR, r0l
           bld         #H'2, r0l
           bcc         LAB_803e:8
-          mov.b       @lcdPageOffset, r0l
+          mov.b       @lcd_pageOffset, r0l
           mov.b       #H'8, r0h
           mulxu.b     r0h, r0
           add.b       r6l, r0l
@@ -14507,7 +14507,7 @@ LAB_814e:
           mov.b       @SSSR, r0l
           bld         #H'2, r0l
           bcc         LAB_814e:8
-          mov.b       @lcdPageOffset, r0l
+          mov.b       @lcd_pageOffset, r0l
           mov.b       #H'8, r0h
           mulxu.b     r0h, r0
           add.b       r5h, r0l
@@ -14797,7 +14797,7 @@ LAB_83a8:
           mov.b       @SSSR, r0l
           bld         #H'2, r0l
           bcc         LAB_83a8:8
-          mov.b       @lcdPageOffset, r0l
+          mov.b       @lcd_pageOffset, r0l
           mov.b       #H'8, r0h
           mulxu.b     r0h, r0
           add.b       r5l, r0l
@@ -14837,7 +14837,7 @@ LAB_8402:
           mov.b       @SSSR, r0l
           bld         #H'2, r0l
           bcc         LAB_8402:8
-          mov.b       @lcdPageOffset, r0l
+          mov.b       @lcd_pageOffset, r0l
           mov.b       #H'8, r0h
           mulxu.b     r0h, r0
           add.b       r5l, r0l
@@ -15071,7 +15071,7 @@ LAB_85d6:
           mov.b       @SSSR, r0l
           bld         #H'2, r0l
           bcc         LAB_85d6:8
-          mov.b       @lcdPageOffset, r0l
+          mov.b       @lcd_pageOffset, r0l
           mov.b       #H'8, r0h
           mulxu.b     r0h, r0
           add.b       r6l, r0l
@@ -15250,7 +15250,7 @@ LAB_8756:
 ;            ... and 1 more
 ; =============================================================================
 gfx_draw_text_frame_upper:
-          mov.w       #lcdPageOffset, r1
+          mov.w       #lcd_pageOffset, r1
           mov.b       #H'80, r0l
           mov.b       r0l, @SSER
           bclr        #H'0, @PDR1
@@ -15440,7 +15440,7 @@ LAB_890c:
           mov.b       @SSSR, r0l
           bld         #H'2, r0l
           bcc         LAB_890c:8
-          mov.b       @lcdPageOffset, r0l
+          mov.b       @lcd_pageOffset, r0l
           mov.b       #H'8, r0h
           mulxu.b     r0h, r0
           add.b       #H'B6, r0l
@@ -15507,7 +15507,7 @@ LAB_89a6:
           mov.b       @SSSR, r0l
           bld         #H'2, r0l
           bcc         LAB_89a6:8
-          mov.b       @lcdPageOffset, r0l
+          mov.b       @lcd_pageOffset, r0l
           mov.b       #H'8, r0h
           mulxu.b     r0h, r0
           add.b       #H'B7, r0l
@@ -15594,7 +15594,7 @@ LAB_8a60:
           mov.b       @SSSR, r0l
           bld         #H'2, r0l
           bcc         LAB_8a60:8
-          mov.b       @lcdPageOffset, r0l
+          mov.b       @lcd_pageOffset, r0l
           mov.b       #H'8, r0h
           mulxu.b     r0h, r0
           add.b       #H'B6, r0l
@@ -21369,7 +21369,7 @@ ped_taskFlags:
           .RES.B      1
 notif_scheduledHour:
           .RES.B      1
-lcdShadeBase:
+lcd_shadeBase:
           .RES.B      1
 ui_menuCursor:
           .RES.B      1
@@ -21449,7 +21449,7 @@ sys_tickHandler:
           .RES.B      2
 sys_savedTickHandler:
           .RES.B      2
-lcdPageOffset:
+lcd_pageOffset:
           .RES.B      2
 DAT_f7e6:
           .RES.B      4

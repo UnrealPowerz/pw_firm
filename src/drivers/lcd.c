@@ -196,7 +196,7 @@ void drv_lcd_init(void) {
     ptr = (uint8_t *)LCD_INIT_FALLBACK_SEQ;
   }
 
-  g.lcdShadeBase = *ptr++;
+  g.lcd_shadeBase = *ptr++;
 
   while (1) {
     cmd = *ptr++;
@@ -215,9 +215,9 @@ void drv_lcd_init(void) {
 
   drv_lcd_send_u8(0xA6);
   drv_lcd_set_contrast((g.save_settings >> 3) & 0xF);
-  g.lcdPageOffset = 1;
+  g.lcd_pageOffset = 1;
   drv_lcd_clear_pages(0x40);
-  g.lcdPageOffset = 0;
+  g.lcd_pageOffset = 0;
   drv_lcd_clear_pages(0x40);
   PDR1 &= ~0x02;
   drv_lcd_send_u8(0xAF);
@@ -229,7 +229,7 @@ void drv_lcd_set_contrast(uint8_t shade) {
   PDR1 &= ~0x01;
   PDR1 &= ~0x02;
   drv_lcd_send_u8(0x81);
-  drv_lcd_send_u8(g.lcdShadeBase + shade);
+  drv_lcd_send_u8(g.lcd_shadeBase + shade);
   while (!SSSR_BIT.TEND)
     ;
   PDR1 |= 0x01;
@@ -249,7 +249,7 @@ void drv_lcd_set_page_addr(uint8_t x, uint8_t p) {
   }
   while (!SSSR_BIT.TDRE)
     ;
-  SSTDR = 0xB0 | (uint8_t)(p + (g.lcdPageOffset * 8));
+  SSTDR = 0xB0 | (uint8_t)(p + (g.lcd_pageOffset * 8));
   while (!SSSR_BIT.TEND)
     ;
 }
@@ -264,13 +264,13 @@ void drv_lcd_flip(void) {
   SSTDR = 0x40;
   while (!SSSR_BIT.TDRE)
     ;
-  SSTDR = g.lcdPageOffset * 0x40;
+  SSTDR = g.lcd_pageOffset * 0x40;
   while (!SSSR_BIT.TEND)
     ;
   while (!SSSR_BIT.TEND)
     ;
   PDR1 |= 0x01;
-  g.lcdPageOffset ^= 1;
+  g.lcd_pageOffset ^= 1;
 }
 
 // ROM: 0x7cfa  98.2%
@@ -290,7 +290,7 @@ void drv_lcd_set_start(uint8_t page) {
     while (!SSSR_BIT.TEND)
       ;
     PDR1 |= 0x01;
-    g.lcdPageOffset = page ^ 1;
+    g.lcd_pageOffset = page ^ 1;
   }
 }
 
@@ -313,7 +313,7 @@ void drv_lcd_clear(uint8_t color) {
     }
     while (!SSSR_BIT.TDRE)
       ;
-    SSTDR = 0xB0 | (p + (uint8_t)(g.lcdPageOffset * 8));
+    SSTDR = 0xB0 | (p + (uint8_t)(g.lcd_pageOffset * 8));
     while (!SSSR_BIT.TEND)
       ;
     PDR1 |= 0x02;
@@ -400,7 +400,7 @@ void drv_lcd_clear_pages(uint8_t height_pixels) {
     }
     while (!SSSR_BIT.TDRE)
       ;
-    SSTDR = 0xB0 | (uint8_t)(p + (g.lcdPageOffset << 3));
+    SSTDR = 0xB0 | (uint8_t)(p + (g.lcd_pageOffset << 3));
     while (!SSSR_BIT.TEND)
       ;
     PDR1 |= 0x02;
@@ -455,7 +455,7 @@ void drv_lcd_blit(uint8_t x, uint8_t y, void *buffer, uint8_t w,
     SSTDR = x & 0x0F;
     while (!SSSR_BIT.TDRE)
       ;
-    SSTDR = 0xB0 | (uint8_t)(p + (g.lcdPageOffset << 3));
+    SSTDR = 0xB0 | (uint8_t)(p + (g.lcd_pageOffset << 3));
     while (!SSSR_BIT.TEND)
       ;
     PDR1 |= 0x02; // A0 high

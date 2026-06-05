@@ -37,7 +37,7 @@
 /* 0xF7A6 */ volatile uint8_t  rtc_hours;
 /* 0xF7A7 */ volatile uint8_t  ped_taskFlags;           /* bit-field via _BIT */
 /* 0xF7A8 */ volatile uint8_t  notif_scheduledHour;
-/* 0xF7A9 */ volatile uint8_t  lcdShadeBase;
+/* 0xF7A9 */ volatile uint8_t  lcd_shadeBase;
 /* 0xF7AA */ volatile uint8_t  ui_menuCursor;
 /* 0xF7AB */ volatile uint8_t  ui_dispatchTickCounter;               /* write-only dispatch tick */
 /* 0xF7AC */ volatile uint8_t  ui_animationTick;
@@ -90,7 +90,7 @@
 /* --- Event loop / LCD state --- */
 /* 0xF7E0 */ volatile event_loop_func_t sys_tickHandler;
 /* 0xF7E2 */ volatile event_loop_func_t sys_savedTickHandler;
-/* 0xF7E4 */ volatile uint8_t  lcdPageOffset;
+/* 0xF7E4 */ volatile uint8_t  lcd_pageOffset;
 /* 0xF7E5 */ volatile uint8_t  _pad_f7e5;
 
 /* --- Multi-purpose overlay #1 (g_scratch, 128 B) --- */

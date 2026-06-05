@@ -137,7 +137,7 @@ void gfx_draw_string(uint8_t x, uint8_t y_raw, const char *str) {
   /* Set page address. */
   while (!SSSR_BIT.TDRE)
     ;
-  SSTDR = 0xB0 | (uint8_t)(g.lcdPageOffset * 8 + y_page);
+  SSTDR = 0xB0 | (uint8_t)(g.lcd_pageOffset * 8 + y_page);
   while (!SSSR_BIT.TEND)
     ;
   PDR1 |= 0x02;
@@ -256,7 +256,7 @@ void gfx_draw_text_frame_upper(void) {
   SSTDR = 0x00;
   while (!SSSR_BIT.TDRE)
     ;
-  SSTDR = 0xB4 + (g.lcdPageOffset * 8);
+  SSTDR = 0xB4 + (g.lcd_pageOffset * 8);
   while (!SSSR_BIT.TEND)
     ;
   PDR1 |= 0x02;
@@ -290,7 +290,7 @@ void gfx_draw_text_frame_upper(void) {
   SSTDR = 0x00;
   while (!SSSR_BIT.TDRE)
     ;
-  SSTDR = 0xB5 + (g.lcdPageOffset * 8);
+  SSTDR = 0xB5 + (g.lcd_pageOffset * 8);
   while (!SSSR_BIT.TEND)
     ;
   PDR1 |= 0x02;
@@ -313,7 +313,7 @@ void gfx_draw_text_frame_upper(void) {
   SSTDR = 0x0F;
   while (!SSSR_BIT.TDRE)
     ;
-  SSTDR = 0xB5 + (g.lcdPageOffset * 8);
+  SSTDR = 0xB5 + (g.lcd_pageOffset * 8);
   while (!SSSR_BIT.TEND)
     ;
   PDR1 |= 0x02;
@@ -347,7 +347,7 @@ void gfx_draw_text_frame_lower(void) {
   SSTDR = 0x00;
   while (!SSSR_BIT.TDRE)
     ;
-  SSTDR = 0xB6 + (g.lcdPageOffset * 8);
+  SSTDR = 0xB6 + (g.lcd_pageOffset * 8);
   while (!SSSR_BIT.TEND)
     ;
   PDR1 |= 0x02;
@@ -381,7 +381,7 @@ void gfx_draw_text_frame_lower(void) {
   SSTDR = 0x00;
   while (!SSSR_BIT.TDRE)
     ;
-  SSTDR = 0xB7 + (g.lcdPageOffset * 8);
+  SSTDR = 0xB7 + (g.lcd_pageOffset * 8);
   while (!SSSR_BIT.TEND)
     ;
   PDR1 |= 0x02;
@@ -429,7 +429,7 @@ void gfx_draw_home_section_divider(void) {
   SSTDR = 0x00;
   while (!SSSR_BIT.TDRE)
     ;
-  SSTDR = 0xB6 + (g.lcdPageOffset * 8);
+  SSTDR = 0xB6 + (g.lcd_pageOffset * 8);
   while (!SSSR_BIT.TEND)
     ;
   PDR1 |= 0x02;
@@ -977,7 +977,7 @@ void gfx_fill_rect(uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint8_t color) {
     SSTDR = x & 0x0F;
     while (!SSSR_BIT.TDRE)
       ;
-    SSTDR = 0xB0 | (uint8_t)(p + (g.lcdPageOffset << 3));
+    SSTDR = 0xB0 | (uint8_t)(p + (g.lcd_pageOffset << 3));
     while (!SSSR_BIT.TEND)
       ;
     PDR1 |= 0x02;
@@ -1065,7 +1065,7 @@ void gfx_draw_sprite_simple(uint8_t x, uint8_t y, uint16_t h, uint16_t w,
     }
     while (!SSSR_BIT.TDRE)
       ;
-    SSTDR = 0xB0 | (uint8_t)(p + (g.lcdPageOffset << 3));
+    SSTDR = 0xB0 | (uint8_t)(p + (g.lcd_pageOffset << 3));
     while (!SSSR_BIT.TEND)
       ;
     PDR1 |= 0x02; // A0 high
