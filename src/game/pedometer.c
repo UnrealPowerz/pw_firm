@@ -129,33 +129,33 @@ uint8_t game_detect_activity(void) {
   prev &= 0x3F;
   p_copy = prev;
 
-  if (((int16_t)accelXSamples[g.accel_sampleCount] -
-       (int16_t)accelXSamples[prev]) >= 0) {
-    total = (uint16_t)((int16_t)accelXSamples[g.accel_sampleCount] -
-                       (int16_t)accelXSamples[p_copy]);
+  if (((int16_t)g.scratch1.accel.samples[g.accel_sampleCount] -
+       (int16_t)g.scratch1.accel.samples[prev]) >= 0) {
+    total = (uint16_t)((int16_t)g.scratch1.accel.samples[g.accel_sampleCount] -
+                       (int16_t)g.scratch1.accel.samples[p_copy]);
   } else {
-    total = (uint16_t)((uint16_t)(-((int16_t)accelXSamples[g.accel_sampleCount])) +
-                       (uint16_t)accelXSamples[p_copy]);
+    total = (uint16_t)((uint16_t)(-((int16_t)g.scratch1.accel.samples[g.accel_sampleCount])) +
+                       (uint16_t)g.scratch1.accel.samples[p_copy]);
   }
 
-  if (((int16_t)accel_samplesY[g.accel_sampleCount] -
-       (int16_t)accel_samplesY[prev]) >= 0) {
-    total += (uint16_t)((int16_t)accel_samplesY[g.accel_sampleCount] -
-                        (int16_t)accel_samplesY[p_copy]);
+  if (((int16_t)g.scratch2.accel.y[g.accel_sampleCount] -
+       (int16_t)g.scratch2.accel.y[prev]) >= 0) {
+    total += (uint16_t)((int16_t)g.scratch2.accel.y[g.accel_sampleCount] -
+                        (int16_t)g.scratch2.accel.y[p_copy]);
   } else {
     total +=
-        (uint16_t)((uint16_t)(-((int16_t)accel_samplesY[g.accel_sampleCount])) +
-                   (uint16_t)accel_samplesY[p_copy]);
+        (uint16_t)((uint16_t)(-((int16_t)g.scratch2.accel.y[g.accel_sampleCount])) +
+                   (uint16_t)g.scratch2.accel.y[p_copy]);
   }
 
-  if (((int16_t)accel_samplesZ[g.accel_sampleCount] -
-       (int16_t)accel_samplesZ[prev]) >= 0) {
-    total += (uint16_t)((int16_t)accel_samplesZ[g.accel_sampleCount] -
-                        (int16_t)accel_samplesZ[p_copy]);
+  if (((int16_t)g.scratch2.accel.z[g.accel_sampleCount] -
+       (int16_t)g.scratch2.accel.z[prev]) >= 0) {
+    total += (uint16_t)((int16_t)g.scratch2.accel.z[g.accel_sampleCount] -
+                        (int16_t)g.scratch2.accel.z[p_copy]);
   } else {
     total +=
-        (uint16_t)((uint16_t)(-((int16_t)accel_samplesZ[g.accel_sampleCount])) +
-                   (uint16_t)accel_samplesZ[p_copy]);
+        (uint16_t)((uint16_t)(-((int16_t)g.scratch2.accel.z[g.accel_sampleCount])) +
+                   (uint16_t)g.scratch2.accel.z[p_copy]);
   }
 
   if (total > 30) {

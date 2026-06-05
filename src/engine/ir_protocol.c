@@ -248,9 +248,9 @@ void ir_parse_rx_packet(void) {
   payload = drv_ir_get_rx_ptr();
   memcpy(payload, (void *)DAT_f7e6, 0x68);
 
-  /* DAT_f841 packs an hour in bits 7..3 (top 5 bits, valid if < 0x18).
+  /* g.scratch1.ir.flags_5b packs an hour in bits 7..3 (top 5 bits, valid if < 0x18).
      Decode to BCD for the notify-time scheduler. */
-  hour_raw = DAT_f841;
+  hour_raw = g.scratch1.ir.flags_5b;
   if ((hour_raw & 0xF8) < 0xC0) {
     bcd = (uint16_t)(hour_raw >> 3);
     tens = bcd / 10;
@@ -479,12 +479,12 @@ void ir_comm_loop(void) {
         g.ir_resultCode = 3;
         goto LAB_14bc;
       }
-      if (!((byte_bits_t *)&DAT_f841)->BIT.b0) {
+      if (!((byte_bits_t *)&g.scratch1.ir.flags_5b)->BIT.b0) {
         drv_ir_send_packet(0x68, 0x12, 2);
         g.ir_resultCode = 3;
         goto LAB_14bc;
       }
-      if (!((byte_bits_t *)&DAT_f841)->BIT.b1) {
+      if (!((byte_bits_t *)&g.scratch1.ir.flags_5b)->BIT.b1) {
         drv_ir_send_packet(0x68, 0x12, 2);
         g.ir_resultCode = 3;
         goto LAB_14bc;
@@ -519,11 +519,11 @@ void ir_comm_loop(void) {
         g.ir_resultCode = 3;
         goto LAB_14bc;
       }
-      if (!((byte_bits_t *)&DAT_f841)->BIT.b0) {
+      if (!((byte_bits_t *)&g.scratch1.ir.flags_5b)->BIT.b0) {
         g.ir_resultCode = 3;
         goto LAB_14bc;
       }
-      if (!((byte_bits_t *)&DAT_f841)->BIT.b1) {
+      if (!((byte_bits_t *)&g.scratch1.ir.flags_5b)->BIT.b1) {
         g.ir_resultCode = 3;
         goto LAB_14bc;
       }
@@ -667,7 +667,7 @@ void ir_comm_loop(void) {
       bf |= 0x10;
       drv_eeprom_write_u8(EEPROM_STEP_HIST_FLAGS, bf);
     }
-      save_set_event_bit((void *)g.scratch1.secondTrainer.buf, DAT_f840);
+      save_set_event_bit((void *)g.scratch1.secondTrainer.buf, g.scratch1.ir.eventBitIndex);
       drv_ir_send_packet(0x00, 0xC0, 2);
       cmdByte = 0xC0;
       goto LAB_1252;
@@ -677,7 +677,7 @@ void ir_comm_loop(void) {
       bf |= 0x1F;
       drv_eeprom_write_u8(EEPROM_STEP_HIST_FLAGS, bf);
     }
-      save_set_event_bit((void *)g.scratch1.secondTrainer.buf, DAT_f840);
+      save_set_event_bit((void *)g.scratch1.secondTrainer.buf, g.scratch1.ir.eventBitIndex);
       drv_ir_send_packet(0x00, 0xC0, 2);
       cmdByte = 0xC0;
       goto LAB_1252;
@@ -687,7 +687,7 @@ void ir_comm_loop(void) {
       bf |= 0x20;
       drv_eeprom_write_u8(EEPROM_STEP_HIST_FLAGS, bf);
     }
-      save_set_event_bit((void *)g.scratch1.secondTrainer.buf, DAT_f840);
+      save_set_event_bit((void *)g.scratch1.secondTrainer.buf, g.scratch1.ir.eventBitIndex);
       drv_ir_send_packet(0x00, 0xC2, 2);
       cmdByte = 0xC2;
       goto LAB_1252;
@@ -697,7 +697,7 @@ void ir_comm_loop(void) {
       bf |= 0x2F;
       drv_eeprom_write_u8(EEPROM_STEP_HIST_FLAGS, bf);
     }
-      save_set_event_bit((void *)g.scratch1.secondTrainer.buf, DAT_f840);
+      save_set_event_bit((void *)g.scratch1.secondTrainer.buf, g.scratch1.ir.eventBitIndex);
       drv_ir_send_packet(0x00, 0xC2, 2);
       cmdByte = 0xC2;
       goto LAB_1252;
@@ -707,7 +707,7 @@ void ir_comm_loop(void) {
       bf |= 0x40;
       drv_eeprom_write_u8(EEPROM_STEP_HIST_FLAGS, bf);
     }
-      save_set_event_bit((void *)g.scratch1.secondTrainer.buf, DAT_f840);
+      save_set_event_bit((void *)g.scratch1.secondTrainer.buf, g.scratch1.ir.eventBitIndex);
       drv_ir_send_packet(0x00, 0xC4, 2);
       cmdByte = 0xC4;
       goto LAB_1252;
@@ -717,7 +717,7 @@ void ir_comm_loop(void) {
       bf |= 0x4F;
       drv_eeprom_write_u8(EEPROM_STEP_HIST_FLAGS, bf);
     }
-      save_set_event_bit((void *)g.scratch1.secondTrainer.buf, DAT_f840);
+      save_set_event_bit((void *)g.scratch1.secondTrainer.buf, g.scratch1.ir.eventBitIndex);
       drv_ir_send_packet(0x00, 0xC4, 2);
       cmdByte = 0xC4;
       goto LAB_1252;
@@ -727,7 +727,7 @@ void ir_comm_loop(void) {
       bf |= 0x80;
       drv_eeprom_write_u8(EEPROM_STEP_HIST_FLAGS, bf);
     }
-      save_set_event_bit((void *)g.scratch1.secondTrainer.buf, DAT_f840);
+      save_set_event_bit((void *)g.scratch1.secondTrainer.buf, g.scratch1.ir.eventBitIndex);
       g.save_settings.BYTE |= 0x01;
       save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (void *)&g.save_totalSteps, 0x18);
       drv_ir_send_packet(0x00, 0xC6, 2);
@@ -739,7 +739,7 @@ void ir_comm_loop(void) {
       bf |= 0x8F;
       drv_eeprom_write_u8(EEPROM_STEP_HIST_FLAGS, bf);
     }
-      save_set_event_bit((void *)g.scratch1.secondTrainer.buf, DAT_f840);
+      save_set_event_bit((void *)g.scratch1.secondTrainer.buf, g.scratch1.ir.eventBitIndex);
       g.save_settings.BYTE |= 0x01;
       save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (void *)&g.save_totalSteps, 0x18);
       drv_ir_send_packet(0x00, 0xC6, 2);
@@ -825,9 +825,9 @@ void ir_comm_loop(void) {
         for (i = 0; i < 0x10; i++) {
           *dst++ = ((uint8_t *)&DAT_f886)[i];
         }
-        *dst = DAT_f840;
+        *dst = g.scratch1.ir.eventBitIndex;
       }
-      if (save_check_event_bit((void *)g.scratch1.secondTrainer.buf, DAT_f840) != 0) {
+      if (save_check_event_bit((void *)g.scratch1.secondTrainer.buf, g.scratch1.ir.eventBitIndex) != 0) {
         drv_ir_send_packet(0x11, 0x9E, 2);
         g.ir_resultCode = 6;
         goto LAB_14bc;
@@ -846,9 +846,9 @@ void ir_comm_loop(void) {
         for (i = 0; i < 0x10; i++) {
           *dst++ = ((uint8_t *)&DAT_f886)[i];
         }
-        *dst = DAT_f840;
+        *dst = g.scratch1.ir.eventBitIndex;
       }
-      if (save_check_event_bit((void *)g.scratch1.secondTrainer.buf, DAT_f840) != 0) {
+      if (save_check_event_bit((void *)g.scratch1.secondTrainer.buf, g.scratch1.ir.eventBitIndex) != 0) {
         drv_ir_send_packet(0x11, 0x9E, 2);
         g.ir_resultCode = 6;
         goto LAB_14bc;

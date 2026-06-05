@@ -104,9 +104,9 @@ void game_start_walk(void) {
   rec->flags_5b &= ~0x04;        /* clear peer-init-done */
 
   rec->id        = *(uint32_t *)DAT_f7e6;
-  rec->id_backup = DAT_f7ea;
-  rec->loc       = DAT_f7ee;
-  rec->loc_backup = DAT_f7f0;
+  rec->id_backup = g.scratch1.ir.id_backup;
+  rec->loc       = g.scratch1.ir.loc;
+  rec->loc_backup = g.scratch1.ir.loc_backup;
   *(uint32_t *)rec->at_0c = DAT_f7f2;
 
   for (i = 0; i < 0x12; i++) {

@@ -38,7 +38,7 @@ union pw_scratch {
     } ir;
     struct {
         uint8_t _pad0[0x40];      /* +0x00..0x3F unused by this view */
-        uint8_t samples[8];       /* +0x40..0x47 X-axis accel samples (also sound playback buffer) */
+        int8_t samples[8];        /* +0x40..0x47 X-axis accel samples (also sound playback buffer) */
     } accel;
     struct {
         uint8_t _pad0[0x60];      /* +0x00..0x5F unused by this view */
@@ -64,8 +64,8 @@ union pw_scratch {
 union pw_scratch2 {
     uint8_t bytes[0xF0];
     struct {
-        uint8_t y[64];                              /* +0x00..0x3F Y-axis accel samples */
-        uint8_t z[16];                              /* +0x40..0x4F Z-axis accel samples */
+        int8_t y[64];                               /* +0x00..0x3F Y-axis accel samples */
+        int8_t z[16];                               /* +0x40..0x4F Z-axis accel samples */
         uint8_t _pad0[0xA0];                        /* +0x50..0xEF unused by this view */
     } accel;
     struct {
@@ -241,8 +241,6 @@ enum view_id {
 #define DAT_f7d8_w  (*(volatile uint16_t *)&g.viewstate.v.dowsing.awardedItemHi)
 
 /* g.scratch1 / g.scratch2 typed views (no plain struct equivalent). */
-#define accel_samplesY            ((volatile int8_t *)g.scratch2.accel.y)
-#define accel_samplesZ            ((volatile int8_t *)g.scratch2.accel.z)
 #define DAT_f886                  (g.scratch2.ir.at_f886)
 #define DAT_f88e                  (g.scratch2.ir.at_f88e)
 #define DAT_f896                  (g.scratch2.ir.at_f896)
@@ -254,15 +252,9 @@ enum view_id {
 #define ped_isNotWalking          (g.scratch2.ped.isNotWalking)
 
 #define DAT_f7e6        (g.scratch1.bytes)              /* uint8_t[128] -- decays to (uint8_t *) */
-#define DAT_f7ea        (g.scratch1.ir.id_backup)
-#define DAT_f7ee        (g.scratch1.ir.loc)
-#define DAT_f7f0        (g.scratch1.ir.loc_backup)
 #define DAT_f7f2        (g.scratch1.ir.at_0c_w)
 #define fft_results     (g.scratch1.fft)
-#define accelXSamples   ((volatile int8_t *)g.scratch1.accel.samples)
 #define DAT_f82e        (g.scratch1.ir.at_48)
-#define DAT_f840        (g.scratch1.ir.eventBitIndex)
-#define DAT_f841        (g.scratch1.ir.flags_5b)
 #define DAT_f842        (g.scratch1.ir.at_5c)
 #define DAT_f843        (g.scratch1.ir.at_5d)
 #define DAT_f844        (g.scratch1.ir.at_5e_w)

@@ -105,9 +105,9 @@ void drv_accel_sample(void) {
     ;
   PDR9 |= 0x01;
 
-  accelXSamples[g.accel_sampleCount] = (int8_t)buf[1];
-  accel_samplesY[g.accel_sampleCount] = (int8_t)buf[3];
-  accel_samplesZ[g.accel_sampleCount] = (int8_t)buf[5];
+  g.scratch1.accel.samples[g.accel_sampleCount] = (int8_t)buf[1];
+  g.scratch2.accel.y[g.accel_sampleCount] = (int8_t)buf[3];
+  g.scratch2.accel.z[g.accel_sampleCount] = (int8_t)buf[5];
 
   if ((uint8_t)g.ui_activeView == VIEW_ACCEL_DEBUG) {
     prev_count = (g.accel_sampleCount + 0x3F) & 0x3F;
@@ -117,34 +117,34 @@ void drv_accel_sample(void) {
       accel_zPosition_word = 0;
     }
 
-    if ((int16_t)accelXSamples[g.accel_sampleCount] -
-            (int16_t)accelXSamples[prev_count] <
+    if ((int16_t)g.scratch1.accel.samples[g.accel_sampleCount] -
+            (int16_t)g.scratch1.accel.samples[prev_count] <
         0) {
-      accel_xPosition_word += (uint16_t)(-accelXSamples[g.accel_sampleCount] +
-                               accelXSamples[prev_count]);
+      accel_xPosition_word += (uint16_t)(-g.scratch1.accel.samples[g.accel_sampleCount] +
+                               g.scratch1.accel.samples[prev_count]);
     } else {
-      accel_xPosition_word += (uint16_t)(accelXSamples[g.accel_sampleCount] -
-                               accelXSamples[prev_count]);
+      accel_xPosition_word += (uint16_t)(g.scratch1.accel.samples[g.accel_sampleCount] -
+                               g.scratch1.accel.samples[prev_count]);
     }
 
-    if ((int16_t)accel_samplesY[g.accel_sampleCount] -
-            (int16_t)accel_samplesY[prev_count] <
+    if ((int16_t)g.scratch2.accel.y[g.accel_sampleCount] -
+            (int16_t)g.scratch2.accel.y[prev_count] <
         0) {
-      accel_yPosition_word += (uint16_t)(-accel_samplesY[g.accel_sampleCount] +
-                               accel_samplesY[prev_count]);
+      accel_yPosition_word += (uint16_t)(-g.scratch2.accel.y[g.accel_sampleCount] +
+                               g.scratch2.accel.y[prev_count]);
     } else {
-      accel_yPosition_word += (uint16_t)(accel_samplesY[g.accel_sampleCount] -
-                               accel_samplesY[prev_count]);
+      accel_yPosition_word += (uint16_t)(g.scratch2.accel.y[g.accel_sampleCount] -
+                               g.scratch2.accel.y[prev_count]);
     }
 
-    if ((int16_t)accel_samplesZ[g.accel_sampleCount] -
-            (int16_t)accel_samplesZ[prev_count] <
+    if ((int16_t)g.scratch2.accel.z[g.accel_sampleCount] -
+            (int16_t)g.scratch2.accel.z[prev_count] <
         0) {
-      accel_zPosition_word += (uint16_t)(-accel_samplesZ[g.accel_sampleCount] +
-                              accel_samplesZ[prev_count]);
+      accel_zPosition_word += (uint16_t)(-g.scratch2.accel.z[g.accel_sampleCount] +
+                              g.scratch2.accel.z[prev_count]);
     } else {
-      accel_zPosition_word += (uint16_t)(accel_samplesZ[g.accel_sampleCount] -
-                              accel_samplesZ[prev_count]);
+      accel_zPosition_word += (uint16_t)(g.scratch2.accel.z[g.accel_sampleCount] -
+                              g.scratch2.accel.z[prev_count]);
     }
   }
 }
