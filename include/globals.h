@@ -45,12 +45,24 @@ struct viewstate {
             volatile uint8_t  at_d8;   /* 0xF7D8 */
             volatile uint8_t  at_d9;   /* 0xF7D9 */
         } bytes;
-        /* Future: typed views per subsystem, e.g.
-         *   struct { uint8_t _p[1]; uint8_t xPos; ...; } accel;
-         *   struct { uint8_t cursorIdx; ...; } dowsing;
-         * Multi-byte types must respect their natural alignment within
-         * their parent struct (ch38 pads uint16 members to even offsets);
-         * for now wider views are exposed via cast macros below. */
+        /* Dowsing minigame's interpretation of these 9 bytes.
+         * Documented in dowsing.c's header comment. */
+        struct {
+            volatile uint8_t cursor;            /* 0xF7D1 = at_d1 — current cursor (0..5) */
+            volatile uint8_t attemptsRemaining; /* 0xF7D2 = at_d2 — counts down each guess */
+            volatile uint8_t hiddenSlot;        /* 0xF7D3 = at_d3 — secret item slot (0..5) */
+            volatile uint8_t markedWrongSlot;   /* 0xF7D4 = at_d4 — last wrong-guess slot */
+            volatile uint8_t wattReward;        /* 0xF7D5 = at_d5 — nonzero -> show g.save_watts */
+            volatile uint8_t saveSlot;          /* 0xF7D6 = at_d6 — index for awarded-item store */
+            volatile uint8_t _at_d7;            /* 0xF7D7 — unused by dowsing */
+            volatile uint8_t awardedItemHi;     /* 0xF7D8 = at_d8 — uint16 item-id hi byte */
+            volatile uint8_t awardedItemLo;     /* 0xF7D9 = at_d9 — uint16 item-id lo byte */
+        } dowsing;
+        /* Add more per-subsystem views here as each is audited. ch38 pads
+         * uint16 members to even offsets within a struct; since this
+         * union sits at an odd offset within viewstate (Y/Z/A take 3
+         * bytes), any uint16 member here would land 1 byte off. Keep
+         * fields uint8 and expose wider views via cast macros below. */
     } v;
 };
 
@@ -131,7 +143,7 @@ enum view_id {
 /* 0xF7D8 is also accessed as a 16-bit word in dowsing (item ID) — disassembly
  * shows mov.w @g.viewstate.v.bytes.at_d8 + drv_eeprom_write_block size 2. The byte alias above
  * is used by battle.c and pedometer.c for flag/limit bytes. */
-#define DAT_f7d8_w  (*(volatile uint16_t *)&g.viewstate.v.bytes.at_d8)
+#define DAT_f7d8_w  (*(volatile uint16_t *)&g.viewstate.v.dowsing.awardedItemHi)
 
 /* 0xF866..0xF955: 240-byte multi-purpose scratch region (sibling of g_scratch).
  * Memory is reused across mutually-exclusive subsystems:

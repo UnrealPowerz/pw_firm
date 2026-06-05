@@ -20,13 +20,13 @@
  * Globals repurposed for dowsing state:
  *   g.viewstate.Y      = result slot index / item kind
  *   g.viewstate.A      = animation tick countdown
- *   g.viewstate.v.bytes.at_d2          = attempts remaining (counts down)
- *   g.viewstate.v.bytes.at_d4          = "marked-wrong" slot
- *   accel_zPosition_byte        = save-slot index for the awarded item
- *   g.viewstate.v.bytes.at_d1           = cursor position (0..5)
- *   g.viewstate.v.bytes.at_d5           = watt reward (nonzero => show g.save_watts on found screen)
+ *   g.viewstate.v.dowsing.attemptsRemaining          = attempts remaining (counts down)
+ *   g.viewstate.v.dowsing.markedWrongSlot          = "marked-wrong" slot
+ *   g.viewstate.v.dowsing.saveSlot        = save-slot index for the awarded item
+ *   g.viewstate.v.dowsing.cursor           = cursor position (0..5)
+ *   g.viewstate.v.dowsing.wattReward           = watt reward (nonzero => show g.save_watts on found screen)
  *   DAT_f7d8_w         = item id awarded
- *   g.viewstate.v.bytes.at_d3   = hidden item slot (0..5), chosen at init
+ *   g.viewstate.v.dowsing.hiddenSlot   = hidden item slot (0..5), chosen at init
  */
 
 // ROM: 0x4792  82.8%
@@ -34,16 +34,16 @@ void game_init_dowsing(void) {
   uint16_t rnd;
 
   g.viewstate.Z = 0;
-  g.viewstate.v.bytes.at_d1 = 0;
-  g.viewstate.v.bytes.at_d2 = 2;
+  g.viewstate.v.dowsing.cursor = 0;
+  g.viewstate.v.dowsing.attemptsRemaining = 2;
 
   rnd = (uint16_t)sys_get_rng();
   rnd <<= 3;
   rnd = (uint16_t)((uint8_t)(rnd >> 8));
-  g.viewstate.v.bytes.at_d3 = (uint8_t)((int16_t)rnd % 6);
+  g.viewstate.v.dowsing.hiddenSlot = (uint8_t)((int16_t)rnd % 6);
 
-  g.viewstate.v.bytes.at_d4 = 0xFF;
-  g.viewstate.v.bytes.at_d5 = 0;
+  g.viewstate.v.dowsing.markedWrongSlot = 0xFF;
+  g.viewstate.v.dowsing.wattReward = 0;
 }
 
 // ROM: 0x47ce  82.0%
@@ -67,7 +67,7 @@ void ui_handle_dowsing(void) {
 
 state_idle:
   if (drv_button_is_triggered(BTN_R)) {
-    if (g.viewstate.v.bytes.at_d1 == g.viewstate.v.bytes.at_d4) {
+    if (g.viewstate.v.dowsing.cursor == g.viewstate.v.dowsing.markedWrongSlot) {
       /* Already marked as wrong — beep but don't advance. */
       drv_sound_play(SND_BACK);
       return;
@@ -78,11 +78,11 @@ state_idle:
     return;
   }
   if (drv_button_is_triggered(BTN_M)) {
-    g.viewstate.v.bytes.at_d1 = (uint8_t)(((int32_t)((uint16_t)g.viewstate.v.bytes.at_d1 + 5)) % 6);
+    g.viewstate.v.dowsing.cursor = (uint8_t)(((int32_t)((uint16_t)g.viewstate.v.dowsing.cursor + 5)) % 6);
     drv_sound_play(SND_CURSOR);
   }
   if (drv_button_is_triggered(BTN_L)) {
-    g.viewstate.v.bytes.at_d1 = (uint8_t)(((int32_t)((uint16_t)g.viewstate.v.bytes.at_d1 + 1)) % 6);
+    g.viewstate.v.dowsing.cursor = (uint8_t)(((int32_t)((uint16_t)g.viewstate.v.dowsing.cursor + 1)) % 6);
     drv_sound_play(SND_CURSOR);
     return;
   }
@@ -95,7 +95,7 @@ state_digging:
   if (drv_sound_is_playing()) {
     return;
   }
-  if (g.viewstate.v.bytes.at_d1 == g.viewstate.v.bytes.at_d3) {
+  if (g.viewstate.v.dowsing.cursor == g.viewstate.v.dowsing.hiddenSlot) {
     g.viewstate.Z = 2;
     ui_handle_dowsing_selection();
     drv_sound_play(SND_DOWSE_HIT);
@@ -104,10 +104,10 @@ state_digging:
   /* Wrong slot. */
   g.viewstate.Z = 3;
   drv_sound_play(SND_FAIL);
-  if (g.viewstate.v.bytes.at_d2 == 2) {
-    g.viewstate.v.bytes.at_d4 = g.viewstate.v.bytes.at_d1;
+  if (g.viewstate.v.dowsing.attemptsRemaining == 2) {
+    g.viewstate.v.dowsing.markedWrongSlot = g.viewstate.v.dowsing.cursor;
   }
-  g.viewstate.v.bytes.at_d2--;
+  g.viewstate.v.dowsing.attemptsRemaining--;
   return;
 
 state_found:
@@ -118,7 +118,7 @@ state_found:
     goto exit_to_home;
   }
   {
-    uint8_t save_slot = accel_zPosition_byte;
+    uint8_t save_slot = g.viewstate.v.dowsing.saveSlot;
     if (save_slot == 3) {
       /* No room left — kick into peer-session caught-stats view. */
       g.viewstate.A = 1;
@@ -147,7 +147,7 @@ state_miss:
   if (!drv_button_is_triggered(BTN_ANY)) {
     return;
   }
-  if (g.viewstate.v.bytes.at_d2 != 0) {
+  if (g.viewstate.v.dowsing.attemptsRemaining != 0) {
     /* Still have attempts left — bounce back to idle. */
     drv_sound_play(SND_CONFIRM);
     g.viewstate.Z = 4;
@@ -222,7 +222,7 @@ void game_check_wild_encounter(void) {
   }
 
 no_encounter:
-  g.viewstate.v.bytes.at_d5 = (uint8_t)((g.viewstate.v.bytes.at_d2 << 2) + 2);
+  g.viewstate.v.dowsing.wattReward = (uint8_t)((g.viewstate.v.dowsing.attemptsRemaining << 2) + 2);
   game_add_watts(10);
   return;
 
@@ -265,7 +265,7 @@ void ui_handle_dowsing_selection(void) {
   item_table = (uint8_t *)sbrk(0x0C);
   drv_eeprom_read_block(EEPROM_LOG_ITEMS, item_table, 0x0C);
 
-  accel_zPosition_byte = save_find_empty_item_slot(item_table);
+  g.viewstate.v.dowsing.saveSlot = save_find_empty_item_slot(item_table);
 
   if ((g.save_settings & 1)) {
     game_check_wild_encounter();
@@ -310,8 +310,8 @@ void ui_render_dowsing_grass(void) {
   sys_init_heap();
   buf = (uint8_t *)sbrk(0x180);
 
-  /* Player sprite (frame selected by g.viewstate.v.bytes.at_d2). */
-  drv_eeprom_read_block(sprites_base + (uint16_t)g.viewstate.v.bytes.at_d2 * 0x20, buf, 0x20);
+  /* Player sprite (frame selected by g.viewstate.v.dowsing.attemptsRemaining). */
+  drv_eeprom_read_block(sprites_base + (uint16_t)g.viewstate.v.dowsing.attemptsRemaining * 0x20, buf, 0x20);
   drv_lcd_blit(0x40, 0, buf, 0x08, 0x10);
 
   /* Background top strip. */
@@ -345,10 +345,10 @@ void ui_render_dowsing_grass(void) {
   drv_eeprom_read_block(0x18D0 + sprites_base, buf, 0x80);
   for (i = 0; i < 6; i++) {
     uint8_t x = (uint8_t)(i * 0x10);
-    if ((uint8_t)i == g.viewstate.v.bytes.at_d4) {
+    if ((uint8_t)i == g.viewstate.v.dowsing.markedWrongSlot) {
       /* "Wrong-slot" marker. */
       drv_lcd_blit(x, 0x18, buf + 0x40, 0x10, 0x10);
-    } else if ((uint8_t)i != g.viewstate.v.bytes.at_d1) {
+    } else if ((uint8_t)i != g.viewstate.v.dowsing.cursor) {
       drv_lcd_blit(x, 0x18, buf, 0x10, 0x10);
     }
   }
@@ -362,7 +362,7 @@ void ui_render_dowsing_grass(void) {
 
   /* Highlighted cursor on top. */
   {
-    uint8_t cursor_x = (uint8_t)(g.viewstate.v.bytes.at_d1 * 0x10);
+    uint8_t cursor_x = (uint8_t)(g.viewstate.v.dowsing.cursor * 0x10);
     drv_lcd_blit(cursor_x, 0x18, buf, 0x10, 0x10);
   }
 
@@ -395,9 +395,9 @@ void ui_render_dowsing(void) {
   sprite_sheet = (uint8_t *)sbrk(0x140);
   buf = (uint8_t *)sbrk(0x180);
 
-  /* Player sprite — load full sheet, then point at frame g.viewstate.v.bytes.at_d2. */
+  /* Player sprite — load full sheet, then point at frame g.viewstate.v.dowsing.attemptsRemaining. */
   drv_eeprom_read_block(sprites_base, sprite_sheet, 0x140);
-  sprite_sheet += (uint16_t)g.viewstate.v.bytes.at_d2 * 0x20;
+  sprite_sheet += (uint16_t)g.viewstate.v.dowsing.attemptsRemaining * 0x20;
   drv_lcd_blit(0x40, 0, sprite_sheet, 0x08, 0x10);
 
   /* Background pieces. */
@@ -431,11 +431,11 @@ void ui_render_dowsing(void) {
   for (i = 0; i < 6; i++) {
     uint8_t x = (uint8_t)(i * 0x10);
 
-    if (g.viewstate.Z == 2 && (uint8_t)i == g.viewstate.v.bytes.at_d1) {
+    if (g.viewstate.Z == 2 && (uint8_t)i == g.viewstate.v.dowsing.cursor) {
       /* Found state hides the cursor slot — item sprite drawn below. */
       continue;
     }
-    if ((uint8_t)i == g.viewstate.v.bytes.at_d4) {
+    if ((uint8_t)i == g.viewstate.v.dowsing.markedWrongSlot) {
       drv_lcd_blit(x, 0x18, buf + 0x40, 0x10, 0x10);
     } else {
       drv_lcd_blit(x, 0x18, buf, 0x10, 0x10);
@@ -449,7 +449,7 @@ void ui_render_dowsing(void) {
     uint8_t rod_x;
     drv_eeprom_read_block(0x278 + sprites_base + (uint16_t)frame * 0x10, buf,
                           0x10);
-    rod_x = (uint8_t)(g.viewstate.v.bytes.at_d1 * 0x10 + 0x04);
+    rod_x = (uint8_t)(g.viewstate.v.dowsing.cursor * 0x10 + 0x04);
     drv_lcd_blit(rod_x, 0x28, buf, 8, 8);
     gfx_draw_text_box(0x30, TEXT_DISCOVER_AN_ITEM, TEXT_BOX_FULL, TEXT_BOX_STATIC);
 
@@ -457,11 +457,11 @@ void ui_render_dowsing(void) {
     /* Found item: draw item icon and either g.save_watts or item name. */
     uint8_t item_x;
     drv_eeprom_read_block(0x208 + sprites_base, buf, 0x10);
-    item_x = (uint8_t)(g.viewstate.v.bytes.at_d1 * 0x10 + 0x04);
+    item_x = (uint8_t)(g.viewstate.v.dowsing.cursor * 0x10 + 0x04);
     drv_lcd_blit(item_x, 0x18, buf, 8, 8);
 
-    if (g.viewstate.v.bytes.at_d5 != 0) {
-      gfx_draw_value_with_icon(0x02, 0x20, 0x0D, (uint16_t)g.viewstate.v.bytes.at_d5);
+    if (g.viewstate.v.dowsing.wattReward != 0) {
+      gfx_draw_value_with_icon(0x02, 0x20, 0x0D, (uint16_t)g.viewstate.v.dowsing.wattReward);
       gfx_draw_text_box(0x30, TEXT_RECEIVED, TEXT_BOX_NO_LINES, TEXT_BOX_BLINK);
     } else {
       uint8_t result_kind = g.viewstate.Y;
@@ -478,19 +478,19 @@ void ui_render_dowsing(void) {
 
     /* Reveal the hidden item only after all attempts are spent. The loop
        draws the icon 3 times for emphasis (single-frame flash effect). */
-    if (g.viewstate.v.bytes.at_d2 == 0) {
+    if (g.viewstate.v.dowsing.attemptsRemaining == 0) {
       uint16_t k;
       drv_eeprom_read_block(0x208 + sprites_base, buf, 0x10);
       for (k = 3; k > 0; k--) {
-        uint8_t item_x = (uint8_t)(g.viewstate.v.bytes.at_d3 * 0x10 + 0x04);
+        uint8_t item_x = (uint8_t)(g.viewstate.v.dowsing.hiddenSlot * 0x10 + 0x04);
         drv_lcd_blit(item_x, 0x16, buf, 8, 8);
       }
     }
 
   } else if (g.viewstate.Z == 4) {
     /* Proximity indicator: |cursor - hidden| < 2 ⇒ "close", else "far". */
-    int16_t diff = (int16_t)(uint16_t)g.viewstate.v.bytes.at_d1 -
-                   (int16_t)(uint16_t)g.viewstate.v.bytes.at_d3;
+    int16_t diff = (int16_t)(uint16_t)g.viewstate.v.dowsing.cursor -
+                   (int16_t)(uint16_t)g.viewstate.v.dowsing.hiddenSlot;
     uint16_t dist = diff < 0 ? (uint16_t)(-diff) : (uint16_t)diff;
 
     if (dist < 2) {
