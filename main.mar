@@ -244,7 +244,7 @@ L_0084:
 ; Called by: drv_ir_finish_and_execute
 ; =============================================================================
 ir_handle_remote_cmd:
-          mov.b       @REQUESTED_POKEMON_ACTION_TYPE, r0l
+          mov.b       @ir_requestedPokemonAction, r0l
           cmp.b       #H'F0, r0l
           beq         LAB_0108:8
           cmp.b       #H'FE, r0l
@@ -938,7 +938,7 @@ drv_ir_send_packet:
           mov.w       #commandType, r6
           mov.b       r0h, @er6
           mov.b       r1l, @(H'1,er6)
-          mov.l       @sessionKey, er1
+          mov.l       @ir_sessionKey, er1
           mov.l       er1, @(H'4,er6)
           sub.b       r0h, r0h
           mov.b       r0h, @(H'2,er6)
@@ -1082,22 +1082,22 @@ drv_ir_send_discovery:
           sub.b       r0l, r0l
           mov.b       r0l, @ir_resultCode
           mov.l       @rng_state, er1
-          mov.l       er1, @nextSessionKey
-          mov.l       @nextSessionKey, er1
-          mov.l       er1, @sessionKey
+          mov.l       er1, @ir_sessionKeyNext
+          mov.l       @ir_sessionKeyNext, er1
+          mov.l       er1, @ir_sessionKey
           mov.b       #H'1, r0h
-          mov.b       r0h, @irHandshakeStep
-          mov.b       r0l, @irTimeoutRetryCount
-          mov.b       r0l, @irCrcRetryCount
+          mov.b       r0h, @ir_handshakeStep
+          mov.b       r0l, @ir_timeoutRetryCount
+          mov.b       r0l, @ir_crcRetryCount
           mov.b       #H'FF, r0h
-          mov.b       r0h, @REQUESTED_POKEMON_ACTION_TYPE
-          mov.w       #irPacketReceivedFlag, r1
+          mov.b       r0h, @ir_requestedPokemonAction
+          mov.w       #ir_packetReceivedFlag, r1
           bclr        #H'0, @r1
           mov.b       r0l, @ir_commandPos
           mov.b       r0l, @DAT_f8c1
           mov.w       @TCNT, e0
           mov.w       e0, @ir_lastCommandTime
-          mov.b       r0l, @irSessionPhase
+          mov.b       r0l, @ir_sessionPhase
           mov.b       #H'FC, r0l
           jmp         @drv_ir_tx_u8:16
 ; =============================================================================
@@ -1145,17 +1145,17 @@ LAB_0930:
           bls         sys_ir_comm_loop__finishIRComms:16
           cmp.w       #H'C80, e6
           bls         LAB_09d8:16
-          mov.b       @irTimeoutRetryCount, r0l
+          mov.b       @ir_timeoutRetryCount, r0l
           inc.b       r0l
-          mov.b       r0l, @irTimeoutRetryCount
-          mov.b       @irHandshakeStep, r0l
+          mov.b       r0l, @ir_timeoutRetryCount
+          mov.b       @ir_handshakeStep, r0l
           cmp.b       #H'3, r0l
           bcc         LAB_0964:8
-          mov.b       @irTimeoutRetryCount, r0l
+          mov.b       @ir_timeoutRetryCount, r0l
           cmp.b       #H'14, r0l
           bcs         LAB_0980:8
 LAB_0964:
-          mov.b       @irPacketReceivedFlag, r0l
+          mov.b       @ir_packetReceivedFlag, r0l
           bld         #H'0, r0l
           bcc         LAB_0976:8
           mov.b       #H'2, r0l
@@ -1185,7 +1185,7 @@ LAB_09a0:
           cmp.w       e6, r0
           bcs         LAB_09a0:8
           mov.b       #H'1, r0l
-          mov.b       r0l, @irHandshakeStep
+          mov.b       r0l, @ir_handshakeStep
           mov.b       #H'FC, r0l
           jsr         @drv_ir_tx_u8:16
           mov.w       @TCNT, e6
@@ -1200,7 +1200,7 @@ LAB_09a0:
 LAB_09d8:
           mov.b       r5l, r5l
           beq         sys_ir_comm_loop__finishIRComms:16
-          mov.w       #irPacketReceivedFlag, r0
+          mov.w       #ir_packetReceivedFlag, r0
           bset        #H'0, @r0
           mov.b       @ir_commandPos, r0l
           cmp.b       #H'1, r0l
@@ -1210,7 +1210,7 @@ LAB_09d8:
           mov.b       @commandType, r0l
           cmp.b       #H'FC, r0l
           bne         sys_ir_comm_loop__finishIRComms:16
-          mov.b       @irHandshakeStep, r0l
+          mov.b       @ir_handshakeStep, r0l
           cmp.b       #H'1, r0l
           beq         LAB_0a18:8
           cmp.b       #H'2, r0l
@@ -1221,7 +1221,7 @@ LAB_09d8:
           jmp         @sys_ir_comm_loop__finishIRComms:16
 LAB_0a18:
           mov.b       #H'2, r0l
-          mov.b       r0l, @irHandshakeStep
+          mov.b       r0l, @ir_handshakeStep
           mov.b       r0l, r1l
           mov.w       #H'FA00, r0
           jsr         @drv_ir_send_packet:16
@@ -1244,9 +1244,9 @@ LAB_0a2c:
           beq         LAB_0a7c:8
           sub.b       r0l, r0l
           mov.b       r0l, @ir_commandPos
-          mov.b       @irCrcRetryCount, r0l
+          mov.b       @ir_crcRetryCount, r0l
           inc.b       r0l
-          mov.b       r0l, @irCrcRetryCount
+          mov.b       r0l, @ir_crcRetryCount
           cmp.b       #H'14, r0l
           bcs         sys_ir_comm_loop__finishIRComms:16
           mov.b       #H'2, r0l
@@ -1265,10 +1265,10 @@ LAB_0a7c:
           add.w       #commandType, r5
           cmp.b       #H'F8, r3l
           bcc         LAB_0ab4:8
-          mov.l       @sessionKey, er1
+          mov.l       @ir_sessionKey, er1
           cmp.l       er1, er0
           bne         LAB_182e:16
-          mov.b       @irHandshakeStep, r0l
+          mov.b       @ir_handshakeStep, r0l
           cmp.b       #H'3, r0l
           bcs         LAB_182e:16
 LAB_0ab4:
@@ -1285,7 +1285,7 @@ LAB_0ab4:
           mov.b       r4h, r0l
           extu.w      r0
           mov.w       r0, e2
-          mov.w       @irXferRemaining, e1
+          mov.w       @ir_xferRemaining, e1
           mov.b       r3l, r0l
           cmp.b       #H'FA, r0l
           beq         LAB_0c3c:16
@@ -1410,7 +1410,7 @@ LAB_0c3c:
           cmp.b       #H'2, r4l
           bne         LAB_0cce:16
 LAB_0c46:
-          mov.b       @irHandshakeStep, r0l
+          mov.b       @ir_handshakeStep, r0l
           cmp.b       #H'1, r0l
           beq         LAB_0c5e:8
           cmp.b       #H'4, r0l
@@ -1422,14 +1422,14 @@ LAB_0c46:
           bra         LAB_0c88:8
 LAB_0c5e:
           mov.b       #H'3, r0l
-          mov.b       r0l, @irHandshakeStep
+          mov.b       r0l, @ir_handshakeStep
           mov.b       #H'2, r1l
           mov.w       #H'F800, r0
           jsr         @drv_ir_send_packet:16
           mov.l       @(H'2,er7), er0
-          mov.l       @nextSessionKey, er1
+          mov.l       @ir_sessionKeyNext, er1
           xor.l       er1, er0
-          mov.l       er0, @sessionKey
+          mov.l       er0, @ir_sessionKey
           jmp         @LAB_182e:16
 LAB_0c88:
           jsr         @sys_get_rng:16
@@ -1451,7 +1451,7 @@ LAB_0ca8:
           cmp.w       e6, r0
           bcs         LAB_0ca8:8
           mov.b       #H'1, r0l
-          mov.b       r0l, @irHandshakeStep
+          mov.b       r0l, @ir_handshakeStep
           mov.b       #H'FC, r0l
           jsr         @drv_ir_tx_u8:16
           mov.w       @TCNT, r0
@@ -1468,15 +1468,15 @@ LAB_0cd8:
           mov.b       r0l, @ir_resultCode
           jmp         @LAB_14bc:16
 LAB_0ce6:
-          mov.b       @irHandshakeStep, r0l
+          mov.b       @ir_handshakeStep, r0l
           cmp.b       #H'3, r0l
           bcc         LAB_182e:16
           mov.l       @(H'2,er7), er0
-          mov.l       @nextSessionKey, er1
+          mov.l       @ir_sessionKeyNext, er1
           xor.l       er1, er0
-          mov.l       er0, @sessionKey
+          mov.l       er0, @ir_sessionKey
           mov.b       #H'4, r0l
-          mov.b       r0l, @irHandshakeStep
+          mov.b       r0l, @ir_handshakeStep
           jsr         @drv_ir_get_rx_ptr:16
           mov.w       r0, r1
           mov.w       e4, e1
@@ -1641,14 +1641,14 @@ LAB_0ed0:
           mov.w       #H'F400, r5
           mov.w       #H'91BE, r0
           mov.b       #H'1, r1l
-          mov.b       r1l, @irSessionPhase
-          mov.w       r0, @irXferSrc
-          mov.w       r5, @irXferDst
+          mov.b       r1l, @ir_sessionPhase
+          mov.w       r0, @ir_xferSrc
+          mov.w       r5, @ir_xferDst
           mov.w       #H'180, r0
-          mov.w       r0, @irXferRemaining
+          mov.w       r0, @ir_xferRemaining
           sub.b       r0l, r0l
-          mov.b       r0l, @irXferChunkCount
-          mov.w       @irXferRemaining, e6
+          mov.b       r0l, @ir_xferChunkCount
+          mov.w       @ir_xferRemaining, e6
           cmp.w       #H'80, e6
           bls         LAB_1366:16
           jmp         @LAB_1362:16
@@ -1945,7 +1945,7 @@ LAB_1218:
           jsr         @drv_ir_send_packet:16
           mov.b       #H'C6, r0l
 LAB_1252:
-          mov.b       r0l, @REQUESTED_POKEMON_ACTION_TYPE
+          mov.b       r0l, @ir_requestedPokemonAction
           jmp         @LAB_14bc:16
 LAB_125a:
           mov.b       #H'3, r0l
@@ -1987,7 +1987,7 @@ LAB_1298:
 LAB_12ac:
           mov.w       e1, r0
           bne         LAB_135a:16
-          mov.b       @irSessionPhase, r0l
+          mov.b       @ir_sessionPhase, r0l
           cmp.b       #H'1, r0l
           beq         LAB_12c6:8
           cmp.b       #H'3, r0l
@@ -1999,14 +1999,14 @@ LAB_12c6:
           mov.w       #DAT_f580, e6
           mov.w       #H'993E, r5
           mov.b       #H'3, r0l
-          mov.b       r0l, @irSessionPhase
-          mov.w       r5, @irXferSrc
-          mov.w       e6, @irXferDst
+          mov.b       r0l, @ir_sessionPhase
+          mov.w       r5, @ir_xferSrc
+          mov.w       e6, @ir_xferDst
           mov.w       #H'140, r0
-          mov.w       r0, @irXferRemaining
+          mov.w       r0, @ir_xferRemaining
           sub.b       r0l, r0l
-          mov.b       r0l, @irXferChunkCount
-          mov.w       @irXferRemaining, e6
+          mov.b       r0l, @ir_xferChunkCount
+          mov.w       @ir_xferRemaining, e6
           cmp.w       #H'80, e6
           bls         LAB_1366:8
           bra         LAB_1362:8
@@ -2014,14 +2014,14 @@ LAB_12f6:
           mov.w       #H'DC00, e6
           mov.w       #H'CC00, r5
           mov.b       #H'5, r0l
-          mov.b       r0l, @irSessionPhase
-          mov.w       r5, @irXferSrc
-          mov.w       e6, @irXferDst
+          mov.b       r0l, @ir_sessionPhase
+          mov.w       r5, @ir_xferSrc
+          mov.w       e6, @ir_xferDst
           mov.w       #H'224, r0
-          mov.w       r0, @irXferRemaining
+          mov.w       r0, @ir_xferRemaining
           sub.b       r0l, r0l
-          mov.b       r0l, @irXferChunkCount
-          mov.w       @irXferRemaining, e6
+          mov.b       r0l, @ir_xferChunkCount
+          mov.w       @ir_xferRemaining, e6
           cmp.w       #H'80, e6
           bls         LAB_1366:8
           bra         LAB_1362:8
@@ -2029,14 +2029,14 @@ LAB_1326:
           mov.w       #H'F400, e6
           mov.w       #H'91BE, r5
           mov.b       #H'2, r0l
-          mov.b       r0l, @irSessionPhase
-          mov.w       r5, @irXferSrc
-          mov.w       e6, @irXferDst
+          mov.b       r0l, @ir_sessionPhase
+          mov.w       r5, @ir_xferSrc
+          mov.w       e6, @ir_xferDst
           mov.w       #H'180, r0
-          mov.w       r0, @irXferRemaining
+          mov.w       r0, @ir_xferRemaining
           sub.b       r0l, r0l
-          mov.b       r0l, @irXferChunkCount
-          mov.w       @irXferRemaining, e6
+          mov.b       r0l, @ir_xferChunkCount
+          mov.w       @ir_xferRemaining, e6
           cmp.w       #H'80, e6
           bls         LAB_17bc:16
           jmp         @LAB_17b8:16
@@ -2050,9 +2050,9 @@ LAB_1366:
           jsr         @drv_ir_get_rx_ptr:16
           mov.w       r0, e0
           mov.w       e6, r1
-          mov.w       @irXferSrc, r0
+          mov.w       @ir_xferSrc, r0
           jsr         @drv_eeprom_read_block:16
-          mov.w       @irXferDst, r5
+          mov.w       @ir_xferDst, r5
           mov.b       r5h, r1l
           mov.b       r5l, r0h
           and.b       #H'80, r0h
@@ -2060,18 +2060,18 @@ LAB_1366:
           mov.w       e6, r2
           mov.b       r2l, r0l
           jsr         @drv_ir_send_packet:16
-          mov.w       @irXferSrc, r0
+          mov.w       @ir_xferSrc, r0
           add.w       e6, r0
-          mov.w       r0, @irXferSrc
-          mov.w       @irXferDst, r0
+          mov.w       r0, @ir_xferSrc
+          mov.w       @ir_xferDst, r0
           add.w       e6, r0
-          mov.w       r0, @irXferDst
-          mov.w       @irXferRemaining, r0
+          mov.w       r0, @ir_xferDst
+          mov.w       @ir_xferRemaining, r0
           sub.w       e6, r0
-          mov.w       r0, @irXferRemaining
-          mov.b       @irXferChunkCount, r0l
+          mov.w       r0, @ir_xferRemaining
+          mov.b       @ir_xferChunkCount, r0l
           inc.b       r0l
-          mov.b       r0l, @irXferChunkCount
+          mov.b       r0l, @ir_xferChunkCount
           jmp         @LAB_182e:16
 LAB_13b6:
           jsr         @ir_parse_rx_packet:16
@@ -2162,7 +2162,7 @@ LAB_147c:
           bset        #H'3, r5l
           mov.b       #H'BE, r0l
 LAB_1480:
-          mov.b       r0l, @REQUESTED_POKEMON_ACTION_TYPE
+          mov.b       r0l, @ir_requestedPokemonAction
 LAB_1484:
           mov.b       r5l, r1l
           mov.w       r6, r0
@@ -2204,7 +2204,7 @@ LAB_14c4:
           mov.b       #H'1, r0l
           mov.b       r0l, @ui_substateZ
           mov.b       #H'F0, r0l
-          mov.b       r0l, @REQUESTED_POKEMON_ACTION_TYPE
+          mov.b       r0l, @ir_requestedPokemonAction
           mov.l       #H'4001AC, er4
           mov.w       #H'AC, e6
           mov.b       @(H'70,er5), r0l
@@ -2257,7 +2257,7 @@ LAB_155a:
           mov.w       e6, r0
           jsr         @save_write_reliable:16
           mov.b       #H'E0, r0l
-          mov.b       r0l, @REQUESTED_POKEMON_ACTION_TYPE
+          mov.b       r0l, @ir_requestedPokemonAction
 LAB_1570:
           mov.b       #H'2, r1l
           mov.w       #H'F028, r0
@@ -2299,7 +2299,7 @@ LAB_15c4:
           jsr         @drv_ir_send_packet:16
           mov.b       #H'2C, r0l
 LAB_15e4:
-          mov.b       r0l, @REQUESTED_POKEMON_ACTION_TYPE
+          mov.b       r0l, @ir_requestedPokemonAction
           jmp         @LAB_182e:16
 LAB_15ec:
           mov.b       @er5, r0h
@@ -2325,24 +2325,24 @@ LAB_1618:
           jsr         @drv_ir_get_rx_ptr:16
           mov.w       r2, r1
           mov.w       r0, e0
-          mov.w       @irXferDst, r0
+          mov.w       @ir_xferDst, r0
           jsr         @drv_eeprom_write_block:16
           mov.w       e2, r0
-          mov.w       @irXferSrc, e0
+          mov.w       @ir_xferSrc, e0
           add.w       r0, e0
-          mov.w       e0, @irXferSrc
-          mov.w       @irXferDst, e0
+          mov.w       e0, @ir_xferSrc
+          mov.w       @ir_xferDst, e0
           add.w       r0, e0
-          mov.w       e0, @irXferDst
-          mov.w       @irXferRemaining, e0
+          mov.w       e0, @ir_xferDst
+          mov.w       @ir_xferRemaining, e0
           sub.w       r0, e0
-          mov.w       e0, @irXferRemaining
-          mov.b       @irXferChunkCount, r1l
+          mov.w       e0, @ir_xferRemaining
+          mov.b       @ir_xferChunkCount, r1l
           inc.b       r1l
-          mov.b       r1l, @irXferChunkCount
-          mov.w       @irXferRemaining, e0
+          mov.b       r1l, @ir_xferChunkCount
+          mov.w       @ir_xferRemaining, e0
           bne         LAB_17b0:16
-          mov.b       @irSessionPhase, r1l
+          mov.b       @ir_sessionPhase, r1l
           cmp.b       #H'2, r1l
           beq         LAB_1672:8
           cmp.b       #H'4, r1l
@@ -2354,14 +2354,14 @@ LAB_1672:
           mov.w       #DAT_f580, r5
           mov.w       #H'993E, r0
           mov.b       #H'4, r1l
-          mov.b       r1l, @irSessionPhase
-          mov.w       r0, @irXferSrc
-          mov.w       r5, @irXferDst
+          mov.b       r1l, @ir_sessionPhase
+          mov.w       r0, @ir_xferSrc
+          mov.w       r5, @ir_xferDst
           mov.w       #H'140, r0
-          mov.w       r0, @irXferRemaining
+          mov.w       r0, @ir_xferRemaining
           sub.b       r0l, r0l
-          mov.b       r0l, @irXferChunkCount
-          mov.w       @irXferRemaining, e6
+          mov.b       r0l, @ir_xferChunkCount
+          mov.w       @ir_xferRemaining, e6
           cmp.w       #H'80, e6
           bls         LAB_17bc:16
           jmp         @LAB_17b8:16
@@ -2369,14 +2369,14 @@ LAB_16a6:
           mov.w       #H'DC00, r5
           mov.w       #H'CC00, e6
           mov.b       #H'6, r0l
-          mov.b       r0l, @irSessionPhase
-          mov.w       e6, @irXferSrc
-          mov.w       r5, @irXferDst
+          mov.b       r0l, @ir_sessionPhase
+          mov.w       e6, @ir_xferSrc
+          mov.w       r5, @ir_xferDst
           mov.w       #H'224, r0
-          mov.w       r0, @irXferRemaining
+          mov.w       r0, @ir_xferRemaining
           sub.b       r0l, r0l
-          mov.b       r0l, @irXferChunkCount
-          mov.w       @irXferRemaining, e6
+          mov.b       r0l, @ir_xferChunkCount
+          mov.w       @ir_xferRemaining, e6
           cmp.w       #H'80, e6
           bls         LAB_17bc:16
           jmp         @LAB_17b8:16
@@ -2458,7 +2458,7 @@ LAB_17b8:
           mov.w       #H'80, e6
 LAB_17bc:
           jsr         @drv_ir_get_rx_ptr:16
-          mov.w       @irXferSrc, r4
+          mov.w       @ir_xferSrc, r4
           mov.b       r4h, @er0
           mov.b       r4l, @(H'1,er0)
           mov.w       e6, r1
@@ -21493,31 +21493,31 @@ accel_samplesZArr:
           .RES.B      3
 DAT_f8a9:
           .RES.B      13
-nextSessionKey:
+ir_sessionKeyNext:
           .RES.B      4
-sessionKey:
+ir_sessionKey:
           .RES.B      4
-irHandshakeStep:
+ir_handshakeStep:
           .RES.B      1
-irTimeoutRetryCount:
+ir_timeoutRetryCount:
           .RES.B      2
 DAT_f8c1:
           .RES.B      1
-irCrcRetryCount:
+ir_crcRetryCount:
           .RES.B      1
-irPacketReceivedFlag:
+ir_packetReceivedFlag:
           .RES.B      1
-REQUESTED_POKEMON_ACTION_TYPE:
+ir_requestedPokemonAction:
           .RES.B      1
-irSessionPhase:
+ir_sessionPhase:
           .RES.B      1
-irXferRemaining:
+ir_xferRemaining:
           .RES.B      2
-irXferSrc:
+ir_xferSrc:
           .RES.B      2
-irXferDst:
+ir_xferDst:
           .RES.B      2
-irXferChunkCount:
+ir_xferChunkCount:
           .RES.B      1
 rdr_data:
           .RES.B      1

@@ -80,7 +80,7 @@ void drv_ir_send_packet(uint8_t pktLen, uint8_t cmdType, uint8_t subtype) {
 
   pkt[0] = cmdType;
   pkt[1] = subtype;
-  *(uint32_t *)(pkt + 4) = sessionKey;
+  *(uint32_t *)(pkt + 4) = ir_sessionKey;
   pkt[2] = 0;
   pkt[3] = 0;
 
@@ -110,17 +110,17 @@ void drv_ir_send_packet(uint8_t pktLen, uint8_t cmdType, uint8_t subtype) {
 void drv_ir_send_discovery(void) {
   drv_ir_init_hw();
   g.ir_resultCode = 0x00;
-  nextSessionKey = g.rng_state;
-  sessionKey = nextSessionKey;
-  irHandshakeStep = 0x01;
-  irTimeoutRetryCount = 0x00;
-  irCrcRetryCount = 0x00;
-  REQUESTED_POKEMON_ACTION_TYPE = 0xFF;
-  irPacketReceivedFlag_BIT.b0 = 0;
+  ir_sessionKeyNext = g.rng_state;
+  ir_sessionKey = ir_sessionKeyNext;
+  ir_handshakeStep = 0x01;
+  ir_timeoutRetryCount = 0x00;
+  ir_crcRetryCount = 0x00;
+  ir_requestedPokemonAction = 0xFF;
+  ir_packetReceivedFlag_BIT.b0 = 0;
   g.ir_commandPos = 0x00;
   DAT_f8c1 = 0x00;
   g.ir_lastCommandTime = TCNT;
-  irSessionPhase = 0x00;
+  ir_sessionPhase = 0x00;
   drv_ir_tx_u8(0xFC);
 }
 

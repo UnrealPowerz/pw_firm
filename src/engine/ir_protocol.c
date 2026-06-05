@@ -12,7 +12,7 @@
  *
  *   ir_handle_remote_cmd       Post-session action dispatcher. After the IR
  *                              loop completes, this runs the action stored in
- *                              REQUESTED_POKEMON_ACTION_TYPE (factory reset,
+ *                              ir_requestedPokemonAction (factory reset,
  *                              start/end walk, peer play, event reward, etc.).
  *
  *   ir_parse_rx_packet         Decode a received 0x68-byte payload into the
@@ -31,7 +31,7 @@
  *                              session.
  *
  * Handshake state machine — drives the SYN-style 3-way exchange before any
- * payload commands are accepted. Stored in `irHandshakeStep`:
+ * payload commands are accepted. Stored in `ir_handshakeStep`:
  *
  *   0 = NONE          - no exchange in progress.
  *   1 = FC_SENT       - sent the 0xFC probe byte, waiting for peer 0xFA.
@@ -40,15 +40,15 @@
  *   4 = TRAINER_SENT  - sent our trainer record to the peer (post-handshake).
  *
  * Session phase — once the handshake completes, the multi-step EEPROM-pair
- * transfer is gated by `irSessionPhase` (own pokemon → peer pokemon → pokedex
+ * transfer is gated by `ir_sessionPhase` (own pokemon → peer pokemon → pokedex
  * → etc.). Values 1..5; the 0x04 opcode advances the phase.
  *
  * LAB_xxxx labels at the bottom of ir_comm_loop are the ROM's exit fan-out:
  *
  *   LAB_182e            tx-done epilogue (random LCD reframe + reset cmd pos)
  *   LAB_14bc            drv_ir_finish_and_execute then -> LAB_182e
- *   LAB_1252            REQUESTED_POKEMON_ACTION_TYPE = cmdByte then LAB_14bc
- *   LAB_15e4            REQUESTED_POKEMON_ACTION_TYPE = cmdByte then LAB_182e
+ *   LAB_1252            ir_requestedPokemonAction = cmdByte then LAB_14bc
+ *   LAB_15e4            ir_requestedPokemonAction = cmdByte then LAB_182e
  *   LAB_17ee            send 0x04 ack then -> LAB_182e
  *   LAB_17ea            write trainer profile, then -> LAB_17ee
  *   start_eeprom_tx*    queue the next chunk of an EEPROM transfer
@@ -94,7 +94,7 @@ void sys_begin_ir_session(event_loop_func_t current_loop,
 
 // ROM: 0x009a  91.2%
 void ir_handle_remote_cmd(void) {
-  switch (REQUESTED_POKEMON_ACTION_TYPE) {
+  switch (ir_requestedPokemonAction) {
   case 0xF0: goto enter_test_mode;
   case 0xFE: goto enter_debug_mode;
   case 0xE0: goto factory_reset_full;
@@ -340,33 +340,33 @@ void ir_comm_loop(void) {
   if (timerDelta <= 4)
     goto finish_no_action;
   if (timerDelta > 0x0C80) {
-    irTimeoutRetryCount++;
-    if (irHandshakeStep < 3 && irTimeoutRetryCount < 0x14) {
+    ir_timeoutRetryCount++;
+    if (ir_handshakeStep < 3 && ir_timeoutRetryCount < 0x14) {
       uint32_t r = sys_get_rng();
       r = (r >> 5) & 0x0F;
       r *= 0x60;
       tcntSnap = TCNT;
       while ((uint16_t)(TCNT - tcntSnap) < (uint16_t)r)
         ;
-      irHandshakeStep = 1;
+      ir_handshakeStep = 1;
       drv_ir_tx_u8(0xFC);
       goto LAB_182e;
     }
-    g.ir_resultCode = irPacketReceivedFlag_BIT.b0 ? 2 : 1;
+    g.ir_resultCode = ir_packetReceivedFlag_BIT.b0 ? 2 : 1;
     goto do_action;
   }
   if (cmdPos_local == 0)
     goto finish_no_action;
-  irPacketReceivedFlag_BIT.b0 = 1;
+  ir_packetReceivedFlag_BIT.b0 = 1;
   if (cmdPos_local == 1) {
     g.ir_commandPos = 0;
     cmdByte = commandType;
     if (cmdByte != 0xFC)
       goto finish_no_action;
-    phase = irHandshakeStep;
+    phase = ir_handshakeStep;
     switch (phase) {
     case 1:
-      irHandshakeStep = 2;
+      ir_handshakeStep = 2;
       drv_ir_send_packet(0x00, 0xFA, 2);
       break;
     case 2:
@@ -385,8 +385,8 @@ void ir_comm_loop(void) {
   g.ir_commandPos = 0;
   crcCalc = ir_calc_packet_checksum(cmdLen, pktBase);
   if (crcCalc != crcExpected) {
-    irCrcRetryCount++;
-    if (irCrcRetryCount < 0x14) {
+    ir_crcRetryCount++;
+    if (ir_crcRetryCount < 0x14) {
       goto finish_no_action;
     }
     g.ir_resultCode = 2;
@@ -405,15 +405,15 @@ void ir_comm_loop(void) {
     subtype = pktBase[1];
     pktLen2 = (uint8_t)(cmdLen - 8);
     payload = drv_ir_get_rx_ptr();
-    e1val = irXferRemaining;
+    e1val = ir_xferRemaining;
     e2val = pktLen2;
-    addr = irXferSrc;
+    addr = ir_xferSrc;
 
     cmdByte = pktBase[0];
     if (cmdByte < 0xF8) {
-      if (*(uint32_t *)(pktBase + 4) != sessionKey)
+      if (*(uint32_t *)(pktBase + 4) != ir_sessionKey)
         goto LAB_182e;
-      phase = irHandshakeStep;
+      phase = ir_handshakeStep;
       if (phase < 3)
         goto LAB_182e;
     }
@@ -421,13 +421,13 @@ void ir_comm_loop(void) {
     switch (cmdByte) {
     case 0xFA:
       if (subtype == 1 || subtype == 2) {
-        phase = irHandshakeStep;
+        phase = ir_handshakeStep;
         switch (phase) {
         case 1:
-          irHandshakeStep = 3;
+          ir_handshakeStep = 3;
           drv_ir_send_packet(0x00, 0xF8, 2);
-          sessionKey = *(uint32_t *)(pktBase + 4);
-          sessionKey = nextSessionKey ^ sessionKey;
+          ir_sessionKey = *(uint32_t *)(pktBase + 4);
+          ir_sessionKey = ir_sessionKeyNext ^ ir_sessionKey;
           goto LAB_182e;
         case 4:
         case 3:
@@ -438,7 +438,7 @@ void ir_comm_loop(void) {
           tcntSnap = TCNT;
           while ((uint16_t)(TCNT - tcntSnap) < (uint16_t)r)
             ;
-          irHandshakeStep = 1;
+          ir_handshakeStep = 1;
           drv_ir_tx_u8(0xFC);
           g.ir_lastCommandTime = TCNT;
           goto LAB_182e;
@@ -458,13 +458,13 @@ void ir_comm_loop(void) {
         g.ir_resultCode = 3;
         goto LAB_14bc;
       }
-      phase = irHandshakeStep;
+      phase = ir_handshakeStep;
       if (phase >= 3) {
         goto LAB_182e;
       }
-      sessionKey = *(uint32_t *)(pktBase + 4);
-      sessionKey = nextSessionKey ^ sessionKey;
-      irHandshakeStep = 4;
+      ir_sessionKey = *(uint32_t *)(pktBase + 4);
+      ir_sessionKey = ir_sessionKeyNext ^ ir_sessionKey;
+      ir_handshakeStep = 4;
       save_read_reliable(EEPROM_TRAINER_REC, EEPROM_TRAINER_REC_BACKUP, (void *)trainerRecBuf, 0x68);
       drv_ir_send_packet(0x68, 0x10, 2);
       ui_substateY_BIT.b0 = 0;
@@ -544,11 +544,11 @@ void ir_comm_loop(void) {
         g.ir_resultCode = 5;
         goto LAB_14bc;
       }
-      irSessionPhase = 1;
-      *(uint16_t *)&irXferSrc = 0x91BE;
-      *(uint16_t *)&irXferDst = 0xF400;
-      irXferRemaining = 0x180;
-      irXferChunkCount = 0;
+      ir_sessionPhase = 1;
+      *(uint16_t *)&ir_xferSrc = 0x91BE;
+      *(uint16_t *)&ir_xferDst = 0xF400;
+      ir_xferRemaining = 0x180;
+      ir_xferChunkCount = 0;
       goto start_eeprom_tx;
 
     case 0x14:
@@ -775,7 +775,7 @@ void ir_comm_loop(void) {
 
     case 0x04:
       if (e1val == 0) {
-        phase = irSessionPhase;
+        phase = ir_sessionPhase;
         if (phase == 1)
           goto handle_0x04_phase1;
         if (phase == 3)
@@ -784,34 +784,34 @@ void ir_comm_loop(void) {
           goto handle_0x04_phase5;
         goto LAB_182e;
       } else {
-        irXferRemaining = e1val;
+        ir_xferRemaining = e1val;
         if (e1val <= 0x80)
           goto start_eeprom_tx;
         goto LAB_1362;
       }
 
     handle_0x04_phase1:
-      irSessionPhase = 3;
-      *(uint16_t *)&irXferSrc = 0x993E;
-      *(uint16_t *)&irXferDst = (uint16_t)DAT_f580;
-      irXferRemaining = 0x140;
-      irXferChunkCount = 0;
+      ir_sessionPhase = 3;
+      *(uint16_t *)&ir_xferSrc = 0x993E;
+      *(uint16_t *)&ir_xferDst = (uint16_t)DAT_f580;
+      ir_xferRemaining = 0x140;
+      ir_xferChunkCount = 0;
       goto start_eeprom_tx;
 
     handle_0x04_phase3:
-      irSessionPhase = 5;
-      *(uint16_t *)&irXferSrc = 0xCC00;
-      *(uint16_t *)&irXferDst = 0xDC00;
-      irXferRemaining = 0x224;
-      irXferChunkCount = 0;
+      ir_sessionPhase = 5;
+      *(uint16_t *)&ir_xferSrc = 0xCC00;
+      *(uint16_t *)&ir_xferDst = 0xDC00;
+      ir_xferRemaining = 0x224;
+      ir_xferChunkCount = 0;
       goto start_eeprom_tx;
 
     handle_0x04_phase5:
-      irSessionPhase = 2;
-      *(uint16_t *)&irXferSrc = 0x91BE;
-      *(uint16_t *)&irXferDst = 0xF400;
-      irXferRemaining = 0x180;
-      irXferChunkCount = 0;
+      ir_sessionPhase = 2;
+      *(uint16_t *)&ir_xferSrc = 0x91BE;
+      *(uint16_t *)&ir_xferDst = 0xF400;
+      ir_xferRemaining = 0x180;
+      ir_xferChunkCount = 0;
       goto start_eeprom_tx_alt;
 
     case 0xA0:
@@ -867,7 +867,7 @@ void ir_comm_loop(void) {
       case 0xBC: flagByte |= 0x04; break;
       case 0xBE: flagByte |= 0x08; break;
       }
-      REQUESTED_POKEMON_ACTION_TYPE = cmdByte;
+      ir_requestedPokemonAction = cmdByte;
       drv_eeprom_write_u8(EEPROM_STEP_HIST_FLAGS, flagByte);
       drv_ir_send_packet(0x00, (uint8_t)(cmdByte + 0x10), 2);
     }
@@ -887,7 +887,7 @@ void ir_comm_loop(void) {
       save_write_reliable(EEPROM_RESV_0083, EEPROM_RESV_0083_BACKUP, payload, 0x28);
       drv_eeprom_write_block(0x0008, payload + 0x68, 0x08);
       g.viewstate.Z = 1;
-      REQUESTED_POKEMON_ACTION_TYPE = 0xF0;
+      ir_requestedPokemonAction = 0xF0;
       switch (payload[0x70]) {
       case 0:
         save_write_reliable(EEPROM_LCD_INIT_SEQ, EEPROM_LCD_INIT_SEQ_BACKUP,
@@ -911,7 +911,7 @@ void ir_comm_loop(void) {
       case 3:
         save_write_reliable(EEPROM_LCD_INIT_SEQ, EEPROM_LCD_INIT_SEQ_BACKUP,
                             payload + 0x28, 0x40);
-        REQUESTED_POKEMON_ACTION_TYPE = 0xE0;
+        ir_requestedPokemonAction = 0xE0;
         break;
       default:
         break;
@@ -956,17 +956,17 @@ void ir_comm_loop(void) {
 
     case 0x0E:
       drv_eeprom_write_block(addr, payload, 0x80);
-      irXferSrc += e2val;
-      irXferDst += e2val;
-      irXferRemaining -= e2val;
-      irXferChunkCount++;
-      if (irXferRemaining == 0) {
-        if (irSessionPhase == 2) {
-          irSessionPhase = 4;
-          *(uint16_t *)&irXferSrc = 0x993E;
-          *(uint16_t *)&irXferDst = (uint16_t)DAT_f580;
-          irXferRemaining = 0x140;
-          irXferChunkCount = 0;
+      ir_xferSrc += e2val;
+      ir_xferDst += e2val;
+      ir_xferRemaining -= e2val;
+      ir_xferChunkCount++;
+      if (ir_xferRemaining == 0) {
+        if (ir_sessionPhase == 2) {
+          ir_sessionPhase = 4;
+          *(uint16_t *)&ir_xferSrc = 0x993E;
+          *(uint16_t *)&ir_xferDst = (uint16_t)DAT_f580;
+          ir_xferRemaining = 0x140;
+          ir_xferChunkCount = 0;
           goto start_eeprom_tx;
         }
       }
@@ -979,7 +979,7 @@ void ir_comm_loop(void) {
     case 0x06: {
       uint8_t i = 0;
       uint8_t *src = payload + 1;
-      uint8_t *dst = (uint8_t *)irXferDst;
+      uint8_t *dst = (uint8_t *)ir_xferDst;
       while (i < (uint8_t)(pktLen2 - 1)) {
         *dst++ = *src++;
         i++;
@@ -997,14 +997,14 @@ LAB_1362:
 start_eeprom_tx:
 start_eeprom_tx_alt:
 LAB_17b0: {
-  uint16_t chunk = (irXferRemaining > 0x80) ? 0x80 : irXferRemaining;
+  uint16_t chunk = (ir_xferRemaining > 0x80) ? 0x80 : ir_xferRemaining;
   drv_eeprom_read_block(EEPROM_TRAINER_PROFILE, &g.save_watts, 2);
   DAT_f88e[0] = (uint8_t)((g.save_watts / 20) & 0xFF);
   drv_eeprom_write_block(EEPROM_TRAINER_PROFILE, &g.save_watts, 2);
   {
     uint8_t *p = drv_ir_get_rx_ptr();
-    p[0] = (uint8_t)(irXferSrc >> 8);
-    p[1] = (uint8_t)(irXferSrc);
+    p[0] = (uint8_t)(ir_xferSrc >> 8);
+    p[1] = (uint8_t)(ir_xferSrc);
     p[2] = (uint8_t)chunk;
   }
   drv_ir_send_packet(0x03, 0x0C, 2);
@@ -1018,11 +1018,11 @@ LAB_17ee:
   goto LAB_182e;
 
 LAB_15e4:
-  REQUESTED_POKEMON_ACTION_TYPE = cmdByte;
+  ir_requestedPokemonAction = cmdByte;
   goto LAB_182e;
 
 LAB_1252:
-  REQUESTED_POKEMON_ACTION_TYPE = cmdByte;
+  ir_requestedPokemonAction = cmdByte;
 LAB_14bc:
   drv_ir_finish_and_execute();
   goto LAB_182e;

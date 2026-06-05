@@ -125,8 +125,8 @@ enum view_id {
 /* g.viewstate.v.bytes.at_d8 -- bit 0 used as a flag in battle.c via bset/bclr in ROM. */
 #define DAT_f7d8_BIT (((volatile byte_bits_t *)&g.viewstate.v.bytes.at_d8)->BIT)
 
-/* irPacketReceivedFlag -- bit 0 used; ROM emits bset/bclr. */
-#define irPacketReceivedFlag_BIT (((volatile byte_bits_t *)&irPacketReceivedFlag)->BIT)
+/* ir_packetReceivedFlag -- bit 0 used; ROM emits bset/bclr. */
+#define ir_packetReceivedFlag_BIT (((volatile byte_bits_t *)&ir_packetReceivedFlag)->BIT)
 
 #define DAT_f7d1_BIT (((volatile byte_bits_t *)&g.viewstate.v.bytes.at_d1)->BIT)
 /* 16-bit "accel physics" view: the accel driver and game_process_accel_data
@@ -150,7 +150,7 @@ enum view_id {
  *
  *   - Accel-Y samples:   int8_t[64] from offset 0   (covers accel_samplesYArr + at_f886/88e/896/897)
  *   - Accel-Z samples:   int8_t[64] from offset 0x40 (overlaps IR session-key state)
- *   - IR session state:  nextSessionKey/sessionKey/handshake/retry counters/xfer (offsets 0x50..0x67)
+ *   - IR session state:  ir_sessionKeyNext/ir_sessionKey/handshake/retry counters/xfer (offsets 0x50..0x67)
  *   - IR packet buffer:  136 bytes from offset 0x68  (cmd/subtype/crc/session/payload)
  *   - Step detection state when IR idle: stepDetectAccum, pendingStepDetect, isNotWalking
  *     overlap with the IR packet payload tail.
@@ -175,7 +175,7 @@ union pw_scratch2 {
         volatile uint8_t  at_f8c1;              /* +0x5B */
         volatile uint8_t  ir_crc_retry_count;   /* +0x5C */
         volatile uint8_t  ir_packet_received_flag; /* +0x5D */
-        volatile uint8_t  requested_pkmn_action;/* +0x5E REQUESTED_POKEMON_ACTION_TYPE */
+        volatile uint8_t  requested_pkmn_action;/* +0x5E ir_requestedPokemonAction */
         volatile uint8_t  ir_session_phase;     /* +0x5F */
         volatile uint16_t ir_xfer_remaining;    /* +0x60 */
         volatile uint16_t ir_xfer_src;          /* +0x62 */
@@ -202,19 +202,19 @@ union pw_scratch2 {
 #define accel_samplesZArr                (g_scratch2.as_struct.accel_z)
 #define accel_samplesZ                  ((volatile int8_t *)g_scratch2.as_struct.accel_z)
 #define DAT_f8a9                       (g_scratch2.as_struct.at_f8a9)
-#define nextSessionKey                 (g_scratch2.as_struct.next_session_key)
-#define sessionKey                     (g_scratch2.as_struct.session_key)
-#define irHandshakeStep                (g_scratch2.as_struct.ir_handshake_step)
-#define irTimeoutRetryCount            (g_scratch2.as_struct.ir_timeout_retry)
+#define ir_sessionKeyNext                 (g_scratch2.as_struct.next_session_key)
+#define ir_sessionKey                     (g_scratch2.as_struct.session_key)
+#define ir_handshakeStep                (g_scratch2.as_struct.ir_handshake_step)
+#define ir_timeoutRetryCount            (g_scratch2.as_struct.ir_timeout_retry)
 #define DAT_f8c1                       (g_scratch2.as_struct.at_f8c1)
-#define irCrcRetryCount                (g_scratch2.as_struct.ir_crc_retry_count)
-#define irPacketReceivedFlag           (g_scratch2.as_struct.ir_packet_received_flag)
-#define REQUESTED_POKEMON_ACTION_TYPE  (g_scratch2.as_struct.requested_pkmn_action)
-#define irSessionPhase                 (g_scratch2.as_struct.ir_session_phase)
-#define irXferRemaining                (g_scratch2.as_struct.ir_xfer_remaining)
-#define irXferSrc                      (g_scratch2.as_struct.ir_xfer_src)
-#define irXferDst                      (g_scratch2.as_struct.ir_xfer_dst)
-#define irXferChunkCount               (g_scratch2.as_struct.ir_xfer_chunk_count)
+#define ir_crcRetryCount                (g_scratch2.as_struct.ir_crc_retry_count)
+#define ir_packetReceivedFlag           (g_scratch2.as_struct.ir_packet_received_flag)
+#define ir_requestedPokemonAction  (g_scratch2.as_struct.requested_pkmn_action)
+#define ir_sessionPhase                 (g_scratch2.as_struct.ir_session_phase)
+#define ir_xferRemaining                (g_scratch2.as_struct.ir_xfer_remaining)
+#define ir_xferSrc                      (g_scratch2.as_struct.ir_xfer_src)
+#define ir_xferDst                      (g_scratch2.as_struct.ir_xfer_dst)
+#define ir_xferChunkCount               (g_scratch2.as_struct.ir_xfer_chunk_count)
 #define rdr_data                       (g_scratch2.as_struct.rdr_data_byte)
 #define commandType                    (g_scratch2.as_struct.cmd)
 #define commandSubtype                 (g_scratch2.as_struct.cmd_subtype)
