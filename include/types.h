@@ -99,7 +99,7 @@ typedef union {
     } BIT;
 } settings_byte_t;
 
-/* pedTaskFlags: pedometer task dispatch flags (bits 0,1,2) */
+/* ped_taskFlags: pedometer task dispatch flags (bits 0,1,2) */
 typedef union {
     uint8_t BYTE;
     struct {

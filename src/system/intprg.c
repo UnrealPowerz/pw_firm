@@ -56,11 +56,11 @@ __interrupt(vect=25) void drv_rtc_handle_sec(void) {
     } else {
         g.session_idleSeconds = 0xE10;
     }
-    if (g.activityTimer != 0) {
-        g.activityTimer--;
+    if (g.ped_activityTimer != 0) {
+        g.ped_activityTimer--;
     }
-    if (g.stepTimer != 0) {
-        g.stepTimer--;
+    if (g.ped_stepTimer != 0) {
+        g.ped_stepTimer--;
     }
     RTCFLG &= ~0x04;
 }
@@ -71,7 +71,7 @@ __interrupt(vect=26) void drv_rtc_handle_min(void) {
     if (!(min & 0x80)) {
         g.rtc_minutes = min;
     }
-    g.pedTaskFlags |= 0x01;
+    g.ped_taskFlags |= 0x01;
     RTCFLG &= ~0x08;
 }
 
@@ -81,7 +81,7 @@ __interrupt(vect=27) void drv_rtc_handle_hour(void) {
     if (!(hr & 0x80)) {
         g.rtc_hours = RHRDR;
     }
-    g.pedTaskFlags |= 0x02;
+    g.ped_taskFlags |= 0x02;
     RTCFLG &= ~0x10;
 }
 

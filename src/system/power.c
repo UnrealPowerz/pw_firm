@@ -83,17 +83,17 @@ void sys_enter_low_power(void) {
   CKSTPR1 |= 0x04;
   g.walker_status_flags = (g.walker_status_flags & 0xE7) | WALKER_MODE_LOW_POWER;
   RTCCR2 |= 0x01;
-  g.stepTimer = 0x1E;
+  g.ped_stepTimer = 0x1E;
   statusFlags_BIT.sleeping = 0;
 }
 
 // ROM: 0xa29c  99.0%
 void sys_enter_deep_sleep(void) {
-  g.activityTimer = 0x3C;
-  g.stepTimer = 0x5A;
+  g.ped_activityTimer = 0x3C;
+  g.ped_stepTimer = 0x5A;
   if ((g.walker_status_flags & WALKER_MODE_MASK) != WALKER_MODE_DEEP_SLEEP) {
     if ((g.walker_status_flags & WALKER_MODE_MASK) == WALKER_MODE_ACTIVE) {
-      g.accelSampleCount = 0;
+      g.ped_sampleCount = 0;
     }
     g.walker_status_flags = (g.walker_status_flags & 0xE7) | WALKER_MODE_DEEP_SLEEP;
     RTCCR2 |= 0x01;

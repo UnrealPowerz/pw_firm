@@ -68,7 +68,7 @@ enum view_id {
  * field by its top-level name continue to compile and so &name remains a
  * valid pointer to the underlying byte. */
 
-#define pedTaskFlags_BIT (((volatile ped_task_flags_t *)&g.pedTaskFlags)->BIT)
+#define ped_taskFlags_BIT (((volatile ped_task_flags_t *)&g.ped_taskFlags)->BIT)
 
 /* --- Substate Management & Sensor Data --- */
 /* g.gCurSubstateY -- bits 0/1 used as flags via bset/bclr/bst in ROM. */

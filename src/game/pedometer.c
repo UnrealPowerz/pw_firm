@@ -7,7 +7,7 @@
  *
  *   --- Accel-sample → step-rate pipeline ---
  *     game_detect_activity            Sum of 3-axis sample deltas — has motion?
- *     game_check_pedometer_activity   Wake from low-power if g.stepTimer expired.
+ *     game_check_pedometer_activity   Wake from low-power if g.ped_stepTimer expired.
  *     game_process_accel_data         Main pipeline (FFT 3 axes + scan peaks +
  *                                     interpolate + commit step batch + accel-
  *                                     debug instrumentation).
@@ -22,16 +22,16 @@
  *     game_pedometer_increment_step   +1 step + 1/20-watt + save commit; also
  *                                     logs the step interaction when walking.
  *     game_pedometer_tick_counters    Batched +1 (called many times per tick
- *                                     based on g.stepBatchSize).
+ *                                     based on g.ped_batchSize).
  *     game_add_watts                  Clamped += into g.save_watts.
  *     game_reset_step_data            Full reset (optionally also totals).
  *     game_rotate_step_history        Daily roll-over: shift the 6-day history
  *                                     and start a fresh g.session_steps slot.
  *
- *   --- Pedometer task dispatch (g.pedTaskFlags) ---
+ *   --- Pedometer task dispatch (g.ped_taskFlags) ---
  *     game_pedometer_tick_session     Per-second g.save_sessionTicksElapsed bump
- *                                     (g.pedTaskFlags bit 0 dispatches to here).
- *     game_dispatch_pedometer_task    Pop bits off g.pedTaskFlags and run the
+ *                                     (g.ped_taskFlags bit 0 dispatches to here).
+ *     game_dispatch_pedometer_task    Pop bits off g.ped_taskFlags and run the
  *                                     corresponding task.
  *     game_reset_pedometer_flags      Clear the step-detection accumulators.
  *
@@ -124,37 +124,37 @@ uint8_t game_detect_activity(void) {
   uint16_t prev;
   volatile uint16_t p_copy;
 
-  prev = g.accelSampleCount;
+  prev = g.ped_sampleCount;
   prev += 0x3F;
   prev &= 0x3F;
   p_copy = prev;
 
-  if (((int16_t)accelXSamples[g.accelSampleCount] -
+  if (((int16_t)accelXSamples[g.ped_sampleCount] -
        (int16_t)accelXSamples[prev]) >= 0) {
-    total = (uint16_t)((int16_t)accelXSamples[g.accelSampleCount] -
+    total = (uint16_t)((int16_t)accelXSamples[g.ped_sampleCount] -
                        (int16_t)accelXSamples[p_copy]);
   } else {
-    total = (uint16_t)((uint16_t)(-((int16_t)accelXSamples[g.accelSampleCount])) +
+    total = (uint16_t)((uint16_t)(-((int16_t)accelXSamples[g.ped_sampleCount])) +
                        (uint16_t)accelXSamples[p_copy]);
   }
 
-  if (((int16_t)accelYSamples[g.accelSampleCount] -
+  if (((int16_t)accelYSamples[g.ped_sampleCount] -
        (int16_t)accelYSamples[prev]) >= 0) {
-    total += (uint16_t)((int16_t)accelYSamples[g.accelSampleCount] -
+    total += (uint16_t)((int16_t)accelYSamples[g.ped_sampleCount] -
                         (int16_t)accelYSamples[p_copy]);
   } else {
     total +=
-        (uint16_t)((uint16_t)(-((int16_t)accelYSamples[g.accelSampleCount])) +
+        (uint16_t)((uint16_t)(-((int16_t)accelYSamples[g.ped_sampleCount])) +
                    (uint16_t)accelYSamples[p_copy]);
   }
 
-  if (((int16_t)accelZSamples[g.accelSampleCount] -
+  if (((int16_t)accelZSamples[g.ped_sampleCount] -
        (int16_t)accelZSamples[prev]) >= 0) {
-    total += (uint16_t)((int16_t)accelZSamples[g.accelSampleCount] -
+    total += (uint16_t)((int16_t)accelZSamples[g.ped_sampleCount] -
                         (int16_t)accelZSamples[p_copy]);
   } else {
     total +=
-        (uint16_t)((uint16_t)(-((int16_t)accelZSamples[g.accelSampleCount])) +
+        (uint16_t)((uint16_t)(-((int16_t)accelZSamples[g.ped_sampleCount])) +
                    (uint16_t)accelZSamples[p_copy]);
   }
 
@@ -166,10 +166,10 @@ uint8_t game_detect_activity(void) {
 
 // ROM: 0xa2f6  83.8%
 void game_check_pedometer_activity(void) {
-  /* When g.stepTimer hits 0 (no steps for a while), exit low-power sleep to
-     resume scanning. g.stepTimer is reset to 30 in game_process_accel_data
+  /* When g.ped_stepTimer hits 0 (no steps for a while), exit low-power sleep to
+     resume scanning. g.ped_stepTimer is reset to 30 in game_process_accel_data
      whenever a non-zero step batch is committed. */
-  if (g.stepTimer == 0) {
+  if (g.ped_stepTimer == 0) {
     sys_wake_from_low_power();
   }
 }
@@ -183,8 +183,8 @@ void game_pedometer_set_total(uint32_t val) {
   g.save_totalSteps = val;
 }
 
-/* Reason: do NOT bit-field-ize g.pedTaskFlags.
- * Tested converting `(g.pedTaskFlags & 0x0N)` to `pedTaskFlags_BIT.<name>` and the
+/* Reason: do NOT bit-field-ize g.ped_taskFlags.
+ * Tested converting `(g.ped_taskFlags & 0x0N)` to `ped_taskFlags_BIT.<name>` and the
  * function regressed by -12.8% (67.9% -> 55.1%).  The ROM tests these
  * three bits with `btst #N, r0l; beq` (the original C used `& mask` in
  * if-conditions), not with `bld; bcc`.  Flat-mask form is what matches
@@ -195,23 +195,23 @@ void game_pedometer_set_total(uint32_t val) {
 // ROM: 0xa34a  69.0%  saves: er2,r3,r5,er6
 void game_dispatch_pedometer_task(void) {
   if (!statusFlags_BIT.pedometer_paused) {
-    if ((g.pedTaskFlags & 0x01)) {
+    if ((g.ped_taskFlags & 0x01)) {
       game_pedometer_tick_session();
     }
-    if ((g.pedTaskFlags & 0x02)) {
+    if ((g.ped_taskFlags & 0x02)) {
       game_pedometer_increment_step();
     }
-    if ((g.pedTaskFlags & 0x04)) {
+    if ((g.ped_taskFlags & 0x04)) {
       game_rotate_step_history();
     }
-    g.pedTaskFlags &= 0xF8;
+    g.ped_taskFlags &= 0xF8;
   }
 }
 
 // ROM: 0xa396  99.3%
 void game_pedometer_tick_session(void) {
   /* Increment with overflow guard — g.save_sessionTicksElapsed saturates at 0xFFFF
-     rather than wrapping to 0. Driven by g.pedTaskFlags bit 0 (per-second). */
+     rather than wrapping to 0. Driven by g.ped_taskFlags bit 0 (per-second). */
   if (g.save_sessionTicksElapsed + 1 != 0) {
     g.save_sessionTicksElapsed++;
   }
@@ -247,7 +247,7 @@ void game_pedometer_increment_step(void) {
 
   g.session_recentSteps = 0;
   if (g.rtc_hours == g.notif_scheduledHour) {
-    g.pedTaskFlags |= 0x04;
+    g.ped_taskFlags |= 0x04;
   }
 }
 
@@ -379,7 +379,7 @@ void game_process_accel_data(void) {
     if (sub < limit) {
       if (steps != 0) {
         g.gCurSubstateA = sub + 1;
-        threshold = g.axisStepThresholdLo;
+        threshold = g.ped_axisStepThresholdLo;
         tx = accelPos_X;
         if (tx < threshold)
           g.currentlyActiveView = VIEW_TEXT;
@@ -389,7 +389,7 @@ void game_process_accel_data(void) {
         tz = g.accelZPos;
         if (tz < threshold)
           g.currentlyActiveView = VIEW_TEXT;
-        threshold = g.axisStepThresholdHi;
+        threshold = g.ped_axisStepThresholdHi;
         tx = accelPos_X;
         if (tx > threshold)
           g.currentlyActiveView = VIEW_TEXT;
@@ -401,7 +401,7 @@ void game_process_accel_data(void) {
           g.currentlyActiveView = VIEW_TEXT;
       }
     } else if (g.DAT_f7d1 < g.DAT_f7d8_1) {
-      threshold = g.axisIdleThreshold;
+      threshold = g.ped_axisIdleThreshold;
       if (accelPos_X < threshold && accelPos_Y < threshold &&
           g.accelZPos < threshold) {
         g.DAT_f7d1++;
@@ -419,22 +419,22 @@ void game_process_accel_data(void) {
       stepDetectAccum = accumulation;
       pendingStepDetect = 0;
 
-      g.stepBatchSize = (uint8_t)(accumulation >> 9);
+      g.ped_batchSize = (uint8_t)(accumulation >> 9);
       stepDetectAccum = accumulation & 0x1FF;
 
-      g.session_recentSteps += (uint16_t)g.stepBatchSize;
+      g.session_recentSteps += (uint16_t)g.ped_batchSize;
       if (g.session_recentSteps > 9999) {
         g.session_recentSteps = 9999;
       }
 
-      g.session_steps += (uint32_t)g.stepBatchSize;
+      g.session_steps += (uint32_t)g.ped_batchSize;
       if (g.session_steps > 99999) {
         g.session_steps = 99999;
       }
 
-      game_pedometer_set_total(g.save_totalSteps + (uint32_t)g.stepBatchSize);
+      game_pedometer_set_total(g.save_totalSteps + (uint32_t)g.ped_batchSize);
 
-      g.save_stepWattCounter += g.stepBatchSize;
+      g.save_stepWattCounter += g.ped_batchSize;
       if (g.save_stepWattCounter >= 20) {
         g.save_stepWattCounter -= 20;
         i = g.save_watts + 1;
@@ -448,15 +448,15 @@ void game_process_accel_data(void) {
     {
       uint32_t accumulation = stepDetectAccum + steps;
       stepDetectAccum = accumulation;
-      g.stepBatchSize = (uint8_t)(accumulation >> 9);
+      g.ped_batchSize = (uint8_t)(accumulation >> 9);
       stepDetectAccum = accumulation & 0x1FF;
     }
 
-    if (g.stepBatchSize != 0) {
-      g.stepTimer = 30;
+    if (g.ped_batchSize != 0) {
+      g.ped_stepTimer = 30;
     }
-    g.subStepCount = 0;
-    g.batchAccumulator = 32;
+    g.ped_subStepCount = 0;
+    g.ped_batchAccumulator = 32;
   }
 }
 
@@ -476,12 +476,12 @@ uint8_t game_check_step_unlock(uint16_t a, uint16_t b, const uint8_t *buf) {
 
 // ROM: 0x24ac  91.6%
 void game_pedometer_tick_counters(void) {
-  if (g.subStepCount == g.stepBatchSize) {
+  if (g.ped_subStepCount == g.ped_batchSize) {
     return;
   }
 
-  g.batchAccumulator += g.stepBatchSize;
-  if (g.batchAccumulator <= 0x40) {
+  g.ped_batchAccumulator += g.ped_batchSize;
+  if (g.ped_batchAccumulator <= 0x40) {
     return;
   }
 
@@ -508,12 +508,12 @@ void game_pedometer_tick_counters(void) {
     g.save_watts = w;
   }
 
-  g.subStepCount++;
-  if (g.subStepCount > g.stepBatchSize) {
-    g.subStepCount = g.stepBatchSize;
+  g.ped_subStepCount++;
+  if (g.ped_subStepCount > g.ped_batchSize) {
+    g.ped_subStepCount = g.ped_batchSize;
   }
 
-  g.batchAccumulator -= 0x40;
+  g.ped_batchAccumulator -= 0x40;
 }
 
 // ROM: 0x1f3e  91.1%

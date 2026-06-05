@@ -35,20 +35,20 @@
 /* 0xF7A4 */ volatile uint8_t  rtc_seconds;
 /* 0xF7A5 */ volatile uint8_t  rtc_minutes;
 /* 0xF7A6 */ volatile uint8_t  rtc_hours;
-/* 0xF7A7 */ volatile uint8_t  pedTaskFlags;           /* bit-field via _BIT */
+/* 0xF7A7 */ volatile uint8_t  ped_taskFlags;           /* bit-field via _BIT */
 /* 0xF7A8 */ volatile uint8_t  notif_scheduledHour;
 /* 0xF7A9 */ volatile uint8_t  lcdShadeBase;
 /* 0xF7AA */ volatile uint8_t  menu_cursor;
 /* 0xF7AB */ volatile uint8_t  DAT_f7ab;               /* write-only dispatch tick */
 /* 0xF7AC */ volatile uint8_t  animTick;
 /* 0xF7AD */ volatile uint8_t  irResultCode;
-/* 0xF7AE */ volatile uint8_t  accelSampleCount;
-/* 0xF7AF */ volatile uint8_t  activityTimer;
-/* 0xF7B0 */ volatile uint8_t  stepTimer;
+/* 0xF7AE */ volatile uint8_t  ped_sampleCount;
+/* 0xF7AF */ volatile uint8_t  ped_activityTimer;
+/* 0xF7B0 */ volatile uint8_t  ped_stepTimer;
 /* 0xF7B1 */ volatile uint8_t  currentlyActiveView;
-/* 0xF7B2 */ volatile uint8_t  stepBatchSize;
-/* 0xF7B3 */ volatile uint8_t  subStepCount;
-/* 0xF7B4 */ volatile uint8_t  batchAccumulator;
+/* 0xF7B2 */ volatile uint8_t  ped_batchSize;
+/* 0xF7B3 */ volatile uint8_t  ped_subStepCount;
+/* 0xF7B4 */ volatile uint8_t  ped_batchAccumulator;
 
 /* --- System status flags --- */
 /* 0xF7B5 */ volatile uint8_t  statusFlags;            /* bit-field via _BIT */
@@ -83,9 +83,9 @@
 /* 0xF7D6 */ volatile uint16_t accelZPos;              /* accelZPos_b = uint8 view */
 /* 0xF7D8 */ volatile uint8_t  DAT_f7d8;               /* MULTI-PURPOSE */
 /* 0xF7D9 */ volatile uint8_t  DAT_f7d8_1;
-/* 0xF7DA */ volatile uint16_t axisStepThresholdLo;
-/* 0xF7DC */ volatile uint16_t axisStepThresholdHi;
-/* 0xF7DE */ volatile uint16_t axisIdleThreshold;
+/* 0xF7DA */ volatile uint16_t ped_axisStepThresholdLo;
+/* 0xF7DC */ volatile uint16_t ped_axisStepThresholdHi;
+/* 0xF7DE */ volatile uint16_t ped_axisIdleThreshold;
 
 /* --- Event loop / LCD state --- */
 /* 0xF7E0 */ volatile event_loop_func_t currentEventLoopFunc;

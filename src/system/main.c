@@ -43,7 +43,7 @@ void sys_main_loop_low_power(void) {
   }
 
   if (walker_status_flags_BIT.session_active) {
-    if (g.accelSampleCount == 0x3F) {
+    if (g.ped_sampleCount == 0x3F) {
       game_process_accel_data();
     }
   }
@@ -59,7 +59,7 @@ void sys_main_loop_low_power(void) {
   } else {
     game_dispatch_pedometer_task();
     if ((g.walker_status_flags & WALKER_MODE_MASK) == WALKER_MODE_DEEP_SLEEP) {
-      if (g.activityTimer == 0) {
+      if (g.ped_activityTimer == 0) {
         drv_lcd_power_save();
         g.walker_status_flags = (g.walker_status_flags & 0xE7) | WALKER_MODE_LOW_POWER;
         g.wakeupFlagMaybe[0] = 0;
@@ -81,7 +81,7 @@ void sys_main_loop_low_power(void) {
   }
 
 end:
-  g.accelSampleCount = (g.accelSampleCount + 1) & 0x3F;
+  g.ped_sampleCount = (g.ped_sampleCount + 1) & 0x3F;
 }
 
 // ROM: 0x7998  97.5%
@@ -109,6 +109,6 @@ void sys_main_loop_active(void) {
   if (!drv_sound_is_playing()) {
     drv_timerw_disable();
     sys_set_handler(sys_main_loop_low_power);
-    g.accelSampleCount = 0;
+    g.ped_sampleCount = 0;
   }
 }

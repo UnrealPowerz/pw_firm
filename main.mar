@@ -441,7 +441,7 @@ LAB_0296:
           jsr         @ui_set_view:16
 LAB_02a0:
           sub.b       r0l, r0l
-          mov.b       r0l, @accelSampleCount
+          mov.b       r0l, @ped_sampleCount
           jsr         @game_reset_pedometer_flags:16
           mov.w       #sys_main_loop_low_power, r0
           jsr         @sys_set_handler:16
@@ -489,9 +489,9 @@ LAB_02fa:
           or.b        #H'10, r0l
           mov.b       r0l, @walker_status_flags
           mov.b       #H'3C, r0l
-          mov.b       r0l, @activityTimer
+          mov.b       r0l, @ped_activityTimer
           mov.b       #H'5A, r0l
-          mov.b       r0l, @stepTimer
+          mov.b       r0l, @ped_stepTimer
           mov.w       #H'E10, r0
           mov.w       r0, @session_idleSeconds
           jsr         @game_reset_pedometer_flags:16
@@ -4152,13 +4152,13 @@ LAB_24a6:
 ; Called by: sys_main_loop_low_power
 ; =============================================================================
 game_pedometer_tick_counters:
-          mov.b       @stepBatchSize, r1l
-          mov.b       @subStepCount, r0l
+          mov.b       @ped_batchSize, r1l
+          mov.b       @ped_subStepCount, r0l
           cmp.b       r1l, r0l
           beq         LAB_256c:16
-          mov.b       @batchAccumulator, r0l
+          mov.b       @ped_batchAccumulator, r0l
           add.b       r1l, r0l
-          mov.b       r0l, @batchAccumulator
+          mov.b       r0l, @ped_batchAccumulator
           cmp.b       #H'40, r0l
           bls         LAB_256c:16
           mov.w       @session_recentSteps, r0
@@ -4199,18 +4199,18 @@ LAB_250e:
 LAB_2546:
           mov.w       r0, @save_watts
 LAB_254a:
-          mov.b       @subStepCount, r0l
+          mov.b       @ped_subStepCount, r0l
           inc.b       r0l
-          mov.b       r0l, @subStepCount
-          mov.b       @stepBatchSize, r0h
+          mov.b       r0l, @ped_subStepCount
+          mov.b       @ped_batchSize, r0h
           cmp.b       r0h, r0l
           bls         LAB_2562:8
           mov.b       r0h, r0l
-          mov.b       r0l, @subStepCount
+          mov.b       r0l, @ped_subStepCount
 LAB_2562:
-          mov.b       @batchAccumulator, r0l
+          mov.b       @ped_batchAccumulator, r0l
           add.b       #H'C0, r0l
-          mov.b       r0l, @batchAccumulator
+          mov.b       r0l, @ped_batchAccumulator
 LAB_256c:
           rts
 ; =============================================================================
@@ -13314,32 +13314,32 @@ LAB_772c:
           bld         #H'3, r0l
           bcc         LAB_772c:8
           bset        #H'0, @PDR9
-          mov.b       @accelSampleCount, r0l
+          mov.b       @ped_sampleCount, r0l
           extu.w      r0
           mov.b       @(H'1,er5), r1l
           mov.b       r1l, @(ACCEL_SAMPLES_X,er0)
-          mov.b       @accelSampleCount, r0l
+          mov.b       @ped_sampleCount, r0l
           extu.w      r0
           mov.b       @(H'3,er5), r1l
           mov.b       r1l, @(ACCEL_SAMPLES_Y,er0)
-          mov.b       @accelSampleCount, r0l
+          mov.b       @ped_sampleCount, r0l
           extu.w      r0
           mov.b       @(H'5,er5), r1l
           mov.b       r1l, @(ACCEL_SAMPLES_Z,er0)
           mov.b       @currentlyActiveView, r0l
           cmp.b       #H'17, r0l
           bne         LAB_7876:16
-          mov.b       @accelSampleCount, r4l
+          mov.b       @ped_sampleCount, r4l
           add.b       #H'3F, r4l
           and.b       #H'3F, r4l
-          mov.b       @accelSampleCount, r0l
+          mov.b       @ped_sampleCount, r0l
           bne         LAB_7788:8
           sub.w       r0, r0
           mov.w       r0, @accelXPos
           mov.w       r0, @accelYPos
           mov.w       r0, @accelZPos
 LAB_7788:
-          mov.b       @accelSampleCount, r0l
+          mov.b       @ped_sampleCount, r0l
           extu.w      r0
           mov.b       @(ACCEL_SAMPLES_X,er0), r0l
           exts.w      r0
@@ -13350,7 +13350,7 @@ LAB_7788:
           sub.w       r4, r0
           mov.w       r0, r0
           blt         LAB_77ba:8
-          mov.b       @accelSampleCount, r0l
+          mov.b       @ped_sampleCount, r0l
           extu.w      r0
           mov.b       @(ACCEL_SAMPLES_X,er0), r0l
           exts.w      r0
@@ -13359,7 +13359,7 @@ LAB_7788:
           sub.w       r1, r0
           bra         LAB_77d0:8
 LAB_77ba:
-          mov.b       @accelSampleCount, r0l
+          mov.b       @ped_sampleCount, r0l
           extu.w      r0
           mov.b       @(ACCEL_SAMPLES_X,er0), r0l
           exts.w      r0
@@ -13371,7 +13371,7 @@ LAB_77d0:
           mov.w       @accelXPos, e0
           add.w       r0, e0
           mov.w       e0, @accelXPos
-          mov.b       @accelSampleCount, r0l
+          mov.b       @ped_sampleCount, r0l
           extu.w      r0
           mov.b       @(ACCEL_SAMPLES_Y,er0), r0l
           exts.w      r0
@@ -13380,7 +13380,7 @@ LAB_77d0:
           sub.w       r1, r0
           mov.w       r0, r0
           blt         LAB_7808:8
-          mov.b       @accelSampleCount, r0l
+          mov.b       @ped_sampleCount, r0l
           extu.w      r0
           mov.b       @(ACCEL_SAMPLES_Y,er0), r0l
           exts.w      r0
@@ -13389,7 +13389,7 @@ LAB_77d0:
           sub.w       r1, r0
           bra         LAB_781e:8
 LAB_7808:
-          mov.b       @accelSampleCount, r0l
+          mov.b       @ped_sampleCount, r0l
           extu.w      r0
           mov.b       @(ACCEL_SAMPLES_Y,er0), r0l
           exts.w      r0
@@ -13401,7 +13401,7 @@ LAB_781e:
           mov.w       @accelYPos, e0
           add.w       r0, e0
           mov.w       e0, @accelYPos
-          mov.b       @accelSampleCount, r0l
+          mov.b       @ped_sampleCount, r0l
           extu.w      r0
           mov.b       @(ACCEL_SAMPLES_Z,er0), r0l
           exts.w      r0
@@ -13410,7 +13410,7 @@ LAB_781e:
           sub.w       r1, r0
           mov.w       r0, r0
           blt         LAB_7856:8
-          mov.b       @accelSampleCount, r0l
+          mov.b       @ped_sampleCount, r0l
           extu.w      r0
           mov.b       @(ACCEL_SAMPLES_Z,er0), r0l
           exts.w      r0
@@ -13419,7 +13419,7 @@ LAB_781e:
           sub.w       r1, r0
           bra         LAB_786c:8
 LAB_7856:
-          mov.b       @accelSampleCount, r0l
+          mov.b       @ped_sampleCount, r0l
           extu.w      r0
           mov.b       @(ACCEL_SAMPLES_Z,er0), r0l
           exts.w      r0
@@ -13480,7 +13480,7 @@ LAB_78e8:
           mov.b       @walker_status_flags, r0l
           bld         #H'1, r0l
           bcc         LAB_78fe:8
-          mov.b       @accelSampleCount, r0l
+          mov.b       @ped_sampleCount, r0l
           cmp.b       #H'3F, r0l
           bne         LAB_78fe:8
           jsr         @game_process_accel_data:16
@@ -13510,7 +13510,7 @@ LAB_7932:
           and.b       #H'18, r0l
           cmp.b       #H'10, r0l
           bne         LAB_7962:8
-          mov.b       @activityTimer, r0l
+          mov.b       @ped_activityTimer, r0l
           bne         LAB_796e:8
           jsr         @drv_lcd_power_save:16
           mov.b       @walker_status_flags, r0l
@@ -13536,10 +13536,10 @@ LAB_796e:
           bclr        #H'2, @IENR2
           jsr         @drv_timerw_enable:16
 LAB_798a:
-          mov.b       @accelSampleCount, r0l
+          mov.b       @ped_sampleCount, r0l
           add.b       #H'1, r0l
           and.b       #H'3F, r0l
-          mov.b       r0l, @accelSampleCount
+          mov.b       r0l, @ped_sampleCount
           rts
 ; =============================================================================
 ; Function: sys_main_loop_active
@@ -13586,7 +13586,7 @@ LAB_79ee:
           mov.w       #sys_main_loop_low_power, r0
           jsr         @sys_set_handler:16
           sub.b       r0l, r0l
-          mov.b       r0l, @accelSampleCount
+          mov.b       r0l, @ped_sampleCount
 LAB_7a08:
           rts
 ; =============================================================================
@@ -16815,7 +16815,7 @@ LAB_947a:
           inc.b       r0l
           mov.b       r0l, @gCurSubstateA
           mov.w       @accelXPos, r0
-          mov.w       @axisStepThresholdLo, e0
+          mov.w       @ped_axisStepThresholdLo, e0
           cmp.w       e0, r0
           bcc         LAB_94e2:8
           mov.b       #H'18, r0l
@@ -16834,7 +16834,7 @@ LAB_94f0:
           mov.b       r0l, @currentlyActiveView
 LAB_94fe:
           mov.w       @accelXPos, r0
-          mov.w       @axisStepThresholdHi, e0
+          mov.w       @ped_axisStepThresholdHi, e0
           cmp.w       e0, r0
           bls         LAB_9510:8
           mov.b       #H'18, r0l
@@ -16857,7 +16857,7 @@ LAB_952e:
           mov.b       @DAT_f7d8_1, r0h
           cmp.b       r0h, r0l
           bcc         LAB_9560:8
-          mov.w       @axisIdleThreshold, r1
+          mov.w       @ped_axisIdleThreshold, r1
           mov.w       @accelXPos, r0
           cmp.w       r1, r0
           bcc         LAB_9560:8
@@ -16888,11 +16888,11 @@ LAB_9570:
           mov.l       er0, @pendingStepDetect
           mov.l       er1, er0
           shar.l      er0
-          mov.b       r0h, @stepBatchSize
+          mov.b       r0h, @ped_batchSize
           mov.l       er1, er0
           and.l       #H'1FF, er0
           mov.l       er0, @stepDetectAccum
-          mov.b       @stepBatchSize, r0l
+          mov.b       @ped_batchSize, r0l
           extu.w      r0
           mov.w       @session_recentSteps, e0
           add.w       r0, e0
@@ -16904,7 +16904,7 @@ LAB_9570:
           mov.w       r0, @session_recentSteps
 LAB_95d0:
           sub.l       er0, er0
-          mov.b       @stepBatchSize, r0l
+          mov.b       @ped_batchSize, r0l
           mov.l       @session_steps, er1
           add.l       er0, er1
           mov.l       er1, @session_steps
@@ -16915,11 +16915,11 @@ LAB_95d0:
           mov.l       er0, @session_steps
 LAB_95fe:
           sub.l       er0, er0
-          mov.b       @stepBatchSize, r0l
+          mov.b       @ped_batchSize, r0l
           mov.l       @save_totalSteps, er1
           add.l       er1, er0
           jsr         @game_pedometer_set_total:16
-          mov.b       @stepBatchSize, r0l
+          mov.b       @ped_batchSize, r0l
           mov.b       @save_stepWattCounter, r0h
           add.b       r0l, r0h
           mov.b       r0h, @save_stepWattCounter
@@ -16941,19 +16941,19 @@ LAB_9644:
           add.l       er6, er0
           mov.l       er0, @stepDetectAccum
           shar.l      er0
-          mov.b       r0h, @stepBatchSize
+          mov.b       r0h, @ped_batchSize
           mov.l       @stepDetectAccum, er0
           and.l       #H'1FF, er0
           mov.l       er0, @stepDetectAccum
-          mov.b       @stepBatchSize, r0l
+          mov.b       @ped_batchSize, r0l
           beq         LAB_9676:8
           mov.b       #H'1E, r0l
-          mov.b       r0l, @stepTimer
+          mov.b       r0l, @ped_stepTimer
 LAB_9676:
           sub.b       r0l, r0l
-          mov.b       r0l, @subStepCount
+          mov.b       r0l, @ped_subStepCount
           mov.b       #H'20, r0l
-          mov.b       r0l, @batchAccumulator
+          mov.b       r0l, @ped_batchAccumulator
 LAB_9682:
           pop.l       er6
           pop.l       er5
@@ -17545,9 +17545,9 @@ LAB_9be2:
           mov.b       @btn_trigger, r0l
           beq         LAB_9c20:8
           mov.b       #H'5A, r0l
-          mov.b       r0l, @activityTimer
+          mov.b       r0l, @ped_activityTimer
           sub.b       r0l, r0l
-          mov.b       r0l, @accelSampleCount
+          mov.b       r0l, @ped_sampleCount
           mov.b       @walker_status_flags, r0l
           and.b       #H'18, r0l
           cmp.b       #H'10, r0l
@@ -18148,7 +18148,7 @@ sys_enter_low_power:
           mov.w       #RTCCR2, r0
           bset        #H'0, @r0
           mov.b       #H'1E, r0l
-          mov.b       r0l, @stepTimer
+          mov.b       r0l, @ped_stepTimer
           mov.w       #statusFlags, r0
           bclr        #H'7, @r0
           rts
@@ -18161,10 +18161,10 @@ sys_enter_low_power:
 game_detect_activity:
           push.w      r6
           push.w      r5
-          mov.b       @accelSampleCount, r5l
+          mov.b       @ped_sampleCount, r5l
           add.b       #H'3F, r5l
           and.b       #H'3F, r5l
-          mov.b       @accelSampleCount, r0l
+          mov.b       @ped_sampleCount, r0l
           extu.w      r0
           mov.b       @(ACCEL_SAMPLES_X,er0), r0l
           exts.w      r0
@@ -18175,7 +18175,7 @@ game_detect_activity:
           sub.w       r5, r0
           mov.w       r0, r0
           blt         LAB_a1e6:8
-          mov.b       @accelSampleCount, r0l
+          mov.b       @ped_sampleCount, r0l
           extu.w      r0
           mov.b       @(ACCEL_SAMPLES_X,er0), r0l
           exts.w      r0
@@ -18184,7 +18184,7 @@ game_detect_activity:
           sub.w       r1, r0
           bra         LAB_a1fc:8
 LAB_a1e6:
-          mov.b       @accelSampleCount, r0l
+          mov.b       @ped_sampleCount, r0l
           extu.w      r0
           mov.b       @(ACCEL_SAMPLES_X,er0), r0l
           exts.w      r0
@@ -18194,7 +18194,7 @@ LAB_a1e6:
           add.w       r1, r0
 LAB_a1fc:
           mov.w       r0, e0
-          mov.b       @accelSampleCount, r0l
+          mov.b       @ped_sampleCount, r0l
           extu.w      r0
           mov.b       @(ACCEL_SAMPLES_Y,er0), r0l
           exts.w      r0
@@ -18203,7 +18203,7 @@ LAB_a1fc:
           sub.w       r1, r0
           mov.w       r0, r0
           blt         LAB_a22c:8
-          mov.b       @accelSampleCount, r0l
+          mov.b       @ped_sampleCount, r0l
           extu.w      r0
           mov.b       @(ACCEL_SAMPLES_Y,er0), r0l
           exts.w      r0
@@ -18212,7 +18212,7 @@ LAB_a1fc:
           sub.w       r1, r0
           bra         LAB_a242:8
 LAB_a22c:
-          mov.b       @accelSampleCount, r0l
+          mov.b       @ped_sampleCount, r0l
           extu.w      r0
           mov.b       @(ACCEL_SAMPLES_Y,er0), r0l
           exts.w      r0
@@ -18222,7 +18222,7 @@ LAB_a22c:
           add.w       r1, r0
 LAB_a242:
           add.w       r0, e0
-          mov.b       @accelSampleCount, r0l
+          mov.b       @ped_sampleCount, r0l
           extu.w      r0
           mov.b       @(ACCEL_SAMPLES_Z,er0), r0l
           exts.w      r0
@@ -18231,7 +18231,7 @@ LAB_a242:
           sub.w       r1, r0
           mov.w       r0, r0
           blt         LAB_a272:8
-          mov.b       @accelSampleCount, r0l
+          mov.b       @ped_sampleCount, r0l
           extu.w      r0
           mov.b       @(ACCEL_SAMPLES_Z,er0), r0l
           exts.w      r0
@@ -18240,7 +18240,7 @@ LAB_a242:
           sub.w       r1, r0
           bra         LAB_a288:8
 LAB_a272:
-          mov.b       @accelSampleCount, r0l
+          mov.b       @ped_sampleCount, r0l
           extu.w      r0
           mov.b       @(ACCEL_SAMPLES_Z,er0), r0l
           exts.w      r0
@@ -18268,9 +18268,9 @@ LAB_a296:
 ; =============================================================================
 sys_enter_deep_sleep:
           mov.b       #H'3C, r0l
-          mov.b       r0l, @activityTimer
+          mov.b       r0l, @ped_activityTimer
           mov.b       #H'5A, r0l
-          mov.b       r0l, @stepTimer
+          mov.b       r0l, @ped_stepTimer
           mov.b       @walker_status_flags, r0l
           and.b       #H'18, r0l
           cmp.b       #H'10, r0l
@@ -18279,7 +18279,7 @@ sys_enter_deep_sleep:
           and.b       #H'18, r0l
           bne         LAB_a2c0:8
           sub.b       r0l, r0l
-          mov.b       r0l, @accelSampleCount
+          mov.b       r0l, @ped_sampleCount
 LAB_a2c0:
           mov.b       @walker_status_flags, r0l
           and.b       #H'E7, r0l
@@ -18312,7 +18312,7 @@ sys_wake_from_low_power:
 ; Called by: sys_main_loop_low_power
 ; =============================================================================
 game_check_pedometer_activity:
-          mov.b       @stepTimer, r0l
+          mov.b       @ped_stepTimer, r0l
           bne         LAB_a2fe:8
           bsr         sys_wake_from_low_power:8
 LAB_a2fe:
@@ -18389,24 +18389,24 @@ game_dispatch_pedometer_task:
           mov.b       @statusFlags, r0l
           bld         #H'5, r0l
           bcs         LAB_a388:8
-          mov.b       @pedTaskFlags, r0l
+          mov.b       @ped_taskFlags, r0l
           btst        #H'0, r0l
           beq         LAB_a368:8
           bsr         game_pedometer_tick_session:8
 LAB_a368:
-          mov.b       @pedTaskFlags, r0l
+          mov.b       @ped_taskFlags, r0l
           btst        #H'1, r0l
           beq         LAB_a372:8
           bsr         game_pedometer_increment_step:8
 LAB_a372:
-          mov.b       @pedTaskFlags, r0l
+          mov.b       @ped_taskFlags, r0l
           btst        #H'2, r0l
           beq         LAB_a37e:8
           jsr         @game_rotate_step_history:16
 LAB_a37e:
-          mov.b       @pedTaskFlags, r0l
+          mov.b       @ped_taskFlags, r0l
           and.b       #H'F8, r0l
-          mov.b       r0l, @pedTaskFlags
+          mov.b       r0l, @ped_taskFlags
 LAB_a388:
           pop.l       er6
           pop.w       r5
@@ -18486,7 +18486,7 @@ LAB_a440:
           mov.b       @rtc_hours, r0h
           cmp.b       r0h, r0l
           bne         LAB_a45a:8
-          mov.w       #pedTaskFlags, r0
+          mov.w       #ped_taskFlags, r0
           bset        #H'2, @r0
 LAB_a45a:
           adds        #2, er7
@@ -18745,17 +18745,17 @@ LAB_a692:
           mov.w       #H'E10, r0
 LAB_a6b0:
           mov.w       r0, @session_idleSeconds
-          mov.b       @activityTimer, r0l
+          mov.b       @ped_activityTimer, r0l
           beq         LAB_a6c4:8
-          mov.b       @activityTimer, r0l
+          mov.b       @ped_activityTimer, r0l
           dec.b       r0l
-          mov.b       r0l, @activityTimer
+          mov.b       r0l, @ped_activityTimer
 LAB_a6c4:
-          mov.b       @stepTimer, r0l
+          mov.b       @ped_stepTimer, r0l
           beq         LAB_a6d4:8
-          mov.b       @stepTimer, r0l
+          mov.b       @ped_stepTimer, r0l
           dec.b       r0l
-          mov.b       r0l, @stepTimer
+          mov.b       r0l, @ped_stepTimer
 LAB_a6d4:
           mov.w       #RTCFLG, r0
           bclr        #H'2, @r0
@@ -18774,7 +18774,7 @@ drv_rtc_handle_min:
           bne         LAB_a6f0:8
           mov.b       r0l, @rtc_minutes
 LAB_a6f0:
-          mov.w       #pedTaskFlags, r0
+          mov.w       #ped_taskFlags, r0
           bset        #H'0, @r0
           mov.w       #RTCFLG, r0
           bclr        #H'3, @r0
@@ -18794,7 +18794,7 @@ drv_rtc_handle_hour:
           mov.b       @RHRDR, r0l
           mov.b       r0l, @rtc_hours
 LAB_a716:
-          mov.w       #pedTaskFlags, r0
+          mov.w       #ped_taskFlags, r0
           bset        #H'1, @r0
           mov.w       #RTCFLG, r0
           bclr        #H'4, @r0
@@ -19182,9 +19182,9 @@ diag_init_test_mode:
 ; =============================================================================
 ui_handle_factory_test:
           mov.b       #H'3C, r0l
-          mov.b       r0l, @activityTimer
+          mov.b       r0l, @ped_activityTimer
           mov.b       #H'1E, r0l
-          mov.b       r0l, @stepTimer
+          mov.b       r0l, @ped_stepTimer
           mov.b       @gCurSubstateA, r1l
           mov.b       @gCurSubstateY, r0l
           cmp.b       #H'12, r0l
@@ -19619,7 +19619,7 @@ LAB_aeb6:
 ; =============================================================================
 sys_init_accel_debug:
           sub.b       r0l, r0l
-          mov.b       r0l, @accelSampleCount
+          mov.b       r0l, @ped_sampleCount
           mov.w       #H'10, e0
           mov.w       e0, @gCurSubstateY
           mov.b       r0l, @gCurSubstateA
@@ -19653,9 +19653,9 @@ ui_render_accel_debug:
           sub.w       #H'6, r7
           mov.w       #gfx_draw_string, r4
           mov.b       #H'3C, r0l
-          mov.b       r0l, @activityTimer
+          mov.b       r0l, @ped_activityTimer
           mov.b       #H'1E, r0l
-          mov.b       r0l, @stepTimer
+          mov.b       r0l, @ped_stepTimer
           mov.w       r7, r6
           mov.b       @gCurSubstateA, r0l
           add.b       #H'30, r0l
@@ -19677,13 +19677,13 @@ ui_render_accel_debug:
           mov.w       r6, e0
           mov.b       #H'54, r0l
           jsr         @r4
-          mov.w       @axisStepThresholdLo, r0
+          mov.w       @ped_axisStepThresholdLo, r0
           mov.w       #H'1000, r1
           extu.l      er0
           divxu.w     r1, er0
           mov.b       @(HEX_DIGITS,er0), r0l
           mov.b       r0l, @er6
-          mov.b       @axisStepThresholdLo, r0l
+          mov.b       @ped_axisStepThresholdLo, r0l
           sub.b       r0h, r0h
           and.w       #H'F, r0
           mov.b       @(HEX_DIGITS,er0), r0l
@@ -19691,7 +19691,7 @@ ui_render_accel_debug:
           mov.w       r6, r0
           inc.w       #2, r0
           mov.w       r0, e6
-          mov.w       @axisStepThresholdLo, e0
+          mov.w       @ped_axisStepThresholdLo, e0
           shlr.w      e0
           shlr.w      e0
           shlr.w      e0
@@ -19702,7 +19702,7 @@ ui_render_accel_debug:
           mov.b       r1l, @er0
           mov.w       r6, r3
           add.w       #H'3, r3
-          mov.w       @axisStepThresholdLo, e0
+          mov.w       @ped_axisStepThresholdLo, e0
           and.w       #H'F, e0
           mov.w       e0, r1
           mov.b       @(HEX_DIGITS,er1), r1l
@@ -19712,18 +19712,18 @@ ui_render_accel_debug:
           mov.w       r6, e0
           mov.w       #H'820, r0
           jsr         @r4
-          mov.w       @axisStepThresholdHi, r0
+          mov.w       @ped_axisStepThresholdHi, r0
           mov.w       #H'1000, r1
           extu.l      er0
           divxu.w     r1, er0
           mov.b       @(HEX_DIGITS,er0), r0l
           mov.b       r0l, @er6
-          mov.b       @axisStepThresholdHi, r0l
+          mov.b       @ped_axisStepThresholdHi, r0l
           sub.b       r0h, r0h
           and.w       #H'F, r0
           mov.b       @(HEX_DIGITS,er0), r0l
           mov.b       r0l, @er5
-          mov.w       @axisStepThresholdHi, r0
+          mov.w       @ped_axisStepThresholdHi, r0
           shlr.w      r0
           shlr.w      r0
           shlr.w      r0
@@ -19732,25 +19732,25 @@ ui_render_accel_debug:
           mov.w       e6, r1
           mov.b       @(HEX_DIGITS,er0), r0l
           mov.b       r0l, @er1
-          mov.w       @axisStepThresholdHi, r0
+          mov.w       @ped_axisStepThresholdHi, r0
           and.w       #H'F, r0
           mov.b       @(HEX_DIGITS,er0), r0l
           mov.b       r0l, @er3
           mov.w       r6, e0
           mov.w       #H'840, r0
           jsr         @r4
-          mov.w       @axisIdleThreshold, r0
+          mov.w       @ped_axisIdleThreshold, r0
           mov.w       #H'1000, r1
           extu.l      er0
           divxu.w     r1, er0
           mov.b       @(HEX_DIGITS,er0), r0l
           mov.b       r0l, @er6
-          mov.b       @axisIdleThreshold, r0l
+          mov.b       @ped_axisIdleThreshold, r0l
           sub.b       r0h, r0h
           and.w       #H'F, r0
           mov.b       @(HEX_DIGITS,er0), r0l
           mov.b       r0l, @er5
-          mov.w       @axisIdleThreshold, r0
+          mov.w       @ped_axisIdleThreshold, r0
           shlr.w      r0
           shlr.w      r0
           shlr.w      r0
@@ -19759,7 +19759,7 @@ ui_render_accel_debug:
           mov.w       e6, r1
           mov.b       @(HEX_DIGITS,er0), r0l
           mov.b       r0l, @er1
-          mov.w       @axisIdleThreshold, r0
+          mov.w       @ped_axisIdleThreshold, r0
           and.w       #H'F, r0
           mov.b       @(HEX_DIGITS,er0), r0l
           mov.b       r0l, @er3
@@ -21365,7 +21365,7 @@ rtc_minutes:
           .RES.B      1
 rtc_hours:
           .RES.B      1
-pedTaskFlags:
+ped_taskFlags:
           .RES.B      1
 notif_scheduledHour:
           .RES.B      1
@@ -21379,19 +21379,19 @@ animTick:
           .RES.B      1
 irResultCode:
           .RES.B      1
-accelSampleCount:
+ped_sampleCount:
           .RES.B      1
-activityTimer:
+ped_activityTimer:
           .RES.B      1
-stepTimer:
+ped_stepTimer:
           .RES.B      1
 currentlyActiveView:
           .RES.B      1
-stepBatchSize:
+ped_batchSize:
           .RES.B      1
-subStepCount:
+ped_subStepCount:
           .RES.B      1
-batchAccumulator:
+ped_batchAccumulator:
           .RES.B      1
 statusFlags:
           .RES.B      1
@@ -21439,11 +21439,11 @@ DAT_f7d8:
           .RES.B      1
 DAT_f7d8_1:
           .RES.B      1
-axisStepThresholdLo:
+ped_axisStepThresholdLo:
           .RES.B      2
-axisStepThresholdHi:
+ped_axisStepThresholdHi:
           .RES.B      2
-axisIdleThreshold:
+ped_axisIdleThreshold:
           .RES.B      2
 currentEventLoopFunc:
           .RES.B      2

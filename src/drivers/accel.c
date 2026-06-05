@@ -105,45 +105,45 @@ void drv_accel_sample(void) {
     ;
   PDR9 |= 0x01;
 
-  accelXSamples[g.accelSampleCount] = (int8_t)buf[1];
-  accelYSamples[g.accelSampleCount] = (int8_t)buf[3];
-  accelZSamples[g.accelSampleCount] = (int8_t)buf[5];
+  accelXSamples[g.ped_sampleCount] = (int8_t)buf[1];
+  accelYSamples[g.ped_sampleCount] = (int8_t)buf[3];
+  accelZSamples[g.ped_sampleCount] = (int8_t)buf[5];
 
   if ((uint8_t)g.currentlyActiveView == VIEW_ACCEL_DEBUG) {
-    prev_count = (g.accelSampleCount + 0x3F) & 0x3F;
-    if (g.accelSampleCount == 0) {
+    prev_count = (g.ped_sampleCount + 0x3F) & 0x3F;
+    if (g.ped_sampleCount == 0) {
       accelPos_X = 0;
       accelPos_Y = 0;
       g.accelZPos = 0;
     }
 
-    if ((int16_t)accelXSamples[g.accelSampleCount] -
+    if ((int16_t)accelXSamples[g.ped_sampleCount] -
             (int16_t)accelXSamples[prev_count] <
         0) {
-      accelPos_X += (uint16_t)(-accelXSamples[g.accelSampleCount] +
+      accelPos_X += (uint16_t)(-accelXSamples[g.ped_sampleCount] +
                                accelXSamples[prev_count]);
     } else {
-      accelPos_X += (uint16_t)(accelXSamples[g.accelSampleCount] -
+      accelPos_X += (uint16_t)(accelXSamples[g.ped_sampleCount] -
                                accelXSamples[prev_count]);
     }
 
-    if ((int16_t)accelYSamples[g.accelSampleCount] -
+    if ((int16_t)accelYSamples[g.ped_sampleCount] -
             (int16_t)accelYSamples[prev_count] <
         0) {
-      accelPos_Y += (uint16_t)(-accelYSamples[g.accelSampleCount] +
+      accelPos_Y += (uint16_t)(-accelYSamples[g.ped_sampleCount] +
                                accelYSamples[prev_count]);
     } else {
-      accelPos_Y += (uint16_t)(accelYSamples[g.accelSampleCount] -
+      accelPos_Y += (uint16_t)(accelYSamples[g.ped_sampleCount] -
                                accelYSamples[prev_count]);
     }
 
-    if ((int16_t)accelZSamples[g.accelSampleCount] -
+    if ((int16_t)accelZSamples[g.ped_sampleCount] -
             (int16_t)accelZSamples[prev_count] <
         0) {
-      g.accelZPos += (uint16_t)(-accelZSamples[g.accelSampleCount] +
+      g.accelZPos += (uint16_t)(-accelZSamples[g.ped_sampleCount] +
                               accelZSamples[prev_count]);
     } else {
-      g.accelZPos += (uint16_t)(accelZSamples[g.accelSampleCount] -
+      g.accelZPos += (uint16_t)(accelZSamples[g.ped_sampleCount] -
                               accelZSamples[prev_count]);
     }
   }

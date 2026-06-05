@@ -228,7 +228,7 @@ return_to_main_view:
   ui_set_view(VIEW_HOME);
 
 finalize:
-  g.accelSampleCount = 0;
+  g.ped_sampleCount = 0;
   game_reset_pedometer_flags();
   sys_set_handler(sys_main_loop_low_power);
   set_ccr(0x00);
