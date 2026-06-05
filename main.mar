@@ -1081,7 +1081,7 @@ drv_ir_send_discovery:
           bsr         drv_ir_init_hw:8
           sub.b       r0l, r0l
           mov.b       r0l, @ir_resultCode
-          mov.l       @nextRandom, er1
+          mov.l       @rng_state, er1
           mov.l       er1, @nextSessionKey
           mov.l       @nextSessionKey, er1
           mov.l       er1, @sessionKey
@@ -4287,7 +4287,7 @@ LAB_25c6:
 ; Called by: PowerON_Reset
 ; =============================================================================
 sys_seed_rng:
-          mov.l       er0, @nextRandom
+          mov.l       er0, @rng_state
           rts
 ; =============================================================================
 ; Function: sys_get_rng
@@ -4298,7 +4298,7 @@ sys_seed_rng:
 ; =============================================================================
 sys_get_rng:
           jsr         @$sp_regsv$3:16
-          mov.w       #nextRandom, r6
+          mov.w       #rng_state, r6
           mov.l       @er6, er5
           mov.l       er5, er0
           mov.l       #H'19660D, er1
@@ -21405,7 +21405,7 @@ sys_wakeFlag:
           .RES.B      3
 sys_heapPointer:
           .RES.B      2
-nextRandom:
+rng_state:
           .RES.B      4
 sound_dataPointer:
           .RES.B      2

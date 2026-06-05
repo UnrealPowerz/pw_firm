@@ -110,7 +110,7 @@ void drv_ir_send_packet(uint8_t pktLen, uint8_t cmdType, uint8_t subtype) {
 void drv_ir_send_discovery(void) {
   drv_ir_init_hw();
   g.ir_resultCode = 0x00;
-  nextSessionKey = g.nextRandom;
+  nextSessionKey = g.rng_state;
   sessionKey = nextSessionKey;
   irHandshakeStep = 0x01;
   irTimeoutRetryCount = 0x00;

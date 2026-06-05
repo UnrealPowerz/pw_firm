@@ -60,7 +60,7 @@
 /* 0xF7BA */ volatile uint8_t  ir_commandPos;
 /* 0xF7BB */ volatile uint8_t  sys_wakeFlag[3];     /* [0]=wake flag; rest pad */
 /* 0xF7BE */ volatile uint16_t sys_heapPointer;            /* sbrk break pointer */
-/* 0xF7C0 */ volatile uint32_t nextRandom;
+/* 0xF7C0 */ volatile uint32_t rng_state;
 
 /* --- Sound engine state --- */
 /* 0xF7C4 */ volatile uint8_t *sound_dataPointer;
