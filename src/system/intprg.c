@@ -48,9 +48,9 @@ __interrupt(vect=24) void drv_rtc_handle_half_sec(void) { RTCFLG &= ~0x02; }
 __interrupt(vect=25) void drv_rtc_handle_sec(void) {
     uint8_t sec = RSECDR;
     if (!(sec & 0x80)) {
-        g.rtcSec = sec;
+        g.rtc_seconds = sec;
     }
-    g.rtcTime++;
+    g.save_rtcTime++;
     if (g.idleSeconds < 0xE10) {
         g.idleSeconds++;
     } else {
@@ -69,7 +69,7 @@ __interrupt(vect=25) void drv_rtc_handle_sec(void) {
 __interrupt(vect=26) void drv_rtc_handle_min(void) {
     uint8_t min = RMINDR;
     if (!(min & 0x80)) {
-        g.rtcMin = min;
+        g.rtc_minutes = min;
     }
     g.pedTaskFlags |= 0x01;
     RTCFLG &= ~0x08;
@@ -79,7 +79,7 @@ __interrupt(vect=26) void drv_rtc_handle_min(void) {
 __interrupt(vect=27) void drv_rtc_handle_hour(void) {
     uint8_t hr = RHRDR;
     if (!(hr & 0x80)) {
-        g.rtcHour = RHRDR;
+        g.rtc_hours = RHRDR;
     }
     g.pedTaskFlags |= 0x02;
     RTCFLG &= ~0x10;

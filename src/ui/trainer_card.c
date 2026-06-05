@@ -145,15 +145,15 @@ void ui_render_trainer_card_time(void) {
   /* Digit sheet — 16 glyphs of 0x20 bytes each at base. */
   drv_eeprom_read_block(base, buf, 0x140);
 
-  time_part = g.rtcHour;
+  time_part = g.rtc_hours;
   drv_lcd_blit(0x20, 0x30, buf + ((((uint16_t)time_part >> 4) & 7) * 0x20), 8, 0x10);
   drv_lcd_blit(0x28, 0x30, buf + ((uint16_t)(time_part & 0xF) * 0x20), 8, 0x10);
 
-  time_part = g.rtcMin;
+  time_part = g.rtc_minutes;
   drv_lcd_blit(0x38, 0x30, buf + ((((uint16_t)time_part >> 4) & 7) * 0x20), 8, 0x10);
   drv_lcd_blit(0x40, 0x30, buf + ((uint16_t)(time_part & 0xF) * 0x20), 8, 0x10);
 
-  time_part = g.rtcSec;
+  time_part = g.rtc_seconds;
   drv_lcd_blit(0x50, 0x30, buf + ((((uint16_t)time_part >> 4) & 7) * 0x20), 8, 0x10);
   drv_lcd_blit(0x58, 0x30, buf + ((uint16_t)(time_part & 0xF) * 0x20), 8, 0x10);
 

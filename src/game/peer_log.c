@@ -82,7 +82,7 @@ void game_log_interaction(uint8_t *trainer, uint8_t *log_slot,
 
   log_slot[0x84] = interaction_type;
   *((uint16_t *)(log_slot + 0x0E)) = val_at_0e;
-  *((uint32_t *)log_slot) = g.rtcTime;
+  *((uint32_t *)log_slot) = g.save_rtcTime;
   *((uint16_t *)(log_slot + 0x78)) = g.recentSessionSteps;
   *((uint32_t *)(log_slot + 0x7C)) = g.sessionSteps;
   *((uint16_t *)(log_slot + 0x0A)) = *((uint16_t *)trainer);

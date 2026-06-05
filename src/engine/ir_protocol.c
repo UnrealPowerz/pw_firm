@@ -232,8 +232,8 @@ finalize:
   game_reset_pedometer_flags();
   sys_set_handler(sys_main_loop_low_power);
   set_ccr(0x00);
-  drv_rtc_get_time((uint8_t *)&g.rtcSec, (uint8_t *)&g.rtcMin,
-                   (uint8_t *)&g.rtcHour);
+  drv_rtc_get_time((uint8_t *)&g.rtc_seconds, (uint8_t *)&g.rtc_minutes,
+                   (uint8_t *)&g.rtc_hours);
 }
 
 // ROM: 0x03b4  55.8%  saves: er2,r3,er4,er5,er6 -> sys_epilogue_0700
@@ -261,7 +261,7 @@ void ir_parse_rx_packet(void) {
   /* If the peer included a wall-clock time, adopt it. */
   peer_rtc = peerRcvdRtcTime;
   if (peer_rtc != 0) {
-    g.rtcTime = peer_rtc;
+    g.save_rtcTime = peer_rtc;
     drv_rtc_set_time(peer_rtc);
   }
 }

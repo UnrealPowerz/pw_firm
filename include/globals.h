@@ -243,7 +243,7 @@ union pw_scratch {
 #define DAT_f844        (g_scratch.as_struct.at_5e)
 /* peerRcvdRtcTime: uint32 at offset +0x60 of the IR transfer buffer
  * (g_scratch). When a peer-sync packet is received, this field holds the
- * peer's RTC time; ir_parse_rx_packet uses it to slave our g.rtcTime if
+ * peer's RTC time; ir_parse_rx_packet uses it to slave our g.save_rtcTime if
  * non-zero. (Same memory is the at_60 8-byte slot of g_scratch.) */
 #define peerRcvdRtcTime (g_scratch.as_struct.at_60)
 /* trainerRecBuf: 8-byte field that's the START of a 0x68-byte trainer-record

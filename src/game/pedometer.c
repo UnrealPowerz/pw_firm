@@ -51,7 +51,7 @@ void game_reset_step_data(uint8_t a) {
   if (a != 0) {
     g.totalSteps = 0;
     g.dayCounter = 0;
-    g.rtcTime = 0xD2B0B80;
+    g.save_rtcTime = 0xD2B0B80;
     g.RamCache_STEP_COUNT_maybe = 0;
   }
   g.sessionTicksElapsed = 0;
@@ -246,7 +246,7 @@ void game_pedometer_increment_step(void) {
   }
 
   g.recentSessionSteps = 0;
-  if (g.rtcHour == g.scheduledNotifyHour) {
+  if (g.rtc_hours == g.scheduledNotifyHour) {
     g.pedTaskFlags |= 0x04;
   }
 }

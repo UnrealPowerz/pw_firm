@@ -446,9 +446,9 @@ LAB_02a0:
           mov.w       #sys_main_loop_low_power, r0
           jsr         @sys_set_handler:16
           ldc.b       #H'0, ccr
-          mov.w       #rtcHour, r1
-          mov.w       #rtcMin, e0
-          mov.w       #rtcSec, r0
+          mov.w       #rtc_hours, r1
+          mov.w       #rtc_minutes, e0
+          mov.w       #rtc_seconds, r0
           jmp         @drv_rtc_get_time:16
 ; =============================================================================
 ; Function: PowerON_Reset
@@ -575,7 +575,7 @@ ir_parse_rx_packet:
 LAB_040e:
           mov.l       @peerRcvdRtcTime, er6
           beq         LAB_0422:8
-          mov.l       er6, @rtcTime
+          mov.l       er6, @save_rtcTime
           mov.l       er6, er0
           jsr         @drv_rtc_set_time:16
 LAB_0422:
@@ -7866,7 +7866,7 @@ LAB_45ae:
 LAB_45bc:
           mov.b       r3l, @(H'84,er6)
           mov.w       e5, @(H'E,er6)
-          mov.l       @rtcTime, er0
+          mov.l       @save_rtcTime, er0
           mov.l       er0, @er6
           mov.w       @recentSessionSteps, r0
           mov.w       r0, @(H'78,er6)
@@ -18483,7 +18483,7 @@ LAB_a440:
           sub.w       r0, r0
           mov.w       r0, @recentSessionSteps
           mov.b       @scheduledNotifyHour, r0l
-          mov.b       @rtcHour, r0h
+          mov.b       @rtc_hours, r0h
           cmp.b       r0h, r0l
           bne         LAB_a45a:8
           mov.w       #pedTaskFlags, r0
@@ -18613,9 +18613,9 @@ drv_rtc_set_time:
           mov.w       e0, r0
           or.b        r0l, r5l
           mov.b       r5l, r6l
-          mov.b       r6l, @rtcHour
-          mov.b       r3h, @rtcMin
-          mov.b       r3l, @rtcSec
+          mov.b       r6l, @rtc_hours
+          mov.b       r3h, @rtc_minutes
+          mov.b       r3l, @rtc_seconds
           bset        #H'0, @CKSTPR1
           mov.w       #RTCCR1, r0
           bclr        #H'7, @r0
@@ -18733,11 +18733,11 @@ drv_rtc_handle_sec:
           mov.b       @RSECDR, r0l
           btst        #H'7, r0l
           bne         LAB_a692:8
-          mov.b       r0l, @rtcSec
+          mov.b       r0l, @rtc_seconds
 LAB_a692:
-          mov.l       @rtcTime, er0
+          mov.l       @save_rtcTime, er0
           inc.l       #1, er0
-          mov.l       er0, @rtcTime
+          mov.l       er0, @save_rtcTime
           mov.w       @idleSeconds, r0
           inc.w       #1, r0
           cmp.w       #H'E10, r0
@@ -18772,7 +18772,7 @@ drv_rtc_handle_min:
           mov.b       @RMINDR, r0l
           btst        #H'7, r0l
           bne         LAB_a6f0:8
-          mov.b       r0l, @rtcMin
+          mov.b       r0l, @rtc_minutes
 LAB_a6f0:
           mov.w       #pedTaskFlags, r0
           bset        #H'0, @r0
@@ -18792,7 +18792,7 @@ drv_rtc_handle_hour:
           btst        #H'7, r0l
           bne         LAB_a716:8
           mov.b       @RHRDR, r0l
-          mov.b       r0l, @rtcHour
+          mov.b       r0l, @rtc_hours
 LAB_a716:
           mov.w       #pedTaskFlags, r0
           bset        #H'1, @r0
@@ -19900,7 +19900,7 @@ game_reset_step_data:
           mov.l       er0, @totalSteps
           mov.w       r0, @dayCounter
           mov.l       #H'D2B0B80, er1
-          mov.l       er1, @rtcTime
+          mov.l       er1, @save_rtcTime
           mov.l       er0, @RamCache_STEP_COUNT_maybe
 LAB_b146:
           sub.w       r0, r0
@@ -20131,7 +20131,7 @@ LAB_b3a6:
           jsr         @sys_delay_short:16
           dec.w       #1, r6
           bne         LAB_b3a6:8
-          mov.l       @rtcTime, er0
+          mov.l       @save_rtcTime, er0
           jsr         @drv_rtc_set_time:16
           jmp         @sys_epilogue_0700:16
 ; =============================================================================
@@ -20335,7 +20335,7 @@ LAB_b52a:
           mov.w       e6, r1
           mov.w       r6, e0
           jsr         @r3
-          mov.b       @rtcHour, r0l
+          mov.b       @rtc_hours, r0l
           extu.w      r0
           shar.w      r0
           shar.w      r0
@@ -20349,7 +20349,7 @@ LAB_b52a:
           mov.w       #H'1008, r1
           mov.w       #H'3020, r0
           jsr         @r5
-          mov.b       @rtcHour, r0l
+          mov.b       @rtc_hours, r0l
           and.b       #H'F, r0l
           extu.w      r0
           mov.w       #H'20, e0
@@ -20359,7 +20359,7 @@ LAB_b52a:
           mov.w       #H'1008, r1
           mov.w       #H'3028, r0
           jsr         @r5
-          mov.b       @rtcMin, r0l
+          mov.b       @rtc_minutes, r0l
           extu.w      r0
           shar.w      r0
           shar.w      r0
@@ -20373,7 +20373,7 @@ LAB_b52a:
           mov.w       #H'1008, r1
           mov.w       #H'3038, r0
           jsr         @r5
-          mov.b       @rtcMin, r0l
+          mov.b       @rtc_minutes, r0l
           and.b       #H'F, r0l
           extu.w      r0
           mov.w       #H'20, e0
@@ -20383,7 +20383,7 @@ LAB_b52a:
           mov.w       #H'1008, r1
           mov.w       #H'3040, r0
           jsr         @r5
-          mov.b       @rtcSec, r0l
+          mov.b       @rtc_seconds, r0l
           extu.w      r0
           shar.w      r0
           shar.w      r0
@@ -20397,7 +20397,7 @@ LAB_b52a:
           mov.w       #H'1008, r1
           mov.w       #H'3050, r0
           jsr         @r5
-          mov.b       @rtcSec, r0l
+          mov.b       @rtc_seconds, r0l
           and.b       #H'F, r0l
           extu.w      r0
           mov.w       #H'20, e0
@@ -21331,7 +21331,7 @@ totalSteps_1:
           .RES.B      3
 RamCache_STEP_COUNT_maybe:
           .RES.B      4
-rtcTime:
+save_rtcTime:
           .RES.B      4
 dayCounter:
           .RES.B      2
@@ -21359,11 +21359,11 @@ recentSessionSteps:
           .RES.B      2
 idleSeconds:
           .RES.B      2
-rtcSec:
+rtc_seconds:
           .RES.B      1
-rtcMin:
+rtc_minutes:
           .RES.B      1
-rtcHour:
+rtc_hours:
           .RES.B      1
 pedTaskFlags:
           .RES.B      1

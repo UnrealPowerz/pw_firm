@@ -13,7 +13,7 @@
 /* --- Persistent save block (24 B; mirrored to EEPROM via save_write_reliable) --- */
 /* 0xF780 */ volatile uint32_t totalSteps;
 /* 0xF784 */ volatile uint32_t RamCache_STEP_COUNT_maybe;  /* walk step count */
-/* 0xF788 */ volatile uint32_t rtcTime;
+/* 0xF788 */ volatile uint32_t save_rtcTime;
 /* 0xF78C */ volatile uint16_t dayCounter;
 /* 0xF78E */ volatile uint16_t watts;
 /* 0xF790 */ volatile uint16_t sessionTicksElapsed;
@@ -32,9 +32,9 @@
 /* 0xF79C */ volatile uint32_t sessionSteps;
 /* 0xF7A0 */ volatile uint16_t recentSessionSteps;
 /* 0xF7A2 */ volatile uint16_t idleSeconds;
-/* 0xF7A4 */ volatile uint8_t  rtcSec;
-/* 0xF7A5 */ volatile uint8_t  rtcMin;
-/* 0xF7A6 */ volatile uint8_t  rtcHour;
+/* 0xF7A4 */ volatile uint8_t  rtc_seconds;
+/* 0xF7A5 */ volatile uint8_t  rtc_minutes;
+/* 0xF7A6 */ volatile uint8_t  rtc_hours;
 /* 0xF7A7 */ volatile uint8_t  pedTaskFlags;           /* bit-field via _BIT */
 /* 0xF7A8 */ volatile uint8_t  scheduledNotifyHour;
 /* 0xF7A9 */ volatile uint8_t  lcdShadeBase;
