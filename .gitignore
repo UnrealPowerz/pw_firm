@@ -9,4 +9,4 @@ COMPLETE_DUMP.sav
 eeprom.bin
 settings.json
 pocketwalker/
-emu_run/
+emu_run/picowalker-core/

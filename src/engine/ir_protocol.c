@@ -279,7 +279,7 @@ uint16_t ir_calc_packet_checksum(uint8_t length, uint8_t *data) {
 
   ptr = data;
   len = (uint32_t)length;
-  sum = 0;
+  sum = 0x0002;   /* seed; ROM does `sub.l er5,er5; mov.b #H'2,r5l` */
   i = 0;
 
   /* Even-indexed bytes go into the upper byte of the running word, odd-indexed
