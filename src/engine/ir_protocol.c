@@ -246,7 +246,7 @@ void ir_parse_rx_packet(void) {
   /* Stash the received payload into the shared DAT_f7e6 record so the rest
      of the comm-loop case-arms can read it without another copy. */
   payload = drv_ir_get_rx_ptr();
-  memcpy(payload, (void *)DAT_f7e6, 0x68);
+  memcpy(g.scratch1.bytes, payload, 0x68);
 
   /* g.scratch1.ir.flags_5b packs an hour in bits 7..3 (top 5 bits, valid if < 0x18).
      Decode to BCD for the notify-time scheduler. */
@@ -392,7 +392,9 @@ void ir_comm_loop(void) {
     g.ir_resultCode = 2;
     goto do_action;
   }
-  *(uint32_t *)((uint8_t *)&g.scratch2.ir.commandType + 2) = *(uint32_t *)(pktBase + 4);
+  /* (ROM stashes pktBase[4..7] = received session ID into a stack local
+   * here, used later by case 0xFA/0xF8 to mix into sessionKey. Our C
+   * reads from pktBase+4 directly at those sites, so no local needed.) */
   {
     uint8_t subtype;
     uint8_t pktLen2;
@@ -472,7 +474,7 @@ void ir_comm_loop(void) {
 
     case 0x10:
       g.viewstate.Y.BIT.b0 = 1;
-      memcpy(payload, (void *)DAT_f7e6, 0x68);
+      memcpy(g.scratch1.bytes, payload, 0x68);
       save_read_reliable(EEPROM_TRAINER_REC, EEPROM_TRAINER_REC_BACKUP, (void *)g.scratch1.secondTrainer.buf, 0x68);
       if (!((byte_bits_t *)&payload[0x5B])->BIT.b0) {
         drv_ir_send_packet(0x68, 0x12, 2);
@@ -513,7 +515,7 @@ void ir_comm_loop(void) {
       goto LAB_182e;
 
     case 0x12:
-      memcpy(payload, (void *)DAT_f7e6, 0x68);
+      memcpy(g.scratch1.bytes, payload, 0x68);
       save_read_reliable(EEPROM_TRAINER_REC, EEPROM_TRAINER_REC_BACKUP, (void *)g.scratch1.secondTrainer.buf, 0x68);
       if (!((byte_bits_t *)&payload[0x5B])->BIT.b0) {
         g.ir_resultCode = 3;
@@ -787,7 +789,6 @@ void ir_comm_loop(void) {
         /* peer ACK'd previous chunk; send the next one via WRITE_RAW.
          * (ROM splits this in two via LAB_135a/LAB_1362, but the
          * min(remaining, 0x80) clamp in start_eeprom_tx covers both.) */
-        g.scratch2.ir.xferRemaining = e1val;
         goto LAB_1362;
       }
 
