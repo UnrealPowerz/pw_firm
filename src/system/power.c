@@ -18,16 +18,16 @@
  *
  *   sys_enter_standby /
  *   sys_update_standby_state  Two periodic ticks driving the standby (LCD
- *     fade-out / fade-in) state machine, both touching g.viewstate.v.bytes.at_d1.BYTE bits 0/1/2
+ *     fade-out / fade-in) state machine, both touching g.viewstate.v.homeStandby.flags.BYTE bits 0/1/2
  *     and g.viewstate.A. Called alternately from ui_render_home_route based
- *     on g.viewstate.v.bytes.at_d1.b1 — _standby runs while b1 is clear (entry/exit phase),
+ *     on g.viewstate.v.homeStandby.flags.b1 — _standby runs while b1 is clear (entry/exit phase),
  *     _update_standby_state runs while b1 is set (active-standby tick at
  *     every 4th g.ui_animationTick, with a periodic b2 toggle for visual blink).
  */
 
 // ROM: 0x6b4c  88.6%
 void sys_enter_standby(void) {
-  if (!g.viewstate.v.bytes.at_d1.BIT.b2) {
+  if (!g.viewstate.v.homeStandby.flags.BIT.b2) {
     g.viewstate.A += 0xFC;
     if (g.viewstate.A <= 0x20) {
       g.viewstate.A = 0x20;
@@ -35,14 +35,14 @@ void sys_enter_standby(void) {
   } else {
     g.viewstate.A += 0x04;
     if (g.viewstate.A >= 0x60) {
-      g.viewstate.v.bytes.at_d1.BIT.b1 = 1;
-      g.viewstate.v.bytes.at_d1.BIT.b2 = 0;
+      g.viewstate.v.homeStandby.flags.BIT.b1 = 1;
+      g.viewstate.v.homeStandby.flags.BIT.b2 = 0;
     }
   }
   if (g.sys_statusFlags.BIT.sleeping) {
     if (g.viewstate.A <= 0x20) {
-      g.viewstate.v.bytes.at_d1.BIT.b2 = 1;
-      g.viewstate.v.bytes.at_d1.BIT.b0 = 1;
+      g.viewstate.v.homeStandby.flags.BIT.b2 = 1;
+      g.viewstate.v.homeStandby.flags.BIT.b0 = 1;
     }
   }
 }
@@ -53,7 +53,7 @@ void sys_update_standby_state(void) {
   if ((g.ui_animationTick & 0x03) != 0) {
     return;
   }
-  if (!g.viewstate.v.bytes.at_d1.BIT.b2) {
+  if (!g.viewstate.v.homeStandby.flags.BIT.b2) {
     s = g.viewstate.A + 0xFC;
     g.viewstate.A = s;
     if (s > 0x20)
@@ -68,13 +68,13 @@ void sys_update_standby_state(void) {
   s = 0x40;
 LAB_6bd2:
   g.viewstate.A = s;
-  g.viewstate.v.bytes.at_d1.BYTE ^= 0x04;  /* ROM emits `bnot #2,@r0`; ch38 doesn't pattern-match
+  g.viewstate.v.homeStandby.flags.BYTE ^= 0x04;  /* ROM emits `bnot #2,@r0`; ch38 doesn't pattern-match
                         either `^= 0x04` or `bN = !bN` to bnot */
 LAB_6bde:
   if (!(g.sys_statusFlags.BIT.sleeping)) {
     g.viewstate.A = 0x68;
-    g.viewstate.v.bytes.at_d1.BIT.b1 = 0;
-    g.viewstate.v.bytes.at_d1.BIT.b2 = 0;
+    g.viewstate.v.homeStandby.flags.BIT.b1 = 0;
+    g.viewstate.v.homeStandby.flags.BIT.b2 = 0;
   }
 }
 

@@ -225,6 +225,23 @@ struct viewstate {
             volatile byte_bits_t calByte0;       /* 0xF7D8 = at_d8 — first byte of 8-byte EEPROM accel cal (overflows into ped_axis* fields) */
             volatile uint8_t     calTarget;      /* 0xF7D9 = at_d9 — second byte of cal; target value that displayCounter must reach */
         } accelDebug;
+        /* Home-view standby state machine (LCD fade-out/in). Owned by power.c
+         * (sys_enter_standby + sys_update_standby_state) and read by home.c
+         * (ui_render_home_route) to choose draw path. */
+        struct {
+            volatile byte_bits_t flags; /* 0xF7D1 = at_d1 — packed:
+                                         *   b0 = entered deep standby
+                                         *   b1 = standby active (locks state)
+                                         *   b2 = fade direction / visual blink toggle */
+            volatile uint8_t _at_d2;    /* 0xF7D2..0xF7D9 unused by homeStandby */
+            volatile uint8_t _at_d3;
+            volatile uint8_t _at_d4;
+            volatile uint8_t _at_d5;
+            volatile uint8_t _at_d6;
+            volatile uint8_t _at_d7;
+            volatile byte_bits_t _at_d8;
+            volatile uint8_t _at_d9;
+        } homeStandby;
         /* Add more per-subsystem views here as each is audited. ch38 pads
          * uint16 members to even offsets within a struct; since this
          * union sits at an odd offset within viewstate (Y/Z/A take 3
