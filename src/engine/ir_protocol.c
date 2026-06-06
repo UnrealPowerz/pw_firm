@@ -600,7 +600,10 @@ void ir_comm_loop(void) {
       *(uint32_t *)(payload + 0x64) = g.save_totalSteps;
       save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (void *)&g.save_totalSteps, 0x18);
       drv_eeprom_write_block(0xCE8A, &g.save_watts, 2);
-      memcpy(payload, (void *)g.scratch1.secondTrainer.buf, 0x68);
+      /* ROM: memcpy(dst=trainerRecBuf, src=payload, 0x68) — stash the
+       * just-constructed trainer record (with totalSteps appended) into
+       * scratch1.secondTrainer.buf for the rest of the comm loop. */
+      memcpy((void *)g.scratch1.secondTrainer.buf, payload, 0x68);
       drv_ir_send_packet(0x68, 0x22, 2);
       goto LAB_182e;
 
