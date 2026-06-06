@@ -784,9 +784,10 @@ void ir_comm_loop(void) {
           goto handle_0x04_phase5;
         goto LAB_182e;
       } else {
+        /* peer ACK'd previous chunk; send the next one via WRITE_RAW.
+         * (ROM splits this in two via LAB_135a/LAB_1362, but the
+         * min(remaining, 0x80) clamp in start_eeprom_tx covers both.) */
         g.scratch2.ir.xferRemaining = e1val;
-        if (e1val <= 0x80)
-          goto start_eeprom_tx;
         goto LAB_1362;
       }
 
@@ -993,26 +994,42 @@ void ir_comm_loop(void) {
     }
   }
 
+/* LAB_1362 / LAB_1366 (ROM) — push a chunk of OUR EEPROM to peer via
+ * CMD_EEPROM_WRITE_RAW. cmd byte = (dst_lo & 0x80) | 0x02 → 0x02 or 0x82
+ * to indicate which 128-byte half of the page; subtype = dst_hi byte. */
 LAB_1362:
-start_eeprom_tx:
+start_eeprom_tx: {
+  uint16_t chunk = (g.scratch2.ir.xferRemaining > 0x80) ? 0x80 : g.scratch2.ir.xferRemaining;
+  uint8_t *rxptr = drv_ir_get_rx_ptr();
+  drv_eeprom_read_block(g.scratch2.ir.xferSrc, rxptr, chunk);
+  {
+    uint8_t dst_hi = (uint8_t)(g.scratch2.ir.xferDst >> 8);
+    uint8_t dst_lo = (uint8_t)g.scratch2.ir.xferDst;
+    uint8_t cmd = (uint8_t)((dst_lo & 0x80) | 0x02);
+    drv_ir_send_packet((uint8_t)chunk, cmd, dst_hi);
+  }
+  g.scratch2.ir.xferSrc += chunk;
+  g.scratch2.ir.xferDst += chunk;
+  g.scratch2.ir.xferRemaining -= chunk;
+  g.scratch2.ir.xferChunkCount++;
+  goto LAB_182e;
+}
+
+/* LAB_17b0 (ROM) — ask peer for a chunk via CMD_EEPROM_READ_REQ.
+ * Used only by phase 5 (after case 0x04 ACK), where we want to PULL data
+ * from peer. The 3-byte body of the request is (src_hi, src_lo, chunk). */
 start_eeprom_tx_alt:
 LAB_17b0: {
   uint16_t chunk = (g.scratch2.ir.xferRemaining > 0x80) ? 0x80 : g.scratch2.ir.xferRemaining;
-  drv_eeprom_read_block(EEPROM_TRAINER_PROFILE, &g.save_watts, 2);
-  DAT_f88e[0] = (uint8_t)((g.save_watts / 20) & 0xFF);
-  drv_eeprom_write_block(EEPROM_TRAINER_PROFILE, &g.save_watts, 2);
-  {
-    uint8_t *p = drv_ir_get_rx_ptr();
-    p[0] = (uint8_t)(g.scratch2.ir.xferSrc >> 8);
-    p[1] = (uint8_t)(g.scratch2.ir.xferSrc);
-    p[2] = (uint8_t)chunk;
-  }
+  uint8_t *p = drv_ir_get_rx_ptr();
+  p[0] = (uint8_t)(g.scratch2.ir.xferSrc >> 8);
+  p[1] = (uint8_t)(g.scratch2.ir.xferSrc);
+  p[2] = (uint8_t)chunk;
   drv_ir_send_packet(0x03, 0x0C, 2);
   goto LAB_182e;
 }
 
 LAB_17ea:
-  drv_eeprom_write_block(EEPROM_TRAINER_PROFILE, &g.save_watts, 2);
 LAB_17ee:
   drv_ir_send_packet(0x00, 0x04, 2);
   goto LAB_182e;
