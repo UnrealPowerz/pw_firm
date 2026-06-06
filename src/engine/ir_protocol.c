@@ -934,11 +934,6 @@ void ir_comm_loop(void) {
       }
       goto LAB_182e;
 
-    case 0x1A:
-      drv_eeprom_write_block(addr, payload, 0x80);
-      drv_ir_send_packet(0x40, 0x1A, 2);
-      break;
-
     case 0x2A:
       save_read_reliable(EEPROM_RESV_0083, EEPROM_RESV_0083_BACKUP, payload, 0x28);
       drv_ir_send_packet(0x28, 0x2A, 2);
@@ -1007,14 +1002,16 @@ void ir_comm_loop(void) {
       goto LAB_17ee;
 
     case 0x06: {
-      uint8_t i = 0;
-      uint8_t *src = payload + 1;
-      uint8_t *dst = (uint8_t *)g.scratch2.ir.xferDst;
-      while (i < (uint8_t)(pktLen2 - 1)) {
-        *dst++ = *src++;
-        i++;
+      /* CMD_RAM_WRITE — write bytes to RAM. Address is (subtype << 8) |
+       * payload[0]; data is payload[1..pktLen2-1]. ROM dst = r1 + payload[0]
+       * where r1 was previously set up with (subtype << 8) by the same code
+       * path used by case 0x0A (EEPROM write rnd). */
+      uint8_t i;
+      uint8_t *dst = (uint8_t *)(((uint16_t)subtype << 8) | payload[0]);
+      for (i = 0; i < (uint8_t)(pktLen2 - 1); i++) {
+        dst[i] = payload[1 + i];
       }
-      drv_ir_send_packet(0x00, subtype, 2);
+      drv_ir_send_packet(0x00, 0x06, subtype);
       goto LAB_182e;
     }
 
