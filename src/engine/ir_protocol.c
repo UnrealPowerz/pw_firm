@@ -272,6 +272,22 @@ void ir_parse_rx_packet(void) {
  * Builds the 0x38-byte CMD_PEER_PLAY_DX response payload (session steps +
  * trainer id/loc + bit-spliced profile/event flags + 0x16 bytes of profile
  * sprite data) and sends it. Matches ROM LAB_0f04+LAB_0fc0 and LAB_16da. */
+/* Shared by all 8 IR_CMD_EVENT_* cases (0xC0/C2/C4/C6 + 0xD0/D2/D4/D6).
+ * Each event ORs a different bit-mask into EEPROM_STEP_HIST_FLAGS, then
+ * records the event on the local trainer record's event-bit array, and
+ * sends an ack packet with `response_cmd` as the cmd byte.
+ *
+ * #pragma inline forces the body to expand at each call site, matching
+ * ROM's per-event duplicated structure (it doesn't have a helper). */
+#pragma inline (handle_event_delivery)
+static void handle_event_delivery(uint8_t flag_mask, uint8_t response_cmd) {
+  uint8_t bf = drv_eeprom_read_u8(EEPROM_STEP_HIST_FLAGS);
+  bf |= flag_mask;
+  drv_eeprom_write_u8(EEPROM_STEP_HIST_FLAGS, bf);
+  save_set_event_bit((void *)g.scratch1.secondTrainer.buf, g.scratch1.ir.eventBitIndex);
+  drv_ir_send_packet(0x00, response_cmd, 2);
+}
+
 #pragma inline (ir_send_peer_play_dx_response)
 static void ir_send_peer_play_dx_response(void) {
   uint8_t *rxptr = drv_ir_get_rx_ptr();
@@ -680,87 +696,48 @@ void ir_comm_loop(void) {
       g.ir_resultCode = 3;
       goto finish_and_execute;
 
-    case IR_CMD_EVENT_MAP: {
-      uint8_t bf = drv_eeprom_read_u8(EEPROM_STEP_HIST_FLAGS);
-      bf |= 0x10;
-      drv_eeprom_write_u8(EEPROM_STEP_HIST_FLAGS, bf);
-    }
-      save_set_event_bit((void *)g.scratch1.secondTrainer.buf, g.scratch1.ir.eventBitIndex);
-      drv_ir_send_packet(0x00, 0xC0, 2);
+    case IR_CMD_EVENT_MAP:
+      handle_event_delivery(0x10, 0xC0);
       cmdByte = 0xC0;
       goto schedule_action_then_finish;
 
-    case IR_CMD_EVENT_MAP_STAMPS: {
-      uint8_t bf = drv_eeprom_read_u8(EEPROM_STEP_HIST_FLAGS);
-      bf |= 0x1F;
-      drv_eeprom_write_u8(EEPROM_STEP_HIST_FLAGS, bf);
-    }
-      save_set_event_bit((void *)g.scratch1.secondTrainer.buf, g.scratch1.ir.eventBitIndex);
-      drv_ir_send_packet(0x00, 0xC0, 2);
+    case IR_CMD_EVENT_MAP_STAMPS:
+      handle_event_delivery(0x1F, 0xC0);
       cmdByte = 0xC0;
       goto schedule_action_then_finish;
 
-    case IR_CMD_EVENT_POKEMON: {
-      uint8_t bf = drv_eeprom_read_u8(EEPROM_STEP_HIST_FLAGS);
-      bf |= 0x20;
-      drv_eeprom_write_u8(EEPROM_STEP_HIST_FLAGS, bf);
-    }
-      save_set_event_bit((void *)g.scratch1.secondTrainer.buf, g.scratch1.ir.eventBitIndex);
-      drv_ir_send_packet(0x00, 0xC2, 2);
+    case IR_CMD_EVENT_POKEMON:
+      handle_event_delivery(0x20, 0xC2);
       cmdByte = 0xC2;
       goto schedule_action_then_finish;
 
-    case IR_CMD_EVENT_POKEMON_STAMPS: {
-      uint8_t bf = drv_eeprom_read_u8(EEPROM_STEP_HIST_FLAGS);
-      bf |= 0x2F;
-      drv_eeprom_write_u8(EEPROM_STEP_HIST_FLAGS, bf);
-    }
-      save_set_event_bit((void *)g.scratch1.secondTrainer.buf, g.scratch1.ir.eventBitIndex);
-      drv_ir_send_packet(0x00, 0xC2, 2);
+    case IR_CMD_EVENT_POKEMON_STAMPS:
+      handle_event_delivery(0x2F, 0xC2);
       cmdByte = 0xC2;
       goto schedule_action_then_finish;
 
-    case IR_CMD_EVENT_ITEM: {
-      uint8_t bf = drv_eeprom_read_u8(EEPROM_STEP_HIST_FLAGS);
-      bf |= 0x40;
-      drv_eeprom_write_u8(EEPROM_STEP_HIST_FLAGS, bf);
-    }
-      save_set_event_bit((void *)g.scratch1.secondTrainer.buf, g.scratch1.ir.eventBitIndex);
-      drv_ir_send_packet(0x00, 0xC4, 2);
+    case IR_CMD_EVENT_ITEM:
+      handle_event_delivery(0x40, 0xC4);
       cmdByte = 0xC4;
       goto schedule_action_then_finish;
 
-    case IR_CMD_EVENT_ITEM_STAMPS: {
-      uint8_t bf = drv_eeprom_read_u8(EEPROM_STEP_HIST_FLAGS);
-      bf |= 0x4F;
-      drv_eeprom_write_u8(EEPROM_STEP_HIST_FLAGS, bf);
-    }
-      save_set_event_bit((void *)g.scratch1.secondTrainer.buf, g.scratch1.ir.eventBitIndex);
-      drv_ir_send_packet(0x00, 0xC4, 2);
+    case IR_CMD_EVENT_ITEM_STAMPS:
+      handle_event_delivery(0x4F, 0xC4);
       cmdByte = 0xC4;
       goto schedule_action_then_finish;
 
-    case IR_CMD_EVENT_ROUTE: {
-      uint8_t bf = drv_eeprom_read_u8(EEPROM_STEP_HIST_FLAGS);
-      bf |= 0x80;
-      drv_eeprom_write_u8(EEPROM_STEP_HIST_FLAGS, bf);
-    }
-      save_set_event_bit((void *)g.scratch1.secondTrainer.buf, g.scratch1.ir.eventBitIndex);
+    /* ROUTE events additionally set the "co-op mode" save_settings bit
+     * (0x01) and commit the save block before sending the ack — unlike
+     * MAP / POKEMON / ITEM events. */
+    case IR_CMD_EVENT_ROUTE:
+    case IR_CMD_EVENT_ROUTE_STAMPS:
+      handle_event_delivery(
+          cmdByte == IR_CMD_EVENT_ROUTE ? 0x80 : 0x8F, 0xC6);
       g.save_settings.BYTE |= 0x01;
-      save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (void *)&g.save_totalSteps, 0x18);
-      drv_ir_send_packet(0x00, 0xC6, 2);
-      cmdByte = 0xC6;
-      goto schedule_action_then_finish;
-
-    case IR_CMD_EVENT_ROUTE_STAMPS: {
-      uint8_t bf = drv_eeprom_read_u8(EEPROM_STEP_HIST_FLAGS);
-      bf |= 0x8F;
-      drv_eeprom_write_u8(EEPROM_STEP_HIST_FLAGS, bf);
-    }
-      save_set_event_bit((void *)g.scratch1.secondTrainer.buf, g.scratch1.ir.eventBitIndex);
-      g.save_settings.BYTE |= 0x01;
-      save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (void *)&g.save_totalSteps, 0x18);
-      drv_ir_send_packet(0x00, 0xC6, 2);
+      save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP,
+                          (void *)&g.save_totalSteps, 0x18);
+      /* handle_event_delivery already sent the ack — overwrite our local
+       * cmdByte so the action dispatcher routes to the route handler. */
       cmdByte = 0xC6;
       goto schedule_action_then_finish;
 
