@@ -256,10 +256,6 @@ struct b_ram_section {
 
 extern volatile struct b_ram_section g;
 
-/* --- System Status Flags --- */
-extern volatile uint8_t status_flags_f7f1;   /* DAT_f7f1 */
-
-/* --- LCD & UI / Timers --- */
 
 /* View IDs dispatched by ui_dispatch_event / ui_dispatch_draw.
  * Walk-anim views are named from the walker's perspective: ARRIVAL when a
@@ -349,7 +345,7 @@ enum view_id {
 #define DAT_f088 (*(volatile uint8_t *)0xF088)
 #define DAT_f580 ((uint8_t *)0xF580)
 #define eepromPageScratch ((uint8_t *)0xF956u)
-extern volatile uint8_t ir_status;
+
 /* ROM data labels — defined as per-label const arrays in src/romdata.c.
  * optlnk packs them contiguously within `#pragma section P` in source
  * order, reproducing the original ROM byte layout. */
