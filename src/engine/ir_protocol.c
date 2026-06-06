@@ -266,6 +266,38 @@ void ir_parse_rx_packet(void) {
   }
 }
 
+/* Helper used by case 0x14 slave-branch and case 0x0E phase-6 finalize.
+ * Builds the 0x38-byte CMD_PEER_PLAY_DX response payload (session steps +
+ * trainer id/loc + bit-spliced profile/event flags + 0x16 bytes of profile
+ * sprite data) and sends it. Matches ROM LAB_0f04+LAB_0fc0 and LAB_16da. */
+static void ir_send_peer_play_dx_response(void) {
+  uint8_t *rxptr = drv_ir_get_rx_ptr();
+  uint8_t i;
+
+  *(uint32_t *)rxptr            = g.session_steps;
+  *(uint16_t *)(rxptr + 4)      = g.session_recentSteps;
+
+  drv_eeprom_read_block(EEPROM_TRAINER_PROFILE, eepromPageScratch, 0x10);
+  ((byte_bits_t *)&rxptr[0x37])->BIT.b0 =
+      ((byte_bits_t *)&eepromPageScratch[0x0E])->BIT.b0;
+  *(uint16_t *)(rxptr + 0x0E) = *(uint16_t *)eepromPageScratch;
+  rxptr[0x36] = (uint8_t)((rxptr[0x36] & 0xE0) | (eepromPageScratch[0x0D] & 0x1F));
+  rxptr[0x36] = (uint8_t)((rxptr[0x36] & ~(0x03 << 5)) |
+                          (eepromPageScratch[0x0D] & 0x60));
+  ((byte_bits_t *)&rxptr[0x36])->BIT.b7 =
+      ((byte_bits_t *)&eepromPageScratch[0x0E])->BIT.b1;
+
+  save_read_reliable(EEPROM_TRAINER_REC, EEPROM_TRAINER_REC_BACKUP,
+                     (void *)g.scratch1.secondTrainer.buf, 0x68);
+  *(uint32_t *)(rxptr + 0x08) = *(uint32_t *)g.scratch1.secondTrainer.buf;
+  *(uint16_t *)(rxptr + 0x0C) = g.scratch1.secondTrainer.loc;
+  for (i = 0; i < 0x10; i++) {
+    rxptr[0x26 + i] = ((uint8_t *)&DAT_f896)[i];
+  }
+  drv_eeprom_read_block(0x8F10, rxptr + 0x10, 0x16);
+  drv_ir_send_packet(0x38, 0x14, 2);
+}
+
 // ROM: 0x0714  50.3%  saves: er3,er4,er5,er6
 #pragma option noregexpansion /* pragma:auto */
 uint16_t ir_calc_packet_checksum(uint8_t length, uint8_t *data) {
@@ -552,30 +584,11 @@ void ir_comm_loop(void) {
 
     case 0x14:
       if (g.viewstate.Y.BIT.b0) {
-        uint8_t *rxptr;
-        uint8_t i;
+        /* slave path — save peer data, then build + send 0x14 response */
         drv_eeprom_write_block(0xF6C0, payload, 0x38);
-        rxptr = drv_ir_get_rx_ptr();
-        *(uint32_t *)rxptr = g.session_steps;
-        *(uint16_t *)(rxptr + 4) = g.session_recentSteps;
-        drv_eeprom_read_block(EEPROM_TRAINER_PROFILE, eepromPageScratch, 0x10);
-        ((byte_bits_t *)&rxptr[0x37])->BIT.b0 =
-            ((byte_bits_t *)&eepromPageScratch[0x0E])->BIT.b0;
-        *(uint16_t *)(rxptr + 0x0E) = *(uint16_t *)eepromPageScratch;
-        rxptr[0x36] = (uint8_t)((rxptr[0x36] & 0xE0) | (eepromPageScratch[0x0D] & 0x1F));
-        rxptr[0x36] = (uint8_t)((rxptr[0x36] & ~(0x03 << 5)) |
-                                (eepromPageScratch[0x0D] & 0x60));
-        ((byte_bits_t *)&rxptr[0x36])->BIT.b7 =
-            ((byte_bits_t *)&eepromPageScratch[0x0E])->BIT.b1;
-        save_read_reliable(EEPROM_TRAINER_REC, EEPROM_TRAINER_REC_BACKUP, (void *)g.scratch1.secondTrainer.buf, 0x68);
-        *(uint32_t *)(rxptr + 0x08) = *(uint32_t *)g.scratch1.secondTrainer.buf;
-        *(uint16_t *)(rxptr + 0x0C) = g.scratch1.secondTrainer.loc;
-        for (i = 0; i < 0x10; i++) {
-          rxptr[0x26 + i] = ((uint8_t *)&DAT_f896)[i];
-        }
-        drv_eeprom_read_block(0x8F10, rxptr + 0x10, 0x16);
-        drv_ir_send_packet(0x38, 0x14, 2);
+        ir_send_peer_play_dx_response();
       } else {
+        /* master path — save peer data, then end the session */
         drv_eeprom_write_block(0xF6C0, payload, 0x38);
         drv_ir_send_packet(0x00, 0x16, 2);
       }
@@ -983,9 +996,8 @@ void ir_comm_loop(void) {
         g.scratch2.ir.xferChunkCount = 0;
         goto start_eeprom_tx_alt;
       case 6:
-        /* ROM LAB_16da — finalize peer-play data: stash totalSteps/recentSteps
-         * into the rx buffer, read trainer profile, splice fields, send 0x14.
-         * Not yet reconstructed; falling through ends the session cleanly. */
+        /* ROM LAB_16da — same response-build as case 0x14 slave branch. */
+        ir_send_peer_play_dx_response();
         goto LAB_182e;
       default:
         goto LAB_182e;
