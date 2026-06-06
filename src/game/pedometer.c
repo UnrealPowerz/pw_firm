@@ -64,7 +64,7 @@ void game_reset_step_data(uint8_t a) {
 
 // ROM: 0x9328  77.8%
 void game_reset_pedometer_flags(void) {
-  g.scratch2.ped.at_f8ee = 0;
+  g.scratch2.ped._resetByte = 0;
   g.scratch2.ped.pendingStepDetect = 0;
   g.scratch2.ped.stepDetectAccumulator = 0;
   g.scratch2.ped.isNotWalking = 0;
@@ -332,7 +332,7 @@ uint32_t game_detect_steps_fft(volatile int16_t *fft_res) {
     }
   }
 
-  g.scratch2.ped.at_f8ee = 0;
+  g.scratch2.ped._resetByte = 0;
   g.scratch2.ped.pendingStepDetect = 0;
   g.scratch2.ped.isNotWalking = 1;
   return 0;

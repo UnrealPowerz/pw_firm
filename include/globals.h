@@ -69,19 +69,19 @@ union pw_scratch2 {
         uint8_t _pad0[0xA0];                        /* +0x50..0xEF unused by this view */
     } accel;
     struct {
-        uint8_t at_f866[0x20];                      /* +0x00..0x1F */
-        uint8_t at_f886[8];                         /* +0x20 (DAT_f886) — TX byte-iteration buffer */
-        uint8_t at_f88e[8];                         /* +0x28 (DAT_f88e) */
-        uint8_t at_f896;                            /* +0x30 (DAT_f896) */
-        uint8_t at_f897[15];                        /* +0x31..0x3F */
-        uint8_t at_f8a6[3];                         /* +0x40..0x42 */
-        uint8_t at_f8a9[13];                        /* +0x43..0x4F (DAT_f8a9 — unused) */
+        uint8_t _headRegion[0x20];                  /* +0x00..0x1F unused by IR (overlays accel.y[0..31]) */
+        uint8_t txResponseA[16];                    /* +0x20..0x2F first TX-response payload buffer
+                                                     *   - DAT_f886 = &[0]  (16-byte block copied to rxptr in case 0xA6/0xA8/0xAA/0xAC/0xAE)
+                                                     *   - DAT_f88e = &[8]  (g.save_watts/20 stashed here) */
+        uint8_t txResponseB[16];                    /* +0x30..0x3F second TX-response payload buffer
+                                                     *   - DAT_f896 = &[0]  (16-byte block copied to rxptr+0x26 in case 0x14) */
+        uint8_t _midRegion[16];                     /* +0x40..0x4F unused by IR (overlays accel.z[0..15]; DAT_f8a9 was unused) */
         volatile uint32_t sessionKeyNext;           /* +0x50 */
         volatile uint32_t sessionKey;               /* +0x54 */
         volatile uint8_t  handshakeStep;            /* +0x58 */
         volatile uint8_t  timeoutRetryCount;        /* +0x59 */
         volatile uint8_t  _pad_at_5a;               /* +0x5A */
-        volatile uint8_t  at_f8c1;                  /* +0x5B (DAT_f8c1) */
+        volatile uint8_t  at_5b;                    /* +0x5B (DAT_f8c1; init=0 with other session state, role unclear) */
         volatile uint8_t  crcRetryCount;            /* +0x5C */
         volatile byte_bits_t packetReceivedFlag;    /* +0x5D */
         volatile uint8_t  requestedPokemonAction;   /* +0x5E */
@@ -102,7 +102,7 @@ union pw_scratch2 {
         uint8_t _pad0[0x80];                        /* +0x00..0x7F unused (overlaps accel + ir session+cmd) */
         volatile uint32_t stepDetectAccumulator;    /* +0x80 = ir.payload[0x10] */
         volatile uint32_t pendingStepDetect;        /* +0x84 = ir.payload[0x14] */
-        volatile uint8_t  at_f8ee;                  /* +0x88 = ir.payload[0x18] (DAT_f8ee) */
+        volatile uint8_t  _resetByte;               /* +0x88 = ir.payload[0x18] — set to 0 alongside step-detect state (DAT_f8ee) */
         volatile uint8_t  isNotWalking;             /* +0x89 = ir.payload[0x19] */
     } ped;
 };
@@ -321,10 +321,10 @@ enum view_id {
 #define DAT_f7d8_w  (*(volatile uint16_t *)&g.viewstate.v.dowsing.awardedItemHi)
 
 /* g.scratch1 / g.scratch2 typed views (no plain struct equivalent). */
-#define DAT_f886                  (g.scratch2.ir.at_f886)
-#define DAT_f88e                  (g.scratch2.ir.at_f88e)
-#define DAT_f896                  (g.scratch2.ir.at_f896)
-#define DAT_f8c1                  (g.scratch2.ir.at_f8c1)
+#define DAT_f886                  (g.scratch2.ir.txResponseA)         /* uint8_t[16] -- decays to ptr */
+#define DAT_f88e                  (&g.scratch2.ir.txResponseA[8])     /* uint8_t * — DAT_f88e[0] = txResponseA[8] */
+#define DAT_f896                  (g.scratch2.ir.txResponseB)         /* uint8_t[16] -- decays to ptr */
+#define DAT_f8c1                  (g.scratch2.ir.at_5b)
 
 #define DAT_f7e6        (g.scratch1.bytes)              /* uint8_t[128] -- decays to (uint8_t *) */
 #define DAT_f7f2        (g.scratch1.ir.at_0c_w)
