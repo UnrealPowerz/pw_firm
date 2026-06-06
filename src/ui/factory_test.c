@@ -232,7 +232,7 @@ cleanup:
 void diag_init_test_mode(void) {
   g.viewstate.Y.BYTE = 0;
   g.viewstate.A = 0;
-  g.viewstate.v.bytes.at_d4 = 1;
+  g.viewstate.v.factoryTest.calibValueLo = 1;
   g.save_settings.BYTE = (g.save_settings.BYTE & 0xF9) | 0x04;
   drv_sound_set_volume(2);
   drv_lcd_set_contrast(4);
@@ -328,9 +328,9 @@ void ui_handle_factory_test(void) {
       s1 = RSECDR;
       s2 = RSECDR;
     } while (s1 != s2);
-    g.viewstate.v.bytes.at_d1.BYTE = s1;
+    g.viewstate.v.factoryTest.currentInputByte.BYTE = s1;
     diag_eeprom_factory_test(0x300);
-    g.viewstate.v.bytes.at_d3 = (uint8_t)diag_eeprom_factory_test(0x300);
+    g.viewstate.v.factoryTest.testResultGate = (uint8_t)diag_eeprom_factory_test(0x300);
     sys_factory_reset_eeprom(1, 1);
     do {
       while (RSECDR & 0x80)
@@ -338,15 +338,15 @@ void ui_handle_factory_test(void) {
       s1 = RSECDR;
       s2 = RSECDR;
     } while (s1 != s2);
-    *(uint8_t *)(&g.viewstate.v.bytes.at_d2) = s1;
+    *(uint8_t *)(&g.viewstate.v.factoryTest.expectedInputByte) = s1;
     goto do_inc;
   }
 
   case 0x0C:
-    /* EEPROM result gate — `g.viewstate.v.bytes.at_d3` here doubles as a generic
+    /* EEPROM result gate — `g.viewstate.v.factoryTest.testResultGate` here doubles as a generic
        pass-flag (1=passed, 0=failed). Wait for the renderer to settle
        then advance with sound. NG2 is shown if it failed. */
-    if (g.viewstate.v.bytes.at_d3 == 0) {
+    if (g.viewstate.v.factoryTest.testResultGate == 0) {
       return;
     }
     if (subA < 4) {
@@ -357,19 +357,19 @@ void ui_handle_factory_test(void) {
   case 0x0D: {
     /* Accel calibration validate — read EEPROM cal block, verify checksum. */
     uint16_t val;
-    save_read_reliable(EEPROM_ACCEL_CAL, EEPROM_ACCEL_CAL_BACKUP, (void *)&g.viewstate.v.bytes.at_d4, 2);
-    val = g.viewstate.v.bytes.at_d4;
-    g.viewstate.v.bytes.at_d3 = drv_adc_validate_calib_checksum(val);
+    save_read_reliable(EEPROM_ACCEL_CAL, EEPROM_ACCEL_CAL_BACKUP, (void *)&g.viewstate.v.factoryTest.calibValueLo, 2);
+    val = g.viewstate.v.factoryTest.calibValueLo;
+    g.viewstate.v.factoryTest.testResultGate = drv_adc_validate_calib_checksum(val);
     if (val != 0) {
       goto do_inc;
     }
-    g.viewstate.v.bytes.at_d3 = 0;
+    g.viewstate.v.factoryTest.testResultGate = 0;
     goto set_substate_y_and_clear_a;
   }
 
   case 0x0E:
-    /* Accel calibration result gate. NG3 if g.viewstate.v.bytes.at_d3 == 0. */
-    if (g.viewstate.v.bytes.at_d3 == 0) {
+    /* Accel calibration result gate. NG3 if g.viewstate.v.factoryTest.testResultGate == 0. */
+    if (g.viewstate.v.factoryTest.testResultGate == 0) {
       return;
     }
     if (subA < 4) {
@@ -380,7 +380,7 @@ void ui_handle_factory_test(void) {
   case 0x0F:
     /* Accel sample check — advance only once samples diverge from the
        stashed value (gives the technician time to wiggle the device). */
-    if (g.viewstate.v.bytes.at_d1.BYTE != *(uint8_t *)(&g.viewstate.v.bytes.at_d2)) {
+    if (g.viewstate.v.factoryTest.currentInputByte.BYTE != *(uint8_t *)(&g.viewstate.v.factoryTest.expectedInputByte)) {
       goto do_sound_and_inc;
     }
     return;
@@ -388,12 +388,12 @@ void ui_handle_factory_test(void) {
   case 0x10:
     /* Re-init the accel driver and arm the result check. */
     drv_accel_init();
-    g.viewstate.v.bytes.at_d3 = 0;
+    g.viewstate.v.factoryTest.testResultGate = 0;
     goto do_inc;
 
   case 0x11:
     /* Accel init result gate. NG5 if pass-flag still 0. */
-    if (g.viewstate.v.bytes.at_d3 == 0) {
+    if (g.viewstate.v.factoryTest.testResultGate == 0) {
       return;
     }
     goto do_sound_and_inc;
@@ -505,28 +505,28 @@ void ui_render_factory_test(void) {
     goto case_d;
 
   case 0x0C:
-    if (g.viewstate.v.bytes.at_d3 != 0) {
+    if (g.viewstate.v.factoryTest.testResultGate != 0) {
       goto case_d;
     }
     draw_string(0x20, 0x08, FACTORY_STR_NG2);
     goto case_d;
 
   case 0x0E:
-    if (g.viewstate.v.bytes.at_d3 != 0) {
+    if (g.viewstate.v.factoryTest.testResultGate != 0) {
       goto case_d;
     }
     draw_string(0x20, 0x08, FACTORY_STR_NG3);
     goto case_d;
 
   case 0x0F:
-    if (g.viewstate.v.bytes.at_d1.BYTE != *(uint8_t *)(&g.viewstate.v.bytes.at_d2)) {
+    if (g.viewstate.v.factoryTest.currentInputByte.BYTE != *(uint8_t *)(&g.viewstate.v.factoryTest.expectedInputByte)) {
       goto case_d;
     }
     draw_string(0x20, 0x08, FACTORY_STR_NG4);
     goto case_d;
 
   case 0x11:
-    if (g.viewstate.v.bytes.at_d3 != 0) {
+    if (g.viewstate.v.factoryTest.testResultGate != 0) {
       goto case_d;
     }
     draw_string(0x20, 0x08, FACTORY_STR_NG5);
@@ -543,10 +543,10 @@ void ui_render_factory_test(void) {
       ;
     PDR1 |= 0x01;
 
-    /* Draw hex digits of g.viewstate.v.bytes.at_d4 */
+    /* Draw hex digits of g.viewstate.v.factoryTest.calibValueLo */
     {
       const uint8_t *hexTable = HEX_DIGITS;
-      uint16_t val = g.viewstate.v.bytes.at_d4;
+      uint16_t val = g.viewstate.v.factoryTest.calibValueLo;
 
       draw_string(0x20, 0x00, FACTORY_STR_OK);
 

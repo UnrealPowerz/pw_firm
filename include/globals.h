@@ -199,6 +199,19 @@ struct viewstate {
             volatile byte_bits_t _at_d8;           /* 0xF7D8 — unused by peer_play */
             volatile uint8_t     _at_d9;           /* 0xF7D9 — unused by peer_play */
         } peerPlay;
+        /* Factory test view (multi-stage; bytes serve different roles per stage).
+         * Documented in factory_test.c. */
+        struct {
+            volatile byte_bits_t currentInputByte;  /* 0xF7D1 = at_d1 — live button-input or accel-sample */
+            volatile uint8_t     expectedInputByte; /* 0xF7D2 = at_d2 — expected value to compare against */
+            volatile uint8_t     testResultGate;    /* 0xF7D3 = at_d3 — 0 = NG, nonzero = OK */
+            volatile uint8_t     calibValueLo;      /* 0xF7D4 = at_d4 — accel-cal uint16 (lo byte) / generic counter */
+            volatile uint8_t     calibValueHi;      /* 0xF7D5 = at_d5 — accel-cal uint16 (hi byte) */
+            volatile uint8_t     _at_d6;            /* 0xF7D6 — unused */
+            volatile uint8_t     _at_d7;            /* 0xF7D7 — unused */
+            volatile byte_bits_t _at_d8;            /* 0xF7D8 — unused */
+            volatile uint8_t     _at_d9;            /* 0xF7D9 — unused */
+        } factoryTest;
         /* Add more per-subsystem views here as each is audited. ch38 pads
          * uint16 members to even offsets within a struct; since this
          * union sits at an odd offset within viewstate (Y/Z/A take 3
