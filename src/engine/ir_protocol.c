@@ -95,24 +95,24 @@ void sys_begin_ir_session(event_loop_func_t current_loop,
 // ROM: 0x009a  91.2%
 void ir_handle_remote_cmd(void) {
   switch (g.scratch2.ir.requestedPokemonAction) {
-  case 0xF0: goto enter_test_mode;
-  case 0xFE: goto enter_debug_mode;
-  case 0xE0: goto factory_reset_full;
-  case 0x2A: goto factory_reset_partial;
-  case 0x2C: goto factory_reset_minimal;
-  case 0x38: goto start_new_walk;
-  case 0x4E: goto end_walk_show_report;
-  case 0x5A: goto restart_walk_clear_history;
-  case 0x66: goto clear_walk_stats;
-  case 0x16: goto start_peer_play;
-  case 0xC0: goto show_menu_a3;
-  case 0xC2: goto show_menu_a0;
-  case 0xC4: goto show_menu_a2;
-  case 0xC6: goto show_menu_a1;
-  case 0xB8: goto show_menu_a4;
-  case 0xBA: goto show_menu_a5;
-  case 0xBC: goto show_menu_a6;
-  case 0xBE: goto show_menu_a7;
+  case IR_CMD_FACTORY_TEST: goto enter_test_mode;
+  case IR_CMD_DEBUG_MODE: goto enter_debug_mode;
+  case IR_CMD_WALKER_RESET_3: goto factory_reset_full;
+  case IR_CMD_WALKER_RESET_1: goto factory_reset_partial;
+  case IR_CMD_WALKER_RESET_0: goto factory_reset_minimal;
+  case IR_CMD_WALK_START_INIT: goto start_new_walk;
+  case IR_CMD_WALK_END_REQ: goto end_walk_show_report;
+  case IR_CMD_WALK_START: goto restart_walk_clear_history;
+  case IR_CMD_CONNECT_COMPLETE: goto clear_walk_stats;
+  case IR_CMD_PEER_PLAY_END: goto start_peer_play;
+  case IR_CMD_EVENT_MAP: goto show_menu_a3;
+  case IR_CMD_EVENT_POKEMON: goto show_menu_a0;
+  case IR_CMD_EVENT_ITEM: goto show_menu_a2;
+  case IR_CMD_EVENT_ROUTE: goto show_menu_a1;
+  case IR_CMD_SHOW_MENU_A4: goto show_menu_a4;
+  case IR_CMD_SHOW_MENU_A5: goto show_menu_a5;
+  case IR_CMD_SHOW_MENU_A6: goto show_menu_a6;
+  case IR_CMD_SHOW_MENU_A7: goto show_menu_a7;
   default:   goto default_handle_error;
   }
 
@@ -450,7 +450,7 @@ void ir_comm_loop(void) {
     }
 
     switch (cmdByte) {
-    case 0xFA:
+    case IR_CMD_ASSERT_MASTER:
       if (subtype == 1 || subtype == 2) {
         phase = g.scratch2.ir.handshakeStep;
         switch (phase) {
@@ -481,10 +481,10 @@ void ir_comm_loop(void) {
       g.ir_resultCode = 3;
       goto LAB_14bc;
 
-    case 0xF4:
+    case IR_CMD_DISCONNECT:
       goto LAB_14bc;
 
-    case 0xF8:
+    case IR_CMD_SLAVE_ACK:
       if (subtype != 2) {
         g.ir_resultCode = 3;
         goto LAB_14bc;
@@ -501,7 +501,7 @@ void ir_comm_loop(void) {
       g.viewstate.Y.BIT.b0 = 0;
       goto LAB_182e;
 
-    case 0x10:
+    case IR_CMD_PEER_PLAY_START:
       g.viewstate.Y.BIT.b0 = 1;
       memcpy(g.scratch1.bytes, payload, 0x68);
       save_read_reliable(EEPROM_TRAINER_REC, EEPROM_TRAINER_REC_BACKUP, (void *)g.scratch1.secondTrainer.buf, 0x68);
@@ -543,7 +543,7 @@ void ir_comm_loop(void) {
       drv_ir_send_packet(0x68, 0x12, 2);
       goto LAB_182e;
 
-    case 0x12:
+    case IR_CMD_PEER_PLAY_RSP:
       memcpy(g.scratch1.bytes, payload, 0x68);
       save_read_reliable(EEPROM_TRAINER_REC, EEPROM_TRAINER_REC_BACKUP, (void *)g.scratch1.secondTrainer.buf, 0x68);
       if (!((byte_bits_t *)&payload[0x5B])->BIT.b0) {
@@ -582,7 +582,7 @@ void ir_comm_loop(void) {
       g.scratch2.ir.xferChunkCount = 0;
       goto start_eeprom_tx;
 
-    case 0x14:
+    case IR_CMD_PEER_PLAY_DX:
       if (g.viewstate.Y.BIT.b0) {
         /* slave path — save peer data, then build + send 0x14 response */
         drv_eeprom_write_block(0xF6C0, payload, 0x38);
@@ -594,18 +594,18 @@ void ir_comm_loop(void) {
       }
       goto LAB_182e;
 
-    case 0x16:
+    case IR_CMD_PEER_PLAY_END:
       if (g.viewstate.Y.BIT.b0) {
         drv_ir_send_packet(0x00, 0x16, 2);
       }
       cmdByte = 0x16;
       goto LAB_1252;
 
-    case 0x1C:
+    case IR_CMD_PEER_PLAY_SEEN:
       g.ir_resultCode = 5;
       goto LAB_14bc;
 
-    case 0x20:
+    case IR_CMD_IDENTITY_REQ:
       save_read_reliable(EEPROM_TRAINER_REC, EEPROM_TRAINER_REC_BACKUP, payload, 0x68);
       *(uint32_t *)(payload + 0x64) = g.save_totalSteps;
       save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (void *)&g.save_totalSteps, 0x18);
@@ -617,67 +617,67 @@ void ir_comm_loop(void) {
       drv_ir_send_packet(0x68, 0x22, 2);
       goto LAB_182e;
 
-    case 0x32:
+    case IR_CMD_IDENTITY_SEND:
       ir_parse_rx_packet();
       save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (void *)&g.save_totalSteps, 0x18);
       drv_ir_send_packet(0x00, 0x34, 2);
       goto LAB_182e;
 
-    case 0x36:
+    case IR_CMD_NOCOMPLETE:
       g.ir_resultCode = 3;
       goto LAB_14bc;
 
-    case 0x38:
+    case IR_CMD_WALK_START_INIT:
       drv_ir_send_packet(0x00, 0x38, 2);
       cmdByte = 0x38;
       goto LAB_15e4;
 
-    case 0x40:
+    case IR_CMD_IDENTITY_SEND_ALIAS1:
       ir_parse_rx_packet();
       save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (void *)&g.save_totalSteps, 0x18);
       drv_ir_send_packet(0x00, 0x42, 2);
       goto LAB_182e;
 
-    case 0x44:
+    case IR_CMD_NOCOMPLETE_ALIAS3:
       g.ir_resultCode = 3;
       goto LAB_14bc;
 
-    case 0x4E:
+    case IR_CMD_WALK_END_REQ:
       drv_ir_send_packet(0x00, 0x50, 2);
       cmdByte = 0x4E;
       goto LAB_1252;
 
-    case 0x52:
+    case IR_CMD_IDENTITY_SEND_ALIAS2:
       ir_parse_rx_packet();
       save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (void *)&g.save_totalSteps, 0x18);
       drv_ir_send_packet(0x00, 0x54, 2);
       goto LAB_182e;
 
-    case 0x5A:
+    case IR_CMD_WALK_START:
       drv_ir_send_packet(0x00, 0x5A, 2);
       cmdByte = 0x5A;
       goto LAB_1252;
 
-    case 0x56:
+    case IR_CMD_NOCOMPLETE_ALIAS1:
       g.ir_resultCode = 3;
       goto LAB_14bc;
 
-    case 0x60:
+    case IR_CMD_IDENTITY_SEND_ALIAS3:
       ir_parse_rx_packet();
       save_read_reliable(EEPROM_TRAINER_REC, EEPROM_TRAINER_REC_BACKUP, (void *)g.scratch1.secondTrainer.buf, 0x68);
       drv_ir_send_packet(0x00, 0x62, 2);
       goto LAB_182e;
 
-    case 0x66:
+    case IR_CMD_CONNECT_COMPLETE:
       drv_ir_send_packet(0x00, 0x68, 2);
       cmdByte = 0x66;
       goto LAB_15e4;
 
-    case 0x64:
+    case IR_CMD_NOCOMPLETE_ALIAS2:
       g.ir_resultCode = 3;
       goto LAB_14bc;
 
-    case 0xC0: {
+    case IR_CMD_EVENT_MAP: {
       uint8_t bf = drv_eeprom_read_u8(EEPROM_STEP_HIST_FLAGS);
       bf |= 0x10;
       drv_eeprom_write_u8(EEPROM_STEP_HIST_FLAGS, bf);
@@ -687,7 +687,7 @@ void ir_comm_loop(void) {
       cmdByte = 0xC0;
       goto LAB_1252;
 
-    case 0xD0: {
+    case IR_CMD_EVENT_MAP_STAMPS: {
       uint8_t bf = drv_eeprom_read_u8(EEPROM_STEP_HIST_FLAGS);
       bf |= 0x1F;
       drv_eeprom_write_u8(EEPROM_STEP_HIST_FLAGS, bf);
@@ -697,7 +697,7 @@ void ir_comm_loop(void) {
       cmdByte = 0xC0;
       goto LAB_1252;
 
-    case 0xC2: {
+    case IR_CMD_EVENT_POKEMON: {
       uint8_t bf = drv_eeprom_read_u8(EEPROM_STEP_HIST_FLAGS);
       bf |= 0x20;
       drv_eeprom_write_u8(EEPROM_STEP_HIST_FLAGS, bf);
@@ -707,7 +707,7 @@ void ir_comm_loop(void) {
       cmdByte = 0xC2;
       goto LAB_1252;
 
-    case 0xD2: {
+    case IR_CMD_EVENT_POKEMON_STAMPS: {
       uint8_t bf = drv_eeprom_read_u8(EEPROM_STEP_HIST_FLAGS);
       bf |= 0x2F;
       drv_eeprom_write_u8(EEPROM_STEP_HIST_FLAGS, bf);
@@ -717,7 +717,7 @@ void ir_comm_loop(void) {
       cmdByte = 0xC2;
       goto LAB_1252;
 
-    case 0xC4: {
+    case IR_CMD_EVENT_ITEM: {
       uint8_t bf = drv_eeprom_read_u8(EEPROM_STEP_HIST_FLAGS);
       bf |= 0x40;
       drv_eeprom_write_u8(EEPROM_STEP_HIST_FLAGS, bf);
@@ -727,7 +727,7 @@ void ir_comm_loop(void) {
       cmdByte = 0xC4;
       goto LAB_1252;
 
-    case 0xD4: {
+    case IR_CMD_EVENT_ITEM_STAMPS: {
       uint8_t bf = drv_eeprom_read_u8(EEPROM_STEP_HIST_FLAGS);
       bf |= 0x4F;
       drv_eeprom_write_u8(EEPROM_STEP_HIST_FLAGS, bf);
@@ -737,7 +737,7 @@ void ir_comm_loop(void) {
       cmdByte = 0xC4;
       goto LAB_1252;
 
-    case 0xC6: {
+    case IR_CMD_EVENT_ROUTE: {
       uint8_t bf = drv_eeprom_read_u8(EEPROM_STEP_HIST_FLAGS);
       bf |= 0x80;
       drv_eeprom_write_u8(EEPROM_STEP_HIST_FLAGS, bf);
@@ -749,7 +749,7 @@ void ir_comm_loop(void) {
       cmdByte = 0xC6;
       goto LAB_1252;
 
-    case 0xD6: {
+    case IR_CMD_EVENT_ROUTE_STAMPS: {
       uint8_t bf = drv_eeprom_read_u8(EEPROM_STEP_HIST_FLAGS);
       bf |= 0x8F;
       drv_eeprom_write_u8(EEPROM_STEP_HIST_FLAGS, bf);
@@ -761,16 +761,16 @@ void ir_comm_loop(void) {
       cmdByte = 0xC6;
       goto LAB_1252;
 
-    case 0xD8:
+    case IR_CMD_EVENT_REJECT:
       g.ir_resultCode = 3;
       goto LAB_14bc;
 
-    case 0x24:
+    case IR_CMD_PING:
       drv_ir_send_packet(0x00, 0x26, 2);
       goto LAB_182e;
 
-    case 0x80:
-    case 0x00: {
+    case IR_CMD_EEPROM_WRITE_CMP_80:
+    case IR_CMD_EEPROM_WRITE_CMP_00: {
       uint16_t write_addr = ((uint16_t)subtype << 8) | (uint16_t)cmdByte;
       if (pktLen2 == 0x80) {
         drv_eeprom_write_page(write_addr, payload);
@@ -781,14 +781,14 @@ void ir_comm_loop(void) {
       goto LAB_17ee;
     }
 
-    case 0x82:
-    case 0x02: {
+    case IR_CMD_EEPROM_WRITE_RAW_80:
+    case IR_CMD_EEPROM_WRITE_RAW_00: {
       uint16_t write_addr = ((uint16_t)subtype << 8) | (uint16_t)(cmdByte & 0x80);
       drv_eeprom_write_block(write_addr, payload, pktLen2);
       goto LAB_17ea;
     }
 
-    case 0x04:
+    case IR_CMD_EEPROM_WRITE_ACK:
       if (e1val == 0) {
         phase = g.scratch2.ir.sessionPhase;
         if (phase == 1)
@@ -829,10 +829,10 @@ void ir_comm_loop(void) {
       g.scratch2.ir.xferChunkCount = 0;
       goto start_eeprom_tx_alt;
 
-    case 0xA0:
-    case 0xA2:
-    case 0xA4:
-    case 0xA6:
+    case IR_CMD_REPEAT_PROBE_A0:
+    case IR_CMD_REPEAT_PROBE_A2:
+    case IR_CMD_REPEAT_PROBE_A4:
+    case IR_CMD_REPEAT_PROBE_A6:
       ir_parse_rx_packet();
       {
         uint8_t i;
@@ -850,10 +850,10 @@ void ir_comm_loop(void) {
       drv_ir_send_packet(0x11, cmdByte, 2);
       goto LAB_182e;
 
-    case 0xA8:
-    case 0xAA:
-    case 0xAC:
-    case 0xAE:
+    case IR_CMD_REPEAT_PROBE_A8:
+    case IR_CMD_REPEAT_PROBE_AA:
+    case IR_CMD_REPEAT_PROBE_AC:
+    case IR_CMD_REPEAT_PROBE_AE:
       ir_parse_rx_packet();
       {
         uint8_t i;
@@ -871,16 +871,16 @@ void ir_comm_loop(void) {
       drv_ir_send_packet(0x11, cmdByte, 2);
       goto LAB_182e;
 
-    case 0xB8:
-    case 0xBA:
-    case 0xBC:
-    case 0xBE: {
+    case IR_CMD_SHOW_MENU_A4:
+    case IR_CMD_SHOW_MENU_A5:
+    case IR_CMD_SHOW_MENU_A6:
+    case IR_CMD_SHOW_MENU_A7: {
       uint8_t flagByte = drv_eeprom_read_u8(EEPROM_STEP_HIST_FLAGS);
       switch (cmdByte) {
-      case 0xB8: flagByte |= 0x01; break;
-      case 0xBA: flagByte |= 0x02; break;
-      case 0xBC: flagByte |= 0x04; break;
-      case 0xBE: flagByte |= 0x08; break;
+      case IR_CMD_SHOW_MENU_A4: flagByte |= 0x01; break;
+      case IR_CMD_SHOW_MENU_A5: flagByte |= 0x02; break;
+      case IR_CMD_SHOW_MENU_A6: flagByte |= 0x04; break;
+      case IR_CMD_SHOW_MENU_A7: flagByte |= 0x08; break;
       }
       g.scratch2.ir.requestedPokemonAction = cmdByte;
       drv_eeprom_write_u8(EEPROM_STEP_HIST_FLAGS, flagByte);
@@ -888,17 +888,17 @@ void ir_comm_loop(void) {
     }
       goto LAB_14bc;
 
-    case 0x9E:
+    case IR_CMD_NORX_ACK:
       drv_ir_send_packet(0x00, 0x9E, 2);
       g.ir_resultCode = 7;
       goto LAB_14bc;
 
-    case 0x9C:
+    case IR_CMD_NORX:
       drv_ir_send_packet(0x00, 0x9C, 2);
       g.ir_resultCode = 7;
       goto LAB_14bc;
 
-    case 0xF0: {
+    case IR_CMD_FACTORY_TEST: {
       save_write_reliable(EEPROM_RESV_0083, EEPROM_RESV_0083_BACKUP, payload, 0x28);
       drv_eeprom_write_block(0x0008, payload + 0x68, 0x08);
       g.viewstate.Z = 1;
@@ -935,7 +935,7 @@ void ir_comm_loop(void) {
       goto LAB_182e;
     }
 
-    case 0xFE:
+    case IR_CMD_DEBUG_MODE:
       if (subtype == 1 && pktLen2 == 8) {
         drv_eeprom_write_block(0x0008, payload, 0x08);
         drv_ir_send_packet(0x00, 0xFE, 2);
@@ -944,19 +944,19 @@ void ir_comm_loop(void) {
       }
       goto LAB_182e;
 
-    case 0x2A:
+    case IR_CMD_WALKER_RESET_1:
       save_read_reliable(EEPROM_RESV_0083, EEPROM_RESV_0083_BACKUP, payload, 0x28);
       drv_ir_send_packet(0x28, 0x2A, 2);
       cmdByte = 0x2A;
       goto LAB_15e4;
 
-    case 0x2C:
+    case IR_CMD_WALKER_RESET_0:
       save_read_reliable(EEPROM_RESV_0083, EEPROM_RESV_0083_BACKUP, payload, 0x28);
       drv_ir_send_packet(0x28, 0x2A, 2);
       cmdByte = 0x2C;
       goto LAB_15e4;
 
-    case 0x0C: {
+    case IR_CMD_EEPROM_READ_REQ: {
       /* CMD_EEPROM_READ_REQ — peer asks us to read 'chunk' bytes from
        * EEPROM addr {src_hi, src_lo} (in payload[0..2]) and respond with
        * CMD_EEPROM_READ_RSP. ROM reads from er5 = payload, NOT from the
@@ -968,7 +968,7 @@ void ir_comm_loop(void) {
       goto LAB_182e;
     }
 
-    case 0x0E:
+    case IR_CMD_EEPROM_READ_RSP:
       /* CMD_EEPROM_READ_RSP — peer sent us a chunk of data. Write to
        * xferDst, advance pointers, then either request next chunk
        * (xferRemaining > 0) or do the phase transition. */
@@ -1003,14 +1003,14 @@ void ir_comm_loop(void) {
         goto LAB_182e;
       }
 
-    case 0x0A:
+    case IR_CMD_EEPROM_WRITE_RND:
       /* CMD_EEPROM_WRITE_RND — random-length write. Address is built from
        * subtype (hi) and payload[0] (lo); data is payload[1..pktLen2-1]. */
       drv_eeprom_write_block(((uint16_t)subtype << 8) | payload[0],
                              payload + 1, (uint16_t)(pktLen2 - 1));
       goto LAB_17ee;
 
-    case 0x06: {
+    case IR_CMD_RAM_WRITE: {
       /* CMD_RAM_WRITE — write bytes to RAM. Address is (subtype << 8) |
        * payload[0]; data is payload[1..pktLen2-1]. ROM dst = r1 + payload[0]
        * where r1 was previously set up with (subtype << 8) by the same code
