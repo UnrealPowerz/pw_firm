@@ -30,7 +30,7 @@ union pw_scratch {
         uint8_t  flags_38_tail[8];/* +0x40..0x47 last 8 bytes of trainer_record.flags_38 (overlays accel.samples) */
         uint8_t  at_48[18];       /* +0x48..0x59 DAT_f82e block (matches trainer_record.at_48) */
         uint8_t  eventBitIndex;   /* +0x5A DAT_f840 (event-bit index passed to save_set_event_bit) */
-        volatile uint8_t flags_5b;/* +0x5B DAT_f841 (b0/b1 used; bits 7..3 pack an hour value) */
+        volatile byte_bits_t flags_5b; /* +0x5B DAT_f841 (b0/b1 used; bits 7..3 pack an hour value) */
         uint8_t  at_5c;           /* +0x5C DAT_f842 (battle context?) */
         uint8_t  at_5d;           /* +0x5D DAT_f843 */
         uint16_t at_5e_w;         /* +0x5E DAT_f844 (uint16; checked != 0) */

@@ -250,7 +250,7 @@ void ir_parse_rx_packet(void) {
 
   /* g.scratch1.ir.flags_5b packs an hour in bits 7..3 (top 5 bits, valid if < 0x18).
      Decode to BCD for the notify-time scheduler. */
-  hour_raw = g.scratch1.ir.flags_5b;
+  hour_raw = g.scratch1.ir.flags_5b.BYTE;
   if ((hour_raw & 0xF8) < 0xC0) {
     bcd = (uint16_t)(hour_raw >> 3);
     tens = bcd / 10;
@@ -479,12 +479,12 @@ void ir_comm_loop(void) {
         g.ir_resultCode = 3;
         goto LAB_14bc;
       }
-      if (!((byte_bits_t *)&g.scratch1.ir.flags_5b)->BIT.b0) {
+      if (!g.scratch1.ir.flags_5b.BIT.b0) {
         drv_ir_send_packet(0x68, 0x12, 2);
         g.ir_resultCode = 3;
         goto LAB_14bc;
       }
-      if (!((byte_bits_t *)&g.scratch1.ir.flags_5b)->BIT.b1) {
+      if (!g.scratch1.ir.flags_5b.BIT.b1) {
         drv_ir_send_packet(0x68, 0x12, 2);
         g.ir_resultCode = 3;
         goto LAB_14bc;
@@ -519,11 +519,11 @@ void ir_comm_loop(void) {
         g.ir_resultCode = 3;
         goto LAB_14bc;
       }
-      if (!((byte_bits_t *)&g.scratch1.ir.flags_5b)->BIT.b0) {
+      if (!g.scratch1.ir.flags_5b.BIT.b0) {
         g.ir_resultCode = 3;
         goto LAB_14bc;
       }
-      if (!((byte_bits_t *)&g.scratch1.ir.flags_5b)->BIT.b1) {
+      if (!g.scratch1.ir.flags_5b.BIT.b1) {
         g.ir_resultCode = 3;
         goto LAB_14bc;
       }

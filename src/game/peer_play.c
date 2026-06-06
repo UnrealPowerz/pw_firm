@@ -117,8 +117,7 @@ void ui_start_peer_play_app(void) {
   /* Copy bit 0 of buf[0x37] into bit 1 of g.viewstate.Y.BYTE -- the ROM uses
    * bld+bst here, which means the destination bit is unconditionally set
    * to the source bit (not OR'd as the original C suggested). */
-  ((byte_bits_t *)&g.viewstate.Y.BYTE)->BIT.b1 =
-      ((byte_bits_t *)&buf[0x37])->BIT.b0;
+  g.viewstate.Y.BIT.b1 = ((byte_bits_t *)&buf[0x37])->BIT.b0;
   g.viewstate.Z = 0;
   g.viewstate.A = 0;
   game_calculate_interaction_reward();
