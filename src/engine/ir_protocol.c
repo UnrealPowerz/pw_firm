@@ -960,22 +960,40 @@ void ir_comm_loop(void) {
     }
 
     case 0x0E:
-      drv_eeprom_write_block(addr, payload, 0x80);
+      /* CMD_EEPROM_READ_RSP — peer sent us a chunk of data. Write to
+       * xferDst, advance pointers, then either request next chunk
+       * (xferRemaining > 0) or do the phase transition. */
+      drv_eeprom_write_block(g.scratch2.ir.xferDst, payload, e2val);
       g.scratch2.ir.xferSrc += e2val;
       g.scratch2.ir.xferDst += e2val;
       g.scratch2.ir.xferRemaining -= e2val;
       g.scratch2.ir.xferChunkCount++;
-      if (g.scratch2.ir.xferRemaining == 0) {
-        if (g.scratch2.ir.sessionPhase == 2) {
-          g.scratch2.ir.sessionPhase = 4;
-          *(uint16_t *)&g.scratch2.ir.xferSrc = 0x993E;
-          *(uint16_t *)&g.scratch2.ir.xferDst = (uint16_t)DAT_f580;
-          g.scratch2.ir.xferRemaining = 0x140;
-          g.scratch2.ir.xferChunkCount = 0;
-          goto start_eeprom_tx;
-        }
+      if (g.scratch2.ir.xferRemaining != 0) {
+        goto start_eeprom_tx_alt;   /* send next READ_REQ */
       }
-      goto LAB_182e;
+      switch (g.scratch2.ir.sessionPhase) {
+      case 2:
+        g.scratch2.ir.sessionPhase = 4;
+        *(uint16_t *)&g.scratch2.ir.xferSrc = 0x993E;
+        *(uint16_t *)&g.scratch2.ir.xferDst = (uint16_t)DAT_f580;
+        g.scratch2.ir.xferRemaining = 0x140;
+        g.scratch2.ir.xferChunkCount = 0;
+        goto start_eeprom_tx_alt;
+      case 4:
+        g.scratch2.ir.sessionPhase = 6;
+        *(uint16_t *)&g.scratch2.ir.xferSrc = 0xCC00;
+        *(uint16_t *)&g.scratch2.ir.xferDst = 0xDC00;
+        g.scratch2.ir.xferRemaining = 0x224;
+        g.scratch2.ir.xferChunkCount = 0;
+        goto start_eeprom_tx_alt;
+      case 6:
+        /* ROM LAB_16da — finalize peer-play data: stash totalSteps/recentSteps
+         * into the rx buffer, read trainer profile, splice fields, send 0x14.
+         * Not yet reconstructed; falling through ends the session cleanly. */
+        goto LAB_182e;
+      default:
+        goto LAB_182e;
+      }
 
     case 0x0A:
       drv_eeprom_write_block(((uint16_t)subtype << 8) | pktBase[0], payload + 1, (uint16_t)(pktLen2 - 1));
