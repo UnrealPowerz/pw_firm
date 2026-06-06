@@ -272,6 +272,17 @@ void ir_parse_rx_packet(void) {
  * Builds the 0x38-byte CMD_PEER_PLAY_DX response payload (session steps +
  * trainer id/loc + bit-spliced profile/event flags + 0x16 bytes of profile
  * sprite data) and sends it. Matches ROM LAB_0f04+LAB_0fc0 and LAB_16da. */
+/* Shared by IR_CMD_IDENTITY_SEND and its three aliases (0x40, 0x52, 0x60).
+ * Parses the received trainer record, commits our save block, and acks.
+ * Each call site supplies the ack cmd byte (one of 0x34, 0x42, 0x54). */
+#pragma inline (commit_identity_and_ack)
+static void commit_identity_and_ack(uint8_t response_cmd) {
+  ir_parse_rx_packet();
+  save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP,
+                      (void *)&g.save_totalSteps, 0x18);
+  drv_ir_send_packet(0x00, response_cmd, 2);
+}
+
 /* Shared by all 8 IR_CMD_EVENT_* cases (0xC0/C2/C4/C6 + 0xD0/D2/D4/D6).
  * Each event ORs a different bit-mask into EEPROM_STEP_HIST_FLAGS, then
  * records the event on the local trainer record's event-bit array, and
@@ -637,9 +648,7 @@ void ir_comm_loop(void) {
       goto finish_packet;
 
     case IR_CMD_IDENTITY_SEND:
-      ir_parse_rx_packet();
-      save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (void *)&g.save_totalSteps, 0x18);
-      drv_ir_send_packet(0x00, 0x34, 2);
+      commit_identity_and_ack(0x34);
       goto finish_packet;
 
     case IR_CMD_NOCOMPLETE:
@@ -652,9 +661,7 @@ void ir_comm_loop(void) {
       goto schedule_action_no_finish;
 
     case IR_CMD_IDENTITY_SEND_ALIAS1:
-      ir_parse_rx_packet();
-      save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (void *)&g.save_totalSteps, 0x18);
-      drv_ir_send_packet(0x00, 0x42, 2);
+      commit_identity_and_ack(0x42);
       goto finish_packet;
 
     case IR_CMD_NOCOMPLETE_ALIAS3:
@@ -667,9 +674,7 @@ void ir_comm_loop(void) {
       goto schedule_action_then_finish;
 
     case IR_CMD_IDENTITY_SEND_ALIAS2:
-      ir_parse_rx_packet();
-      save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (void *)&g.save_totalSteps, 0x18);
-      drv_ir_send_packet(0x00, 0x54, 2);
+      commit_identity_and_ack(0x54);
       goto finish_packet;
 
     case IR_CMD_WALK_START:
