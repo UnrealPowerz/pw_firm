@@ -302,10 +302,10 @@ void game_rotate_interaction_log_record(void) {
     log_record[0x10 + i] = peer_data[0x26 + i];
   }
 
-  if (g.viewstate.v.bytes.at_d3 == 0) {
-    uint8_t accel_val = g.viewstate.v.bytes.at_d2;
+  if (g.viewstate.v.peerPlay.wattsAwarded == 0) {
+    uint8_t accel_val = g.viewstate.v.peerPlay.subTextOrSlot;
     if (accel_val < 10) {
-      /* ROM: r1h=settings_bit (d_high), e1=trainer[0x8C+g.viewstate.v.bytes.at_d2*2] uint16
+      /* ROM: r1h=settings_bit (d_high), e1=trainer[0x8C+g.viewstate.v.peerPlay.subTextOrSlot*2] uint16
        * (val_at_0e), push=0 (event_subtype). */
       game_log_interaction(
           trainer_buf, log_record, accel_val + 1,

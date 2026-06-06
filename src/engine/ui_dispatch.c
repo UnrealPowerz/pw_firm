@@ -34,7 +34,7 @@ void ui_reset_substate(void) {
   g.viewstate.Y.BYTE = 0;
   g.viewstate.Z = 0;
   g.viewstate.A = 0x20;       /* initial animation tick / dwell countdown */
-  g.viewstate.v.bytes.at_d1.BYTE &= ~0x07;          /* clear the 3 low flag bits (b0/b1/b2) used by
+  g.viewstate.v.homeStandby.flags.BYTE &= ~0x07;          /* clear the 3 low flag bits (b0/b1/b2) used by
                                  home + battle; preserve the upper byte state */
 }
 

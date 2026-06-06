@@ -375,7 +375,7 @@ void game_process_accel_data(void) {
   view = g.ui_activeView;
   if (view == VIEW_ACCEL_DEBUG) {
     sub = g.viewstate.A;
-    limit = g.viewstate.v.bytes.at_d8.BYTE;
+    limit = g.viewstate.v.accelDebug.calByte0.BYTE;
     if (sub < limit) {
       if (steps != 0) {
         g.viewstate.A = sub + 1;
@@ -400,11 +400,11 @@ void game_process_accel_data(void) {
         if (tz > threshold)
           g.ui_activeView = VIEW_TEXT;
       }
-    } else if (g.viewstate.v.bytes.at_d1.BYTE < g.viewstate.v.bytes.at_d9) {
+    } else if (g.viewstate.v.accelDebug.displayCounter.BYTE < g.viewstate.v.accelDebug.calTarget) {
       threshold = g.ped_axisIdleThreshold;
       if (accel_xPosition_word < threshold && accel_yPosition_word < threshold &&
           accel_zPosition_word < threshold) {
-        g.viewstate.v.bytes.at_d1.BYTE++;
+        g.viewstate.v.accelDebug.displayCounter.BYTE++;
       }
     }
   }
