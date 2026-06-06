@@ -43,19 +43,21 @@
  * transfer is gated by `g.scratch2.ir.sessionPhase` (own pokemon → peer pokemon → pokedex
  * → etc.). Values 1..5; the 0x04 opcode advances the phase.
  *
- * LAB_xxxx labels at the bottom of ir_comm_loop are the ROM's exit fan-out:
+ * Named labels at the bottom of ir_comm_loop are the function's exit
+ * fan-out (renamed from ROM's LAB_xxxx for readability — no codegen change):
  *
- *   LAB_182e            tx-done epilogue (random LCD reframe + reset cmd pos)
- *   LAB_14bc            drv_ir_finish_and_execute then -> LAB_182e
- *   LAB_1252            g.scratch2.ir.requestedPokemonAction = cmdByte then LAB_14bc
- *   LAB_15e4            g.scratch2.ir.requestedPokemonAction = cmdByte then LAB_182e
- *   LAB_17ee            send 0x04 ack then -> LAB_182e
- *   LAB_17ea            write trainer profile, then -> LAB_17ee
- *   start_eeprom_tx*    queue the next chunk of an EEPROM transfer
+ *   finish_packet               tx-done epilogue (LCD reframe + reset cmd pos)
+ *   finish_and_execute          run drv_ir_finish_and_execute then finish_packet
+ *   schedule_action_then_finish requestedPokemonAction = cmdByte; finish_and_execute
+ *   schedule_action_no_finish   requestedPokemonAction = cmdByte; finish_packet
+ *   send_write_ack              send 0x04 WRITE_ACK then finish_packet
+ *   send_eeprom_write_chunk     push our EEPROM chunk via CMD_EEPROM_WRITE_RAW
+ *   send_eeprom_read_request    request a chunk via CMD_EEPROM_READ_REQ
  *
- * The function is at 65.5% match and very score-sensitive; do not refactor
- * the control flow or the LAB layout without re-verifying.
- */
+ * The function is at ~70% match and very score-sensitive — empirically,
+ * extracting these shared-label patterns into helper functions (even
+ * with #pragma inline) costs match score, indicating the original C
+ * also used the goto-to-shared-label structure visible in the ROM. */
 
 // ROM: 0x6954  83.2%
 void sys_begin_ir_session(event_loop_func_t current_loop,
@@ -382,7 +384,7 @@ void ir_comm_loop(void) {
         ;
       g.scratch2.ir.handshakeStep = 1;
       drv_ir_tx_u8(0xFC);
-      goto LAB_182e;
+      goto finish_packet;
     }
     g.ir_resultCode = g.scratch2.ir.packetReceivedFlag.BIT.b0 ? 2 : 1;
     goto do_action;
@@ -443,10 +445,10 @@ void ir_comm_loop(void) {
     cmdByte = pktBase[0];
     if (cmdByte < 0xF8) {
       if (*(uint32_t *)(pktBase + 4) != g.scratch2.ir.sessionKey)
-        goto LAB_182e;
+        goto finish_packet;
       phase = g.scratch2.ir.handshakeStep;
       if (phase < 3)
-        goto LAB_182e;
+        goto finish_packet;
     }
 
     switch (cmdByte) {
@@ -459,7 +461,7 @@ void ir_comm_loop(void) {
           drv_ir_send_packet(0x00, 0xF8, 2);
           g.scratch2.ir.sessionKey = *(uint32_t *)(pktBase + 4);
           g.scratch2.ir.sessionKey = g.scratch2.ir.sessionKeyNext ^ g.scratch2.ir.sessionKey;
-          goto LAB_182e;
+          goto finish_packet;
         case 4:
         case 3:
         case 2: {
@@ -472,26 +474,26 @@ void ir_comm_loop(void) {
           g.scratch2.ir.handshakeStep = 1;
           drv_ir_tx_u8(0xFC);
           g.ir_lastCommandTime = TCNT;
-          goto LAB_182e;
+          goto finish_packet;
         }
         default:
-          goto LAB_182e;
+          goto finish_packet;
         }
       }
       g.ir_resultCode = 3;
-      goto LAB_14bc;
+      goto finish_and_execute;
 
     case IR_CMD_DISCONNECT:
-      goto LAB_14bc;
+      goto finish_and_execute;
 
     case IR_CMD_SLAVE_ACK:
       if (subtype != 2) {
         g.ir_resultCode = 3;
-        goto LAB_14bc;
+        goto finish_and_execute;
       }
       phase = g.scratch2.ir.handshakeStep;
       if (phase >= 3) {
-        goto LAB_182e;
+        goto finish_packet;
       }
       g.scratch2.ir.sessionKey = *(uint32_t *)(pktBase + 4);
       g.scratch2.ir.sessionKey = g.scratch2.ir.sessionKeyNext ^ g.scratch2.ir.sessionKey;
@@ -499,7 +501,7 @@ void ir_comm_loop(void) {
       save_read_reliable(EEPROM_TRAINER_REC, EEPROM_TRAINER_REC_BACKUP, (void *)g.scratch1.secondTrainer.buf, 0x68);
       drv_ir_send_packet(0x68, 0x10, 2);
       g.viewstate.Y.BIT.b0 = 0;
-      goto LAB_182e;
+      goto finish_packet;
 
     case IR_CMD_PEER_PLAY_START:
       g.viewstate.Y.BIT.b0 = 1;
@@ -508,79 +510,79 @@ void ir_comm_loop(void) {
       if (!((byte_bits_t *)&payload[0x5B])->BIT.b0) {
         drv_ir_send_packet(0x68, 0x12, 2);
         g.ir_resultCode = 3;
-        goto LAB_14bc;
+        goto finish_and_execute;
       }
       if (!g.scratch1.ir.flags_5b.BIT.b0) {
         drv_ir_send_packet(0x68, 0x12, 2);
         g.ir_resultCode = 3;
-        goto LAB_14bc;
+        goto finish_and_execute;
       }
       if (!g.scratch1.ir.flags_5b.BIT.b1) {
         drv_ir_send_packet(0x68, 0x12, 2);
         g.ir_resultCode = 3;
-        goto LAB_14bc;
+        goto finish_and_execute;
       }
       if (*(uint8_t *)(payload + 0x5C) != DAT_f842) {
         drv_ir_send_packet(0x68, 0x12, 2);
         g.ir_resultCode = 3;
-        goto LAB_14bc;
+        goto finish_and_execute;
       }
       if (DAT_f844 != 0) {
         drv_ir_send_packet(0x68, 0x12, 2);
         g.ir_resultCode = 3;
-        goto LAB_14bc;
+        goto finish_and_execute;
       }
       if (!((byte_bits_t *)&payload[0x5B])->BIT.b1) {
         drv_ir_send_packet(0x68, 0x12, 2);
         g.ir_resultCode = 4;
-        goto LAB_14bc;
+        goto finish_and_execute;
       }
       if (game_find_seen_peer((void *)(DAT_f7e6 + 0x10)) != 0) {
         drv_ir_send_packet(0x00, 0x1C, 2);
         g.ir_resultCode = 5;
-        goto LAB_14bc;
+        goto finish_and_execute;
       }
       drv_ir_send_packet(0x68, 0x12, 2);
-      goto LAB_182e;
+      goto finish_packet;
 
     case IR_CMD_PEER_PLAY_RSP:
       memcpy(g.scratch1.bytes, payload, 0x68);
       save_read_reliable(EEPROM_TRAINER_REC, EEPROM_TRAINER_REC_BACKUP, (void *)g.scratch1.secondTrainer.buf, 0x68);
       if (!((byte_bits_t *)&payload[0x5B])->BIT.b0) {
         g.ir_resultCode = 3;
-        goto LAB_14bc;
+        goto finish_and_execute;
       }
       if (!g.scratch1.ir.flags_5b.BIT.b0) {
         g.ir_resultCode = 3;
-        goto LAB_14bc;
+        goto finish_and_execute;
       }
       if (!g.scratch1.ir.flags_5b.BIT.b1) {
         g.ir_resultCode = 3;
-        goto LAB_14bc;
+        goto finish_and_execute;
       }
       if (*(uint8_t *)(payload + 0x5C) != DAT_f842) {
         g.ir_resultCode = 3;
-        goto LAB_14bc;
+        goto finish_and_execute;
       }
       if (DAT_f844 != 0) {
         g.ir_resultCode = 3;
-        goto LAB_14bc;
+        goto finish_and_execute;
       }
       if (!((byte_bits_t *)&payload[0x5B])->BIT.b1) {
         g.ir_resultCode = 4;
-        goto LAB_14bc;
+        goto finish_and_execute;
       }
       if (game_find_seen_peer((void *)(DAT_f7e6 + 0x10)) != 0) {
         drv_ir_send_packet(0x00, 0x1C, 2);
         g.ir_resultCode = 5;
-        goto LAB_14bc;
+        goto finish_and_execute;
       }
       g.scratch2.ir.sessionPhase = 1;
       *(uint16_t *)&g.scratch2.ir.xferSrc = 0x91BE;
       *(uint16_t *)&g.scratch2.ir.xferDst = 0xF400;
       g.scratch2.ir.xferRemaining = 0x180;
       g.scratch2.ir.xferChunkCount = 0;
-      goto start_eeprom_tx;
+      goto send_eeprom_write_chunk;
 
     case IR_CMD_PEER_PLAY_DX:
       if (g.viewstate.Y.BIT.b0) {
@@ -592,18 +594,18 @@ void ir_comm_loop(void) {
         drv_eeprom_write_block(0xF6C0, payload, 0x38);
         drv_ir_send_packet(0x00, 0x16, 2);
       }
-      goto LAB_182e;
+      goto finish_packet;
 
     case IR_CMD_PEER_PLAY_END:
       if (g.viewstate.Y.BIT.b0) {
         drv_ir_send_packet(0x00, 0x16, 2);
       }
       cmdByte = 0x16;
-      goto LAB_1252;
+      goto schedule_action_then_finish;
 
     case IR_CMD_PEER_PLAY_SEEN:
       g.ir_resultCode = 5;
-      goto LAB_14bc;
+      goto finish_and_execute;
 
     case IR_CMD_IDENTITY_REQ:
       save_read_reliable(EEPROM_TRAINER_REC, EEPROM_TRAINER_REC_BACKUP, payload, 0x68);
@@ -615,67 +617,67 @@ void ir_comm_loop(void) {
        * scratch1.secondTrainer.buf for the rest of the comm loop. */
       memcpy((void *)g.scratch1.secondTrainer.buf, payload, 0x68);
       drv_ir_send_packet(0x68, 0x22, 2);
-      goto LAB_182e;
+      goto finish_packet;
 
     case IR_CMD_IDENTITY_SEND:
       ir_parse_rx_packet();
       save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (void *)&g.save_totalSteps, 0x18);
       drv_ir_send_packet(0x00, 0x34, 2);
-      goto LAB_182e;
+      goto finish_packet;
 
     case IR_CMD_NOCOMPLETE:
       g.ir_resultCode = 3;
-      goto LAB_14bc;
+      goto finish_and_execute;
 
     case IR_CMD_WALK_START_INIT:
       drv_ir_send_packet(0x00, 0x38, 2);
       cmdByte = 0x38;
-      goto LAB_15e4;
+      goto schedule_action_no_finish;
 
     case IR_CMD_IDENTITY_SEND_ALIAS1:
       ir_parse_rx_packet();
       save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (void *)&g.save_totalSteps, 0x18);
       drv_ir_send_packet(0x00, 0x42, 2);
-      goto LAB_182e;
+      goto finish_packet;
 
     case IR_CMD_NOCOMPLETE_ALIAS3:
       g.ir_resultCode = 3;
-      goto LAB_14bc;
+      goto finish_and_execute;
 
     case IR_CMD_WALK_END_REQ:
       drv_ir_send_packet(0x00, 0x50, 2);
       cmdByte = 0x4E;
-      goto LAB_1252;
+      goto schedule_action_then_finish;
 
     case IR_CMD_IDENTITY_SEND_ALIAS2:
       ir_parse_rx_packet();
       save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (void *)&g.save_totalSteps, 0x18);
       drv_ir_send_packet(0x00, 0x54, 2);
-      goto LAB_182e;
+      goto finish_packet;
 
     case IR_CMD_WALK_START:
       drv_ir_send_packet(0x00, 0x5A, 2);
       cmdByte = 0x5A;
-      goto LAB_1252;
+      goto schedule_action_then_finish;
 
     case IR_CMD_NOCOMPLETE_ALIAS1:
       g.ir_resultCode = 3;
-      goto LAB_14bc;
+      goto finish_and_execute;
 
     case IR_CMD_IDENTITY_SEND_ALIAS3:
       ir_parse_rx_packet();
       save_read_reliable(EEPROM_TRAINER_REC, EEPROM_TRAINER_REC_BACKUP, (void *)g.scratch1.secondTrainer.buf, 0x68);
       drv_ir_send_packet(0x00, 0x62, 2);
-      goto LAB_182e;
+      goto finish_packet;
 
     case IR_CMD_CONNECT_COMPLETE:
       drv_ir_send_packet(0x00, 0x68, 2);
       cmdByte = 0x66;
-      goto LAB_15e4;
+      goto schedule_action_no_finish;
 
     case IR_CMD_NOCOMPLETE_ALIAS2:
       g.ir_resultCode = 3;
-      goto LAB_14bc;
+      goto finish_and_execute;
 
     case IR_CMD_EVENT_MAP: {
       uint8_t bf = drv_eeprom_read_u8(EEPROM_STEP_HIST_FLAGS);
@@ -685,7 +687,7 @@ void ir_comm_loop(void) {
       save_set_event_bit((void *)g.scratch1.secondTrainer.buf, g.scratch1.ir.eventBitIndex);
       drv_ir_send_packet(0x00, 0xC0, 2);
       cmdByte = 0xC0;
-      goto LAB_1252;
+      goto schedule_action_then_finish;
 
     case IR_CMD_EVENT_MAP_STAMPS: {
       uint8_t bf = drv_eeprom_read_u8(EEPROM_STEP_HIST_FLAGS);
@@ -695,7 +697,7 @@ void ir_comm_loop(void) {
       save_set_event_bit((void *)g.scratch1.secondTrainer.buf, g.scratch1.ir.eventBitIndex);
       drv_ir_send_packet(0x00, 0xC0, 2);
       cmdByte = 0xC0;
-      goto LAB_1252;
+      goto schedule_action_then_finish;
 
     case IR_CMD_EVENT_POKEMON: {
       uint8_t bf = drv_eeprom_read_u8(EEPROM_STEP_HIST_FLAGS);
@@ -705,7 +707,7 @@ void ir_comm_loop(void) {
       save_set_event_bit((void *)g.scratch1.secondTrainer.buf, g.scratch1.ir.eventBitIndex);
       drv_ir_send_packet(0x00, 0xC2, 2);
       cmdByte = 0xC2;
-      goto LAB_1252;
+      goto schedule_action_then_finish;
 
     case IR_CMD_EVENT_POKEMON_STAMPS: {
       uint8_t bf = drv_eeprom_read_u8(EEPROM_STEP_HIST_FLAGS);
@@ -715,7 +717,7 @@ void ir_comm_loop(void) {
       save_set_event_bit((void *)g.scratch1.secondTrainer.buf, g.scratch1.ir.eventBitIndex);
       drv_ir_send_packet(0x00, 0xC2, 2);
       cmdByte = 0xC2;
-      goto LAB_1252;
+      goto schedule_action_then_finish;
 
     case IR_CMD_EVENT_ITEM: {
       uint8_t bf = drv_eeprom_read_u8(EEPROM_STEP_HIST_FLAGS);
@@ -725,7 +727,7 @@ void ir_comm_loop(void) {
       save_set_event_bit((void *)g.scratch1.secondTrainer.buf, g.scratch1.ir.eventBitIndex);
       drv_ir_send_packet(0x00, 0xC4, 2);
       cmdByte = 0xC4;
-      goto LAB_1252;
+      goto schedule_action_then_finish;
 
     case IR_CMD_EVENT_ITEM_STAMPS: {
       uint8_t bf = drv_eeprom_read_u8(EEPROM_STEP_HIST_FLAGS);
@@ -735,7 +737,7 @@ void ir_comm_loop(void) {
       save_set_event_bit((void *)g.scratch1.secondTrainer.buf, g.scratch1.ir.eventBitIndex);
       drv_ir_send_packet(0x00, 0xC4, 2);
       cmdByte = 0xC4;
-      goto LAB_1252;
+      goto schedule_action_then_finish;
 
     case IR_CMD_EVENT_ROUTE: {
       uint8_t bf = drv_eeprom_read_u8(EEPROM_STEP_HIST_FLAGS);
@@ -747,7 +749,7 @@ void ir_comm_loop(void) {
       save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (void *)&g.save_totalSteps, 0x18);
       drv_ir_send_packet(0x00, 0xC6, 2);
       cmdByte = 0xC6;
-      goto LAB_1252;
+      goto schedule_action_then_finish;
 
     case IR_CMD_EVENT_ROUTE_STAMPS: {
       uint8_t bf = drv_eeprom_read_u8(EEPROM_STEP_HIST_FLAGS);
@@ -759,15 +761,15 @@ void ir_comm_loop(void) {
       save_write_reliable(EEPROM_SAVE_BLOCK, EEPROM_SAVE_BLOCK_BACKUP, (void *)&g.save_totalSteps, 0x18);
       drv_ir_send_packet(0x00, 0xC6, 2);
       cmdByte = 0xC6;
-      goto LAB_1252;
+      goto schedule_action_then_finish;
 
     case IR_CMD_EVENT_REJECT:
       g.ir_resultCode = 3;
-      goto LAB_14bc;
+      goto finish_and_execute;
 
     case IR_CMD_PING:
       drv_ir_send_packet(0x00, 0x26, 2);
-      goto LAB_182e;
+      goto finish_packet;
 
     case IR_CMD_EEPROM_WRITE_CMP_80:
     case IR_CMD_EEPROM_WRITE_CMP_00: {
@@ -778,56 +780,56 @@ void ir_comm_loop(void) {
         sys_lzss_decode((uint8_t *)payload, eepromPageScratch);
         drv_eeprom_write_page(write_addr, eepromPageScratch);
       }
-      goto LAB_17ee;
+      goto send_write_ack;
     }
 
     case IR_CMD_EEPROM_WRITE_RAW_80:
     case IR_CMD_EEPROM_WRITE_RAW_00: {
       uint16_t write_addr = ((uint16_t)subtype << 8) | (uint16_t)(cmdByte & 0x80);
       drv_eeprom_write_block(write_addr, payload, pktLen2);
-      goto LAB_17ea;
+      goto send_write_ack;
     }
 
     case IR_CMD_EEPROM_WRITE_ACK:
       if (e1val == 0) {
         phase = g.scratch2.ir.sessionPhase;
         if (phase == 1)
-          goto handle_0x04_phase1;
+          goto setup_phase_3_pokedex;
         if (phase == 3)
-          goto handle_0x04_phase3;
+          goto setup_phase_5_teamdata;
         if (phase == 5)
-          goto handle_0x04_phase5;
-        goto LAB_182e;
+          goto setup_phase_2_peerprofile;
+        goto finish_packet;
       } else {
         /* peer ACK'd previous chunk; send the next one via WRITE_RAW.
-         * (ROM splits this in two via LAB_135a/LAB_1362, but the
-         * min(remaining, 0x80) clamp in start_eeprom_tx covers both.) */
-        goto LAB_1362;
+         * (ROM splits this in two via LAB_135a/send_eeprom_write_chunk, but the
+         * min(remaining, 0x80) clamp in send_eeprom_write_chunk covers both.) */
+        goto send_eeprom_write_chunk;
       }
 
-    handle_0x04_phase1:
+    setup_phase_3_pokedex:
       g.scratch2.ir.sessionPhase = 3;
       *(uint16_t *)&g.scratch2.ir.xferSrc = 0x993E;
       *(uint16_t *)&g.scratch2.ir.xferDst = (uint16_t)DAT_f580;
       g.scratch2.ir.xferRemaining = 0x140;
       g.scratch2.ir.xferChunkCount = 0;
-      goto start_eeprom_tx;
+      goto send_eeprom_write_chunk;
 
-    handle_0x04_phase3:
+    setup_phase_5_teamdata:
       g.scratch2.ir.sessionPhase = 5;
       *(uint16_t *)&g.scratch2.ir.xferSrc = 0xCC00;
       *(uint16_t *)&g.scratch2.ir.xferDst = 0xDC00;
       g.scratch2.ir.xferRemaining = 0x224;
       g.scratch2.ir.xferChunkCount = 0;
-      goto start_eeprom_tx;
+      goto send_eeprom_write_chunk;
 
-    handle_0x04_phase5:
+    setup_phase_2_peerprofile:
       g.scratch2.ir.sessionPhase = 2;
       *(uint16_t *)&g.scratch2.ir.xferSrc = 0x91BE;
       *(uint16_t *)&g.scratch2.ir.xferDst = 0xF400;
       g.scratch2.ir.xferRemaining = 0x180;
       g.scratch2.ir.xferChunkCount = 0;
-      goto start_eeprom_tx_alt;
+      goto send_eeprom_read_request;
 
     case IR_CMD_REPEAT_PROBE_A0:
     case IR_CMD_REPEAT_PROBE_A2:
@@ -845,10 +847,10 @@ void ir_comm_loop(void) {
       if (save_check_event_bit((void *)g.scratch1.secondTrainer.buf, g.scratch1.ir.eventBitIndex) != 0) {
         drv_ir_send_packet(0x11, 0x9E, 2);
         g.ir_resultCode = 6;
-        goto LAB_14bc;
+        goto finish_and_execute;
       }
       drv_ir_send_packet(0x11, cmdByte, 2);
-      goto LAB_182e;
+      goto finish_packet;
 
     case IR_CMD_REPEAT_PROBE_A8:
     case IR_CMD_REPEAT_PROBE_AA:
@@ -866,10 +868,10 @@ void ir_comm_loop(void) {
       if (save_check_event_bit((void *)g.scratch1.secondTrainer.buf, g.scratch1.ir.eventBitIndex) != 0) {
         drv_ir_send_packet(0x11, 0x9E, 2);
         g.ir_resultCode = 6;
-        goto LAB_14bc;
+        goto finish_and_execute;
       }
       drv_ir_send_packet(0x11, cmdByte, 2);
-      goto LAB_182e;
+      goto finish_packet;
 
     case IR_CMD_SHOW_MENU_A4:
     case IR_CMD_SHOW_MENU_A5:
@@ -886,17 +888,17 @@ void ir_comm_loop(void) {
       drv_eeprom_write_u8(EEPROM_STEP_HIST_FLAGS, flagByte);
       drv_ir_send_packet(0x00, (uint8_t)(cmdByte + 0x10), 2);
     }
-      goto LAB_14bc;
+      goto finish_and_execute;
 
     case IR_CMD_NORX_ACK:
       drv_ir_send_packet(0x00, 0x9E, 2);
       g.ir_resultCode = 7;
-      goto LAB_14bc;
+      goto finish_and_execute;
 
     case IR_CMD_NORX:
       drv_ir_send_packet(0x00, 0x9C, 2);
       g.ir_resultCode = 7;
-      goto LAB_14bc;
+      goto finish_and_execute;
 
     case IR_CMD_FACTORY_TEST: {
       save_write_reliable(EEPROM_RESV_0083, EEPROM_RESV_0083_BACKUP, payload, 0x28);
@@ -932,7 +934,7 @@ void ir_comm_loop(void) {
         break;
       }
       drv_ir_send_packet(0x28, 0xF0, 2);
-      goto LAB_182e;
+      goto finish_packet;
     }
 
     case IR_CMD_DEBUG_MODE:
@@ -940,21 +942,21 @@ void ir_comm_loop(void) {
         drv_eeprom_write_block(0x0008, payload, 0x08);
         drv_ir_send_packet(0x00, 0xFE, 2);
         cmdByte = 0xFE;
-        goto LAB_15e4;
+        goto schedule_action_no_finish;
       }
-      goto LAB_182e;
+      goto finish_packet;
 
     case IR_CMD_WALKER_RESET_1:
       save_read_reliable(EEPROM_RESV_0083, EEPROM_RESV_0083_BACKUP, payload, 0x28);
       drv_ir_send_packet(0x28, 0x2A, 2);
       cmdByte = 0x2A;
-      goto LAB_15e4;
+      goto schedule_action_no_finish;
 
     case IR_CMD_WALKER_RESET_0:
       save_read_reliable(EEPROM_RESV_0083, EEPROM_RESV_0083_BACKUP, payload, 0x28);
       drv_ir_send_packet(0x28, 0x2A, 2);
       cmdByte = 0x2C;
-      goto LAB_15e4;
+      goto schedule_action_no_finish;
 
     case IR_CMD_EEPROM_READ_REQ: {
       /* CMD_EEPROM_READ_REQ — peer asks us to read 'chunk' bytes from
@@ -965,7 +967,7 @@ void ir_comm_loop(void) {
       uint8_t chunk = payload[2];
       drv_eeprom_read_block(eaddr, payload, chunk);
       drv_ir_send_packet(chunk, 0x0E, 2);
-      goto LAB_182e;
+      goto finish_packet;
     }
 
     case IR_CMD_EEPROM_READ_RSP:
@@ -978,7 +980,7 @@ void ir_comm_loop(void) {
       g.scratch2.ir.xferRemaining -= e2val;
       g.scratch2.ir.xferChunkCount++;
       if (g.scratch2.ir.xferRemaining != 0) {
-        goto start_eeprom_tx_alt;   /* send next READ_REQ */
+        goto send_eeprom_read_request;   /* send next READ_REQ */
       }
       switch (g.scratch2.ir.sessionPhase) {
       case 2:
@@ -987,20 +989,20 @@ void ir_comm_loop(void) {
         *(uint16_t *)&g.scratch2.ir.xferDst = (uint16_t)DAT_f580;
         g.scratch2.ir.xferRemaining = 0x140;
         g.scratch2.ir.xferChunkCount = 0;
-        goto start_eeprom_tx_alt;
+        goto send_eeprom_read_request;
       case 4:
         g.scratch2.ir.sessionPhase = 6;
         *(uint16_t *)&g.scratch2.ir.xferSrc = 0xCC00;
         *(uint16_t *)&g.scratch2.ir.xferDst = 0xDC00;
         g.scratch2.ir.xferRemaining = 0x224;
         g.scratch2.ir.xferChunkCount = 0;
-        goto start_eeprom_tx_alt;
+        goto send_eeprom_read_request;
       case 6:
         /* ROM LAB_16da — same response-build as case 0x14 slave branch. */
         ir_send_peer_play_dx_response();
-        goto LAB_182e;
+        goto finish_packet;
       default:
-        goto LAB_182e;
+        goto finish_packet;
       }
 
     case IR_CMD_EEPROM_WRITE_RND:
@@ -1008,7 +1010,7 @@ void ir_comm_loop(void) {
        * subtype (hi) and payload[0] (lo); data is payload[1..pktLen2-1]. */
       drv_eeprom_write_block(((uint16_t)subtype << 8) | payload[0],
                              payload + 1, (uint16_t)(pktLen2 - 1));
-      goto LAB_17ee;
+      goto send_write_ack;
 
     case IR_CMD_RAM_WRITE: {
       /* CMD_RAM_WRITE — write bytes to RAM. Address is (subtype << 8) |
@@ -1021,19 +1023,18 @@ void ir_comm_loop(void) {
         dst[i] = payload[1 + i];
       }
       drv_ir_send_packet(0x00, 0x06, subtype);
-      goto LAB_182e;
+      goto finish_packet;
     }
 
     default:
-      goto LAB_182e;
+      goto finish_packet;
     }
   }
 
-/* LAB_1362 / LAB_1366 (ROM) — push a chunk of OUR EEPROM to peer via
+/* send_eeprom_write_chunk / LAB_1366 (ROM) — push a chunk of OUR EEPROM to peer via
  * CMD_EEPROM_WRITE_RAW. cmd byte = (dst_lo & 0x80) | 0x02 → 0x02 or 0x82
  * to indicate which 128-byte half of the page; subtype = dst_hi byte. */
-LAB_1362:
-start_eeprom_tx: {
+send_eeprom_write_chunk: {
   uint16_t chunk = (g.scratch2.ir.xferRemaining > 0x80) ? 0x80 : g.scratch2.ir.xferRemaining;
   uint8_t *rxptr = drv_ir_get_rx_ptr();
   drv_eeprom_read_block(g.scratch2.ir.xferSrc, rxptr, chunk);
@@ -1047,43 +1048,41 @@ start_eeprom_tx: {
   g.scratch2.ir.xferDst += chunk;
   g.scratch2.ir.xferRemaining -= chunk;
   g.scratch2.ir.xferChunkCount++;
-  goto LAB_182e;
+  goto finish_packet;
 }
 
-/* LAB_17b0 (ROM) — ask peer for a chunk via CMD_EEPROM_READ_REQ.
+/* send_eeprom_read_request (ROM) — ask peer for a chunk via CMD_EEPROM_READ_REQ.
  * Used only by phase 5 (after case 0x04 ACK), where we want to PULL data
  * from peer. The 3-byte body of the request is (src_hi, src_lo, chunk). */
-start_eeprom_tx_alt:
-LAB_17b0: {
+send_eeprom_read_request: {
   uint16_t chunk = (g.scratch2.ir.xferRemaining > 0x80) ? 0x80 : g.scratch2.ir.xferRemaining;
   uint8_t *p = drv_ir_get_rx_ptr();
   p[0] = (uint8_t)(g.scratch2.ir.xferSrc >> 8);
   p[1] = (uint8_t)(g.scratch2.ir.xferSrc);
   p[2] = (uint8_t)chunk;
   drv_ir_send_packet(0x03, 0x0C, 2);
-  goto LAB_182e;
+  goto finish_packet;
 }
 
-LAB_17ea:
-LAB_17ee:
+send_write_ack:
   drv_ir_send_packet(0x00, 0x04, 2);
-  goto LAB_182e;
+  goto finish_packet;
 
-LAB_15e4:
+schedule_action_no_finish:
   g.scratch2.ir.requestedPokemonAction = cmdByte;
-  goto LAB_182e;
+  goto finish_packet;
 
-LAB_1252:
+schedule_action_then_finish:
   g.scratch2.ir.requestedPokemonAction = cmdByte;
-LAB_14bc:
+finish_and_execute:
   drv_ir_finish_and_execute();
-  goto LAB_182e;
+  goto finish_packet;
 
 do_action:
   drv_ir_finish_and_execute();
 
 finish_after_tx:
-LAB_182e: {
+finish_packet: {
   uint16_t t = TCNT;
   t = (uint16_t)((t << 2) | (t >> 14));
   t &= 1;
