@@ -4,6 +4,7 @@
 #include "globals.h"
 #include "iodefine.h"
 #include "types.h"
+#include "romdata.h"
 #include "eeprom_layout.h"
 #include "gfx_consts.h"
 #include "input_consts.h"
