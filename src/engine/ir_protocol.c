@@ -400,8 +400,6 @@ void ir_comm_loop(void) {
     uint8_t pktLen2;
     uint8_t *payload;
     uint16_t e1val;
-    uint16_t addr;
-
     uint8_t e2val;
 
     subtype = pktBase[1];
@@ -409,7 +407,6 @@ void ir_comm_loop(void) {
     payload = drv_ir_get_rx_ptr();
     e1val = g.scratch2.ir.xferRemaining;
     e2val = pktLen2;
-    addr = g.scratch2.ir.xferSrc;
 
     cmdByte = pktBase[0];
     if (cmdByte < 0xF8) {
