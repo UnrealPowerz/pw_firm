@@ -212,6 +212,19 @@ struct viewstate {
             volatile byte_bits_t _at_d8;            /* 0xF7D8 — unused */
             volatile uint8_t     _at_d9;            /* 0xF7D9 — unused */
         } factoryTest;
+        /* Accel debug view (factory-test follow-on; technician wiggles device
+         * until displayCounter matches calTarget). Documented in accel_debug.c. */
+        struct {
+            volatile byte_bits_t displayCounter; /* 0xF7D1 = at_d1 — drawn as ASCII digit; matches calTarget triggers SPI 0xA7 */
+            volatile uint8_t     _at_d2;         /* 0xF7D2 — init 0; not otherwise read */
+            volatile uint8_t     _at_d3;         /* 0xF7D3 — unused */
+            volatile uint8_t     _at_d4;         /* 0xF7D4 — init 0; not otherwise read */
+            volatile uint8_t     _at_d5;         /* 0xF7D5 — unused */
+            volatile uint8_t     _at_d6;         /* 0xF7D6 — unused */
+            volatile uint8_t     _at_d7;         /* 0xF7D7 — unused */
+            volatile byte_bits_t calByte0;       /* 0xF7D8 = at_d8 — first byte of 8-byte EEPROM accel cal (overflows into ped_axis* fields) */
+            volatile uint8_t     calTarget;      /* 0xF7D9 = at_d9 — second byte of cal; target value that displayCounter must reach */
+        } accelDebug;
         /* Add more per-subsystem views here as each is audited. ch38 pads
          * uint16 members to even offsets within a struct; since this
          * union sits at an odd offset within viewstate (Y/Z/A take 3
