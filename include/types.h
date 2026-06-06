@@ -170,7 +170,7 @@ struct trainer_record {
     uint8_t  flags_38[16];  /* +0x38..0x47 bit-array (gfx.c reads p[0x38+off] & (1<<bit)) */
     uint8_t  at_48[18];     /* +0x48..0x59 18-byte block written from DAT_f82e in session.c */
     uint8_t  at_5a;         /* +0x5A (unaccessed in current decomp; preserves 0x5B alignment) */
-    volatile uint8_t  flags_5b;  /* +0x5B status flags (b0,b1,b2 used) */
+    volatile byte_bits_t flags_5b; /* +0x5B status flags (b0,b1,b2 used) */
     uint8_t  at_5c;         /* +0x5C set from DAT_f842 (battle context?) */
     uint8_t  at_5d;         /* +0x5D set from DAT_f843 */
     uint8_t  at_5e;         /* +0x5E zeroed in game_start_walk */

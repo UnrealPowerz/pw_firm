@@ -36,11 +36,11 @@ void game_init_peer_identity(void) {
   rec = (struct trainer_record *)sbrk(sizeof(*rec));
   save_read_reliable(EEPROM_TRAINER_REC, EEPROM_TRAINER_REC_BACKUP, (uint8_t *)rec, sizeof(*rec));
 
-  if (!(rec->flags_5b & 0x02)) {
-    rec->flags_5b |= 0x02;
+  if (!(rec->flags_5b.BYTE & 0x02)) {
+    rec->flags_5b.BYTE |= 0x02;
     rec->id_backup = rec->id;
     rec->loc_backup = rec->loc;
-    rec->flags_5b |= 0x04;
+    rec->flags_5b.BYTE |= 0x04;
 
     save_write_reliable(EEPROM_TRAINER_REC, EEPROM_TRAINER_REC_BACKUP, (uint8_t *)rec, sizeof(*rec));
 

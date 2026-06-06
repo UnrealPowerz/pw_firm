@@ -35,9 +35,9 @@ void game_sync_walk_status(void) {
   save_read_reliable(EEPROM_TRAINER_REC, EEPROM_TRAINER_REC_BACKUP, rec, sizeof(struct trainer_record));
 
   g.sys_walkerFlags.BIT.session_active =
-      ((byte_bits_t *)&rec->flags_5b)->BIT.b0;
+      rec->flags_5b.BIT.b0;
   g.sys_walkerFlags.BIT.walking =
-      ((byte_bits_t *)&rec->flags_5b)->BIT.b1;
+      rec->flags_5b.BIT.b1;
 }
 
 /* Reason: prologue saves smaller register set than ROM, defeats alignment.
@@ -99,9 +99,9 @@ void game_start_walk(void) {
   rec = (struct trainer_record *)g.scratch1.secondTrainer.buf;
   save_read_reliable(EEPROM_TRAINER_REC, EEPROM_TRAINER_REC_BACKUP, rec, sizeof(*rec));
 
-  rec->flags_5b |= 0x01;         /* session_active */
-  rec->flags_5b |= 0x02;         /* walking */
-  rec->flags_5b &= ~0x04;        /* clear peer-init-done */
+  rec->flags_5b.BYTE |= 0x01;         /* session_active */
+  rec->flags_5b.BYTE |= 0x02;         /* walking */
+  rec->flags_5b.BYTE &= ~0x04;        /* clear peer-init-done */
 
   rec->id        = *(uint32_t *)DAT_f7e6;
   rec->id_backup = g.scratch1.ir.id_backup;
@@ -149,8 +149,8 @@ void game_end_walk(void) {
   rec->id_backup = 0;
   rec->loc_backup = 0;
 
-  rec->flags_5b &= ~0x02;        /* clear walking */
-  rec->flags_5b &= ~0x04;        /* clear peer-init-done */
+  rec->flags_5b.BYTE &= ~0x02;        /* clear walking */
+  rec->flags_5b.BYTE &= ~0x04;        /* clear peer-init-done */
 
   save_write_reliable(EEPROM_TRAINER_REC, EEPROM_TRAINER_REC_BACKUP, rec, sizeof(*rec));
   save_clear_data();
