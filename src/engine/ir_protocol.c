@@ -272,6 +272,7 @@ void ir_parse_rx_packet(void) {
  * Builds the 0x38-byte CMD_PEER_PLAY_DX response payload (session steps +
  * trainer id/loc + bit-spliced profile/event flags + 0x16 bytes of profile
  * sprite data) and sends it. Matches ROM LAB_0f04+LAB_0fc0 and LAB_16da. */
+#pragma inline (ir_send_peer_play_dx_response)
 static void ir_send_peer_play_dx_response(void) {
   uint8_t *rxptr = drv_ir_get_rx_ptr();
   uint8_t i;
