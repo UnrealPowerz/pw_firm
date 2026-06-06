@@ -952,8 +952,12 @@ void ir_comm_loop(void) {
       goto LAB_15e4;
 
     case 0x0C: {
-      uint16_t eaddr = ((uint16_t)pktBase[0] << 8) | pktBase[1];
-      uint8_t chunk = pktBase[2];
+      /* CMD_EEPROM_READ_REQ — peer asks us to read 'chunk' bytes from
+       * EEPROM addr {src_hi, src_lo} (in payload[0..2]) and respond with
+       * CMD_EEPROM_READ_RSP. ROM reads from er5 = payload, NOT from the
+       * packet header. */
+      uint16_t eaddr = ((uint16_t)payload[0] << 8) | payload[1];
+      uint8_t chunk = payload[2];
       drv_eeprom_read_block(eaddr, payload, chunk);
       drv_ir_send_packet(chunk, 0x0E, 2);
       goto LAB_182e;
@@ -996,7 +1000,10 @@ void ir_comm_loop(void) {
       }
 
     case 0x0A:
-      drv_eeprom_write_block(((uint16_t)subtype << 8) | pktBase[0], payload + 1, (uint16_t)(pktLen2 - 1));
+      /* CMD_EEPROM_WRITE_RND — random-length write. Address is built from
+       * subtype (hi) and payload[0] (lo); data is payload[1..pktLen2-1]. */
+      drv_eeprom_write_block(((uint16_t)subtype << 8) | payload[0],
+                             payload + 1, (uint16_t)(pktLen2 - 1));
       goto LAB_17ee;
 
     case 0x06: {
