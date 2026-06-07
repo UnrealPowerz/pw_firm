@@ -72,17 +72,21 @@ void ui_render_pokeradar(void) {
                  (g.viewstate.v.radar.secretPatchIndex & 1) * 0x18, (uint8_t *)buf + 0xC0,
                  0x10, 0x10);
 
-    if (g.viewstate.Z == RADAR_LOCK_ANIM) {
+    switch (g.viewstate.Z) {
+    case RADAR_LOCK_ANIM:
       gfx_draw_text_box(0x30, TEXT_FOUND_SOMETHING_EX, TEXT_BOX_FULL, TEXT_BOX_STATIC);
-    } else if (g.viewstate.Z == RADAR_FADE_TO_BATTLE) {
+      break;
+    case RADAR_FADE_TO_BATTLE:
       /* Vertical shutter close-in before battle. */
       gfx_fill_rect(0, 0, 0x60, (uint8_t)(g.viewstate.v.radar.timeRemaining * 8), 3);
       gfx_fill_rect(0, (uint8_t)(0x40 - g.viewstate.v.radar.timeRemaining * 8), 0x60,
                     (uint8_t)(g.viewstate.v.radar.timeRemaining * 8), 3);
       g.viewstate.v.radar.timeRemaining++;
-    } else if (g.viewstate.Z == RADAR_REWARD) {
+      break;
+    case RADAR_REWARD:
       gfx_draw_value_with_icon(2, 0x20, 0x0D, g.viewstate.Y.BYTE);
       gfx_draw_text_box(0x30, TEXT_RECEIVED, TEXT_BOX_NO_LINES, TEXT_BOX_BLINK);
+      break;
     }
   } else {
     /* Search phase — prompt and (briefly) flash the next-patch hint. */

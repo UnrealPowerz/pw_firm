@@ -443,7 +443,8 @@ void ui_render_dowsing(void) {
   }
 
   /* Per-substate overlay. */
-  if (g.viewstate.Z == 0) {
+  switch (g.viewstate.Z) {
+  case 0: {
     /* Idle: dowsing rod, two-frame bob. */
     uint8_t frame = g.ui_animationTick & 0x01;
     uint8_t rod_x;
@@ -452,8 +453,9 @@ void ui_render_dowsing(void) {
     rod_x = (uint8_t)(g.viewstate.v.dowsing.cursor * 0x10 + 0x04);
     drv_lcd_blit(rod_x, 0x28, buf, 8, 8);
     gfx_draw_text_box(0x30, TEXT_DISCOVER_AN_ITEM, TEXT_BOX_FULL, TEXT_BOX_STATIC);
-
-  } else if (g.viewstate.Z == 2) {
+    break;
+  }
+  case 2: {
     /* Found item: draw item icon and either g.save_watts or item name. */
     uint8_t item_x;
     drv_eeprom_read_block(0x208 + sprites_base, buf, 0x10);
@@ -472,8 +474,9 @@ void ui_render_dowsing(void) {
       }
       gfx_draw_text_box(0x30, TEXT_FOUND, TEXT_BOX_NO_LINES, TEXT_BOX_BLINK);
     }
-
-  } else if (g.viewstate.Z == 3) {
+    break;
+  }
+  case 3:
     gfx_draw_text_box(0x30, TEXT_NOTHING_FOUND, TEXT_BOX_FULL, TEXT_BOX_BLINK);
 
     /* Reveal the hidden item only after all attempts are spent. The loop
@@ -486,8 +489,8 @@ void ui_render_dowsing(void) {
         drv_lcd_blit(item_x, 0x16, buf, 8, 8);
       }
     }
-
-  } else if (g.viewstate.Z == 4) {
+    break;
+  case 4: {
     /* Proximity indicator: |cursor - hidden| < 2 ⇒ "close", else "far". */
     int16_t diff = (int16_t)(uint16_t)g.viewstate.v.dowsing.cursor -
                    (int16_t)(uint16_t)g.viewstate.v.dowsing.hiddenSlot;
@@ -498,6 +501,8 @@ void ui_render_dowsing(void) {
     } else {
       gfx_draw_text_box(0x30, TEXT_ITS_FAR_AWAY, TEXT_BOX_FULL, TEXT_BOX_BLINK);
     }
+    break;
+  }
   }
 
 end:

@@ -103,12 +103,10 @@ void ui_handle_settings_shade(void) {
 
 // ROM: 0x6dfc  78.8%
 void ui_handle_settings(void) {
-  if (g.viewstate.Y.BYTE == SETTINGS_MENU) {
-    ui_handle_settings_main_page();
-  } else if (g.viewstate.Y.BYTE == SETTINGS_VOLUME) {
-    ui_handle_settings_volume();
-  } else if (g.viewstate.Y.BYTE == SETTINGS_SHADE) {
-    ui_handle_settings_shade();
+  switch (g.viewstate.Y.BYTE) {
+  case SETTINGS_MENU:   ui_handle_settings_main_page(); break;
+  case SETTINGS_VOLUME: ui_handle_settings_volume();    break;
+  case SETTINGS_SHADE:  ui_handle_settings_shade();     break;
   }
   if (drv_button_is_triggered(BTN_M)) {
     if (g.viewstate.Y.BYTE == SETTINGS_MENU) {
@@ -158,10 +156,12 @@ void ui_render_settings(void) {
   /* Within-page cursor x: 0 = g.sound_volume row, 0x30 = shade row. */
   cursor_x = g.viewstate.Z * 0x30;
 
-  if (g.viewstate.Y.BYTE == SETTINGS_MENU) {
+  switch (g.viewstate.Y.BYTE) {
+  case SETTINGS_MENU:
     animOff = ((g.ui_animationTick & 0x01) + 9) * 0x10;
     drv_lcd_blit(cursor_x, 0x14, buf + animOff, 8, 8);
-  } else if (g.viewstate.Y.BYTE == SETTINGS_VOLUME) {
+    break;
+  case SETTINGS_VOLUME:
     drv_lcd_blit(cursor_x, 0x14, buf + 0xB0, 8, 8);
 
     volVal = (g.save_settings.BYTE >> 1) & 0x03;
@@ -172,7 +172,8 @@ void ui_render_settings(void) {
     drv_lcd_blit(0x08, 0x28, buf, 0x18, 0x10);
     drv_lcd_blit(0x28, 0x28, buf + 0x60, 0x18, 0x10);
     drv_lcd_blit(0x48, 0x28, buf + 0xC0, 0x18, 0x10);
-  } else if (g.viewstate.Y.BYTE == SETTINGS_SHADE) {
+    break;
+  case SETTINGS_SHADE:
     shVal = (g.save_settings.BYTE >> 3) & 0x0F;
     shadeOff = shVal * 8 + 8;
     animOff = ((g.ui_animationTick & 0x01) + 3) * 0x10;
@@ -186,6 +187,7 @@ void ui_render_settings(void) {
       xpos = (uint8_t)(i * 8) + 8;
       drv_lcd_blit(xpos, 0x28, buf, 8, 0x10);
     }
+    break;
   }
 
   drv_eeprom_read_block(0x5F8, buf, 0x20);
