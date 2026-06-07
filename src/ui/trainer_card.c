@@ -113,16 +113,16 @@ void ui_render_trainer_card_time(void) {
   buf = (uint8_t *)sbrk(0x140);
 
   /* "TRAINER CARD" heading bar + per-screen labels. */
-  drv_eeprom_read_block(SPR_OFF(menu_hdg_trainer), buf, sizeof(SPR.menu_hdg_trainer));
+  drv_eeprom_read_block(SPR_OFF(menu_hdg_trainer), buf, SPR_SIZE(menu_hdg_trainer));
   drv_lcd_blit(8, 0, buf, 0x50, 0x10);
 
-  drv_eeprom_read_block(SPR_OFF(trainer_person_icon), buf, sizeof(SPR.trainer_person_icon));
+  drv_eeprom_read_block(SPR_OFF(trainer_person_icon), buf, SPR_SIZE(trainer_person_icon));
   drv_lcd_blit(0, 0x10, buf, 0x10, 0x10);
 
-  drv_eeprom_read_block(SPR_OFF(trainer_name_img), buf, sizeof(SPR.trainer_name_img));
+  drv_eeprom_read_block(SPR_OFF(trainer_name_img), buf, SPR_SIZE(trainer_name_img));
   drv_lcd_blit(0x10, 0x10, buf, 0x50, 0x10);
 
-  drv_eeprom_read_block(SPR_OFF(trainer_route_small), buf, sizeof(SPR.trainer_route_small));
+  drv_eeprom_read_block(SPR_OFF(trainer_route_small), buf, SPR_SIZE(trainer_route_small));
   drv_lcd_blit(0, 0x20, buf, 0x10, 0x10);
 
   /* Date label — different art for co-op vs solo (special route vs normal). */
@@ -139,11 +139,11 @@ void ui_render_trainer_card_time(void) {
   drv_lcd_blit(0, 0, buf + 0x40, 8, 0x10);
   drv_lcd_blit(0x58, 0, buf + 0x20, 8, 0x10);
 
-  drv_eeprom_read_block(SPR_OFF(label_time), buf, sizeof(SPR.label_time));
+  drv_eeprom_read_block(SPR_OFF(label_time), buf, SPR_SIZE(label_time));
   drv_lcd_blit(0, 0x30, buf, 0x20, 0x10);
 
   /* Digit sheet — 16 glyphs of 0x20 bytes each at the sprite-base anchor. */
-  drv_eeprom_read_block(SPR_OFF(digits), buf, sizeof(SPR.digits));
+  drv_eeprom_read_block(SPR_OFF(digits), buf, SPR_SIZE(digits));
 
   time_part = g.rtc_hours;
   drv_lcd_blit(0x20, 0x30, buf + ((((uint16_t)time_part >> 4) & 7) * 0x20), 8, 0x10);
@@ -184,15 +184,15 @@ void ui_render_daily_step_history(void) {
   }
 
   /* "Days" header label. */
-  drv_eeprom_read_block(SPR_OFF(label_days), buf, sizeof(SPR.label_days));
+  drv_eeprom_read_block(SPR_OFF(label_days), buf, SPR_SIZE(label_days));
   drv_lcd_blit(0x28, 0, buf, 0x28, 0x10);
 
   /* "Total days:" bottom label. */
-  drv_eeprom_read_block(SPR_OFF(label_total_days), buf, sizeof(SPR.label_total_days));
+  drv_eeprom_read_block(SPR_OFF(label_total_days), buf, SPR_SIZE(label_total_days));
   drv_lcd_blit(0, 0x20, buf, 0x40, 0x10);
 
   /* "Steps" label, drawn twice (middle and bottom rows). */
-  drv_eeprom_read_block(SPR_OFF(label_steps), buf, sizeof(SPR.label_steps));
+  drv_eeprom_read_block(SPR_OFF(label_steps), buf, SPR_SIZE(label_steps));
   drv_lcd_blit(0x38, 0x10, buf, 0x28, 0x10);
   drv_lcd_blit(0x38, 0x30, buf, 0x28, 0x10);
 
@@ -201,7 +201,7 @@ void ui_render_daily_step_history(void) {
   drv_lcd_blit(0x18, 0, buf, 8, 0x10);
 
   /* Day digit (picked from the 16-glyph sheet by g.viewstate.Y.BYTE). */
-  drv_eeprom_read_block(SPR_OFF(digits), buf, sizeof(SPR.digits));
+  drv_eeprom_read_block(SPR_OFF(digits), buf, SPR_SIZE(digits));
   drv_lcd_blit(0x20, 0, buf + (uint16_t)g.viewstate.Y.BYTE * 0x20, 8, 0x10);
 
   /* Step count for "today − g.viewstate.Y.BYTE". Each day uses 4 bytes at 0xCEF0. */
@@ -221,7 +221,7 @@ void ui_render_step_goal_reached(void) {
 
   sys_init_heap();
   buf = (uint8_t *)sbrk(0x140);
-  drv_eeprom_read_block(SPR_OFF(digits), buf, sizeof(SPR.digits));
+  drv_eeprom_read_block(SPR_OFF(digits), buf, SPR_SIZE(digits));
 
   /* Row of 7 "1" digits across the top — the literal "10000000". */
   for (i = 0; i < 7; i++) {
@@ -229,10 +229,10 @@ void ui_render_step_goal_reached(void) {
     drv_lcd_blit((uint8_t)x, 8, buf + 0x120, 8, 0x10);
   }
 
-  drv_eeprom_read_block(SPR_OFF(label_steps), buf, sizeof(SPR.label_steps));
+  drv_eeprom_read_block(SPR_OFF(label_steps), buf, SPR_SIZE(label_steps));
   drv_lcd_blit(0x38, 0x08, buf, 0x28, 0x10);
 
-  drv_eeprom_read_block(SPR_OFF(hours_frame), buf, sizeof(SPR.hours_frame));
+  drv_eeprom_read_block(SPR_OFF(hours_frame), buf, SPR_SIZE(hours_frame));
   drv_lcd_blit(0x38, 0x28, buf, 0x28, 0x10);
 
   gfx_draw_numeric_value(0x30, 0x28, g.save_walkStepCount, 0);

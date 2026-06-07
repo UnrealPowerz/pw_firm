@@ -311,7 +311,7 @@ void ui_render_dowsing_grass(void) {
   drv_lcd_blit(0x40, 0, buf, 0x08, 0x10);
 
   /* Background top strip. */
-  drv_eeprom_read_block(SPR_OFF(left_string_unref), buf, sizeof(SPR.left_string_unref));
+  drv_eeprom_read_block(SPR_OFF(left_string_unref), buf, SPR_SIZE(left_string_unref));
   drv_lcd_blit(0x20, 0, buf, 0x20, 0x10);
 
   drv_eeprom_read_block(SPR_OFF(blank_img_16x24), buf, 0x60);
@@ -339,7 +339,7 @@ void ui_render_dowsing_grass(void) {
 
   /* Six selection circles across the grid. */
   drv_eeprom_read_block(SPR_OFF(bush_dark), buf,
-                        sizeof(SPR.bush_dark) + sizeof(SPR.bush_light));
+                        SPR_SIZE(bush_dark) + SPR_SIZE(bush_light));
   for (i = 0; i < 6; i++) {
     uint8_t x = (uint8_t)(i * 0x10);
     if ((uint8_t)i == g.viewstate.v.dowsing.markedWrongSlot) {
@@ -394,7 +394,7 @@ void ui_render_dowsing(void) {
   drv_lcd_blit(0x40, 0, sprite_sheet, 0x08, 0x10);
 
   /* Background pieces. */
-  drv_eeprom_read_block(SPR_OFF(left_string_unref), buf, sizeof(SPR.left_string_unref));
+  drv_eeprom_read_block(SPR_OFF(left_string_unref), buf, SPR_SIZE(left_string_unref));
   drv_lcd_blit(0x20, 0, buf, 0x20, 0x10);
 
   drv_eeprom_read_block(SPR_OFF(blank_img_16x24), buf, 0x60);
@@ -421,7 +421,7 @@ void ui_render_dowsing(void) {
 
   /* Six probe circles. */
   drv_eeprom_read_block(SPR_OFF(bush_dark), buf,
-                        sizeof(SPR.bush_dark) + sizeof(SPR.bush_light));
+                        SPR_SIZE(bush_dark) + SPR_SIZE(bush_light));
   for (i = 0; i < 6; i++) {
     uint8_t x = (uint8_t)(i * 0x10);
 
@@ -452,7 +452,7 @@ void ui_render_dowsing(void) {
   case 2: {
     /* Found item: draw item icon and either g.save_watts or item name. */
     uint8_t item_x;
-    drv_eeprom_read_block(SPR_OFF(item_symbol), buf, sizeof(SPR.item_symbol));
+    drv_eeprom_read_block(SPR_OFF(item_symbol), buf, SPR_SIZE(item_symbol));
     item_x = (uint8_t)(g.viewstate.v.dowsing.cursor * 0x10 + 0x04);
     drv_lcd_blit(item_x, 0x18, buf, 8, 8);
 
@@ -477,7 +477,7 @@ void ui_render_dowsing(void) {
        draws the icon 3 times for emphasis (single-frame flash effect). */
     if (g.viewstate.v.dowsing.attemptsRemaining == 0) {
       uint16_t k;
-      drv_eeprom_read_block(SPR_OFF(item_symbol), buf, sizeof(SPR.item_symbol));
+      drv_eeprom_read_block(SPR_OFF(item_symbol), buf, SPR_SIZE(item_symbol));
       for (k = 3; k > 0; k--) {
         uint8_t item_x = (uint8_t)(g.viewstate.v.dowsing.hiddenSlot * 0x10 + 0x04);
         drv_lcd_blit(item_x, 0x16, buf, 8, 8);

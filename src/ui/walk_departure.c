@@ -50,7 +50,7 @@ void ui_draw_departure_cloud_anim(void) {
   sys_init_heap();
   ptr = sbrk(0x180);
 
-  drv_eeprom_read_block(SPR_OFF(cloud_appeared), ptr, sizeof(SPR.cloud_appeared));
+  drv_eeprom_read_block(SPR_OFF(cloud_appeared), ptr, SPR_SIZE(cloud_appeared));
   drv_lcd_blit(0x20, 0x10, ptr, 0x20, 0x18);
 
   gfx_fill_rect(0, 0, 0x60, 8, 3);
@@ -69,7 +69,7 @@ void ui_draw_cloud_rise_anim(void) {
   ptr = sbrk(0x180);
 
   if (g.viewstate.Z <= 4) {
-    drv_eeprom_read_block(SPR_OFF(music_note_icon), ptr, sizeof(SPR.music_note_icon));
+    drv_eeprom_read_block(SPR_OFF(music_note_icon), ptr, SPR_SIZE(music_note_icon));
     drv_lcd_blit(
         0x2c, ANIM_CLOUD_Y[g.viewstate.Z],
         (void *)ptr, 8, 8);
@@ -114,7 +114,7 @@ void ui_render_operation_completed(void) {
   sys_init_heap();
   ptr = sbrk(0x100);
 
-  drv_eeprom_read_block(SPR_OFF(walker_blank_img), ptr, sizeof(SPR.walker_blank_img));
+  drv_eeprom_read_block(SPR_OFF(walker_blank_img), ptr, SPR_SIZE(walker_blank_img));
   drv_lcd_blit(0x20, 0x10, ptr, 0x20, 0x20);
   gfx_draw_text_box(0x30, TEXT_COMPLETED, TEXT_BOX_FULL, TEXT_BOX_STATIC);
 

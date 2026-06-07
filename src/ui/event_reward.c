@@ -28,10 +28,10 @@ void ui_draw_ball_sparkles_anim(void) {
   sys_init_heap();
   ptr = sbrk(0x180);
 
-  drv_eeprom_read_block(SPR_OFF(pokeball), ptr, sizeof(SPR.pokeball));
+  drv_eeprom_read_block(SPR_OFF(pokeball), ptr, SPR_SIZE(pokeball));
   drv_lcd_blit(0x2c, 0x10, ptr, 8, 8);
 
-  drv_eeprom_read_block(SPR_OFF(catch_star), ptr, sizeof(SPR.catch_star));
+  drv_eeprom_read_block(SPR_OFF(catch_star), ptr, SPR_SIZE(catch_star));
   {
     uint16_t packed = ((const uint16_t *)ANIM_SPARKLES_XY)[g.viewstate.Z];
     drv_lcd_blit((uint8_t)packed, (uint8_t)(packed >> 8), ptr, 8, 8);
@@ -62,7 +62,7 @@ void ui_render_event_reward_info(void) {
       gfx_draw_event_pokemon_name(0, 0x20, 5);
       break;
     case 1:
-      drv_eeprom_read_block(SPR_OFF(map_scroll_large), ptr, sizeof(SPR.map_scroll_large));
+      drv_eeprom_read_block(SPR_OFF(map_scroll_large), ptr, SPR_SIZE(map_scroll_large));
       drv_lcd_blit(0x20, 0x04, ptr, 0x20, 0x18);
       gfx_draw_text_box(0x20, TEXT_SPECIAL_ROUTE, TEXT_BOX_NO_SHADOW, TEXT_BOX_STATIC);
       break;
@@ -71,7 +71,7 @@ void ui_render_event_reward_info(void) {
       gfx_draw_event_item_name(0, 0x20, 0, 0x0D);
       break;
     case 3:
-      drv_eeprom_read_block(SPR_OFF(map_scroll_large), ptr, sizeof(SPR.map_scroll_large));
+      drv_eeprom_read_block(SPR_OFF(map_scroll_large), ptr, SPR_SIZE(map_scroll_large));
       drv_lcd_blit(0x20, 0x04, ptr, 0x20, 0x18);
       gfx_draw_text_box(0x20, TEXT_SPECIAL_MAP, TEXT_BOX_NO_SHADOW, TEXT_BOX_STATIC);
       break;

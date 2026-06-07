@@ -348,7 +348,7 @@ void ui_render_inventory_items(void) {
 
   /* Item-symbol glyph — filled-cell icon for each present item in the
    * dowsed-items grid (10 slots = 2 rows x 5). */
-  eread(SPR_OFF(item_symbol), buf, sizeof(SPR.item_symbol));
+  eread(SPR_OFF(item_symbol), buf, SPR_SIZE(item_symbol));
 
   for (i = 0; i < 5; i++) {
     if (g.viewstate.v.bytes.at_d2 & (1 << i)) {

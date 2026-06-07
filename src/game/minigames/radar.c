@@ -59,7 +59,7 @@ void ui_render_pokeradar(void) {
   drv_lcd_blit(RADAR_Y_COORDS[cursor] - 8, (cursor & 1) * 0x18 + 8, buf, 8, 8);
 
   /* The four grass patches (large dark-bush sprite, 32x24). */
-  drv_eeprom_read_block(SPR_OFF(bush_dark_large), buf, sizeof(SPR.bush_dark_large));
+  drv_eeprom_read_block(SPR_OFF(bush_dark_large), buf, SPR_SIZE(bush_dark_large));
   for (i = 0; i < 4; i++) {
     drv_lcd_blit(RADAR_Y_COORDS[i], (i & 1) * 0x18, buf, 0x20, 0x18);
   }
@@ -233,7 +233,7 @@ void ui_render_radar_failure(void) {
      the "It got away..." text-box. */
   sys_init_heap();
   buf = sbrk(0xC0);
-  drv_eeprom_read_block(SPR_OFF(bush_dark_large), buf, sizeof(SPR.bush_dark_large));
+  drv_eeprom_read_block(SPR_OFF(bush_dark_large), buf, SPR_SIZE(bush_dark_large));
 
   for (i = 0; i < 4; i++) {
     drv_lcd_blit(RADAR_Y_COORDS[i], (uint8_t)((i & 1) * 0x18),

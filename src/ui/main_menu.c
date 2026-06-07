@@ -188,7 +188,7 @@ void ui_render_main_menu(void) {
     }
 
     /* Per-row 16x16 menu icon (poke-radar, dowsing, connect, ...). */
-    drv_eeprom_read_block(SPR_OFF(menu_icons[i]), sprite_buf, sizeof(SPR.menu_icons[i]));
+    drv_eeprom_read_block(SPR_OFF(menu_icons[i]), sprite_buf, SPR_SIZE(menu_icons[i]));
     gfx_blit_to_buffer(0x10, 0x10, 0, MAIN_MENU_Y_COORDS[i],
                        sprite_buf, e0_buf, 0x10);
 
@@ -206,7 +206,7 @@ void ui_render_main_menu(void) {
     }
 
     /* "W" icon next to the current g.save_watts value (right side) — always drawn. */
-    drv_eeprom_read_block(SPR_OFF(watt_symbol), sprite_buf, sizeof(SPR.watt_symbol));
+    drv_eeprom_read_block(SPR_OFF(watt_symbol), sprite_buf, SPR_SIZE(watt_symbol));
     drv_lcd_blit(0x50, 0x30, sprite_buf, 0x10, 0x10);
 
     /* Cost row (left "W" + arrow) only for the two minigames with a cost. */
@@ -232,7 +232,7 @@ void ui_render_main_menu(void) {
 
   /* Left/right menu-edge chevrons — reads the left+right arrow pair. */
   drv_eeprom_read_block(SPR_OFF(menu_arrow_left), sprite_buf,
-                        sizeof(SPR.menu_arrow_left) + sizeof(SPR.menu_arrow_right));
+                        SPR_SIZE(menu_arrow_left) + SPR_SIZE(menu_arrow_right));
   drv_lcd_blit(0, 0, sprite_buf, 8, 0x10);
 
   drv_lcd_blit(0x58, 0, sprite_buf + 0x20, 8, 0x10);
