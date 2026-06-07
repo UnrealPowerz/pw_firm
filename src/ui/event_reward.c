@@ -28,10 +28,10 @@ void ui_draw_ball_sparkles_anim(void) {
   sys_init_heap();
   ptr = sbrk(0x180);
 
-  drv_eeprom_read_block(EEP_ABS_POKEBALL, ptr, 0x10);
+  drv_eeprom_read_block(SPR_OFF(pokeball), ptr, 0x10);
   drv_lcd_blit(0x2c, 0x10, ptr, 8, 8);
 
-  drv_eeprom_read_block(EEP_ABS_CATCH_STAR, ptr, 0x10);
+  drv_eeprom_read_block(SPR_OFF(catch_star), ptr, 0x10);
   {
     uint16_t packed = ((const uint16_t *)ANIM_SPARKLES_XY)[g.viewstate.Z];
     drv_lcd_blit((uint8_t)packed, (uint8_t)(packed >> 8), ptr, 8, 8);
@@ -51,8 +51,6 @@ void ui_draw_ball_sparkles_anim(void) {
 #pragma option case=ifthen  /* pragma:auto */
 void ui_render_event_reward_info(void) {
   void *ptr;
-  uint16_t off = 0x280;
-
   sys_init_heap();
   ptr = sbrk(0x180);
 
@@ -64,7 +62,7 @@ void ui_render_event_reward_info(void) {
       gfx_draw_event_pokemon_name(0, 0x20, 5);
       break;
     case 1:
-      drv_eeprom_read_block(off + 0x1750, ptr, 0xC0);
+      drv_eeprom_read_block(SPR_OFF(map_scroll_large), ptr, sizeof(SPR.map_scroll_large));
       drv_lcd_blit(0x20, 0x04, ptr, 0x20, 0x18);
       gfx_draw_text_box(0x20, TEXT_SPECIAL_ROUTE, TEXT_BOX_NO_SHADOW, TEXT_BOX_STATIC);
       break;
@@ -73,7 +71,7 @@ void ui_render_event_reward_info(void) {
       gfx_draw_event_item_name(0, 0x20, 0, 0x0D);
       break;
     case 3:
-      drv_eeprom_read_block(off + 0x1750, ptr, 0xC0);
+      drv_eeprom_read_block(SPR_OFF(map_scroll_large), ptr, sizeof(SPR.map_scroll_large));
       drv_lcd_blit(0x20, 0x04, ptr, 0x20, 0x18);
       gfx_draw_text_box(0x20, TEXT_SPECIAL_MAP, TEXT_BOX_NO_SHADOW, TEXT_BOX_STATIC);
       break;
@@ -81,12 +79,12 @@ void ui_render_event_reward_info(void) {
     case 5:
     case 6:
     case 7: {
-      uint16_t case_off;
-      if (g.viewstate.A == 4)      case_off = 0x238;
-      else if (g.viewstate.A == 5) case_off = 0x238 + 0x10;
-      else if (g.viewstate.A == 6) case_off = 0x258;
-      else                         case_off = 0x268;
-      drv_eeprom_read_block(off + case_off, ptr, 0x10);
+      uint16_t glyph_idx;
+      if (g.viewstate.A == 4)      glyph_idx = 0;
+      else if (g.viewstate.A == 5) glyph_idx = 1;
+      else if (g.viewstate.A == 6) glyph_idx = 2;
+      else                         glyph_idx = 3;
+      drv_eeprom_read_block(SPR_OFF(card_faces) + glyph_idx * 0x10, ptr, 0x10);
       drv_lcd_blit(0x2C, 0x10, ptr, 0x08, 0x08);
       gfx_draw_text_box(0x20, TEXT_STAMP, TEXT_BOX_NO_SHADOW, TEXT_BOX_STATIC);
       break;

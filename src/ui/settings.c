@@ -140,19 +140,19 @@ void ui_render_settings(void) {
   buf = sbrk(0x140);
 
   /* "Settings" header. */
-  drv_eeprom_read_block(EEP_ABS_MENU_HDG_SETTINGS, buf, 0x140);
+  drv_eeprom_read_block(SPR_OFF(menu_hdg_settings), buf, 0x140);
   drv_lcd_blit(8, 0, buf, 0x50, 0x10);
 
   /* "Sound" row label. */
-  drv_eeprom_read_block(EEP_ABS_LABEL_SOUND, buf, 0xA0);
+  drv_eeprom_read_block(SPR_OFF(label_sound), buf, 0xA0);
   drv_lcd_blit(8, 0x10, buf, 0x28, 0x10);
 
   /* "Shade" row label. */
-  drv_eeprom_read_block(EEP_ABS_LABEL_SHADE, buf, 0xA0);
+  drv_eeprom_read_block(SPR_OFF(label_shade), buf, 0xA0);
   drv_lcd_blit(0x38, 0x10, buf, 0x28, 0x10);
 
   /* Arrows sheet — used below to pick the cursor variant for each subview. */
-  drv_eeprom_read_block(EEP_ABS_ARROWS_8x8, buf, 0xC0);
+  drv_eeprom_read_block(SPR_OFF(arrows_8x8), buf, 0xC0);
 
   /* Within-page cursor x: 0 = g.sound_volume row, 0x30 = shade row. */
   cursor_x = g.viewstate.Z * 0x30;
@@ -170,7 +170,7 @@ void ui_render_settings(void) {
     drv_lcd_blit((uint8_t)(volVal * 0x20), 0x2C, buf + animOff, 8, 8);
 
     /* Speaker icons sheet: none/low/high in sequence (3 * 0x60 = 0x120). */
-    drv_eeprom_read_block(EEP_ABS_SPEAKER_NONE, buf, 0x120);
+    drv_eeprom_read_block(SPR_OFF(speaker_none), buf, 0x120);
     drv_lcd_blit(0x08, 0x28, buf, 0x18, 0x10);
     drv_lcd_blit(0x28, 0x28, buf + 0x60, 0x18, 0x10);
     drv_lcd_blit(0x48, 0x28, buf + 0xC0, 0x18, 0x10);
@@ -183,7 +183,7 @@ void ui_render_settings(void) {
     drv_lcd_blit((uint8_t)shadeOff, 0x20, buf + animOff, 8, 8);
     drv_lcd_blit((uint8_t)(g.viewstate.Z * 0x30), 0x14, buf + 0xB0, 8, 8);
 
-    drv_eeprom_read_block(EEP_ABS_CONTRAST_BAR, buf, 0x20);
+    drv_eeprom_read_block(SPR_OFF(contrast_bar), buf, 0x20);
     for (i = 0; i < 0x0A; i++) {
       uint8_t xpos;
       xpos = (uint8_t)(i * 8) + 8;
@@ -193,7 +193,7 @@ void ui_render_settings(void) {
   }
 
   /* Return-symbol chevron in the left gutter. */
-  drv_eeprom_read_block(EEP_ABS_MENU_RETURN_SYMBOL, buf, 0x20);
+  drv_eeprom_read_block(SPR_OFF(menu_return_symbol), buf, 0x20);
   drv_lcd_blit(0, 0, buf, 8, 0x10);
   gfx_draw_battery_low(0x58, 0);
 }

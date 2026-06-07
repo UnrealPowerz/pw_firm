@@ -57,7 +57,7 @@ void ui_draw_arrival_cloud_anim(void) {
   sys_init_heap();
   ptr = sbrk(0x180);
 
-  drv_eeprom_read_block(EEP_ABS_CLOUD_APPEARED, ptr, 0xc0);
+  drv_eeprom_read_block(SPR_OFF(cloud_appeared), ptr, 0xc0);
   drv_lcd_blit(0x20, 0x10, ptr, 0x20, 0x18);
 
   gfx_fill_rect(0, 0, 0x60, 8, 3);

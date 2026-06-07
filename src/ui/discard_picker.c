@@ -121,9 +121,7 @@ void ui_render_discard_item_slot(void) {
 
 // ROM: 0x3cd8  80.8%
 void ui_render_discard_picker(void) {
-  void *buf;
-  volatile uint16_t base = EEP_SPRITE_BASE;
-  /* Function-pointer alias — see same pattern in ui_render_battle. */
+  void *buf;  /* Function-pointer alias — see same pattern in ui_render_battle. */
   void (*blit)(uint8_t, uint8_t, void *, uint8_t, uint8_t) =
       (void (*)(uint8_t, uint8_t, void *, uint8_t, uint8_t))drv_lcd_blit;
 
@@ -133,24 +131,24 @@ void ui_render_discard_picker(void) {
   /* Left gutter chevron — drawn from the return-symbol slot of the menu
    * arrow strip (offset 0x378 = "return" 8x16, used here as a generic
    * 8x16 chevron). */
-  drv_eeprom_read_block(base + EEP_MENU_RETURN_SYMBOL, buf, 0x20);
+  drv_eeprom_read_block(SPR_OFF(menu_return_symbol), buf, 0x20);
   blit(0, 0, buf, 8, 0x10);
 
-  /* "Switch?" header string (0x8B30 absolute = base + 0x88B0). */
-  drv_eeprom_read_block(base + 0x88B0, buf, 0x140);
+  /* "Switch?" header string (absolute 0x8B30 — outside the SPR struct). */
+  drv_eeprom_read_block(0x8B30, buf, 0x140);
   blit(8, 0, buf, 0x50, 0x10);
 
   /* Cursor sprite (2-frame blink) over the currently-selected reward slot.
-   * 0x2A8 picks an arrow variant within EEP_ARROWS_8x8 (+0x30 = down/right). */
-  drv_eeprom_read_block(base + 0x2A8, buf, 0x20);
+   * 0x2A8 picks an arrow variant within arrows_8x8 (+0x30 = down/right). */
+  drv_eeprom_read_block(SPR_OFF(arrows_8x8) + 0x30, buf, 0x20);
   blit((uint8_t)(0x18 + (g.viewstate.Z * 0x14)), 0x18,
        (uint8_t *)buf + ((g.ui_animationTick & 1) * 0x10), 8, 8);
 
   /* Three reward-slot icons. Pokemon icon set (A==0) or item icon set (A!=0). */
   if (g.viewstate.A == 0) {
-    drv_eeprom_read_block(base + EEP_POKEBALL, buf, 0x10);
+    drv_eeprom_read_block(SPR_OFF(pokeball), buf, 0x10);
   } else {
-    drv_eeprom_read_block(base + EEP_ITEM_SYMBOL, buf, 0x10);
+    drv_eeprom_read_block(SPR_OFF(item_symbol), buf, 0x10);
   }
 
   blit(0x18, 0x20, buf, 8, 8);

@@ -303,22 +303,18 @@ void ui_handle_dowsing_selection(void) {
 // ROM: 0x4b9c  87.2%  saves: r5
 void ui_render_dowsing_grass(void) {
   uint8_t *buf;
-  volatile uint16_t sprites_base;
-  uint16_t i;
-
-  sprites_base = EEP_SPRITE_BASE;
-  sys_init_heap();
+  uint16_t i;  sys_init_heap();
   buf = (uint8_t *)sbrk(0x180);
 
   /* Player sprite (frame selected by g.viewstate.v.dowsing.attemptsRemaining). */
-  drv_eeprom_read_block(sprites_base + (uint16_t)g.viewstate.v.dowsing.attemptsRemaining * 0x20, buf, 0x20);
+  drv_eeprom_read_block(SPR_OFF(digits) + (uint16_t)g.viewstate.v.dowsing.attemptsRemaining * 0x20, buf, 0x20);
   drv_lcd_blit(0x40, 0, buf, 0x08, 0x10);
 
   /* Background top strip. */
-  drv_eeprom_read_block(0x1950 + sprites_base, buf, 0x80);
+  drv_eeprom_read_block(SPR_OFF(left_string_unref), buf, 0x80);
   drv_lcd_blit(0x20, 0, buf, 0x20, 0x10);
 
-  drv_eeprom_read_block(0x19D0 + sprites_base, buf, 0x60);
+  drv_eeprom_read_block(SPR_OFF(blank_img_16x24), buf, 0x60);
   drv_lcd_blit(0x48, 0, buf, 0x18, 0x10);
 
   /* Grass background — different art in co-op vs solo. */
@@ -342,7 +338,7 @@ void ui_render_dowsing_grass(void) {
   }
 
   /* Six selection circles across the grid. */
-  drv_eeprom_read_block(0x18D0 + sprites_base, buf, 0x80);
+  drv_eeprom_read_block(SPR_OFF(bush_dark), buf, 0x80);
   for (i = 0; i < 6; i++) {
     uint8_t x = (uint8_t)(i * 0x10);
     if ((uint8_t)i == g.viewstate.v.dowsing.markedWrongSlot) {
@@ -381,11 +377,7 @@ void ui_render_dowsing_grass(void) {
 void ui_render_dowsing(void) {
   uint8_t *buf;
   uint8_t *sprite_sheet;
-  uint16_t sprites_base;
   uint16_t i;
-
-  sprites_base = EEP_SPRITE_BASE;
-
   if (g.viewstate.Z == 1) {
     ui_render_dowsing_grass();
     goto end;
@@ -396,15 +388,15 @@ void ui_render_dowsing(void) {
   buf = (uint8_t *)sbrk(0x180);
 
   /* Player sprite — load full sheet, then point at frame g.viewstate.v.dowsing.attemptsRemaining. */
-  drv_eeprom_read_block(sprites_base, sprite_sheet, 0x140);
+  drv_eeprom_read_block(SPR_OFF(digits), sprite_sheet, 0x140);
   sprite_sheet += (uint16_t)g.viewstate.v.dowsing.attemptsRemaining * 0x20;
   drv_lcd_blit(0x40, 0, sprite_sheet, 0x08, 0x10);
 
   /* Background pieces. */
-  drv_eeprom_read_block(0x1950 + sprites_base, buf, 0x80);
+  drv_eeprom_read_block(SPR_OFF(left_string_unref), buf, 0x80);
   drv_lcd_blit(0x20, 0, buf, 0x20, 0x10);
 
-  drv_eeprom_read_block(0x19D0 + sprites_base, buf, 0x60);
+  drv_eeprom_read_block(SPR_OFF(blank_img_16x24), buf, 0x60);
   drv_lcd_blit(0x48, 0, buf, 0x18, 0x10);
 
   /* Grass background. */
@@ -427,7 +419,7 @@ void ui_render_dowsing(void) {
   }
 
   /* Six probe circles. */
-  drv_eeprom_read_block(0x18D0 + sprites_base, buf, 0x80);
+  drv_eeprom_read_block(SPR_OFF(bush_dark), buf, 0x80);
   for (i = 0; i < 6; i++) {
     uint8_t x = (uint8_t)(i * 0x10);
 
@@ -448,7 +440,7 @@ void ui_render_dowsing(void) {
     /* Idle: dowsing rod, two-frame bob. */
     uint8_t frame = g.ui_animationTick & 0x01;
     uint8_t rod_x;
-    drv_eeprom_read_block(0x278 + sprites_base + (uint16_t)frame * 0x10, buf,
+    drv_eeprom_read_block(SPR_OFF(arrows_8x8) + (uint16_t)frame * 0x10, buf,
                           0x10);
     rod_x = (uint8_t)(g.viewstate.v.dowsing.cursor * 0x10 + 0x04);
     drv_lcd_blit(rod_x, 0x28, buf, 8, 8);
@@ -458,7 +450,7 @@ void ui_render_dowsing(void) {
   case 2: {
     /* Found item: draw item icon and either g.save_watts or item name. */
     uint8_t item_x;
-    drv_eeprom_read_block(0x208 + sprites_base, buf, 0x10);
+    drv_eeprom_read_block(SPR_OFF(item_symbol), buf, 0x10);
     item_x = (uint8_t)(g.viewstate.v.dowsing.cursor * 0x10 + 0x04);
     drv_lcd_blit(item_x, 0x18, buf, 8, 8);
 
@@ -483,7 +475,7 @@ void ui_render_dowsing(void) {
        draws the icon 3 times for emphasis (single-frame flash effect). */
     if (g.viewstate.v.dowsing.attemptsRemaining == 0) {
       uint16_t k;
-      drv_eeprom_read_block(0x208 + sprites_base, buf, 0x10);
+      drv_eeprom_read_block(SPR_OFF(item_symbol), buf, 0x10);
       for (k = 3; k > 0; k--) {
         uint8_t item_x = (uint8_t)(g.viewstate.v.dowsing.hiddenSlot * 0x10 + 0x04);
         drv_lcd_blit(item_x, 0x16, buf, 8, 8);

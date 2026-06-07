@@ -313,7 +313,6 @@ void ui_render_inventory_items(void) {
   void (*eread)(uint16_t, void *, uint16_t);
   void *buf;
   void *namebuf;
-  uint16_t base;
   uint16_t anim;
   uint8_t cursor;
   uint8_t col_x, row_y;
@@ -324,25 +323,23 @@ void ui_render_inventory_items(void) {
   eread = drv_eeprom_read_block;
   sys_init_heap();
   buf = sbrk(0x140);
-  base = EEP_SPRITE_BASE;
-
   /* Left gutter chevron. */
-  eread(EEP_MENU_ARROW_LEFT + base, buf, 0x20);
+  eread(SPR_OFF(menu_arrow_left), buf, 0x20);
   blit(0, 0, buf, 8, 16);
 
   /* "POKéMON & ITEMS" heading bar. */
-  eread(EEP_MENU_HDG_INVENTORY + base, buf, 0x140);
+  eread(SPR_OFF(menu_hdg_inventory), buf, 0x140);
   blit(0x08, 0x00, buf, 0x50, 0x10);
 
   /* Treasure-chest illustration in the right panel. */
-  eread(EEP_PRESENT_LARGE + base, buf, 0xC0);
+  eread(SPR_OFF(present_large), buf, 0xC0);
   blit(0x3C, 0x18, buf, 0x20, 0x18);
 
   /* Cursor sprite over the current slot in the 5x2 grid. The +3-indexed
    * arrow variant (with tick toggle) gives the animated right-pointing
    * cursor used elsewhere too. */
   anim = (uint16_t)((uint16_t)(g.ui_animationTick & 1) + 3) * 0x10;
-  eread(EEP_ARROWS_8x8 + base + anim, buf, 0x10);
+  eread(SPR_OFF(arrows_8x8) + anim, buf, 0x10);
 
   cursor = g.viewstate.Y.BYTE;
   col_x = (uint8_t)((cursor % 5) * 8 + 0x10);
@@ -350,10 +347,8 @@ void ui_render_inventory_items(void) {
   blit(col_x, row_y, buf, 8, 8);
 
   /* Item-symbol glyph — filled-cell icon for each present item in the
-   * dowsed-items grid (10 slots = 2 rows x 5). Reuses the volatile base
-   * register by adding the offset in place. */
-  base += EEP_ITEM_SYMBOL;
-  eread(base, buf, 0x10);
+   * dowsed-items grid (10 slots = 2 rows x 5). */
+  eread(SPR_OFF(item_symbol), buf, sizeof(SPR.item_symbol));
 
   for (i = 0; i < 5; i++) {
     if (g.viewstate.v.bytes.at_d2 & (1 << i)) {

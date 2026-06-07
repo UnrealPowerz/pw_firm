@@ -159,15 +159,13 @@ void ui_handle_main_menu(void) {
 void ui_render_main_menu(void) {
   uint8_t *sprite_buf, *e0_buf;
   uint16_t i;
-  volatile uint16_t base = EEP_SPRITE_BASE;
-
   sys_init_heap();
   sprite_buf = (uint8_t *)sbrk(0x140);
   e0_buf = (uint8_t *)sbrk(0x80);
 
   /* Current selection: 80x16 menu heading bar for the selected row. */
   {
-    uint16_t addr = (uint16_t)g.ui_menuCursor * 0x140 + EEP_MENU_HDG_POKERADAR + base;
+    uint16_t addr = (uint16_t)g.ui_menuCursor * 0x140 + SPR_OFF(menu_hdg_pokeradar);
     drv_eeprom_read_block(addr, sprite_buf, 0x140);
     drv_lcd_blit(8, 0, sprite_buf, 0x50, 0x10);
   }
@@ -183,7 +181,7 @@ void ui_render_main_menu(void) {
        * EEP_ARROWS_8x8 sheet: arrows in 3 configs each (normal/offset/inverted);
        * +3 indexes into the right-arrow set, +(tick & 1) toggles between the
        * two animation frames. */
-      uint16_t cursor_addr = (uint16_t)((g.ui_animationTick & 1) + 3) * 0x10 + EEP_ARROWS_8x8 + base;
+      uint16_t cursor_addr = (uint16_t)((g.ui_animationTick & 1) + 3) * 0x10 + SPR_OFF(arrows_8x8);
       drv_eeprom_read_block(cursor_addr, sprite_buf, 0x10);
       gfx_blit_to_buffer(8, 8, 4, (uint8_t)(MAIN_MENU_Y_COORDS[i] - 8),
                          sprite_buf, e0_buf, 0x10);
@@ -191,7 +189,7 @@ void ui_render_main_menu(void) {
 
     /* Per-row 16x16 menu icon (poke-radar, dowsing, connect, ...). */
     {
-      uint16_t item_addr = EEP_MENU_ICONS + base + (uint16_t)i * 0x40;
+      uint16_t item_addr = SPR_OFF(menu_icons[0]) + (uint16_t)i * 0x40;
       drv_eeprom_read_block(item_addr, sprite_buf, 0x40);
       gfx_blit_to_buffer(0x10, 0x10, 0, MAIN_MENU_Y_COORDS[i],
                          sprite_buf, e0_buf, 0x10);
@@ -211,7 +209,7 @@ void ui_render_main_menu(void) {
     }
 
     /* "W" icon next to the current g.save_watts value (right side) — always drawn. */
-    drv_eeprom_read_block(base + EEP_WATT_SYMBOL, sprite_buf, 0x40);
+    drv_eeprom_read_block(SPR_OFF(watt_symbol), sprite_buf, 0x40);
     drv_lcd_blit(0x50, 0x30, sprite_buf, 0x10, 0x10);
 
     /* Cost row (left "W" + arrow) only for the two minigames with a cost. */
@@ -220,7 +218,7 @@ void ui_render_main_menu(void) {
 
       /* 0x180 offset = tail of the digit sheet, used as a small arrow glyph.
        * Reads 0x20 bytes which spans into the WATT-symbol bytes. */
-      drv_eeprom_read_block(base + 0x180, sprite_buf, 0x20);
+      drv_eeprom_read_block(SPR_OFF(digits) + 0x180, sprite_buf, 0x20);
       drv_lcd_blit(0x28, 0x30, sprite_buf, 8, 0x10);
     }
     break;
@@ -237,7 +235,7 @@ void ui_render_main_menu(void) {
 
   /* Left/right menu-edge chevrons. Reads the left-arrow + right-arrow pair
    * (0x40 bytes), then blits both halves at the screen edges. */
-  drv_eeprom_read_block(base + EEP_MENU_ARROW_LEFT, sprite_buf, 0x40);
+  drv_eeprom_read_block(SPR_OFF(menu_arrow_left), sprite_buf, 0x40);
   drv_lcd_blit(0, 0, sprite_buf, 8, 0x10);
 
   drv_lcd_blit(0x58, 0, sprite_buf + 0x20, 8, 0x10);
