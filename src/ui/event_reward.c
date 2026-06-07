@@ -28,10 +28,10 @@ void ui_draw_ball_sparkles_anim(void) {
   sys_init_heap();
   ptr = sbrk(0x180);
 
-  drv_eeprom_read_block(SPR_OFF(pokeball), ptr, 0x10);
+  drv_eeprom_read_block(SPR_OFF(pokeball), ptr, sizeof(SPR.pokeball));
   drv_lcd_blit(0x2c, 0x10, ptr, 8, 8);
 
-  drv_eeprom_read_block(SPR_OFF(catch_star), ptr, 0x10);
+  drv_eeprom_read_block(SPR_OFF(catch_star), ptr, sizeof(SPR.catch_star));
   {
     uint16_t packed = ((const uint16_t *)ANIM_SPARKLES_XY)[g.viewstate.Z];
     drv_lcd_blit((uint8_t)packed, (uint8_t)(packed >> 8), ptr, 8, 8);

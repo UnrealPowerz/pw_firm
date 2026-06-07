@@ -131,7 +131,7 @@ void ui_render_discard_picker(void) {
   /* Left gutter chevron — drawn from the return-symbol slot of the menu
    * arrow strip (offset 0x378 = "return" 8x16, used here as a generic
    * 8x16 chevron). */
-  drv_eeprom_read_block(SPR_OFF(menu_return_symbol), buf, 0x20);
+  drv_eeprom_read_block(SPR_OFF(menu_return_symbol), buf, sizeof(SPR.menu_return_symbol));
   blit(0, 0, buf, 8, 0x10);
 
   /* "Switch?" header string (absolute 0x8B30 — outside the SPR struct). */
@@ -146,9 +146,9 @@ void ui_render_discard_picker(void) {
 
   /* Three reward-slot icons. Pokemon icon set (A==0) or item icon set (A!=0). */
   if (g.viewstate.A == 0) {
-    drv_eeprom_read_block(SPR_OFF(pokeball), buf, 0x10);
+    drv_eeprom_read_block(SPR_OFF(pokeball), buf, sizeof(SPR.pokeball));
   } else {
-    drv_eeprom_read_block(SPR_OFF(item_symbol), buf, 0x10);
+    drv_eeprom_read_block(SPR_OFF(item_symbol), buf, sizeof(SPR.item_symbol));
   }
 
   blit(0x18, 0x20, buf, 8, 8);

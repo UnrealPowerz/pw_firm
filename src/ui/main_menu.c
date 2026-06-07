@@ -206,7 +206,7 @@ void ui_render_main_menu(void) {
     }
 
     /* "W" icon next to the current g.save_watts value (right side) — always drawn. */
-    drv_eeprom_read_block(SPR_OFF(watt_symbol), sprite_buf, 0x40);
+    drv_eeprom_read_block(SPR_OFF(watt_symbol), sprite_buf, sizeof(SPR.watt_symbol));
     drv_lcd_blit(0x50, 0x30, sprite_buf, 0x10, 0x10);
 
     /* Cost row (left "W" + arrow) only for the two minigames with a cost. */

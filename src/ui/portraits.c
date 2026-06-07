@@ -127,11 +127,11 @@ void ui_render_connecting_screen(uint8_t show_ir) {
   buf = sbrk(0x180);
 
   if (show_ir) {
-    drv_eeprom_read_block(SPR_OFF(ir_xmit_icon), buf, 0x20);
+    drv_eeprom_read_block(SPR_OFF(ir_xmit_icon), buf, sizeof(SPR.ir_xmit_icon));
     drv_lcd_blit(0x2C, 0, buf, 8, 0x10);
   }
 
-  drv_eeprom_read_block(SPR_OFF(walker_blank_img), buf, 0x100);
+  drv_eeprom_read_block(SPR_OFF(walker_blank_img), buf, sizeof(SPR.walker_blank_img));
   drv_lcd_blit(0x20, 0x10, buf, 0x20, 0x20);
   gfx_draw_text_box(0x30, TEXT_CONNECTING, TEXT_BOX_FULL, TEXT_BOX_STATIC);
 }
@@ -163,7 +163,7 @@ void ui_render_step_history(void) {
   sys_init_heap();
   buf = sbrk(0x180);
 
-  drv_eeprom_read_block(SPR_OFF(walker_blank_img), buf, 0x100);
+  drv_eeprom_read_block(SPR_OFF(walker_blank_img), buf, sizeof(SPR.walker_blank_img));
   drv_lcd_blit(0x20, 0x10, buf, 0x20, 0x20);
 
   day = g.ir_resultCode - 1;
