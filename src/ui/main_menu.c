@@ -156,7 +156,6 @@ void ui_handle_main_menu(void) {
 //   + needs gfx_blit_to_buffer signature investigation
 // ROM: 0x9930  69.1%
 #pragma option noregexpansion /* pragma:auto */
-#pragma noregsave (ui_render_main_menu)
 void ui_render_main_menu(void) {
   uint8_t *sprite_buf, *e0_buf;
   uint16_t i;
