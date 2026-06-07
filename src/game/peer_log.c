@@ -119,7 +119,7 @@ void game_log_interaction(uint8_t *trainer, uint8_t *log_slot,
   } else {
     /* Pull pokemon data from the wild-encounter EEPROM block instead. */
     log_slot[0x76] = drv_eeprom_read_u8(EEPROM_HOUR_MARKER);
-    drv_eeprom_read_block(0xBF50, log_slot + 0x4C, 0x2A);
+    drv_eeprom_read_block(EEPROM_SROUTE_ROUTE_NAME, log_slot + 0x4C, 0x2A);
   }
 
   if (event_subtype >= 1 && event_subtype <= 3) {
@@ -272,7 +272,7 @@ void game_rotate_interaction_log_record(void) {
   drv_eeprom_read_block(EEPROM_TRAINER_PROFILE, trainer_buf, 0xBE);
 
   peer_data = (uint8_t *)sbrk(0x38);
-  drv_eeprom_read_block(0xF6C0, peer_data, 0x38);
+  drv_eeprom_read_block(EEPROM_PEER_PLAY_DATA, peer_data, 0x38);
 
   log_record = (uint8_t *)sbrk(0x88);
 

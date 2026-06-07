@@ -109,7 +109,7 @@ void ui_render_home_bar(void) {
   int i;
   uint8_t *itemArea;
 
-  base = 0x280;
+  base = EEP_SPRITE_BASE;
   gfx_draw_home_section_divider();
   flags = drv_eeprom_read_u8(EEPROM_STEP_HIST_FLAGS);
 
@@ -117,7 +117,8 @@ void ui_render_home_bar(void) {
   buf = sbrk(0x180);
 
   if (flags & 0x20) {
-    drv_eeprom_read_block(0x1F0 + base, buf, 0x10);
+    /* "Event pokemon held" indicator (flag bit 0x20 = walker contains event poke). */
+    drv_eeprom_read_block(EEP_POKEBALL_EVENT + base, buf, 0x10);
     for (i = 0; i < 0x10; i++) {
       buf[i] |= 0x01;
     }
@@ -129,7 +130,8 @@ void ui_render_home_bar(void) {
     drv_eeprom_read_block(EEPROM_WILD_POKE, buf, 8);
     hasRoute = *(uint16_t *)(buf + 6);
     if (hasRoute != 0) {
-      drv_eeprom_read_block(0x218 + base, buf, 0x10);
+      /* "Event item held" indicator (flag bit 0x40 = walker contains event item). */
+      drv_eeprom_read_block(EEP_ITEM_SYMBOL_EVENT + base, buf, 0x10);
       for (i = 0; i < 0x10; i++) {
         buf[i] |= 0x01;
       }
@@ -137,7 +139,9 @@ void ui_render_home_bar(void) {
     }
   }
 
-  drv_eeprom_read_block(0x238 + base, buf, 0x40);
+  /* 4 stamp-suit glyphs (heart/spade/diamond/club, 8x8 each, total 0x40 bytes).
+   * Each suit is one of the four "stamp received" indicators (flag bits 0x01-0x08). */
+  drv_eeprom_read_block(EEP_CARD_FACES + base, buf, 0x40);
   for (i = 0; i < 0x40; i++) {
     buf[i] |= 0x01;
   }
@@ -159,7 +163,8 @@ void ui_render_home_bar(void) {
     drv_lcd_blit(0x28, 0x30, buf + 0x30, 8, 8);
   }
 
-  drv_eeprom_read_block(0x1E0 + base, buf, 0x10);
+  /* Pokeball glyph — bottom row pokemon-slot indicators. */
+  drv_eeprom_read_block(EEP_POKEBALL + base, buf, 0x10);
   drv_eeprom_read_block(EEPROM_LOG_CONTEXT, itemArea, 0x30);
 
   for (i = 0; i < 3; i++) {
@@ -172,7 +177,8 @@ void ui_render_home_bar(void) {
     }
   }
 
-  drv_eeprom_read_block(0x208 + base, buf, 0x10);
+  /* Item-symbol glyph — bottom row item-slot indicators. */
+  drv_eeprom_read_block(EEP_ITEM_SYMBOL + base, buf, 0x10);
   drv_eeprom_read_block(EEPROM_LOG_ITEMS, itemArea, 0x0C);
 
   for (i = 0; i < 3; i++) {
@@ -186,7 +192,8 @@ void ui_render_home_bar(void) {
   }
 
   if (flags & 0x10) {
-    drv_eeprom_read_block(0x228 + base, buf, 0x10);
+    /* Tiny map icon — "special map received" indicator. */
+    drv_eeprom_read_block(EEP_MAP_ICON_TINY + base, buf, 0x10);
     drv_lcd_blit(0x30, 0x38, buf, 8, 8);
   }
 

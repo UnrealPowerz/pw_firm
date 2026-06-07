@@ -102,7 +102,7 @@ void drv_sound_play(uint8_t sound_idx) {
     return;
 
   TIERW &= ~0x01;
-  drv_eeprom_read_block(0x8CB0 + (sound_idx * 4), &metadata, 4);
+  drv_eeprom_read_block(EEP_ABS_RANDOM_CHK_TABLE + (sound_idx * 4), &metadata, 4);
 
   offset = (metadata.offset >> 8) | (metadata.offset << 8);
   src_ptr = (uint8_t *)0x8CF0 + offset;

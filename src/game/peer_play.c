@@ -37,11 +37,11 @@ void game_calculate_interaction_reward(void) {
   sys_init_heap();
   sbrk(0xBE);
   peer_steps = (uint8_t *)sbrk(0x38);
-  drv_eeprom_read_block(0xF6C0, peer_steps, 0x38);
+  drv_eeprom_read_block(EEPROM_PEER_PLAY_DATA, peer_steps, 0x38);
 
   /* Read the dowsed-items table (10 slots x 2 uint16 = 0x28 bytes). */
   item_table = (uint16_t *)sbrk(0x28);
-  drv_eeprom_read_block(0xCEC8, item_table, 0x28);
+  drv_eeprom_read_block(EEPROM_PEER_GIFT_ITEMS, item_table, 0x28);
 
   /* score = own session steps + peer session steps + 10*(own recent + peer recent),
      clamped to 20000. */
@@ -113,7 +113,7 @@ void ui_start_peer_play_app(void) {
   uint8_t *buf;
   sys_init_heap();
   buf = sbrk(0x38);
-  drv_eeprom_read_block(0xF6C0, buf, 0x38);
+  drv_eeprom_read_block(EEPROM_PEER_PLAY_DATA, buf, 0x38);
   /* Copy bit 0 of buf[0x37] into bit 1 of g.viewstate.Y.BYTE -- the ROM uses
    * bld+bst here, which means the destination bit is unconditionally set
    * to the source bit (not OR'd as the original C suggested). */

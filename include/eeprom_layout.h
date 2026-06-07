@@ -100,6 +100,29 @@
 #define EEPROM_WILD_POKE           0xBD40
 #define EEPROM_WILD_POKE_SIZE      0x188
 
+/* ---- Event-pokemon (gifted or radar-caught) ---- */
+#define EEPROM_EVENT_POKE_BASIC    0xBA44  /* PokemonSummary, 0x10 bytes */
+#define EEPROM_EVENT_POKE_EXTRA    0xBA54  /* EventPokeExtraData, 0x2C bytes */
+#define EEPROM_EVENT_POKE_SPRITE   0xBA80  /* small 32x24 x 2 frames */
+#define EEPROM_EVENT_POKE_NAME     0xBC00  /* name image 80x16 */
+
+/* ---- Special route bundle (0xBF00..0xC83B) ---- */
+#define EEPROM_SROUTE_INFO         0xBF00  /* struct SpecialRoute header */
+#define EEPROM_SROUTE_POKE_BASIC   0xBF08  /* PokemonSummary, 0x10 bytes */
+#define EEPROM_SROUTE_POKE_EXTRA   0xBF18  /* EventPokeExtraData, 0x2C bytes */
+#define EEPROM_SROUTE_MIN_STEPS    0xBF44  /* u16 LE: min steps to encounter */
+#define EEPROM_SROUTE_ROUTE_NAME   0xBF50  /* u16[21] route name */
+#define EEPROM_SROUTE_POKE_ANIM    0xBF7C  /* small sprite 32x24x2, 0x170 bytes */
+#define EEPROM_SROUTE_POKE_NAME    0xC6FC  /* name image 80x16 */
+#define EEPROM_SROUTE_ITEM_NAME    0xCA3C  /* item name image 96x16 */
+
+/* ---- Peer-play interaction snapshot ---- */
+#define EEPROM_PEER_PLAY_DATA      0xF6C0  /* struct PeerPlayData, 0x38 bytes */
+#define EEPROM_PEER_PLAY_DATA_SIZE 0x38
+
+/* ---- Peer-gifted items log (10 entries of {u16 item, u16 unused}) ---- */
+#define EEPROM_PEER_GIFT_ITEMS     0xCEC8
+
 /* ---- Misc single-byte status lookups (referenced as drv_eeprom_read_u8) ---- */
 #define EEPROM_HOUR_MARKER         0xBF06  /* 1 byte - 'hour offset?' */
 #define EEPROM_SPECIAL_BYTE        0xBF0D  /* 1 byte - 'special mode flag?' */

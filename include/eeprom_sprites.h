@@ -86,16 +86,35 @@
  * the 16-bit unsigned base+offset range — we keep absolute addresses for
  * them below in EEP_ABS_TXT_*. */
 
+/* ---- Absolute sprite addresses for sites that don't use the base register.
+ *      (Several intentionally duplicate offsets above + 0x280, but use the
+ *       absolute form when no `volatile base` is in scope.) ---- */
+#define EEP_ABS_POKEBALL              0x0460  /* = base + EEP_POKEBALL */
+#define EEP_ABS_ARROWS_8x8            0x04F8  /* = base + EEP_ARROWS_8x8 */
+#define EEP_ABS_MENU_RETURN_SYMBOL    0x05F8  /* = base + EEP_MENU_RETURN_SYMBOL */
+#define EEP_ABS_MENU_HDG_SETTINGS     0x0F50  /* = base + EEP_MENU_HDG_SETTINGS */
+#define EEP_ABS_LABEL_SOUND           0x1690  /* = base + EEP_LABEL_SOUND */
+#define EEP_ABS_LABEL_SHADE           0x1730  /* = base + EEP_LABEL_SHADE */
+#define EEP_ABS_SPEAKER_NONE          0x17D0  /* speaker icons; 3x 0x60 bytes sequentially */
+#define EEP_ABS_CONTRAST_BAR          0x18F0
+#define EEP_ABS_TREASURE_CHEST        0x1910  /* = base + EEP_TREASURE_CHEST */
+#define EEP_ABS_BUSH_DARK_LARGE       0x1CB0  /* = base + EEP_BUSH_DARK_LARGE */
+#define EEP_ABS_CLOUD_APPEARED        0x1F70  /* "pokemon appeared" cloud 32x24 */
+#define EEP_ABS_CATCH_STAR            0x2040  /* 8x8 catch star */
+#define EEP_ABS_BATTLE_PLACARD_ABS    0x2050  /* attack/evade/catch placard 96x32 */
+#define EEP_ABS_WALKER_BLANK_IMG      0x2350  /* pokewalker image, blank screen 32x32 */
+#define EEP_ABS_IR_XMIT_ICON          0x2450  /* IR transmit "wifi arcs" 8x16 */
+#define EEP_ABS_MUSIC_NOTE_ICON       0x2480
+
+/* ---- Out-of-band data (random checksum area, peer play, special route, events) ---- */
+#define EEP_ABS_RANDOM_CHK_TABLE      0x8CB0  /* random checksum descriptor addrs */
+
 /* ---- Pedometer/walker route assets (used by walk_departure etc.; not via base) ---- */
 #define EEP_ABS_HOME_ROUTE_IMG   0x8FBE  /* current "area" graphic 32x24 */
 #define EEP_ABS_HOME_ROUTE_NAME  0x907E  /* current "area" textual name 80x16 */
 #define EEP_ABS_POKE_ANIM_SMALL  0x91BE  /* current pokemon small-anim sprite 32x24x2 */
 #define EEP_ABS_POKE_ANIM_LARGE  0x933E  /* current pokemon main-screen sprite 64x48x2 */
 #define EEP_ABS_POKE_NAME_IMG    0x993E  /* current pokemon name image 80x16 */
-#define EEP_ABS_WALK_ARRIVAL_BG  0x1F70  /* "pokemon appeared" cloud 32x24 (within sprite region but used absolute) */
-#define EEP_ABS_BATTLE_PLACARD   0x2050  /* attack/evade/catch placard 96x32 */
-#define EEP_ABS_WALKER_BLANK     0x2350  /* pokewalker image, blank screen 32x32 */
-#define EEP_ABS_MUSIC_NOTE       0x2480  /* music note (used by walk_departure) */
 #define EEP_ABS_SPECIAL_ROUTE_HOME 0xC83C  /* special route home-screen img 32x24 */
 
 #endif /* EEPROM_SPRITES_H */

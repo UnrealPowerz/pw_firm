@@ -28,10 +28,10 @@ void ui_draw_ball_sparkles_anim(void) {
   sys_init_heap();
   ptr = sbrk(0x180);
 
-  drv_eeprom_read_block(0x460, ptr, 0x10);
+  drv_eeprom_read_block(EEP_ABS_POKEBALL, ptr, 0x10);
   drv_lcd_blit(0x2c, 0x10, ptr, 8, 8);
 
-  drv_eeprom_read_block(0x2040, ptr, 0x10);
+  drv_eeprom_read_block(EEP_ABS_CATCH_STAR, ptr, 0x10);
   {
     uint16_t packed = ((const uint16_t *)ANIM_SPARKLES_XY)[g.viewstate.Z];
     drv_lcd_blit((uint8_t)packed, (uint8_t)(packed >> 8), ptr, 8, 8);
@@ -59,7 +59,7 @@ void ui_render_event_reward_info(void) {
   if (g.viewstate.A <= 7) {
     switch (g.viewstate.A) {
     case 0:
-      drv_eeprom_read_block(0xBA80 + ((g.ui_animationTick & 1) * 0xC0), ptr, 0x180);
+      drv_eeprom_read_block(EEPROM_EVENT_POKE_SPRITE + ((g.ui_animationTick & 1) * 0xC0), ptr, 0x180);
       drv_lcd_blit(0x20, 0x08, ptr, 0x20, 0x18);
       gfx_draw_event_pokemon_name(0, 0x20, 5);
       break;
@@ -147,7 +147,7 @@ void ui_handle_event_reward_anim(void) {
     ptr1 = sbrk(0xBE);
     drv_eeprom_read_block(EEPROM_TRAINER_PROFILE, ptr1, 0xBE);
     sbrk(0x10);
-    drv_eeprom_read_block(0xBA44, ptr1,
+    drv_eeprom_read_block(EEPROM_EVENT_POKE_BASIC, ptr1,
                           0x10); /* reusing ptr1 to save register */
     stackVar = ((g.save_settings.BYTE & 1)) << 8;
     ptr3 = sbrk(0x88);

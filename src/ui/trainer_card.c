@@ -108,7 +108,7 @@ exit_to_home:
 void ui_render_trainer_card_time(void) {
   uint8_t *buf;
   uint8_t time_part;
-  volatile uint16_t base = 0x280;
+  volatile uint16_t base = EEP_SPRITE_BASE;
 
   sys_init_heap();
   buf = (uint8_t *)sbrk(0x140);
@@ -172,7 +172,7 @@ void ui_render_daily_step_history(void) {
   uint32_t day_steps;
   uint16_t day_addr;
   uint16_t days_ago;
-  volatile uint16_t base = 0x280;
+  volatile uint16_t base = EEP_SPRITE_BASE;
 
   sys_init_heap();
   buf = (uint8_t *)sbrk(0x140);
@@ -199,8 +199,8 @@ void ui_render_daily_step_history(void) {
   drv_lcd_blit(0x38, 0x10, buf, 0x28, 0x10);
   drv_lcd_blit(0x38, 0x30, buf, 0x28, 0x10);
 
-  /* "-" glyph from the digit sheet (entry 11 = '-'). */
-  drv_eeprom_read_block(0x160 + base, buf, 0x20);
+  /* "-" glyph from the digit sheet (entry 11: '0'..'9' + ':' + '-'). */
+  drv_eeprom_read_block(EEP_DIGITS + 0x160 + base, buf, 0x20);
   drv_lcd_blit(0x18, 0, buf, 8, 0x10);
 
   /* Day digit (picked from the 16-glyph sheet by g.viewstate.Y.BYTE). */
@@ -223,7 +223,7 @@ void ui_render_step_goal_reached(void) {
   uint8_t i;
   volatile uint16_t base;
 
-  base = 0x280;
+  base = EEP_SPRITE_BASE;
 
   sys_init_heap();
   buf = (uint8_t *)sbrk(0x140);
@@ -252,7 +252,7 @@ void ui_render_step_goal_reward(void) {
   sys_init_heap();
   buf = (uint8_t *)sbrk(0xC0);
   /* Gift/reward sprite. */
-  drv_eeprom_read_block(0x1910, buf, 0xC0);
+  drv_eeprom_read_block(EEP_ABS_TREASURE_CHEST, buf, 0xC0);
   drv_lcd_blit(0x20, 0x04, buf, 0x20, 0x18);
   gfx_draw_text_box(0x20, TEXT_REWARD, TEXT_BOX_NO_SHADOW, TEXT_BOX_STATIC);
   gfx_draw_text_box(0x30, TEXT_RECEIVED, TEXT_BOX_NO_LINES, TEXT_BOX_BLINK);

@@ -503,16 +503,16 @@ void game_battle_handle_finish(void) {
 
     block_buf = sbrk(0x170);
 
-    drv_eeprom_read_block(0xBF08, block_buf, 0x10);
+    drv_eeprom_read_block(EEPROM_SROUTE_POKE_BASIC, block_buf, 0x10);
     drv_eeprom_write_block(0xBA44, block_buf, 0x10);
 
-    drv_eeprom_read_block(0xBF18, block_buf, 0x2C);
+    drv_eeprom_read_block(EEPROM_SROUTE_POKE_EXTRA, block_buf, 0x2C);
     drv_eeprom_write_block(0xBA54, block_buf, 0x2C);
 
-    drv_eeprom_read_block(0xBF7C, block_buf, 0x170);
+    drv_eeprom_read_block(EEPROM_SROUTE_POKE_ANIM, block_buf, 0x170);
     drv_eeprom_write_block(0xBA80, block_buf, 0x170);
 
-    drv_eeprom_read_block(0xC6FC, block_buf, 0x140);
+    drv_eeprom_read_block(EEPROM_SROUTE_POKE_NAME, block_buf, 0x140);
     drv_eeprom_write_block(0xBC00, block_buf, 0x140);
 
     drv_eeprom_write_u8(EEPROM_STEP_HIST_FLAGS, hist_flags | 0x20);

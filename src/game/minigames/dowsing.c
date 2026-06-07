@@ -192,7 +192,7 @@ void game_check_wild_encounter(void) {
   encounter_data = (uint8_t *)sbrk(0x188);
   route_data = (uint8_t *)sbrk(0x7C);
 
-  drv_eeprom_read_block(0xBF00, route_data, 0x7C);
+  drv_eeprom_read_block(EEPROM_SROUTE_INFO, route_data, 0x7C);
 
   /* Byte-swap big-endian 16-bit value at offset 0x4A into the step
      requirement. (EEPROM stores multi-byte fields BE.) */
@@ -239,7 +239,7 @@ encounter:
     *((uint16_t *)(encounter_data + 0x4)) = *((uint16_t *)(route_data + 0x4));
     *((uint16_t *)(encounter_data + 0x6)) = *((uint16_t *)(route_data + 0x48));
 
-    drv_eeprom_read_block(0xCA3C, encounter_data + 0x8, 0x180);
+    drv_eeprom_read_block(EEPROM_SROUTE_ITEM_NAME, encounter_data + 0x8, 0x180);
     game_write_wild_poke(encounter_data);
 
     {
@@ -306,7 +306,7 @@ void ui_render_dowsing_grass(void) {
   volatile uint16_t sprites_base;
   uint16_t i;
 
-  sprites_base = 0x280;
+  sprites_base = EEP_SPRITE_BASE;
   sys_init_heap();
   buf = (uint8_t *)sbrk(0x180);
 
@@ -384,7 +384,7 @@ void ui_render_dowsing(void) {
   uint16_t sprites_base;
   uint16_t i;
 
-  sprites_base = 0x280;
+  sprites_base = EEP_SPRITE_BASE;
 
   if (g.viewstate.Z == 1) {
     ui_render_dowsing_grass();

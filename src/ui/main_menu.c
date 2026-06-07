@@ -159,7 +159,7 @@ void ui_handle_main_menu(void) {
 void ui_render_main_menu(void) {
   uint8_t *sprite_buf, *e0_buf;
   uint16_t i;
-  volatile uint16_t base = 0x280;
+  volatile uint16_t base = EEP_SPRITE_BASE;
 
   sys_init_heap();
   sprite_buf = (uint8_t *)sbrk(0x140);

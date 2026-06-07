@@ -50,7 +50,7 @@ void ui_draw_departure_cloud_anim(void) {
   sys_init_heap();
   ptr = sbrk(0x180);
 
-  drv_eeprom_read_block(0x1f70, ptr, 0xc0);
+  drv_eeprom_read_block(EEP_ABS_CLOUD_APPEARED, ptr, 0xc0);
   drv_lcd_blit(0x20, 0x10, ptr, 0x20, 0x18);
 
   gfx_fill_rect(0, 0, 0x60, 8, 3);
@@ -69,7 +69,7 @@ void ui_draw_cloud_rise_anim(void) {
   ptr = sbrk(0x180);
 
   if (g.viewstate.Z <= 4) {
-    drv_eeprom_read_block(0x2480, ptr, 0x10);
+    drv_eeprom_read_block(EEP_ABS_MUSIC_NOTE_ICON, ptr, 0x10);
     drv_lcd_blit(
         0x2c, ANIM_CLOUD_Y[g.viewstate.Z],
         (void *)ptr, 8, 8);
@@ -114,7 +114,7 @@ void ui_render_operation_completed(void) {
   sys_init_heap();
   ptr = sbrk(0x100);
 
-  drv_eeprom_read_block(0x2350, ptr, 0x100);
+  drv_eeprom_read_block(EEP_ABS_WALKER_BLANK_IMG, ptr, 0x100);
   drv_lcd_blit(0x20, 0x10, ptr, 0x20, 0x20);
   gfx_draw_text_box(0x30, TEXT_COMPLETED, TEXT_BOX_FULL, TEXT_BOX_STATIC);
 

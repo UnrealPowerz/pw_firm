@@ -48,26 +48,28 @@ void ui_render_pokeradar(void) {
   void *buf;
   uint8_t cursor;
   uint8_t i;
-  volatile uint16_t base = 0x280;
+  volatile uint16_t base = EEP_SPRITE_BASE;
 
   sys_init_heap();
   buf = sbrk(0x100);
 
-  /* Animated grass-blade sprite that sits over the player's selected patch. */
-  drv_eeprom_read_block(0x278 + base + (((g.ui_animationTick & 1) + 9) * 0x10), buf, 0x10);
+  /* Animated cursor — picks slot 9/10 of the EEP_ARROWS_8x8 sheet (two-frame
+   * blink) for the grass blade over the selected patch. */
+  drv_eeprom_read_block(EEP_ARROWS_8x8 + base + (((g.ui_animationTick & 1) + 9) * 0x10), buf, 0x10);
 
   cursor = g.viewstate.A;
   drv_lcd_blit(RADAR_Y_COORDS[cursor] - 8, (cursor & 1) * 0x18 + 8, buf, 8, 8);
 
-  /* The four grass patches. */
-  drv_eeprom_read_block(0x1A30 + base, buf, 0xC0);
+  /* The four grass patches (large dark-bush sprite, 32x24). */
+  drv_eeprom_read_block(EEP_BUSH_DARK_LARGE + base, buf, 0xC0);
   for (i = 0; i < 4; i++) {
     drv_lcd_blit(RADAR_Y_COORDS[i], (i & 1) * 0x18, buf, 0x20, 0x18);
   }
 
   if (g.viewstate.v.radar.lockAnimTimer != 0) {
-    /* Reveal phase — overlay the encounter icon on the secret patch. */
-    drv_eeprom_read_block(0x1AF0 + base, buf, 0x100);
+    /* Reveal phase — overlay the encounter icon (word bubble + exclamation
+     * marks) on the secret patch. */
+    drv_eeprom_read_block(EEP_WORD_BUBBLE_1EX + base, buf, 0x100);
     drv_lcd_blit(RADAR_Y_COORDS[g.viewstate.v.radar.secretPatchIndex] + 0x10,
                  (g.viewstate.v.radar.secretPatchIndex & 1) * 0x18, (uint8_t *)buf + 0xC0,
                  0x10, 0x10);
@@ -92,7 +94,7 @@ void ui_render_pokeradar(void) {
     /* Search phase — prompt and (briefly) flash the next-patch hint. */
     gfx_draw_text_box(0x30, TEXT_FIND_A_POKEMON, TEXT_BOX_FULL, TEXT_BOX_STATIC);
     if (g.viewstate.v.radar.timerSubTick == 0) {
-      drv_eeprom_read_block(0x1AF0 + base, buf, 0x100);
+      drv_eeprom_read_block(EEP_WORD_BUBBLE_1EX + base, buf, 0x100);
       drv_lcd_blit(RADAR_Y_COORDS[g.viewstate.v.radar.secretPatchIndex] + 0x10,
                    (g.viewstate.v.radar.secretPatchIndex & 1) * 0x18,
                    (uint8_t *)buf + RADAR_FRAME_MULT[g.viewstate.v.radar.roundsCompleted.BYTE] * 0x40,
@@ -233,7 +235,7 @@ void ui_render_radar_failure(void) {
      the "It got away..." text-box. */
   sys_init_heap();
   buf = sbrk(0xC0);
-  drv_eeprom_read_block(0x1CB0, buf, 0xC0);
+  drv_eeprom_read_block(EEP_ABS_BUSH_DARK_LARGE, buf, 0xC0);
 
   for (i = 0; i < 4; i++) {
     drv_lcd_blit(RADAR_Y_COORDS[i], (uint8_t)((i & 1) * 0x18),
@@ -274,7 +276,7 @@ void game_roll_radar_encounter(void) {
       if ((drv_eeprom_read_u8(EEPROM_STEP_HIST_FLAGS) & 0x20) == 0) {
         sys_init_heap();
         scratch = sbrk(4);
-        drv_eeprom_read_block(0xBF44, scratch, 4);
+        drv_eeprom_read_block(EEPROM_SROUTE_MIN_STEPS, scratch, 4);
         steps_required = ((uint32_t)scratch[1] << 16) |
                          ((uint32_t)scratch[2] << 8) | scratch[3];
         if (steps_required <= g.session_steps) {
