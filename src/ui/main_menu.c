@@ -195,7 +195,8 @@ void ui_render_main_menu(void) {
     drv_lcd_blit((uint8_t)(i * 0x10), 0x10, e0_buf, 0x10, 0x20);
   }
 
-  if (g.viewstate.Y.BYTE == MENU_POPUP_NONE) {
+  switch (g.viewstate.Y.BYTE) {
+  case MENU_POPUP_NONE:
     gfx_draw_numeric_value(0x48, 0x30, g.save_watts, 0);
     /* Cost number: dowsing costs 10, radar costs 3. */
     if (g.ui_menuCursor == MENU_POKERADAR) {
@@ -215,12 +216,16 @@ void ui_render_main_menu(void) {
       drv_eeprom_read_block(base + 0x180, sprite_buf, 0x20);
       drv_lcd_blit(0x28, 0x30, sprite_buf, 8, 0x10);
     }
-  } else if (g.viewstate.Y.BYTE == MENU_POPUP_NEED_WATTS) {
+    break;
+  case MENU_POPUP_NEED_WATTS:
     gfx_draw_text_box(0x30, TEXT_NEED_MORE_WATTS, TEXT_BOX_FULL, TEXT_BOX_BLINK);
-  } else if (g.viewstate.Y.BYTE == MENU_POPUP_NO_POKEMON) {
+    break;
+  case MENU_POPUP_NO_POKEMON:
     gfx_draw_text_box(0x30, TEXT_NO_POKEMON_HELD, TEXT_BOX_FULL, TEXT_BOX_BLINK);
-  } else if (g.viewstate.Y.BYTE == MENU_POPUP_NOTHING_HELD) {
+    break;
+  case MENU_POPUP_NOTHING_HELD:
     gfx_draw_text_box(0x30, TEXT_NOTHING_HELD, TEXT_BOX_FULL, TEXT_BOX_BLINK);
+    break;
   }
 
   drv_eeprom_read_block(base + 0x338, sprite_buf, 0x40);
