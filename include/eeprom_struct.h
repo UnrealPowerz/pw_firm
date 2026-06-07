@@ -26,9 +26,11 @@ struct sprite_region {
     uint8_t  map_icon_tiny[0x10];         /* 0x04A8: tiny map icon 8x8 */
     uint8_t  card_faces[0x40];            /* 0x04B8: 4 stamp suits 8x8 each */
     uint8_t  arrows_8x8[0xC0];            /* 0x04F8: up/down/left/right 3 variants */
-    uint8_t  menu_arrow_left[0x20];       /* 0x05B8: left arrow 8x16 */
-    uint8_t  menu_arrow_right[0x20];      /* 0x05D8: right arrow 8x16 */
-    uint8_t  menu_return_symbol[0x20];    /* 0x05F8: "return" symbol 8x16 */
+    /* Three 8x16 menu glyphs — read individually or as a contiguous strip.
+     * Use SPR_SPAN(menu_arrow_left, menu_return_symbol) for the trio. */
+    uint8_t  menu_arrow_left[0x20];       /* 0x05B8: left arrow */
+    uint8_t  menu_arrow_right[0x20];      /* 0x05D8: right arrow */
+    uint8_t  menu_return_symbol[0x20];    /* 0x05F8: "return" symbol */
     uint8_t  _gap_0618[0x20];             /* 0x0618: unused */
     uint8_t  more_msg_or_mask[0x10];      /* 0x0638: "more message" OR mask */
     uint8_t  more_msg_and_mask[0x8];      /* 0x0648: "more message" AND mask */
@@ -60,6 +62,8 @@ struct sprite_region {
     /* Settings screen */
     uint8_t  label_sound[0xA0];           /* 0x1690 */
     uint8_t  label_shade[0xA0];           /* 0x1730 */
+    /* Speaker icons (no-waves / one-wave / two-waves), 24x16 each, often
+     * read together. Use SPR_SPAN(speaker_none, speaker_high) for the trio. */
     uint8_t  speaker_none[0x60];          /* 0x17D0 */
     uint8_t  speaker_low[0x60];           /* 0x1830 */
     uint8_t  speaker_high[0x60];          /* 0x1890 */
@@ -69,6 +73,7 @@ struct sprite_region {
     uint8_t  treasure_chest[0xC0];        /* 0x1910 */
     uint8_t  map_scroll_large[0xC0];      /* 0x19D0 */
     uint8_t  present_large[0xC0];         /* 0x1A90 */
+    /* Small bush variants — read together by dowsing. */
     uint8_t  bush_dark[0x40];             /* 0x1B50 */
     uint8_t  bush_light[0x40];            /* 0x1B90 */
     uint8_t  left_string_unref[0x80];     /* 0x1BD0 */
@@ -102,5 +107,11 @@ struct sprite_region {
 
 /* Size of a sprite_region member (so call sites don't repeat the size). */
 #define SPR_SIZE(member) ((uint16_t)sizeof(SPR.member))
+
+/* For reads that span multiple consecutive fields, sum the sizeofs.
+ * Sum-of-sizeofs folds to a compile-time constant; SPR_OFF subtraction
+ * doesn't (ch38 keeps each address live and computes the diff at runtime).
+ * Use: drv_eeprom_read_block(SPR_OFF(first), buf,
+ *                            sizeof(SPR.first) + sizeof(SPR.second) + ...); */
 
 #endif /* EEPROM_STRUCT_H */

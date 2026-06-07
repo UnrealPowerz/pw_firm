@@ -230,9 +230,9 @@ void ui_render_main_menu(void) {
     break;
   }
 
-  /* Left/right menu-edge chevrons. Reads the left-arrow + right-arrow pair
-   * (0x40 bytes), then blits both halves at the screen edges. */
-  drv_eeprom_read_block(SPR_OFF(menu_arrow_left), sprite_buf, 0x40);
+  /* Left/right menu-edge chevrons — reads the left+right arrow pair. */
+  drv_eeprom_read_block(SPR_OFF(menu_arrow_left), sprite_buf,
+                        sizeof(SPR.menu_arrow_left) + sizeof(SPR.menu_arrow_right));
   drv_lcd_blit(0, 0, sprite_buf, 8, 0x10);
 
   drv_lcd_blit(0x58, 0, sprite_buf + 0x20, 8, 0x10);

@@ -338,7 +338,8 @@ void ui_render_dowsing_grass(void) {
   }
 
   /* Six selection circles across the grid. */
-  drv_eeprom_read_block(SPR_OFF(bush_dark), buf, 0x80);
+  drv_eeprom_read_block(SPR_OFF(bush_dark), buf,
+                        sizeof(SPR.bush_dark) + sizeof(SPR.bush_light));
   for (i = 0; i < 6; i++) {
     uint8_t x = (uint8_t)(i * 0x10);
     if ((uint8_t)i == g.viewstate.v.dowsing.markedWrongSlot) {
@@ -419,7 +420,8 @@ void ui_render_dowsing(void) {
   }
 
   /* Six probe circles. */
-  drv_eeprom_read_block(SPR_OFF(bush_dark), buf, 0x80);
+  drv_eeprom_read_block(SPR_OFF(bush_dark), buf,
+                        sizeof(SPR.bush_dark) + sizeof(SPR.bush_light));
   for (i = 0; i < 6; i++) {
     uint8_t x = (uint8_t)(i * 0x10);
 

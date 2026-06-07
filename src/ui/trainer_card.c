@@ -133,8 +133,8 @@ void ui_render_trainer_card_time(void) {
   }
   drv_lcd_blit(0x10, 0x20, buf, 0x50, 0x10);
 
-  /* Reads the left arrow + right arrow + return strip in one block; the
-   * blits at +0x40 and +0x20 pick the return and right-arrow glyphs. */
+  /* Over-reads past the menu arrows into the gap/talk-bubble area;
+   * only the first 0x60 bytes (left+right+return) are used by the blits below. */
   drv_eeprom_read_block(SPR_OFF(menu_arrow_left), buf, 0xC0);
   drv_lcd_blit(0, 0, buf + 0x40, 8, 0x10);
   drv_lcd_blit(0x58, 0, buf + 0x20, 8, 0x10);
@@ -175,9 +175,8 @@ void ui_render_daily_step_history(void) {
   sys_init_heap();
   buf = (uint8_t *)sbrk(0x140);
 
-  /* Left gutter chevron (always); right chevron only for y < 7 (not at end).
-   * Loads the left-arrow + right-arrow + return strip; first 8x16 glyph is
-   * the left arrow, +0x20 picks the right arrow. */
+  /* Over-reads past the menu arrows; first 0x20 = left arrow (gutter chevron),
+   * +0x20 = right arrow (shown only if not at the last page). */
   drv_eeprom_read_block(SPR_OFF(menu_arrow_left), buf, 0xC0);
   drv_lcd_blit(0, 0, buf, 8, 0x10);
   if (g.viewstate.Y.BYTE < 7) {

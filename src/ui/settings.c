@@ -169,8 +169,9 @@ void ui_render_settings(void) {
     animOff = ((g.ui_animationTick & 0x01) + 9) * 0x10;
     drv_lcd_blit((uint8_t)(volVal * 0x20), 0x2C, buf + animOff, 8, 8);
 
-    /* Speaker icons sheet: none/low/high in sequence (3 * 0x60 = 0x120). */
-    drv_eeprom_read_block(SPR_OFF(speaker_none), buf, 0x120);
+    /* All three speaker icons (none/low/high) read together. */
+    drv_eeprom_read_block(SPR_OFF(speaker_none), buf,
+                          sizeof(SPR.speaker_none) + sizeof(SPR.speaker_low) + sizeof(SPR.speaker_high));
     drv_lcd_blit(0x08, 0x28, buf, 0x18, 0x10);
     drv_lcd_blit(0x28, 0x28, buf + 0x60, 0x18, 0x10);
     drv_lcd_blit(0x48, 0x28, buf + 0xC0, 0x18, 0x10);
