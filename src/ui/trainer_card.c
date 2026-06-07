@@ -113,36 +113,37 @@ void ui_render_trainer_card_time(void) {
   sys_init_heap();
   buf = (uint8_t *)sbrk(0x140);
 
-  /* Static "HH:MM:SS" frame: digit slots, colons, and labels. */
-  drv_eeprom_read_block(0xA50 + base, buf, 0x140);
+  /* "TRAINER CARD" heading bar + per-screen labels. */
+  drv_eeprom_read_block(EEP_MENU_HDG_TRAINER + base, buf, 0x140);
   drv_lcd_blit(8, 0, buf, 0x50, 0x10);
 
-  drv_eeprom_read_block(0xF90 + base, buf, 0x40);
+  drv_eeprom_read_block(EEP_TRAINER_PERSON_ICON + base, buf, 0x40);
   drv_lcd_blit(0, 0x10, buf, 0x10, 0x10);
 
-  drv_eeprom_read_block(0xFD0 + base, buf, 0x140);
+  drv_eeprom_read_block(EEP_TRAINER_NAME_IMG + base, buf, 0x140);
   drv_lcd_blit(0x10, 0x10, buf, 0x50, 0x10);
 
-  drv_eeprom_read_block(0x1110 + base, buf, 0x40);
+  drv_eeprom_read_block(EEP_TRAINER_ROUTE_SMALL + base, buf, 0x40);
   drv_lcd_blit(0, 0x20, buf, 0x10, 0x10);
 
-  /* Date label — different art for co-op vs solo. */
+  /* Date label — different art for co-op vs solo (special route vs normal). */
   if (g.save_settings.BYTE & 1) {
-    drv_eeprom_read_block(0xC8FC, buf, 0x140);
+    drv_eeprom_read_block(EEP_ABS_SPECIAL_ROUTE_HOME, buf, 0x140);
   } else {
-    drv_eeprom_read_block(0x907E, buf, 0x140);
+    drv_eeprom_read_block(EEP_ABS_HOME_ROUTE_NAME, buf, 0x140);
   }
   drv_lcd_blit(0x10, 0x20, buf, 0x50, 0x10);
 
-  /* Left/right gutter chevrons. */
-  drv_eeprom_read_block(0x338 + base, buf, 0xC0);
+  /* Reads the left/right/return arrow strip; blit `+0x40` picks the return
+   * symbol (left gutter), `+0x20` picks the right arrow (right gutter). */
+  drv_eeprom_read_block(EEP_MENU_ARROW_LEFT + base, buf, 0xC0);
   drv_lcd_blit(0, 0, buf + 0x40, 8, 0x10);
   drv_lcd_blit(0x58, 0, buf + 0x20, 8, 0x10);
 
-  drv_eeprom_read_block(0x11F0 + base, buf, 0x80);
+  drv_eeprom_read_block(EEP_LABEL_TIME + base, buf, 0x80);
   drv_lcd_blit(0, 0x30, buf, 0x20, 0x10);
 
-  /* Digit sheet — 16 glyphs of 0x20 bytes each at base. */
+  /* Digit sheet — 16 glyphs of 0x20 bytes each at the sprite-base anchor. */
   drv_eeprom_read_block(base, buf, 0x140);
 
   time_part = g.rtc_hours;
@@ -157,8 +158,8 @@ void ui_render_trainer_card_time(void) {
   drv_lcd_blit(0x50, 0x30, buf + ((((uint16_t)time_part >> 4) & 7) * 0x20), 8, 0x10);
   drv_lcd_blit(0x58, 0x30, buf + ((uint16_t)(time_part & 0xF) * 0x20), 8, 0x10);
 
-  /* Colon separators between HH/MM and MM/SS. */
-  drv_eeprom_read_block(0x280 + 0x140, buf, 0x20);
+  /* Colon glyph (10th entry in the digit sheet). */
+  drv_eeprom_read_block(EEP_SPRITE_BASE + EEP_DIGITS_COLON, buf, 0x20);
   drv_lcd_blit(0x30, 0x30, buf, 8, 0x10);
   drv_lcd_blit(0x48, 0x30, buf, 8, 0x10);
 }
@@ -176,27 +177,29 @@ void ui_render_daily_step_history(void) {
   sys_init_heap();
   buf = (uint8_t *)sbrk(0x140);
 
-  /* Left gutter chevron (always); right chevron only for y < 7 (not at end). */
-  drv_eeprom_read_block(0x338 + base, buf, 0xC0);
+  /* Left gutter chevron (always); right chevron only for y < 7 (not at end).
+   * Loads the left-arrow + right-arrow + return strip; first 8x16 glyph is
+   * the left arrow, +0x20 picks the right arrow. */
+  drv_eeprom_read_block(EEP_MENU_ARROW_LEFT + base, buf, 0xC0);
   drv_lcd_blit(0, 0, buf, 8, 0x10);
   if (g.viewstate.Y.BYTE < 7) {
     drv_lcd_blit(0x58, 0, buf + 0x20, 8, 0x10);
   }
 
-  /* "Steps day -N" header */
-  drv_eeprom_read_block(0x1270 + base, buf, 0xA0);
+  /* "Days" header label. */
+  drv_eeprom_read_block(EEP_LABEL_DAYS + base, buf, 0xA0);
   drv_lcd_blit(0x28, 0, buf, 0x28, 0x10);
 
-  /* "Total" label (bottom row). */
-  drv_eeprom_read_block(0x1310 + base, buf, 0x100);
+  /* "Total days:" bottom label. */
+  drv_eeprom_read_block(EEP_LABEL_TOTAL_DAYS + base, buf, 0x100);
   drv_lcd_blit(0, 0x20, buf, 0x40, 0x10);
 
-  /* "Days ago" label, drawn twice (middle and bottom). */
-  drv_eeprom_read_block(0x1150 + base, buf, 0xA0);
+  /* "Steps" label, drawn twice (middle and bottom rows). */
+  drv_eeprom_read_block(EEP_LABEL_STEPS + base, buf, 0xA0);
   drv_lcd_blit(0x38, 0x10, buf, 0x28, 0x10);
   drv_lcd_blit(0x38, 0x30, buf, 0x28, 0x10);
 
-  /* "-" glyph for negative days. */
+  /* "-" glyph from the digit sheet (entry 11 = '-'). */
   drv_eeprom_read_block(0x160 + base, buf, 0x20);
   drv_lcd_blit(0x18, 0, buf, 8, 0x10);
 
@@ -232,10 +235,10 @@ void ui_render_step_goal_reached(void) {
     drv_lcd_blit((uint8_t)x, 8, buf + 0x120, 8, 0x10);
   }
 
-  drv_eeprom_read_block(0x1150 + base, buf, 0xA0);
+  drv_eeprom_read_block(EEP_LABEL_STEPS + base, buf, 0xA0);
   drv_lcd_blit(0x38, 0x08, buf, 0x28, 0x10);
 
-  drv_eeprom_read_block(0x2210 + base, buf, 0xA0);
+  drv_eeprom_read_block(EEP_HOURS_FRAME + base, buf, 0xA0);
   drv_lcd_blit(0x38, 0x28, buf, 0x28, 0x10);
 
   gfx_draw_numeric_value(0x30, 0x28, g.save_walkStepCount, 0);

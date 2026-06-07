@@ -6,6 +6,7 @@
 #include "types.h"
 #include "romdata.h"
 #include "eeprom_layout.h"
+#include "eeprom_sprites.h"
 #include "gfx_consts.h"
 #include "input_consts.h"
 #include "ir_cmd.h"
