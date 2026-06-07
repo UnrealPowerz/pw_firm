@@ -139,7 +139,8 @@ void ui_handle_event_reward_anim(void) {
   if (g.viewstate.Z <= 8)
     return;
 
-  if (g.viewstate.A == 0) {
+  switch (g.viewstate.A) {
+  case 0: {
     void *ptr1;
     void *ptr3;
     sys_init_heap();
@@ -152,7 +153,9 @@ void ui_handle_event_reward_anim(void) {
     ptr3 = sbrk(0x88);
     game_log_interaction(ptr1, ptr3, 0x1D,
                           (uint8_t)((g.save_settings.BYTE & 1)), 0, 4);
-  } else if (g.viewstate.A == 2) {
+    break;
+  }
+  case 2: {
     void *ptr1;
     uint16_t *ptr2;
     void *ptr3;
@@ -165,7 +168,9 @@ void ui_handle_event_reward_anim(void) {
     ptr3 = sbrk(0x88);
     game_log_interaction(ptr1, ptr3, 0x1C,
                           (uint8_t)((g.save_settings.BYTE & 1)), ptr2[3], 0);
-  } else {
+    break;
+  }
+  default:
     ui_reset_substate();
     ui_set_view(VIEW_HOME);
     return;
