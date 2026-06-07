@@ -29,7 +29,6 @@ void ui_enter_ir_session(void) {
 // ROM: 0x9756  74.7%
 void ui_handle_main_menu(void) {
   uint16_t cost;
-  const uint8_t *costTable = MENU_ITEM_COSTS;
 
   /* A popup is active — any button dismisses it back to the normal menu. */
   if (g.viewstate.Y.BYTE != MENU_POPUP_NONE) {
@@ -41,16 +40,16 @@ void ui_handle_main_menu(void) {
   }
 
   if (drv_button_is_triggered(BTN_M)) {
+    uint16_t watts = g.save_watts;
+    const uint8_t *costTable = MENU_ITEM_COSTS;
     cost = costTable[g.ui_menuCursor];
-    if (g.save_watts < cost) {
+    if (watts < cost) {
       g.viewstate.Y.BYTE = MENU_POPUP_NEED_WATTS;
       drv_sound_play(SND_CURSOR);
       return;
     }
 
-    if (g.ui_menuCursor > MENU_SETTINGS) {
-    } else {
-      switch (g.ui_menuCursor) {
+    switch (g.ui_menuCursor) {
       case MENU_POKERADAR:
         if (!(g.sys_walkerFlags.BIT.walking)) {
           g.viewstate.Y.BYTE = MENU_POPUP_NO_POKEMON;
@@ -111,7 +110,6 @@ void ui_handle_main_menu(void) {
         ui_reset_settings_substate();
         ui_set_view(VIEW_SETTINGS);
         return;
-      }
     }
   }
 
