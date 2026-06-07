@@ -193,11 +193,7 @@ void ui_render_home_bar(void) {
     drv_lcd_blit(0x30, 0x38, buf, 8, 8);
   }
 
-  {
-    uint8_t fmt;
-    fmt = 1;
-    gfx_draw_numeric_value(0x58, 0x30, g.session_steps, fmt);
-  }
+  gfx_draw_numeric_value(0x58, 0x30, g.session_steps, 1);
 
   gfx_draw_battery_low(0, 0);
 }

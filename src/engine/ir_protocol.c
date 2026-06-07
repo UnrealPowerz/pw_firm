@@ -382,10 +382,7 @@ void ir_comm_loop(void) {
   uint16_t crcCalc;
 
   sys_wdt_kick();
-  {
-    uint8_t ssr = SSR3 & 0xC4;
-    SSR3 = ssr;
-  }
+  SSR3 = SSR3 & 0xC4;
   cmdPos_local = g.ir_commandPos;
   if (SSR3_BIT.RDRF) {
     if (cmdPos_local >= 0x88) {

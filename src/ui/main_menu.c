@@ -164,11 +164,9 @@ void ui_render_main_menu(void) {
   e0_buf = (uint8_t *)sbrk(0x80);
 
   /* Current selection: 80x16 menu heading bar for the selected row. */
-  {
-    uint16_t addr = (uint16_t)g.ui_menuCursor * 0x140 + SPR_OFF(menu_hdg_pokeradar);
-    drv_eeprom_read_block(addr, sprite_buf, 0x140);
-    drv_lcd_blit(8, 0, sprite_buf, 0x50, 0x10);
-  }
+  drv_eeprom_read_block((uint16_t)g.ui_menuCursor * 0x140 + SPR_OFF(menu_hdg_pokeradar),
+                        sprite_buf, 0x140);
+  drv_lcd_blit(8, 0, sprite_buf, 0x50, 0x10);
 
   for (i = 0; i < 6; i++) {
     uint16_t j;

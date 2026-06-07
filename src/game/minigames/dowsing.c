@@ -351,17 +351,11 @@ void ui_render_dowsing_grass(void) {
   }
 
   /* Bobbing grass overlay — g.ui_animationTick selects one of 4 wobble offsets. */
-  {
-    uint8_t anim = g.ui_animationTick & 0x03;
-    gfx_draw_animated_grass(
-        0x10, 0x10, (int8_t)*((volatile uint8_t *)(0xBD82 + anim)), buf);
-  }
+  gfx_draw_animated_grass(0x10, 0x10,
+      (int8_t)*((volatile uint8_t *)(0xBD82 + (g.ui_animationTick & 0x03))), buf);
 
   /* Highlighted cursor on top. */
-  {
-    uint8_t cursor_x = (uint8_t)(g.viewstate.v.dowsing.cursor * 0x10);
-    drv_lcd_blit(cursor_x, 0x18, buf, 0x10, 0x10);
-  }
+  drv_lcd_blit((uint8_t)(g.viewstate.v.dowsing.cursor * 0x10), 0x18, buf, 0x10, 0x10);
 
   gfx_draw_text_box(0x30, TEXT_DISCOVER_AN_ITEM, TEXT_BOX_FULL, TEXT_BOX_STATIC);
 }
