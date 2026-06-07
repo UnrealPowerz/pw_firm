@@ -79,6 +79,7 @@ void ui_render_event_reward_info(void) {
     case 5:
     case 6:
     case 7: {
+      /* Card-faces sheet — heart/spade/diamond/club glyphs (0x10 each). */
       uint16_t glyph_idx;
       if (g.viewstate.A == 4)      glyph_idx = 0;
       else if (g.viewstate.A == 5) glyph_idx = 1;

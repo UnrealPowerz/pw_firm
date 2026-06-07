@@ -188,12 +188,9 @@ void ui_render_main_menu(void) {
     }
 
     /* Per-row 16x16 menu icon (poke-radar, dowsing, connect, ...). */
-    {
-      uint16_t item_addr = SPR_OFF(menu_icons[0]) + (uint16_t)i * 0x40;
-      drv_eeprom_read_block(item_addr, sprite_buf, 0x40);
-      gfx_blit_to_buffer(0x10, 0x10, 0, MAIN_MENU_Y_COORDS[i],
-                         sprite_buf, e0_buf, 0x10);
-    }
+    drv_eeprom_read_block(SPR_OFF(menu_icons[i]), sprite_buf, sizeof(SPR.menu_icons[i]));
+    gfx_blit_to_buffer(0x10, 0x10, 0, MAIN_MENU_Y_COORDS[i],
+                       sprite_buf, e0_buf, 0x10);
 
     drv_lcd_blit((uint8_t)(i * 0x10), 0x10, e0_buf, 0x10, 0x20);
   }
