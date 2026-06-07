@@ -309,8 +309,6 @@ void ui_render_inventory_pokemon(void) {
 
 // ROM: 0x918c  81.9%
 void ui_render_inventory_items(void) {
-  void (*blit)(uint8_t, uint8_t, void *, uint8_t, uint8_t);
-  void (*eread)(uint16_t, void *, uint16_t);
   void *buf;
   void *namebuf;
   uint16_t anim;
@@ -319,53 +317,51 @@ void ui_render_inventory_items(void) {
   int i;
   uint16_t item_id[2];
 
-  blit = drv_lcd_blit;
-  eread = drv_eeprom_read_block;
   sys_init_heap();
   buf = sbrk(0x140);
   /* Left gutter chevron. */
-  eread(SPR_OFF(menu_arrow_left), buf, 0x20);
-  blit(0, 0, buf, 8, 16);
+  drv_eeprom_read_block(SPR_OFF(menu_arrow_left), buf, 0x20);
+  drv_lcd_blit(0, 0, buf, 8, 16);
 
   /* "POKéMON & ITEMS" heading bar. */
-  eread(SPR_OFF(menu_hdg_inventory), buf, 0x140);
-  blit(0x08, 0x00, buf, 0x50, 0x10);
+  drv_eeprom_read_block(SPR_OFF(menu_hdg_inventory), buf, 0x140);
+  drv_lcd_blit(0x08, 0x00, buf, 0x50, 0x10);
 
   /* Treasure-chest illustration in the right panel. */
-  eread(SPR_OFF(present_large), buf, 0xC0);
-  blit(0x3C, 0x18, buf, 0x20, 0x18);
+  drv_eeprom_read_block(SPR_OFF(present_large), buf, 0xC0);
+  drv_lcd_blit(0x3C, 0x18, buf, 0x20, 0x18);
 
   /* Cursor sprite over the current slot in the 5x2 grid. The +3-indexed
    * arrow variant (with tick toggle) gives the animated right-pointing
    * cursor used elsewhere too. */
   anim = (uint16_t)((uint16_t)(g.ui_animationTick & 1) + 3) * 0x10;
-  eread(SPR_OFF(arrows_8x8) + anim, buf, 0x10);
+  drv_eeprom_read_block(SPR_OFF(arrows_8x8) + anim, buf, 0x10);
 
   cursor = g.viewstate.Y.BYTE;
   col_x = (uint8_t)((cursor % 5) * 8 + 0x10);
   row_y = (uint8_t)((cursor / 5) * 0x10 + 0x10);
-  blit(col_x, row_y, buf, 8, 8);
+  drv_lcd_blit(col_x, row_y, buf, 8, 8);
 
   /* Item-symbol glyph — filled-cell icon for each present item in the
    * dowsed-items grid (10 slots = 2 rows x 5). */
-  eread(SPR_OFF(item_symbol), buf, SPR_SIZE(item_symbol));
+  drv_eeprom_read_block(SPR_OFF(item_symbol), buf, SPR_SIZE(item_symbol));
 
   for (i = 0; i < 5; i++) {
     if (g.viewstate.v.bytes.at_d2 & (1 << i)) {
-      blit((uint8_t)(i * 8 + 0x10), 0x18, buf, 8, 8);
+      drv_lcd_blit((uint8_t)(i * 8 + 0x10), 0x18, buf, 8, 8);
     }
   }
 
   for (i = 0; i < 5; i++) {
     if (g.viewstate.v.bytes.at_d2 & (0x20 << i)) {
-      blit((uint8_t)(i * 8 + 0x10), 0x28, buf, 8, 8);
+      drv_lcd_blit((uint8_t)(i * 8 + 0x10), 0x28, buf, 8, 8);
     }
   }
 
   /* Lookup the item name for the currently-selected slot. */
-  eread(0xCEC8 + (uint16_t)((uint16_t)g.viewstate.Y.BYTE << 2), (void *)item_id, 4);
+  drv_eeprom_read_block(EEPROM_PEER_GIFT_ITEMS + (uint16_t)((uint16_t)g.viewstate.Y.BYTE << 2), (void *)item_id, 4);
   namebuf = sbrk(0x14);
-  eread(0x8F8C, namebuf, 0x14);
+  drv_eeprom_read_block(EEPROM_SUBY_LOOKUP_TABLE, namebuf, 0x14);
   for (i = 0; i < 10; i++) {
     if (item_id[0] == ((uint16_t *)namebuf)[i]) {
       gfx_draw_item_name(0x00, 0x30, i, 0x0F);

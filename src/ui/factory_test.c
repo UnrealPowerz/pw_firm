@@ -436,11 +436,9 @@ set_substate_y_and_clear_a:
 // ROM: 0xad06  50.3%
 void ui_render_factory_test(void) {
   uint8_t buf[6];
-  void (*draw_string)(uint8_t, uint8_t, const char *);
   uint8_t subY;
   uint8_t subA;
 
-  draw_string = gfx_draw_string;
   subY = g.viewstate.Y.BYTE;
 
   if (subY > 0x12) {
@@ -452,7 +450,7 @@ void ui_render_factory_test(void) {
     if (g.viewstate.Z != 0) {
       goto case_d;
     }
-    draw_string(0x20, 0x08, FACTORY_STR_NG1);
+    gfx_draw_string(0x20, 0x08, FACTORY_STR_NG1);
     goto case_d;
 
   case 0x01:
@@ -483,53 +481,53 @@ void ui_render_factory_test(void) {
     if (((uint16_t)g.ui_animationTick >> 1) & 1) {
       goto case_d;
     }
-    draw_string(0x06, 0x38, FACTORY_STR_V);
+    gfx_draw_string(0x06, 0x38, FACTORY_STR_V);
     goto case_d;
 
   case 0x08:
     if (((uint16_t)g.ui_animationTick >> 1) & 1) {
       goto case_d;
     }
-    draw_string(0x2D, 0x38, FACTORY_STR_V);
+    gfx_draw_string(0x2D, 0x38, FACTORY_STR_V);
     goto case_d;
 
   case 0x09:
     if (((uint16_t)g.ui_animationTick >> 1) & 1) {
       goto case_d;
     }
-    draw_string(0x55, 0x38, FACTORY_STR_V);
+    gfx_draw_string(0x55, 0x38, FACTORY_STR_V);
     goto case_d;
 
   case 0x0A:
-    draw_string(0x20, 0x08, FACTORY_STR_EEP);
+    gfx_draw_string(0x20, 0x08, FACTORY_STR_EEP);
     goto case_d;
 
   case 0x0C:
     if (g.viewstate.v.factoryTest.testResultGate != 0) {
       goto case_d;
     }
-    draw_string(0x20, 0x08, FACTORY_STR_NG2);
+    gfx_draw_string(0x20, 0x08, FACTORY_STR_NG2);
     goto case_d;
 
   case 0x0E:
     if (g.viewstate.v.factoryTest.testResultGate != 0) {
       goto case_d;
     }
-    draw_string(0x20, 0x08, FACTORY_STR_NG3);
+    gfx_draw_string(0x20, 0x08, FACTORY_STR_NG3);
     goto case_d;
 
   case 0x0F:
     if (g.viewstate.v.factoryTest.currentInputByte.BYTE != *(uint8_t *)(&g.viewstate.v.factoryTest.expectedInputByte)) {
       goto case_d;
     }
-    draw_string(0x20, 0x08, FACTORY_STR_NG4);
+    gfx_draw_string(0x20, 0x08, FACTORY_STR_NG4);
     goto case_d;
 
   case 0x11:
     if (g.viewstate.v.factoryTest.testResultGate != 0) {
       goto case_d;
     }
-    draw_string(0x20, 0x08, FACTORY_STR_NG5);
+    gfx_draw_string(0x20, 0x08, FACTORY_STR_NG5);
     goto case_d;
 
   case 0x12:
@@ -548,7 +546,7 @@ void ui_render_factory_test(void) {
       const uint8_t *hexTable = HEX_DIGITS;
       uint16_t val = g.viewstate.v.factoryTest.calibValueLo;
 
-      draw_string(0x20, 0x00, FACTORY_STR_OK);
+      gfx_draw_string(0x20, 0x00, FACTORY_STR_OK);
 
       buf[4] = 0;
       buf[0] = hexTable[(val >> 12) & 0xF];
@@ -557,13 +555,13 @@ void ui_render_factory_test(void) {
       buf[3] = hexTable[val & 0xF];
       buf[4] = 0;
 
-      draw_string(0x20, 0x18, (const char *)buf);
+      gfx_draw_string(0x20, 0x18, (const char *)buf);
     }
 
     if (!(((uint16_t)g.ui_animationTick >> 1) & 1)) {
-      draw_string(0x06, 0x38, FACTORY_STR_V);
-      draw_string(0x2D, 0x38, FACTORY_STR_V);
-      draw_string(0x55, 0x38, FACTORY_STR_V);
+      gfx_draw_string(0x06, 0x38, FACTORY_STR_V);
+      gfx_draw_string(0x2D, 0x38, FACTORY_STR_V);
+      gfx_draw_string(0x55, 0x38, FACTORY_STR_V);
     }
     goto case_d;
 

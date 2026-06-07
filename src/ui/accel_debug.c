@@ -39,12 +39,10 @@ void sys_noop(void) {}
 #pragma option noregexpansion /* pragma:auto */
 void ui_render_accel_debug(void) {
   uint8_t buf[6];
-  void (*draw_string)(uint8_t, uint8_t, const char *);
   uint8_t *hexTable;
   uint8_t *p;
   uint8_t *q;
 
-  draw_string = gfx_draw_string;
   g.sys_activityTimer = 0x3C;
   g.ped_stepTimer = 0x1E;
 
@@ -55,12 +53,12 @@ void ui_render_accel_debug(void) {
   /* Draw g.viewstate.A as ASCII digit at position 0x4C */
   *p = (uint8_t)(g.viewstate.A + 0x30);
   *q = 0;
-  draw_string(0x4C, 0x00, (const char *)p);
+  gfx_draw_string(0x4C, 0x00, (const char *)p);
 
   /* Draw g.viewstate.v.accelDebug.calByte0.BYTE as ASCII digit at position 0x54 */
   *p = (uint8_t)(g.viewstate.v.accelDebug.calByte0.BYTE + 0x30);
   *q = 0;
-  draw_string(0x54, 0x00, (const char *)p);
+  gfx_draw_string(0x54, 0x00, (const char *)p);
 
   hexTable = (uint8_t *)HEX_DIGITS;
 
@@ -89,7 +87,7 @@ void ui_render_accel_debug(void) {
     *(p + 2) = hexTable[(val >> 4) & 0xF];
     *(p + 3) = hexTable[val & 0xF];
     *(p + 4) = 0;
-    draw_string(0x20, 0x08, (const char *)p);
+    gfx_draw_string(0x20, 0x08, (const char *)p);
   }
 
   /* Draw hex digits of g.ped_axisStepThresholdHi at 0x840 */
@@ -100,7 +98,7 @@ void ui_render_accel_debug(void) {
     *(p + 2) = hexTable[(val >> 4) & 0xF];
     *(p + 3) = hexTable[val & 0xF];
     *(p + 4) = 0;
-    draw_string(0x40, 0x08, (const char *)p);
+    gfx_draw_string(0x40, 0x08, (const char *)p);
   }
 
   /* Draw hex digits of g.ped_axisIdleThreshold at 0x1020 */
@@ -111,17 +109,17 @@ void ui_render_accel_debug(void) {
     *(p + 2) = hexTable[(val >> 4) & 0xF];
     *(p + 3) = hexTable[val & 0xF];
     *(p + 4) = 0;
-    draw_string(0x20, 0x10, (const char *)p);
+    gfx_draw_string(0x20, 0x10, (const char *)p);
   }
 
   /* Draw g.viewstate.v.accelDebug.displayCounter.BYTE as ASCII digit at 0x104C */
   *p = (uint8_t)(g.viewstate.v.accelDebug.displayCounter.BYTE + 0x30);
   *q = 0;
-  draw_string(0x4C, 0x10, (const char *)p);
+  gfx_draw_string(0x4C, 0x10, (const char *)p);
 
   /* Draw g.viewstate.v.accelDebug.calTarget (the byte after g.viewstate.v.accelDebug.calByte0.BYTE) at 0x1054 */
   *p = g.viewstate.v.accelDebug.calTarget;
-  draw_string(0x54, 0x10, (const char *)p);
+  gfx_draw_string(0x54, 0x10, (const char *)p);
 
   /* If g.viewstate.v.accelDebug.displayCounter.BYTE == g.viewstate.v.accelDebug.calTarget, send SPI command 0xA7 and draw check mark */
   if (g.viewstate.v.accelDebug.displayCounter.BYTE == g.viewstate.v.accelDebug.calTarget) {
@@ -133,6 +131,6 @@ void ui_render_accel_debug(void) {
     while (!SSSR_BIT.TEND)
       ;
     PDR1 |= 0x01;
-    draw_string(0x08, 0x20, FACTORY_STR_OK);
+    gfx_draw_string(0x08, 0x20, FACTORY_STR_OK);
   }
 }

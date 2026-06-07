@@ -66,11 +66,7 @@ void ui_render_battle(void) {
   uint8_t *sprite_buf, *frame_buf, *mask_buf;
   uint16_t addr;
   uint8_t i, flip;
-  /* These function-pointer aliases are load-bearing: ROM caches the addresses
-     in registers and reuses them at every call site. Removing them tanks the
-     match score. Names match the underlying drivers. */
-  void (*read_eeprom)(uint16_t, void *, uint16_t) = drv_eeprom_read_block;
-  void (*blit)(uint8_t, uint8_t, void *, uint8_t, uint8_t) = drv_lcd_blit;
+  /* (no manual function-pointer aliases; see test below) */
 
   sys_init_heap();
   sprite_buf = (uint8_t *)sbrk(0x300);
@@ -79,20 +75,20 @@ void ui_render_battle(void) {
 
   /* Own-pokemon back sprite (top of screen) — frame from g.ui_animationTick. */
   addr = (uint16_t)(g.ui_animationTick & 1) * 0xC0 + 0x91BE;
-  read_eeprom(addr, sprite_buf, 0xC0);
-  blit((uint8_t)g.viewstate.v.battle.spriteY, 8, sprite_buf, 0x20, 0x18);
+  drv_eeprom_read_block(addr, sprite_buf, 0xC0);
+  drv_lcd_blit((uint8_t)g.viewstate.v.battle.spriteY, 8, sprite_buf, 0x20, 0x18);
 
   /* HP/turn pips for player side (top row). */
-  read_eeprom(0x280 + 0x1DB0, sprite_buf, 0x10);
+  drv_eeprom_read_block(SPR_OFF(hp_tick), sprite_buf, 0x10);
   for (i = 0; i < g.viewstate.A; i++) {
-    blit((uint8_t)(0x38 + (i << 3)), 0, sprite_buf, 8, 8);
+    drv_lcd_blit((uint8_t)(0x38 + (i << 3)), 0, sprite_buf, 8, 8);
   }
 
   /* HP/wiggle pips for wild side (bottom row). Only drawn once the
      "started_fight" bit is set (case 1 advances past intro). */
   if (g.viewstate.v.battle.flags.BYTE & 0x01) {
     for (i = 0; i < g.viewstate.v.battle.hpRemaining.BYTE; i++) {
-      blit((uint8_t)(0x08 + (i << 3)), 0x18, sprite_buf, 8, 8);
+      drv_lcd_blit((uint8_t)(0x08 + (i << 3)), 0x18, sprite_buf, 8, 8);
     }
   }
 
@@ -103,19 +99,19 @@ void ui_render_battle(void) {
     if (kind < 4) {
       /* Route encounter (kinds 1..3): index into 16-byte metadata table at
          0x8F52 to read the flip flag, then load 0x180-byte sprite. */
-      read_eeprom(0x8F52 + (uint16_t)(kind - 1) * 16, sprite_buf, 0x10);
+      drv_eeprom_read_block(0x8F52 + (uint16_t)(kind - 1) * 16, sprite_buf, 0x10);
       flip = sprite_buf[0x0E] & 0x01;
       addr = 0x9A7E + (uint16_t)(kind - 1) * 0x180 +
              (uint16_t)(g.ui_animationTick & 1) * 0xC0;
     } else {
       /* Peer-sourced encounter (kind == 4): metadata at EEPROM 0xBF08,
          sprite at 0xBF7C. */
-      read_eeprom(0xBF08, sprite_buf, 0x10);
+      drv_eeprom_read_block(0xBF08, sprite_buf, 0x10);
       flip = sprite_buf[0x0E] & 0x01;
       addr = 0xBF7C + (uint16_t)(g.ui_animationTick & 1) * 0xC0;
     }
 
-    read_eeprom(addr, sprite_buf, 0x180);
+    drv_eeprom_read_block(addr, sprite_buf, 0x180);
     if (!flip) {
       gfx_flip_horiz(0x20, 0x18, sprite_buf);
     }
@@ -128,13 +124,13 @@ void ui_render_battle(void) {
       int16_t s = sine[(uint16_t)g.viewstate.v.battle.animTick << 2];
       uint8_t ball_y = (uint8_t)(0x14 - (uint8_t)((uint16_t)(s << 1) >> 8));
 
-      read_eeprom(0x280 + 0x1E0, mask_buf, 0x10);
-      read_eeprom(0x280 + 0x200, frame_buf, 0x08);
+      drv_eeprom_read_block(SPR_OFF(pokeball), mask_buf, 0x10);
+      drv_eeprom_read_block(SPR_OFF(_gap_0480), frame_buf, 0x08);
 
-      blit((uint8_t)ball_x, ball_y, mask_buf, 8, 8);
+      drv_lcd_blit((uint8_t)ball_x, ball_y, mask_buf, 8, 8);
       gfx_alpha_blend(sprite_buf, 0x20, 0x18, mask_buf, frame_buf,
                       ball_x - g.viewstate.v.battle.spriteX, ball_y, 0x08);
-      blit((uint8_t)g.viewstate.v.battle.spriteX, 0, sprite_buf, 0x20, 0x18);
+      drv_lcd_blit((uint8_t)g.viewstate.v.battle.spriteX, 0, sprite_buf, 0x20, 0x18);
     } else {
       gfx_draw_sprite_simple((uint8_t)g.viewstate.v.battle.spriteX, 0, 0x18, 0x20, sprite_buf);
     }
@@ -166,8 +162,8 @@ void ui_render_battle(void) {
       break;
     case BS_PICK_MOVE:
       /* "?" menu sprite — player picks their next action. */
-      read_eeprom(0x280 + 0x1DD0, sprite_buf, 0x300);
-      blit(0x00, 0x20, sprite_buf, 0x60, 0x20);
+      drv_eeprom_read_block(SPR_OFF(battle_placard), sprite_buf, 0x300);
+      drv_lcd_blit(0x00, 0x20, sprite_buf, 0x60, 0x20);
       goto switch_default;
     case BS_ATTACK_ANIM: {
       /* Player-attack animation. Outcome is in g.viewstate.v.battle.flags.BYTE bits 3-4:
@@ -176,8 +172,8 @@ void ui_render_battle(void) {
       if (outcome == 0) {
         if (g.viewstate.v.battle.animTick == 4) {
           drv_sound_play(SND_ATTACK_HIT);
-          read_eeprom(0x280 + 0x1BF0, sprite_buf, 0x80);
-          blit(0x28, 0x00, sprite_buf, 0x10, 0x20);
+          drv_eeprom_read_block(SPR_OFF(star_attack), sprite_buf, 0x80);
+          drv_lcd_blit(0x28, 0x00, sprite_buf, 0x10, 0x20);
         }
         if (g.viewstate.v.battle.animTick >= 4) {
           gfx_draw_own_pokemon_name(0x00, 0x20, 5);
@@ -200,8 +196,8 @@ void ui_render_battle(void) {
       } else if (outcome == 2) {
         if (g.viewstate.v.battle.animTick == 4) {
           drv_sound_play(SND_CRIT_HIT);
-          read_eeprom(0x280 + 0x1C70, sprite_buf, 0x80);
-          blit(0x28, 0x00, sprite_buf, 0x10, 0x20);
+          drv_eeprom_read_block(SPR_OFF(star_critical), sprite_buf, 0x80);
+          drv_lcd_blit(0x28, 0x00, sprite_buf, 0x10, 0x20);
         }
         if (g.viewstate.v.battle.animTick >= 4) {
           gfx_draw_text_box(0x20, TEXT_CRITICAL_HIT, TEXT_BOX_NO_SHADOW, TEXT_BOX_STATIC);
@@ -218,8 +214,8 @@ void ui_render_battle(void) {
       if (sub == 0) {
         if (g.viewstate.v.battle.animTick == 4) {
           drv_sound_play(SND_ATTACK_HIT);
-          read_eeprom(0x280 + 0x1BF0, sprite_buf, 0x80);
-          blit(0x28, 0x00, sprite_buf, 0x10, 0x20);
+          drv_eeprom_read_block(SPR_OFF(star_attack), sprite_buf, 0x80);
+          drv_lcd_blit(0x28, 0x00, sprite_buf, 0x10, 0x20);
         }
         if (g.viewstate.v.battle.animTick >= 4) {
           if (g.viewstate.Y.BYTE < 4) {
@@ -278,15 +274,15 @@ void ui_render_battle(void) {
       goto switch_default;
     case BS_BALL_FLY:
       /* Ball-in-flight sprite. */
-      read_eeprom(0x280 + 0x1CF0, sprite_buf, 0xC0);
-      blit(0x08, 0x00, sprite_buf, 0x20, 0x18);
+      drv_eeprom_read_block(SPR_OFF(cloud_appeared), sprite_buf, 0xC0);
+      drv_lcd_blit(0x08, 0x00, sprite_buf, 0x20, 0x18);
       break;
 
     case BS_BALL_LAND:
     case BS_WIGGLE_CHECK:
       /* Ball at rest, centred — wiggle frames cycle this. */
-      read_eeprom(0x460, sprite_buf, 0x10);
-      blit(20, 0x0C, sprite_buf, 8, 8);
+      drv_eeprom_read_block(0x460, sprite_buf, 0x10);
+      drv_lcd_blit(20, 0x0C, sprite_buf, 8, 8);
       break;
 
     case BS_WIGGLE_ROLL: {
@@ -299,25 +295,25 @@ void ui_render_battle(void) {
         wiggle_x = 0x15;
       else
         wiggle_x = 0x14;
-      read_eeprom(0x460, sprite_buf, 0x10);
-      blit(wiggle_x, 0x0C, sprite_buf, 8, 8);
+      drv_eeprom_read_block(0x460, sprite_buf, 0x10);
+      drv_lcd_blit(wiggle_x, 0x0C, sprite_buf, 8, 8);
       break;
     }
 
     case BS_CAUGHT_FANFARE:
       /* Caught fanfare: ball + two diverging confetti sparks. */
-      read_eeprom(0x460, sprite_buf, 0x10);
-      blit(20, 0x0C, sprite_buf, 8, 8);
-      read_eeprom(0x2040, sprite_buf, 0x10);
-      blit((uint8_t)(12 - g.viewstate.v.battle.animTick),
+      drv_eeprom_read_block(0x460, sprite_buf, 0x10);
+      drv_lcd_blit(20, 0x0C, sprite_buf, 8, 8);
+      drv_eeprom_read_block(0x2040, sprite_buf, 0x10);
+      drv_lcd_blit((uint8_t)(12 - g.viewstate.v.battle.animTick),
            (uint8_t)(10 - 2 * g.viewstate.v.battle.animTick), sprite_buf, 8, 8);
-      blit((uint8_t)(28 + g.viewstate.v.battle.animTick),
+      drv_lcd_blit((uint8_t)(28 + g.viewstate.v.battle.animTick),
            (uint8_t)(12 - 2 * g.viewstate.v.battle.animTick), sprite_buf, 8, 8);
       break;
 
     case BS_CAUGHT_TEXT:
-      read_eeprom(0x460, sprite_buf, 0x10);
-      blit(20, 0x0C, sprite_buf, 8, 8);
+      drv_eeprom_read_block(0x460, sprite_buf, 0x10);
+      drv_lcd_blit(20, 0x0C, sprite_buf, 8, 8);
       if (g.viewstate.Y.BYTE < 4) {
         gfx_draw_route_pokemon_name(0x00, 0x20, (uint8_t)(g.viewstate.Y.BYTE - 1),
                                     0x05);
@@ -329,8 +325,8 @@ void ui_render_battle(void) {
 
     case BS_BALL_MISS:
       /* Ball miss — recovery frame (same ball-flight sprite). */
-      read_eeprom(0x280 + 0x1CF0, sprite_buf, 0xC0);
-      blit(0x08, 0x00, sprite_buf, 0x20, 0x18);
+      drv_eeprom_read_block(SPR_OFF(cloud_appeared), sprite_buf, 0xC0);
+      drv_lcd_blit(0x08, 0x00, sprite_buf, 0x20, 0x18);
       break;
     }
   switch_default:
