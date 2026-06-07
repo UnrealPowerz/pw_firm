@@ -194,21 +194,26 @@ void ui_render_peer_play(void) {
     uint8_t table_idx = 0;
     uint8_t i;
 
-    if (g.viewstate.v.peerPlay.resultTextIndex.BYTE == 0x2C) {
+    switch (g.viewstate.v.peerPlay.resultTextIndex.BYTE) {
+    case 0x2C:
       limit = count;
       if (limit > 5)
         limit = 5;
-    } else if (g.viewstate.v.peerPlay.resultTextIndex.BYTE == 0x2D) {
+      break;
+    case 0x2D:
       if (limit > 4)
         limit = 4;
-    } else if (g.viewstate.v.peerPlay.resultTextIndex.BYTE == 0x2E) {
+      break;
+    case 0x2E:
       if (limit > 3)
         limit = 3;
-    } else if (g.viewstate.v.peerPlay.resultTextIndex.BYTE == 0x2F) {
+      break;
+    case 0x2F:
       if (limit > 2)
         limit = 2;
       table_idx = 1;
-    } else if (g.viewstate.v.peerPlay.resultTextIndex.BYTE == 0x30) {
+      break;
+    case 0x30:
       ui_draw_music_note(0x2C, MUSIC_NOTE_HEIGHTS[2], 0);  /* peak height */
       goto music_done;
     }
